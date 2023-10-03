@@ -473,8 +473,8 @@ function installKeyAndSwipeEventHandler() {
       let touchendX = 0
     
       function checkDirection() {
-        if (touchendX < touchstartX) getTheDate(-1);
-        if (touchendX > touchstartX) getTheDate(+1);
+        if (touchendX < touchstartX) getTheDate(+1);
+        if (touchendX > touchstartX) getTheDate(-1);
       }
 
       document.addEventListener('touchstart', e => {
