@@ -15,6 +15,7 @@ import threading
 import os
 import gzip
 
+from utils.helpers import get_settings, Detection, ParseFileName
 from utils.notifications import sendAppriseNotifications
 from utils.parse_settings import config_to_settings
 
@@ -39,6 +40,7 @@ DB_PATH = userDir + '/BirdNET-Pi/scripts/birds.db'
 
 INTERPRETER, INCLUDE_LIST, EXCLUDE_LIST = (None, None, None)
 PREDICTED_SPECIES_LIST = []
+model, priv_thresh, sf_thresh = (None, None, None)
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -619,6 +621,47 @@ def handle_client(conn, addr):
         # time.sleep(3)
 
     conn.close()
+
+
+def load_global_model():
+    global INTERPRETER
+    global model, priv_thresh, sf_thresh
+    conf = get_settings()
+    model = conf['MODEL']
+    priv_thresh = conf['PRIVACY_THRESHOLD']
+    sf_thresh = conf['SF_THRESH']
+    INTERPRETER = loadModel()
+
+
+def run_analysis(file):
+    global INCLUDE_LIST, EXCLUDE_LIST
+    INCLUDE_LIST = loadCustomSpeciesList(os.path.expanduser("~/BirdNET-Pi/include_species_list.txt"))
+    EXCLUDE_LIST = loadCustomSpeciesList(os.path.expanduser("~/BirdNET-Pi/exclude_species_list.txt"))
+
+    conf = get_settings()
+
+    # Read audio data & handle errors
+    try:
+        audio_data = readAudioData(file.file_name, conf.getfloat('OVERLAP'))
+    except (NameError, TypeError) as e:
+        print(f"Error with the following info: {e}")
+        return []
+
+    file = ParseFileName(file.file_name)
+    # Process audio data and get detections
+    raw_detections = analyzeAudioData(audio_data, conf.getfloat('LATITUDE'), conf.getfloat('LONGITUDE'), file.week,
+                                      conf.getfloat('SENSITIVITY'), conf.getfloat('OVERLAP'))
+    confident_detections = []
+    for time_slot, entries in raw_detections.items():
+        print(f'{time_slot}-{entries[0]}')
+        for entry in entries:
+            if entry[1] >= conf.getfloat('CONFIDENCE') and ((entry[0] in INCLUDE_LIST or len(INCLUDE_LIST) == 0)
+                                                            and (entry[0] not in EXCLUDE_LIST or len(EXCLUDE_LIST) == 0)
+                                                            and (entry[0] in PREDICTED_SPECIES_LIST
+                                                                 or len(PREDICTED_SPECIES_LIST) == 0)):
+                d = Detection(time_slot.split(';')[0], time_slot.split(';')[1], entry[0], entry[1])
+                confident_detections.append(d)
+    return confident_detections
 
 
 def start():
