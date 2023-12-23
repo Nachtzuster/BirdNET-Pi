@@ -37,16 +37,19 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 userDir = os.path.expanduser('~')
 DB_PATH = userDir + '/BirdNET-Pi/scripts/birds.db'
 
+INTERPRETER, INCLUDE_LIST, EXCLUDE_LIST = (None, None, None)
 PREDICTED_SPECIES_LIST = []
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-try:
-    server.bind(ADDR)
-except BaseException:
-    print("Waiting on socket")
-    time.sleep(5)
+
+def bind_port():
+    try:
+        server.bind(ADDR)
+    except BaseException:
+        print("Waiting on socket")
+        time.sleep(5)
 
 
 # Open most recent Configuration and grab DB_PWD as a python variable
@@ -271,8 +274,10 @@ def predict(sample, sensitivity):
     return p_sorted[:human_cutoff]
 
 
-def analyzeAudioData(chunks, lat, lon, week, sensitivity, overlap,):
+def analyzeAudioData(chunks, lat, lon, week, sens, overlap,):
     global INTERPRETER
+
+    sensitivity = max(0.5, min(1.0 - (sens - 1.0), 1.5))
 
     detections = {}
     start = time.time()
@@ -454,10 +459,8 @@ def handle_client(conn, addr):
         week_number = int(now.strftime("%V"))
         week = max(1, min(week_number, 48))
 
-        sensitivity = max(0.5, min(1.0 - (args.sensitivity - 1.0), 1.5))
-
         # Process audio data and get detections
-        detections = analyzeAudioData(audioData, args.lat, args.lon, week, sensitivity, args.overlap)
+        detections = analyzeAudioData(audioData, args.lat, args.lon, week, args.sensitivity, args.overlap)
 
         # Write detections to output file
         min_conf = max(0.01, min(args.min_conf, 0.99))
@@ -619,8 +622,9 @@ def handle_client(conn, addr):
 
 
 def start():
+    bind_port()
     # Load model
-    global INTERPRETER, INCLUDE_LIST, EXCLUDE_LIST
+    global INTERPRETER
     INTERPRETER = loadModel()
     server.listen()
     # print(f"[LISTENING] Server is listening on {SERVER}")
@@ -632,4 +636,5 @@ def start():
 
 
 # print("[STARTING] server is starting...")
-start()
+if __name__ == '__main__':
+    start()
