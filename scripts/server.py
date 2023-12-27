@@ -42,6 +42,8 @@ INTERPRETER, INCLUDE_LIST, EXCLUDE_LIST = (None, None, None)
 PREDICTED_SPECIES_LIST = []
 model, priv_thresh, sf_thresh = (None, None, None)
 
+mdata, mdata_params = (None, None)
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -289,9 +291,7 @@ def analyzeAudioData(chunks, lat, lon, week, sens, overlap,):
         if len(PREDICTED_SPECIES_LIST) == 0 or len(INCLUDE_LIST) != 0:
             predictSpeciesList(lat, lon, week)
 
-    # Convert and prepare metadata
-    mdata = convertMetadata(np.array([lat, lon, week]))
-    mdata = np.expand_dims(mdata, 0)
+    mdata = get_metadata(lat, lon, week)
 
     # Parse every chunk
     pred_start = 0.0
@@ -321,9 +321,19 @@ def analyzeAudioData(chunks, lat, lon, week, sens, overlap,):
 
         pred_start = pred_end - overlap
 
-    print('DONE! Time', int((time.time() - start) * 10) / 10.0, 'SECONDS')
-#    print('DETECTIONS:::::',detections)
+    print(f'DONE! Time {time.time() - start:.2f} SECONDS')
     return detections
+
+
+def get_metadata(lat, lon, week):
+    global mdata, mdata_params
+    if mdata_params != [lat, lon, week]:
+        mdata_params = [lat, lon, week]
+        # Convert and prepare metadata
+        mdata = convertMetadata(np.array([lat, lon, week]))
+        mdata = np.expand_dims(mdata, 0)
+
+    return mdata
 
 
 def writeResultsToFile(detections, min_conf, path):
