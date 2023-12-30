@@ -51,9 +51,6 @@ else
   if pgrep arecord &> /dev/null ;then
     echo "Recording"
   else
-    until grep 5050 <(netstat -tulpn 2>&1);do
-      sleep 1
-    done
     if [ -z ${REC_CARD} ];then
       arecord -f S16_LE -c${CHANNELS} -r48000 -t wav --max-file-time ${RECORDING_LENGTH}\
 	      	      	       --use-strftime ${RECS_DIR}/StreamData/%F-birdnet-%H:%M:%S.wav
