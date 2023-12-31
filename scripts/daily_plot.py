@@ -15,10 +15,12 @@ from matplotlib.colors import LogNorm
 from utils.helpers import DB_PATH
 
 
-def get_data():
+def get_data(now=None):
     conn = sqlite3.connect(DB_PATH)
-    now = datetime.now()
-    df = pd.read_sql_query("SELECT * from detections WHERE Date = DATE('now', 'localtime')", conn)
+    if now is None:
+        now = datetime.now()
+    df = pd.read_sql_query(f"SELECT * from detections WHERE Date = DATE('{now.strftime('%Y-%m-%d')}', 'localtime')",
+                           conn)
 
     # Convert Date and Time Fields to Panda's format
     df['Date'] = pd.to_datetime(df['Date'])
@@ -125,12 +127,22 @@ def load_fonts():
 
 def main(daemon, sleep_m):
     load_fonts()
+    last_run = None
     while True:
-        data, time = get_data()
+        now = datetime.now()
+        if last_run and now.day != last_run.day:
+            print("getting yesterday's dataset")
+            yesterday = last_run.replace(hour=23, minute=59)
+            data, time = get_data(yesterday)
+        else:
+            data, time = get_data(now)
         if not data.empty:
             create_plot(data, time, is_top=True)
             create_plot(data, time, is_top=False)
+        else:
+            print('empty dataset')
         if daemon:
+            last_run = now
             sleep(60 * sleep_m)
         else:
             break
