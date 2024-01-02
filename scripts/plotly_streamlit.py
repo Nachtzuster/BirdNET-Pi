@@ -170,6 +170,7 @@ top_N_species = (df5.value_counts()[:top_N])
 
 font_size = 15
 
+
 def sunrise_sunset_scatter(num_days_to_display):
     latitude = df['Lat'][0]
     longitude = df['Lon'][0]
@@ -209,11 +210,12 @@ def sunrise_sunset_scatter(num_days_to_display):
     sunrise_week_list.append(None)
     sunrise_list.append(None)
     sunrise_text_list.append(None)
-    sun_list = sunrise_list.extend(sunset_list)
-    sun_week_list = sunrise_week_list.extend(sunset_week_list)
+    sunrise_list.extend(sunset_list)
+    sunrise_week_list.extend(sunset_week_list)
     sunrise_text_list.extend(sunset_text_list)
 
     return sunrise_week_list, sunrise_list, sunrise_text_list
+
 
 def hms_to_dec(t):
     # (h, m, s) = t.split(':')
@@ -222,6 +224,7 @@ def hms_to_dec(t):
     s = t.second / 3600
     result = h + m + s
     return result
+
 
 def hms_to_str(t):
     # (h, m, s) = t.split(':')
@@ -470,10 +473,10 @@ if daily is False:
         y_downscale_factor = int(len(saved_time_labels) / number_of_y_ticks)
         fig.update_layout(
             yaxis=dict(
-                tickmode = 'array',
-                tickvals = day_hour_freq.columns[::y_downscale_factor],
-                ticktext = saved_time_labels[::y_downscale_factor],
-                nticks = 6
+                tickmode='array',
+                tickvals=day_hour_freq.columns[::y_downscale_factor],
+                ticktext=saved_time_labels[::y_downscale_factor],
+                nticks=6
             )
         )
         st.plotly_chart(fig, use_container_width=True)  # , config=config)
