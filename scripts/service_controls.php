@@ -4,10 +4,10 @@ function service_status($name) {
   $home = shell_exec("awk -F: '/1000/{print $6}' /etc/passwd");
   $home = trim($home);
 
-  if($name == "birdnet_server.service") {
-    $filesinproc=trim(shell_exec("ls ".$home."/BirdSongs/Processed | wc -l"));
+  if($name == "birdnet_analysis.service") {
+    $filesinproc=trim(shell_exec("ls ".$home."/BirdSongs/StreamData | wc -l"));
     if($filesinproc > 200) { 
-       echo "<span style='color:#fc6603'>(stalled - backlog of ".$filesinproc." files in ~/BirdSongs/Processed/)</span>";
+       echo "<span style='color:#fc6603'>(stalled - backlog of ".$filesinproc." files in ~/BirdSongs/StreamData/)</span>";
        return;
     }
   } 
@@ -45,21 +45,7 @@ function service_status($name) {
     <button type="submit" name="submit" value="sudo systemctl enable --now birdnet_log.service">Enable</button>
   </form>
   <form action="" method="GET">
-    <h3>Extraction Service <?php echo service_status("extraction.service");?></h3>
-    <button type="submit" name="submit" value="sudo systemctl stop extraction.service">Stop</button>
-    <button type="submit" name="submit" value="sudo systemctl restart extraction.service">Restart </button>
-    <button type="submit" name="submit" value="sudo systemctl disable --now extraction.service">Disable</button>
-    <button type="submit" name="submit" value="sudo systemctl enable --now extraction.service">Enable</button>
-  </form>
-  <form action="" method="GET">
-    <h3>BirdNET Analysis Server <?php echo service_status("birdnet_server.service");?></h3>
-    <button type="submit" name="submit" value="sudo systemctl stop birdnet_server.service">Stop</button>
-    <button type="submit" name="submit" value="sudo systemctl restart birdnet_server.service">Restart</button>
-    <button type="submit" name="submit" value="sudo systemctl disable --now birdnet_server.service">Disable</button>
-    <button type="submit" name="submit" value="sudo systemctl enable --now birdnet_server.service">Enable</button>
-  </form>
-  <form action="" method="GET">
-    <h3>BirdNET Analysis Client <?php echo service_status("birdnet_analysis.service");?></h3>
+    <h3>BirdNET Analysis <?php echo service_status("birdnet_analysis.service");?></h3>
     <button type="submit" name="submit" value="sudo systemctl stop birdnet_analysis.service">Stop</button>
     <button type="submit" name="submit" value="sudo systemctl restart birdnet_analysis.service">Restart</button>
     <button type="submit" name="submit" value="sudo systemctl disable --now birdnet_analysis.service">Disable</button>
