@@ -13,9 +13,9 @@ if [ "$LOGGING_LEVEL" == "info" ] || [ "$LOGGING_LEVEL" == "debug" ];then
 fi
 
 [ -z $RECORDING_LENGTH ] && RECORDING_LENGTH=15
+[ -d $RECS_DIR/StreamData ] || mkdir -p $RECS_DIR/StreamData
 
 if [ ! -z $RTSP_STREAM ];then
-  [ -d $RECS_DIR/StreamData ] || mkdir -p $RECS_DIR/StreamData
   # Explode the RSPT steam setting into an array so we can count the number we have
   RTSP_STREAMS_EXPLODED_ARRAY=(${RTSP_STREAM//,/ })
 
@@ -56,11 +56,10 @@ else
     done
     if [ -z ${REC_CARD} ];then
       arecord -f S16_LE -c${CHANNELS} -r48000 -t wav --max-file-time ${RECORDING_LENGTH}\
-	      --use-strftime ${RECS_DIR}/%B-%Y/%d-%A/%F-birdnet-%H:%M:%S.wav
+	      	      	       --use-strftime ${RECS_DIR}/StreamData/%F-birdnet-%H:%M:%S.wav
     else
       arecord -f S16_LE -c${CHANNELS} -r48000 -t wav --max-file-time ${RECORDING_LENGTH}\
-        -D "${REC_CARD}" --use-strftime \
-	${RECS_DIR}/%B-%Y/%d-%A/%F-birdnet-%H:%M:%S.wav
+        -D "${REC_CARD}" --use-strftime ${RECS_DIR}/StreamData/%F-birdnet-%H:%M:%S.wav
     fi
   fi
 fi
