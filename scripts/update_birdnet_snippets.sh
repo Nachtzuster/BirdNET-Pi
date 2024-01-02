@@ -33,15 +33,35 @@ if [ -f $my_dir/privacy_server ] || [ -L /usr/local/bin/privacy_server.py ];then
   rm -f /usr/local/bin/privacy_server.py
 fi
 
+if systemctl list-unit-files birdnet_server.service &>/dev/null;then
+  sudo systemctl disable --now birdnet_server.service
+  sudo rm -f /usr/lib/systemd/system/birdnet_server.service
+  sudo rm $HOME/BirdNET-Pi/templates/birdnet_server.service
+  rm -f /usr/local/bin/server.py
+fi
+if systemctl list-unit-files extraction.service &>/dev/null;then
+  sudo systemctl disable --now extraction.service
+  sudo rm -f /usr/lib/systemd/system/extraction.service
+  sudo rm $HOME/BirdNET-Pi/templates/extraction.service
+  rm -f /usr/local/bin/extract_new_birdsounds.sh
+fi
+
 inotify_installation_status=$(~/BirdNET-Pi/birdnet/bin/python3 -c 'import pkgutil; print("installed" if pkgutil.find_loader("inotify") else "not installed")')
 if [[ "$pytest_installation_status" = "not installed" ]];then
   $HOME/BirdNET-Pi/birdnet/bin/pip3 install -U pip
   $HOME/BirdNET-Pi/birdnet/bin/pip3 install inotify psutil
 fi
 
+if grep -q 'birdnet_server.service' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"&>/dev/null; then
+    sudo -E sed -i '/After=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
+    sudo -E sed -i '/Requires=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
+    sudo -E sed -i '/RuntimeMaxSec=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
+    sudo -E sed -i "s|ExecStart=.*|ExecStart=$HOME/BirdNET-Pi/birdnet/bin/python3 /usr/local/bin/birdnet_analysis.py|" "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
+    sudo systemctl daemon-reload && restart_services.sh
+fi
+
 # Adds python virtual-env to the python systemd services
-if ! grep 'BirdNET-Pi/birdnet/' $HOME/BirdNET-Pi/templates/birdnet_server.service &>/dev/null || ! grep 'BirdNET-Pi/birdnet' $HOME/BirdNET-Pi/templates/chart_viewer.service &>/dev/null;then
-  sudo -E sed -i "s|ExecStart=.*|ExecStart=$HOME/BirdNET-Pi/birdnet/bin/python3 /usr/local/bin/server.py|" ~/BirdNET-Pi/templates/birdnet_server.service
+if ! grep 'BirdNET-Pi/birdnet' $HOME/BirdNET-Pi/templates/chart_viewer.service &>/dev/null;then
   sudo -E sed -i "s|ExecStart=.*|ExecStart=$HOME/BirdNET-Pi/birdnet/bin/python3 /usr/local/bin/daily_plot.py|" ~/BirdNET-Pi/templates/chart_viewer.service
   sudo systemctl daemon-reload && restart_services.sh
 fi
@@ -51,12 +71,6 @@ if ! grep 'daemon' $HOME/BirdNET-Pi/templates/chart_viewer.service &>/dev/null;t
   sudo systemctl daemon-reload && restart_services.sh
 fi
 
-if grep privacy ~/BirdNET-Pi/templates/birdnet_server.service &>/dev/null;then
-  sudo -E sed -i 's/privacy_server.py/server.py/g' \
-    ~/BirdNET-Pi/templates/birdnet_server.service
-  sudo systemctl daemon-reload
-  restart_services.sh
-fi
 if ! grep APPRISE_NOTIFICATION_TITLE /etc/birdnet/birdnet.conf &>/dev/null;then
   sudo -u$USER echo "APPRISE_NOTIFICATION_TITLE=\"New BirdNET-Pi Detection\"" >> /etc/birdnet/birdnet.conf
 fi
@@ -188,12 +202,6 @@ streamlit_version=$($HOME/BirdNET-Pi/birdnet/bin/pip3 show streamlit 2>/dev/null
 [[ $apprise_version != "1.2.1" ]] && $HOME/BirdNET-Pi/birdnet/bin/pip3 install apprise==1.2.1
 [[ $streamlit_version != "1.19.0" ]] && $HOME/BirdNET-Pi/birdnet/bin/pip3 install streamlit==1.19.0
 
-if grep -q 'RuntimeMaxSec=' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"&>/dev/null; then
-    sudo -E sed -i '/RuntimeMaxSec=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
-    sudo -E sed -i "s|ExecStart=.*|ExecStart=$HOME/BirdNET-Pi/birdnet/bin/python3 /usr/local/bin/birdnet_analysis.py|" "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
-    sudo systemctl daemon-reload && restart_services.sh
-fi
-
 if ! grep RAW_SPECTROGRAM /etc/birdnet/birdnet.conf &>/dev/null;then
   sudo -u$USER echo "RAW_SPECTROGRAM=0" >> /etc/birdnet/birdnet.conf
 fi
@@ -264,6 +272,12 @@ if [ ! -f "$labels_file" ]; then
     fi
 fi
 
+if [ -L /usr/local/bin/analyze.py ];then
+  rm -f /usr/local/bin/analyze.py
+fi
+if [ -L /usr/local/bin/birdnet_analysis.sh ];then
+  rm -f /usr/local/bin/birdnet_analysis.sh
+fi
 
 sudo systemctl daemon-reload
 restart_services.sh
