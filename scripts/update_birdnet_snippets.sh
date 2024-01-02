@@ -40,6 +40,11 @@ if ! grep 'BirdNET-Pi/birdnet/' $HOME/BirdNET-Pi/templates/birdnet_server.servic
   sudo systemctl daemon-reload && restart_services.sh
 fi
 
+if ! grep 'daemon' $HOME/BirdNET-Pi/templates/chart_viewer.service &>/dev/null;then
+  sudo -E sed -i "s|daily_plot.py.*|daily_plot.py --daemon --sleep 2|" ~/BirdNET-Pi/templates/chart_viewer.service
+  sudo systemctl daemon-reload && restart_services.sh
+fi
+
 if grep privacy ~/BirdNET-Pi/templates/birdnet_server.service &>/dev/null;then
   sudo -E sed -i 's/privacy_server.py/server.py/g' \
     ~/BirdNET-Pi/templates/birdnet_server.service
