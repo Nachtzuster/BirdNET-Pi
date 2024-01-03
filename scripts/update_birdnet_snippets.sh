@@ -106,6 +106,9 @@ fi
 if ! which lsof &>/dev/null;then
   sudo apt update && sudo apt -y install lsof
 fi
+if ! which inotifywait &>/dev/null;then
+  sudo apt update && sudo apt -y install inotify-tools
+fi
 if ! grep RTSP_STREAM /etc/birdnet/birdnet.conf &>/dev/null;then
   sudo -u$USER echo "RTSP_STREAM=" >> /etc/birdnet/birdnet.conf
 fi
