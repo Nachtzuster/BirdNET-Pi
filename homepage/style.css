@@ -141,7 +141,7 @@ button:hover {
 }
 
 .topnav {
-  background-color: rgb(159, 226, 155);
+  background-color: #7e7e7e;
   display: flex;
   flex: 65%;
   width: 65%;
