@@ -181,9 +181,9 @@ top_N_species = (df5.value_counts()[:top_N])
 font_size = 15
 
 
-def sunrise_sunset_scatter(num_days_to_display):
-    latitude = df2['Lat'][0]
-    longitude = df2['Lon'][0]
+def sunrise_sunset_scatter(date_range):
+    latitude = df2['Lat'][-1]
+    longitude = df2['Lon'][-1]
 
     sun = Sun(latitude, longitude)
 
@@ -193,13 +193,13 @@ def sunrise_sunset_scatter(num_days_to_display):
     sunset_week_list = []
     sunrise_text_list = []
     sunset_text_list = []
+    daysback_range = []
 
     now = datetime.now()
 
-    for past_day in range(num_days_to_display):
-        d = timedelta(days=num_days_to_display - past_day - 1)
+    current_date = start_date
 
-        current_date = now - d
+    for current_date in date_range:
         # current_date = datetime.fromisocalendar(2022, week + 1, 5)
         # time_zone = datetime.now()
         sun_rise = sun.get_local_sunrise_time(current_date)
@@ -214,17 +214,17 @@ def sunrise_sunset_scatter(num_days_to_display):
         sunset_text_list.append(temp_time)
         sunrise_list.append(sun_rise_time)
         sunset_list.append(sun_dusk_time)
-        sunrise_week_list.append(past_day)
-        sunset_week_list.append(past_day)
+       
+        daysback_range.append(current_date.strftime('%d-%m-%Y'))
 
-    sunrise_week_list.append(None)
     sunrise_list.append(None)
     sunrise_text_list.append(None)
     sunrise_list.extend(sunset_list)
-    sunrise_week_list.extend(sunset_week_list)
     sunrise_text_list.extend(sunset_text_list)
+    daysback_range.append(None)
+    daysback_range.extend(daysback_range)
 
-    return sunrise_week_list, sunrise_list, sunrise_text_list
+    return daysback_range, sunrise_list, sunrise_text_list
 
 
 def hms_to_dec(t):
@@ -464,12 +464,7 @@ if daily is False:
             # text=labels,
             texttemplate="%{text}", autocolorscale=False, colorscale=selected_pal
         )
-        num_days_to_display = len(fig_x)
-        sunrise_week_list, sunrise_list, sunrise_text_list = sunrise_sunset_scatter(num_days_to_display)
-        daysback_range = fig_x
-        daysback_range.append(None)
-        daysback_range.extend(daysback_range)
-        daysback_range = daysback_range[:-1]
+        daysback_range, sunrise_list, sunrise_text_list = sunrise_sunset_scatter(day_hour_freq.index.tolist())
 
         sunrise_sunset = go.Scatter(x=daysback_range,
                                     y=sunrise_list,
