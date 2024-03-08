@@ -189,13 +189,9 @@ def sunrise_sunset_scatter(date_range):
 
     sunrise_list = []
     sunset_list = []
-    sunrise_week_list = []
-    sunset_week_list = []
     sunrise_text_list = []
     sunset_text_list = []
     daysback_range = []
-
-    now = datetime.now()
 
     current_date = start_date
 
@@ -214,7 +210,7 @@ def sunrise_sunset_scatter(date_range):
         sunset_text_list.append(temp_time)
         sunrise_list.append(sun_rise_time)
         sunset_list.append(sun_dusk_time)
-       
+
         daysback_range.append(current_date.strftime('%d-%m-%Y'))
 
     sunrise_list.append(None)
