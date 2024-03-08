@@ -12,7 +12,6 @@ from sqlite3 import Connection
 import plotly.express as px
 from sklearn.preprocessing import normalize
 from suntime import Sun
-from datetime import datetime
 
 profile = False
 if profile:
