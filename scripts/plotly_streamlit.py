@@ -181,8 +181,8 @@ font_size = 15
 
 
 def sunrise_sunset_scatter(date_range):
-    latitude = df2['Lat'][-1]
-    longitude = df2['Lon'][-1]
+    latitude = df2['Lat'][0]
+    longitude = df2['Lon'][0]
 
     sun = Sun(latitude, longitude)
 
