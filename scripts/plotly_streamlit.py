@@ -12,6 +12,7 @@ from sqlite3 import Connection
 import plotly.express as px
 from sklearn.preprocessing import normalize
 from suntime import Sun
+from utils.helpers import get_settings
 
 profile = False
 if profile:
@@ -181,8 +182,9 @@ font_size = 15
 
 
 def sunrise_sunset_scatter(date_range):
-    latitude = df2['Lat'][0]
-    longitude = df2['Lon'][0]
+    conf = get_settings()
+    latitude = conf.getfloat('LATITUDE')
+    longitude = conf.getfloat('LONGITUDE')
 
     sun = Sun(latitude, longitude)
 
