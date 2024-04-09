@@ -279,7 +279,7 @@ $newconfig = get_config();
       <input name="full_disk" type="radio" id="purge" value="purge" <?php if (strcmp($newconfig['FULL_DISK'], "purge") == 0) { echo "checked"; }?>>Purge</label>
       <label for="keep">
       <input name="full_disk" type="radio" id="keep" value="keep" <?php if (strcmp($newconfig['FULL_DISK'], "keep") == 0) { echo "checked"; }?>>Keep</label>
-      <p>When the disk becomes full, you can choose to 'purge' old files to make room for new ones or 'keep' your data and stop all services instead.<br>Note: you can exclude specific files from 'purge' on the Recordings page.</p>
+      <p>When the disk becomes full, you can choose to 'purge' old files to make room for new ones or 'keep' your data and stop all services instead.<br>Note: You can exclude specific files from 'purge' on the Recordings page. Just audio files gets purged (NOT excluded ones), you can still see the detections from your "birds.db"</p>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
 
@@ -433,7 +433,7 @@ foreach($formats as $format){
 
       <table class="settingstable"><tr><td>
       <h2>BirdNET-Lite Settings</h2>
-
+								# add info box: "Explanation for these settings: https://github.com/mcguirepr89/BirdNET-Pi/wiki/BirdNET-Pi:-some-theory-on-classification-&-some-practical-hints" (already linked on page 1 / basic seetings at the "model" box
       <p>
         <label for="overlap">Overlap: </label>
         <input name="overlap" type="number" min="0.0" max="2.9" step="0.1" value="<?php print($newconfig['OVERLAP']);?>" required/><br>
@@ -442,7 +442,7 @@ foreach($formats as $format){
       <p>
         <label for="confidence">Minimum Confidence: </label>
         <input name="confidence" type="number" min="0.01" max="0.99" step="0.01" value="<?php print($newconfig['CONFIDENCE']);?>" required/><br>
-        &nbsp;&nbsp;&nbsp;&nbsp;Min=0.01, Max=0.99
+        &nbsp;&nbsp;&nbsp;&nbsp;Min=0.01, Max=0.99		# add info box: "Lower value = more detections and more false positives"
       </p>
       <p>
         <label for="sensitivity">Sigmoid Sensitivity: </label>

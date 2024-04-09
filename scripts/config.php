@@ -459,10 +459,10 @@ function runProcess() {
       </td></tr></table><br>
       <table class="settingstable" style="width:100%"><tr><td>
       <h2>Notifications</h2>
-      <p><a target="_blank" href="https://github.com/caronc/apprise/wiki">Apprise Notifications</a> can be setup and enabled for 70+ notification services. Each service should be on its own line.</p>
+      <p><a target="_blank" href="https://github.com/caronc/apprise/wiki">Apprise Notifications</a> can be setup and enabled for 70+ notification services. Each service should be on its own line. For Telegram add "?format=markdown" after your chat_id</p>
       <label for="apprise_input">Apprise Notifications Configuration: </label><br>
       <textarea placeholder="mailto://{user}:{password}@gmail.com
-tgram://{bot_token}/{chat_id}
+tgram://{bot_token}/{chat_id}?format=markdown (?format=markdown needed for weekly report)
 twitter://{ConsumerKey}/{ConsumerSecret}/{AccessToken}/{AccessSecret}
 https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
 ..." style="vertical-align: top" name="apprise_input" rows="5" type="text" ><?php print($apprise_config);?></textarea>
