@@ -10,28 +10,21 @@ require_once 'scripts/common.php';
 $home = get_home();
 $config = get_config();
 
-$db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
-
 if(isset($_GET['deletefile'])) {
   ensure_authenticated('You must be authenticated to delete files.');
   if (preg_match('~^.*(\.\.\/).+$~', $_GET['deletefile'])) {
     echo "Error";
     die();
   }
-  $db_writable = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READWRITE);
-  $db->busyTimeout(1000);
-  $statement1 = $db_writable->prepare('DELETE FROM detections WHERE File_Name = :file_name LIMIT 1');
-  ensure_db_ok($statement1);
-  $statement1->bindValue(':file_name', explode("/", $_GET['deletefile'])[2]);
+
   $file_pointer = $home."/BirdSongs/Extracted/By_Date/".$_GET['deletefile'];
   if (!exec("sudo rm $file_pointer && sudo rm $file_pointer.png")) {
     echo "OK";
   } else {
     echo "Error";
   }
-  $result1 = $statement1->execute();
-  $db_writable->close();
+  $delDetectionResult = delete_detection_by_filename($_GET['deletefile']);
+  ensure_db_ok($delDetectionResult['success']);
   die();
 }
 
@@ -100,9 +93,9 @@ if(isset($_GET['shiftfile'])) {
 }
 
 if(isset($_GET['bydate'])){
-  $statement = $db->prepare('SELECT DISTINCT(Date) FROM detections GROUP BY Date ORDER BY Date DESC');
-  ensure_db_ok($statement);
-  $result = $statement->execute();
+  $result_data = get_detections_by_date();
+  ensure_db_ok($result_data['success'] );
+  $result = $result_data['data'];
   $view = "bydate";
 
   #Specific Date
@@ -111,24 +104,26 @@ if(isset($_GET['bydate'])){
   session_start();
   $_SESSION['date'] = $date;
   if(isset($_GET['sort']) && $_GET['sort'] == "occurrences") {
-    $statement = $db->prepare("SELECT DISTINCT(Com_Name) FROM detections WHERE Date == \"$date\" GROUP BY Com_Name ORDER BY COUNT(*) DESC");
+	$sort = $_GET['sort'];
   } else {
-    $statement = $db->prepare("SELECT DISTINCT(Com_Name) FROM detections WHERE Date == \"$date\" ORDER BY Com_Name");
+	$sort = null;
   }
-  ensure_db_ok($statement);
-  $result = $statement->execute();
+  $result_data = get_detections_by_date($date, $sort);
+  ensure_db_ok($result_data['success']);
+  $result = $result_data['data'];
   $view = "date";
 
   #By Species
 } elseif(isset($_GET['byspecies'])) {
   if(isset($_GET['sort']) && $_GET['sort'] == "occurrences") {
-    $statement = $db->prepare('SELECT DISTINCT(Com_Name) FROM detections GROUP BY Com_Name ORDER BY COUNT(*) DESC');
+	$sort = $_GET['sort'];
   } else {
-    $statement = $db->prepare('SELECT DISTINCT(Com_Name) FROM detections ORDER BY Com_Name ASC');
-  } 
+	$sort = null;
+  }
   session_start();
-  ensure_db_ok($statement);
-  $result = $statement->execute();
+  $resultArr_data = get_detections_by_species(null, $sort);
+  ensure_db_ok($resultArr_data['success']);
+  $result = $resultArr_data['data']['species'];
   $view = "byspecies";
 
   #Specific Species
@@ -136,12 +131,10 @@ if(isset($_GET['bydate'])){
   $species = $_GET['species'];
   session_start();
   $_SESSION['species'] = $species;
-  $statement = $db->prepare("SELECT * FROM detections WHERE Com_Name == \"$species\" ORDER BY Com_Name");
-  ensure_db_ok($statement);
-  $statement3 = $db->prepare("SELECT Date, Time, Sci_Name, MAX(Confidence), File_Name FROM detections WHERE Com_Name == \"$species\" ORDER BY Com_Name");
-  ensure_db_ok($statement3);
-  $result = $statement->execute();
-  $result3 = $statement3->execute();
+  $resultArr_data = get_detections_by_species($species, null);
+  ensure_db_ok($resultArr_data['success']);
+  $result = $resultArr_data['data']['species'];
+  $resul3 = $resultArr_data['data']['species_MaxConf'];
   $view = "species";
 } else {
   unset($_SESSION['species']);
@@ -279,8 +272,8 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
 <?php
   #By Date
   if($view == "bydate") {
-    while($results=$result->fetchArray(SQLITE3_ASSOC)){
-      $date = $results['Date'];
+      foreach ($result as $bd_result){
+          $date = $bd_result['Date'];
       if(realpath($home."/BirdSongs/Extracted/By_Date/".$date) !== false){
         echo "<td>
           <button action=\"submit\" name=\"date\" value=\"$date\">".($date == date('Y-m-d') ? "Today" : $date)."</button></td></tr>";}}
@@ -288,10 +281,9 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
           #By Species
   } elseif($view == "byspecies") {
     $birds = array();
-    while($results=$result->fetchArray(SQLITE3_ASSOC))
-    {
-      $name = $results['Com_Name'];
-      $birds[] = $name;
+    foreach ($result as $species_bird_name) {
+        $name = $species_bird_name['Com_Name'];
+        $birds[] = $name;
     }
 
     if(count($birds) > 45) {
@@ -322,9 +314,9 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
     }
   } elseif($view == "date") {
     $birds = array();
-while($results=$result->fetchArray(SQLITE3_ASSOC))
+foreach ($result as $species_bird_name)
 {
-  $name = $results['Com_Name'];
+$name = $species_bird_name['Com_Name'];
   if(realpath($home."/BirdSongs/Extracted/By_Date/".$date."/".str_replace(" ", "_",$name)) !== false){
     $birds[] = $name;
   }
@@ -395,35 +387,33 @@ if ($fp) {
 }
 
 $name = $_GET['species'];
+$confidence = null;
 if(isset($_SESSION['date'])) {
   $date = $_SESSION['date'];
   if(isset($_GET['sort']) && $_GET['sort'] == "confidence") {
-    $statement2 = $db->prepare("SELECT * FROM detections where Com_Name == \"$name\" AND Date == \"$date\" ORDER BY Confidence DESC");
-  } else {
-    $statement2 = $db->prepare("SELECT * FROM detections where Com_Name == \"$name\" AND Date == \"$date\" ORDER BY Time DESC");
+      $confidence = $_GET['sort'];
   }
+  $result2_data = get_species_detection_info($name, $date, $confidence);
 } else {
-  if(isset($_GET['sort']) && $_GET['sort'] == "confidence") {
-    $statement2 = $db->prepare("SELECT * FROM detections where Com_Name == \"$name\" ORDER BY Confidence DESC");
-  } else {
-    $statement2 = $db->prepare("SELECT * FROM detections where Com_Name == \"$name\" ORDER BY Date DESC, Time DESC");
-  }
+    if(isset($_GET['sort']) && $_GET['sort'] == "confidence") {
+        $confidence = $_GET['sort'];
+	}
+	$result2_data = get_species_detection_info($name, null, $confidence);
 }
-ensure_db_ok($statement2);
-$result2 = $statement2->execute();
-$num_rows = 0;
-while ($result2->fetchArray(SQLITE3_ASSOC)) {
-    $num_rows++;
-}
-$result2->reset(); // reset the pointer to the beginning of the result set
+ensure_db_ok($result2_data['success']);
+$result2 = $result2_data['data'];
+//Count number of records we have
+$num_rows = count($result2);
+
 echo "<table>
   <tr>
   <th>$name</th>
   </tr>";
   $iter=0;
-  while($results=$result2->fetchArray(SQLITE3_ASSOC))
-  {
-    $comname = preg_replace('/ /', '_', $results['Com_Name']);
+while($iter < count($result2))
+{
+	$results = $result2[$iter];
+	$comname = preg_replace('/ /', '_', $results['Com_Name']);
     $comname = preg_replace('/\'/', '', $comname);
     $date = $results['Date'];
     $filename = "/By_Date/".$date."/".$comname."/".$results['File_Name'];
@@ -435,14 +425,14 @@ echo "<table>
     $confidence = round((float)round($results['Confidence'],2) * 100 ) . '%';
     $filename_formatted = $date."/".$comname."/".$results['File_Name'];
 
-    // file was deleted by disk check, no need to show the detection in recordings
+	$iter++;
+	// file was deleted by disk check, no need to show the detection in recordings
     if(!file_exists($home."/BirdSongs/Extracted/".$filename)) {
       continue;
     }
     if(!in_array($filename_formatted, $disk_check_exclude_arr) && isset($_GET['only_excluded'])) {
       continue;
     }
-    $iter++;
 
     if($num_rows < 100){
       $imageelem = "<video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename_png\" preload=\"none\" title=\"$filename\"><source src=\"$filename\"></video>";
@@ -495,14 +485,14 @@ echo "<table>
 
   if(isset($_GET['filename'])){
     $name = $_GET['filename'];
-    $statement2 = $db->prepare("SELECT * FROM detections where File_name == \"$name\" ORDER BY Date DESC, Time DESC");
-    ensure_db_ok($statement2);
-    $result2 = $statement2->execute();
+    $result2_data = get_detections_by_filename($name);
+	ensure_db_ok($result2_data['success']);
+	$result2 = $result2_data['data'];
     echo "<table>
       <tr>
       <th>$name</th>
       </tr>";
-      while($results=$result2->fetchArray(SQLITE3_ASSOC))
+	  foreach ($result2 as $results)
       {
         $comname = preg_replace('/ /', '_', $results['Com_Name']);
         $comname = preg_replace('/\'/', '', $comname);

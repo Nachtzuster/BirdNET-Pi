@@ -24,32 +24,24 @@ function safe_percentage($count, $prior_count) {
 
 if(isset($_GET['ascii'])) {
 
-	$db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-	$db->busyTimeout(1000);
+	$weekly_species_counts = get_weekly_report_species_detection_counts();
 
-	$statement1 = $db->prepare('SELECT DISTINCT(Com_Name), COUNT(*) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'" GROUP By Com_Name ORDER BY COUNT(*) DESC');
-	ensure_db_ok($statement1);
-	$result1 = $statement1->execute();
+	ensure_db_ok($weekly_species_counts['detections']['success']);
+	$result1 = $weekly_species_counts['detections']['data'];
 
-	$statement4 = $db->prepare('SELECT DISTINCT(Com_Name), COUNT(*) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'"');
-	ensure_db_ok($statement4);
-	$result4 = $statement4->execute();
-	$totalcount = $result4->fetchArray(SQLITE3_ASSOC)['COUNT(*)'];
+	ensure_db_ok($weekly_species_counts['totalcount']['success']);
+	$totalcount = $weekly_species_counts['totalcount']['data']['COUNT(*)'];
 
-	$statement5 = $db->prepare('SELECT DISTINCT(Com_Name), COUNT(*) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate- (7*86400)).'" AND "'.date("Y-m-d",$enddate- (7*86400)).'"');
-	ensure_db_ok($statement5);
-	$result5 = $statement5->execute();
-	$priortotalcount = $result5->fetchArray(SQLITE3_ASSOC)['COUNT(*)'];
+	ensure_db_ok($weekly_species_counts['priortotalcount']['success']);
+	$priortotalcount = $weekly_species_counts['priortotalcount']['data']['COUNT(*)'];
 
-	$statement6 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'"');
-	ensure_db_ok($statement6);
-	$result6 = $statement6->execute();
-	$totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC)['COUNT(DISTINCT(Com_Name))'];
+	$weekly_species_talley = get_weekly_report_species_talley();
 
-	$statement7 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate- (7*86400)).'" AND "'.date("Y-m-d",$enddate- (7*86400)).'"');
-	ensure_db_ok($statement7);
-	$result7= $statement7->execute();
-	$priortotalspeciestally = $result7->fetchArray(SQLITE3_ASSOC)['COUNT(DISTINCT(Com_Name))'];
+	ensure_db_ok($weekly_species_talley['totalspeciestally']['success']);
+	$totalspeciestally = $weekly_species_talley['totalspeciestally']['data']['COUNT(DISTINCT(Com_Name))'];
+
+	ensure_db_ok($weekly_species_talley['priortotalspeciestally']['success']);
+	$priortotalspeciestally = $weekly_species_talley['priortotalspeciestally']['data']['COUNT(DISTINCT(Com_Name))'];
 
 	$percentagedifftotal = safe_percentage($totalcount, $priortotalcount);
 	if($percentagedifftotal > 0) {
@@ -67,7 +59,7 @@ if(isset($_GET['ascii'])) {
 
 	$detections = [];
 	$i = 0;
-	while($detection=$result1->fetchArray(SQLITE3_ASSOC))
+	foreach ($result1 as $detection)
 	{
 		$detections[$detection["Com_Name"]] = $detection["COUNT(*)"];
 	}
@@ -85,11 +77,9 @@ if(isset($_GET['ascii'])) {
 		$i++;
 
 		if($i <= 10) {
-			$statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Com_Name == "'.$com_name.'" AND Date BETWEEN "'.date("Y-m-d",$startdate - (7*86400)).'" AND "'.date("Y-m-d",$enddate - (7*86400)).'"');
-			ensure_db_ok($statement2);
-			$result2 = $statement2->execute();
-			$totalcount = $result2->fetchArray(SQLITE3_ASSOC);
-			$priorweekcount = $totalcount['COUNT(*)'];
+			$statement2 = get_weekly_report_species_detection($com_name);
+			ensure_db_ok($statement2['success']);
+			$priorweekcount = $statement2['data']['COUNT(*)'];
 
       // really percent changed
 			$percentagediff = safe_percentage($scount, $priorweekcount);
@@ -108,11 +98,9 @@ if(isset($_GET['ascii'])) {
     $newspeciescount=0;
 	foreach($detections as $com_name=>$scount)
 	{
-		$statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Com_Name == "'.$com_name.'" AND Date NOT BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'"');
-		ensure_db_ok($statement3);
-		$result3 = $statement3->execute();
-		$totalcount = $result3->fetchArray(SQLITE3_ASSOC);
-		$nonthisweekcount = $totalcount['COUNT(*)'];
+		$statement3 = get_weekly_report_species_detection($com_name,false);
+		ensure_db_ok($statement3['success']);
+		$nonthisweekcount = $statement3['data']['COUNT(*)'];
 
 		if($nonthisweekcount == 0) {
 			$newspeciescount++;
@@ -137,19 +125,19 @@ if(isset($_GET['ascii'])) {
 echo "<h1>Week ".date('W', $enddate)." Report</h1>".date('F jS, Y',$startdate)." — ".date('F jS, Y',$enddate)."<br>";
 ?></div><?php
 
-$db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
 if($debug == false){
-$statement1 = $db->prepare('SELECT DISTINCT(Com_Name), COUNT(*) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'" GROUP By Com_Name ORDER BY COUNT(*) DESC');
+	$weekly_species_counts = get_weekly_report_species_detection_counts();
+	$result1 = $weekly_species_counts['detections']['data'];
+	ensure_db_ok($weekly_species_counts['detections']['success']);
 } else {
-	$statement1 = $db->prepare('SELECT DISTINCT(Com_Name), COUNT(*) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'" GROUP By Com_Name ORDER BY COUNT(*) ASC');
+	$weekly_species_counts = get_weekly_report_species_detection_counts(false);
+	$result1 = $weekly_species_counts['detections']['data'];
+	ensure_db_ok($weekly_species_counts['detections']['success']);
 }
-ensure_db_ok($statement1);
-$result1 = $statement1->execute();
 
 $detections = [];
 $i = 0;
-while($detection=$result1->fetchArray(SQLITE3_ASSOC))
+foreach ($result1 as $detection)
 {
 	if($debug == true){
 		if($i > 10) { 
@@ -178,11 +166,9 @@ while($detection=$result1->fetchArray(SQLITE3_ASSOC))
 	{
 		$i++;
 		if($i <= 10) {
-			$statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Com_Name == "'.$com_name.'" AND Date BETWEEN "'.date("Y-m-d",$startdate - (7*86400)).'" AND "'.date("Y-m-d",$enddate - (7*86400)).'"');
-			ensure_db_ok($statement2);
-			$result2 = $statement2->execute();
-			$totalcount = $result2->fetchArray(SQLITE3_ASSOC);
-			$priorweekcount = $totalcount['COUNT(*)'];
+			$statement2 = get_weekly_report_species_detection($com_name);
+			ensure_db_ok($statement2['success']);
+			$priorweekcount = $statement2['data']['COUNT(*)'];
 
 			$percentagediff = safe_percentage($scount, $priorweekcount);
 			if($percentagediff > 0) {
@@ -211,11 +197,9 @@ while($detection=$result1->fetchArray(SQLITE3_ASSOC))
     $newspeciescount=0;
 	foreach($detections as $com_name=>$scount)
 	{
-		$statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Com_Name == "'.$com_name.'" AND Date NOT BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'"');
-		ensure_db_ok($statement3);
-		$result3 = $statement3->execute();
-		$totalcount = $result3->fetchArray(SQLITE3_ASSOC);
-		$nonthisweekcount = $totalcount['COUNT(*)'];
+		$statement3 = get_weekly_report_species_detection($com_name,false);
+		ensure_db_ok($statement3['success']);
+		$nonthisweekcount = $statement3['data']['COUNT(*)'];
 
 		if($nonthisweekcount == 0) {
 			$newspeciescount++;

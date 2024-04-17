@@ -183,15 +183,11 @@ if(isset($_GET["latitude"])){
 }
 
 if(isset($_GET['sendtest']) && $_GET['sendtest'] == "true") {
-  $db = new SQLite3($home."/BirdNET-Pi/scripts/birds.db", SQLITE3_OPEN_READONLY);
-  $db->busyTimeout(1000);
-
   $cf = explode("\n",$_GET['apprise_config']);
   $cf = "'".implode("' '", $cf)."'";
 
-  $statement0 = $db->prepare('SELECT * FROM detections WHERE Date == DATE(\'now\', \'localtime\') ORDER BY TIME DESC LIMIT 1');
-  $result0 = $statement0->execute();
-  while($todaytable=$result0->fetchArray(SQLITE3_ASSOC))
+  $result0 = get_most_recent_detection_today();
+  foreach ($result0['data'] as $todaytable)
   {
     $sciname = $todaytable['Sci_Name'];
     $comname = $todaytable['Com_Name'];

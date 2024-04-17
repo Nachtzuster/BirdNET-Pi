@@ -10,36 +10,25 @@ ini_set('display_errors', 0);
 require_once 'scripts/common.php';
 $home = get_home();
 
-$db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
 
 if(isset($_GET['sort']) && $_GET['sort'] == "occurrences") {
-  
-  $statement = $db->prepare('SELECT Date, Time, File_Name, Com_Name, COUNT(*), MAX(Confidence) FROM detections GROUP BY Com_Name ORDER BY COUNT(*) DESC');
-  ensure_db_ok($statement);
-  $result = $statement->execute();
-
-  $statement2 = $db->prepare('SELECT Date, Time, File_Name, Com_Name, COUNT(*), MAX(Confidence) FROM detections GROUP BY Com_Name ORDER BY COUNT(*) DESC');
-  ensure_db_ok($statement2);
-  $result2 = $statement2->execute();
+  $sort = "occurrences";
+  $result2_data = get_species_best_recording_list($sort);
+  ensure_db_ok($result2_data['success']);
+  $result2 = $result2_data['data'];
 } else {
-
-  $statement = $db->prepare('SELECT Date, Time, File_Name, Com_Name, COUNT(*), MAX(Confidence) FROM detections GROUP BY Com_Name ORDER BY Com_Name ASC');
-  ensure_db_ok($statement);
-  $result = $statement->execute();
-
-  $statement2 = $db->prepare('SELECT Date, Time, File_Name, Com_Name, COUNT(*), MAX(Confidence) FROM detections GROUP BY Com_Name ORDER BY Com_Name ASC');
-  ensure_db_ok($statement2);
-  $result2 = $statement2->execute();
+  $result2_data = get_species_best_recording_list();
+  ensure_db_ok($result2_data['success']);
+  $result2 = $result2_data['data'];
 }
 
 
 
 if(isset($_GET['species'])){
   $selection = $_GET['species'];
-  $statement3 = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = \"$selection\"");
-  ensure_db_ok($statement3);
-  $result3 = $statement3->execute();
+  $result3_data = get_best_recordings_for_species($selection);
+  ensure_db_ok($result3_data['success']);
+  $result3 = $result3_data['data'];
 }
 
 if(!file_exists($home."/BirdNET-Pi/scripts/disk_check_exclude.txt") || strpos(file_get_contents($home."/BirdNET-Pi/scripts/disk_check_exclude.txt"),"##start") === false) {
@@ -80,7 +69,7 @@ if (get_included_files()[0] === __FILE__) {
 <table>
   <?php
   $birds = array();
-  while($results=$result2->fetchArray(SQLITE3_ASSOC))
+  foreach($result2 as $results)
   {
     $comname = preg_replace('/ /', '_', $results['Com_Name']);
     $comname = preg_replace('/\'/', '', $comname);
@@ -152,7 +141,7 @@ function setModalText(iter, title, text, authorlink) {
   $species = $_GET['species'];
   $iter=0;
   $lines;
-while($results=$result3->fetchArray(SQLITE3_ASSOC)){
+foreach ($result3 as $results){
   $count = $results['COUNT(*)'];
   $maxconf = round((float)round($results['MAX(Confidence)'],2) * 100 ) . '%';
   $date = $results['Date'];
@@ -221,7 +210,7 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
     <table>
 <?php
 $excludelines = [];
-while($results=$result->fetchArray(SQLITE3_ASSOC))
+foreach($result2 as $results)
 {
 $comname = preg_replace('/ /', '_', $results['Com_Name']);
 $comname = preg_replace('/\'/', '', $comname);

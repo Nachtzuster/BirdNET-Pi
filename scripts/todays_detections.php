@@ -22,81 +22,36 @@ if(isset($kiosk) && $kiosk == true) {
   $kiosk = false;
 }
 
-$db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
 
-$statement1 = $db->prepare('SELECT COUNT(*) FROM detections');
-ensure_db_ok($statement1);
-$result1 = $statement1->execute();
-$totalcount = $result1->fetchArray(SQLITE3_ASSOC);
+$totalcount_data = get_detection_count_all();
+ensure_db_ok($totalcount_data['success']);
+$totalcount = $totalcount_data['data'];
 
-$statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == DATE(\'now\', \'localtime\')');
-ensure_db_ok($statement2);
-$result2 = $statement2->execute();
-$todaycount = $result2->fetchArray(SQLITE3_ASSOC);
+$todaycount_data = get_detection_count_today();
+ensure_db_ok($todaycount_data['success']);
+$todaycount = $todaycount_data['data'];
 
-$statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == Date(\'now\', \'localtime\') AND TIME >= TIME(\'now\', \'localtime\', \'-1 hour\')');
-ensure_db_ok($statement3);
-$result3 = $statement3->execute();
-$hourcount = $result3->fetchArray(SQLITE3_ASSOC);
+$hourcount_data = get_detection_count_last_hour();
+ensure_db_ok($hourcount_data['success']);
+$hourcount = $hourcount_data['data'];
 
-$statement4 = $db->prepare('SELECT Com_Name, Sci_Name, Time, Confidence FROM detections LIMIT 1');
-ensure_db_ok($statement4);
-$result4 = $statement4->execute();
-$mostrecent = $result4->fetchArray(SQLITE3_ASSOC);
+$mostrecent_data = get_most_recent_detection();
+ensure_db_ok($mostrecent_data['success']);
+$mostrecent = $mostrecent_data['data'];
 
-$statement5 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections WHERE Date == Date(\'now\', \'localtime\')');
-ensure_db_ok($statement5);
-$result5 = $statement5->execute();
-$todayspeciestally = $result5->fetchArray(SQLITE3_ASSOC);
+$todayspeciestally_data = get_species_talley();
+ensure_db_ok($todayspeciestally_data['success']);
+$todayspeciestally = $todayspeciestally_data['data'];
 
-$statement6 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections');
-ensure_db_ok($statement6);
-$result6 = $statement6->execute();
-$totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
+$totalspeciestally_data = get_species_talley_all();
+ensure_db_ok($totalspeciestally_data['success']);
+$totalspeciestally = $totalspeciestally_data['data'];
 
 if(isset($_GET['comname'])) {
  $birdName = $_GET['comname'];
  $birdName = str_replace("_", " ", $birdName);
 
-
-// Prepare a SQL statement to retrieve the detection data for the specified bird
-$stmt = $db->prepare('SELECT Date, COUNT(*) AS Detections FROM detections WHERE Com_Name = :com_name AND Date BETWEEN DATE("now", "-30 days") AND DATE("now") GROUP BY Date');
-
-// Bind the bird name parameter to the SQL statement
-$stmt->bindValue(':com_name', $birdName);
-
-// Execute the SQL statement and get the result set
-$result = $stmt->execute();
-
-// Fetch the result set as an associative array
-$data = array();
-while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-  $data[$row['Date']] = $row['Detections'];
-}
-
-// Create an array of all dates in the last 14 days
-$last14Days = array();
-for ($i = 0; $i < 31; $i++) {
-  $last14Days[] = date('Y-m-d', strtotime("-$i days"));
-}
-
-// Merge the data array with the last14Days array
-$data = array_merge(array_fill_keys($last14Days, 0), $data);
-
-// Sort the data by date in ascending order
-ksort($data);
-
-// Convert the data to an array of objects
-$data = array_map(function($date, $count) {
-  return array('date' => $date, 'count' => $count);
-}, array_keys($data), $data);
-
-// Close the database connection
-$db->close();
-
-// Return the data as JSON
-echo json_encode($data);
+ echo get_detection_stats_last_30_days($birdName)['data'];
 die();
 
 }
@@ -149,33 +104,9 @@ function relativeTime($ts)
 
 
 if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
-  if(isset($_GET['searchterm'])) {
-    if(strtolower(explode(" ", $_GET['searchterm'])[0]) == "not") {
-      $not = "NOT ";
-      $operator = "AND";
-      $_GET['searchterm'] =  str_replace("not ", "", $_GET['searchterm']);
-      $_GET['searchterm'] =  str_replace("NOT ", "", $_GET['searchterm']);
-    } else {
-      $not = "";
-      $operator = "OR";
-    }
-    $searchquery = "AND (Com_name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Sci_name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Confidence ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." File_Name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Time ".$not."LIKE '%".$_GET['searchterm']."%')";
-  } else {
-    $searchquery = "";
-  }
-  if(isset($_GET['display_limit']) && is_numeric($_GET['display_limit'])){
-    $statement0 = $db->prepare('SELECT Date, Time, Com_Name, Sci_Name, Confidence, File_Name FROM detections WHERE Date == Date(\'now\', \'localtime\') '.$searchquery.' ORDER BY Time DESC LIMIT '.(intval($_GET['display_limit'])-40).',40');
-  } else {
-    // legacy mode
-    if(isset($_GET['hard_limit']) && is_numeric($_GET['hard_limit'])) {
-      $statement0 = $db->prepare('SELECT Date, Time, Com_Name, Sci_Name, Confidence, File_Name FROM detections WHERE Date == Date(\'now\', \'localtime\') '.$searchquery.' ORDER BY Time DESC LIMIT '.$_GET['hard_limit']);
-    } else {
-      $statement0 = $db->prepare('SELECT Date, Time, Com_Name, Sci_Name, Confidence, File_Name FROM detections WHERE Date == Date(\'now\', \'localtime\') '.$searchquery.' ORDER BY Time DESC');
-    }
-    
-  }
-  ensure_db_ok($statement0);
-  $result0 = $statement0->execute();
+  $result0 = get_todays_detections($_GET['display_limit'], $_GET['searchterm'], $_GET['hard_limit']);
+  ensure_db_ok($result0['success']);
+  $result0 = $result0['data'];
 
   ?> <table>
    <?php
@@ -187,7 +118,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
   $lines=null;
   $licenses_urls = array();
 
-  while($todaytable=$result0->fetchArray(SQLITE3_ASSOC))
+  foreach($result0 as $todaytable)
   {
     $iterations++;
 

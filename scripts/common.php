@@ -1,4 +1,6 @@
 <?php
+//Database Queries
+include_once 'common_db.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE)
   session_start();
@@ -87,4 +89,17 @@ function debug_log($message) {
     $message = $message ? 'true' : 'false';
   }
   error_log($message . "\n", 3, $_SERVER['DOCUMENT_ROOT'] . "/debug_log.log");
+}
+
+/**
+ * Returns the start and end dates for last week
+ *
+ * @return string[]
+ */
+function get_last_weeks_dates()
+{
+	$startdate = strtotime('last sunday') - (7 * 86400);
+	$enddate = strtotime('last sunday') - (1 * 86400);
+
+	return ['start_date' => $startdate, 'end_date' => $enddate];
 }

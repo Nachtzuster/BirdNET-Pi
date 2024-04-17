@@ -18,13 +18,10 @@ $theDate = date('Y-m-d');
 $chart = "Combo-$theDate.png";
 $chart2 = "Combo2-$theDate.png";
 
-$db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
+$statement1 = get_detection_count_by_date($theDate);
+ensure_db_ok($statement1['success']);
+$totalcount = $statement1['data'];
 
-$statement1 = $db->prepare("SELECT COUNT(*) FROM detections WHERE Date == \"$theDate\"");
-ensure_db_ok($statement1);
-$result1 = $statement1->execute();
-$totalcount = $result1->fetchArray(SQLITE3_ASSOC);
 
 if(isset($_GET['blocation']) ) {
 
@@ -39,13 +36,14 @@ if(isset($_GET['blocation']) ) {
 	$hrsinday = 24;
 	for($i=0;$i<$hrsinday;$i++) {
 		$starttime = strtotime("12 AM") + (3600*$i);
+		$endtime = date("H:i",$starttime + 3600);
 
-		$statement1 = $db->prepare("SELECT DISTINCT(Com_Name), COUNT(*) FROM detections WHERE Date == \"$theDate\" AND Time > '".date("H:i", $starttime)."' AND Time < '".date("H:i",$starttime + 3600)."' AND Confidence > 0.75 GROUP By Com_Name ORDER BY COUNT(*) DESC");
-		ensure_db_ok($statement1);
-		$result1 = $statement1->execute();
+		$statement1 = get_detection_breakdown_by_time($theDate,$starttime,$endtime);
+		ensure_db_ok($statement1['success']);
+		$result1 = $statement1['data'];
 
 		$detections = [];
-		while($detection=$result1->fetchArray(SQLITE3_ASSOC))
+		foreach ($result1 as $detection)
 		{
 			$detections[$detection["Com_Name"]] = $detection["COUNT(*)"];
 		}

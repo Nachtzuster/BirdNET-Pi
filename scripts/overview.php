@@ -13,13 +13,9 @@ set_timezone();
 $myDate = date('Y-m-d');
 $chart = "Combo-$myDate.png";
 
-$db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
-
-$statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == DATE(\'now\', \'localtime\')');
-ensure_db_ok($statement2);
-$result2 = $statement2->execute();
-$todaycount = $result2->fetchArray(SQLITE3_ASSOC);
+$todaycount_data = get_detection_count_today();
+ensure_db_ok($todaycount_data['success']);
+$todaycount = $todaycount_data['data'];
 
 if(isset($_GET['custom_image'])){
   if(isset($config["CUSTOM_IMAGE"])) {
@@ -54,9 +50,9 @@ if(isset($_GET['fetch_chart_string']) && $_GET['fetch_chart_string'] == "true") 
 
 if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isset($_GET['previous_detection_identifier'])) {
 
-  $statement4 = $db->prepare('SELECT Com_Name, Sci_Name, Date, Time, Confidence, File_Name FROM detections ORDER BY Date DESC, Time DESC LIMIT 15');
-  ensure_db_ok($statement4);
-  $result4 = $statement4->execute();
+  $result4 = get_most_recent_detection(15);
+  ensure_db_ok($result4['success']);
+  $result4 = $result4['data'];
   if(!isset($_SESSION['images'])) {
     $_SESSION['images'] = [];
   }
@@ -64,7 +60,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
   $lines;
   $licenses_urls = array();
   // hopefully one of the 5 most recent detections has an image that is valid, we'll use that one as the most recent detection until the newer ones get their images created
-  while($mostrecent = $result4->fetchArray(SQLITE3_ASSOC)) {
+    foreach ($result4 as $mostrecent){
     $comname = preg_replace('/ /', '_', $mostrecent['Com_Name']);
     $sciname = preg_replace('/ /', '_', $mostrecent['Sci_Name']);
     $comname = preg_replace('/\'/', '', $comname);
@@ -209,26 +205,21 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
 
 if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
 
-$statement = $db->prepare('SELECT COUNT(*) FROM detections');
-ensure_db_ok($statement);
-$result = $statement->execute();
-$totalcount = $result->fetchArray(SQLITE3_ASSOC);
+$totalcount_data = get_detection_count_all();
+ensure_db_ok($totalcount_data['success']);
+$totalcount = $totalcount_data['data'];
 
-$statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == Date(\'now\', \'localtime\') AND TIME >= TIME(\'now\', \'localtime\', \'-1 hour\')');
-ensure_db_ok($statement3);
-$result3 = $statement3->execute();
-$hourcount = $result3->fetchArray(SQLITE3_ASSOC);
+$hourcount_data = get_detection_count_last_hour();
+ensure_db_ok($hourcount_data['success']);
+$hourcount = $hourcount_data['data'];
 
-$statement5 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections WHERE Date == Date(\'now\',\'localtime\')');
-ensure_db_ok($statement5);
-$result5 = $statement5->execute();
-$speciestally = $result5->fetchArray(SQLITE3_ASSOC);
+$speciestally_data = get_species_talley();
+ensure_db_ok($speciestally_data['success']);
+$speciestally = $speciestally_data['data'];
 
-$statement6 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections');
-ensure_db_ok($statement6);
-$result6 = $statement6->execute();
-$totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
-  
+$totalspeciestally_data = get_species_talley_all();
+ensure_db_ok($totalspeciestally_data['success']);
+$totalspeciestally = $totalspeciestally_data['data'];
 ?>
 <table>
   <tr>
