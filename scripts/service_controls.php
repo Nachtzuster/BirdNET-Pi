@@ -88,6 +88,14 @@ function service_status($name) {
     <button type="submit" name="submit" <?php do_service_mount("disable");?> onclick="return confirm('This will reboot, are you sure?')">Disable</button>
     <button type="submit" name="submit" <?php do_service_mount("enable");?> onclick="return confirm('This will reboot, are you sure?')">Enable</button>
   </div>
+  <h3>Location Autoupdate (!experimental!) <?php echo service_status("location_autoupdate.service");?></h3>
+  <div role="group" class="btn-group-center">
+    <button type="submit" name="submit" value="sudo systemctl stop location_autoupdate.service">Stop</button>
+    <button type="submit" name="submit" value="sudo systemctl restart location_autoupdate.service">Restart</button>
+    <button type="submit" name="submit" value="sudo systemctl disable --now location_autoupdate.service">Disable</button>
+    <button type="submit" name="submit" value="sudo systemctl enable --now location_autoupdate.service">Enable</button>
+  </div>
+
   <div role="group" class="btn-group-center">
     <button type="submit" name="submit" value="stop_core_services.sh">Stop Core Services</button>
   </div>

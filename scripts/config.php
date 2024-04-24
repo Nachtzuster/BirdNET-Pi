@@ -51,6 +51,9 @@ if(isset($_GET['restart_php']) && $_GET['restart_php'] == "true") {
 if(isset($_GET["latitude"])){
   $latitude = $_GET["latitude"];
   $longitude = $_GET["longitude"];
+  $location_autoupdate = $_GET["location_autoupdate"];
+  $location_autoupdate_interval = $_GET["location_autoupdate_interval"];
+  $location_autoupdate_threshold = $_GET["location_autoupdate_threshold"];
   $site_name = $_GET["site_name"];
   $site_name = str_replace('"', "", $site_name);
   $site_name = str_replace('\'', "", $site_name);
@@ -145,6 +148,9 @@ if(isset($_GET["latitude"])){
   $contents = preg_replace("/SITE_NAME=.*/", "SITE_NAME=\"$site_name\"", $contents);
   $contents = preg_replace("/LATITUDE=.*/", "LATITUDE=$latitude", $contents);
   $contents = preg_replace("/LONGITUDE=.*/", "LONGITUDE=$longitude", $contents);
+  $contents = preg_replace("/LOCATION_AUTOUPDATE=.*/", "LOCATION_AUTOUPDATE=$location_autoupdate", $contents);
+  $contents = preg_replace("/LOCATION_AUTOUPDATE_INTERVAL=.*/", "LOCATION_AUTOUPDATE_INTERVAL=$location_autoupdate_interval", $contents);
+  $contents = preg_replace("/LOCATION_AUTOUPDATE_THRESHOLD=.*/", "LOCATION_AUTOUPDATE_THRESHOLD=$location_autoupdate_threshold", $contents);
   $contents = preg_replace("/BIRDWEATHER_ID=.*/", "BIRDWEATHER_ID=$birdweather_id", $contents);
   $contents = preg_replace("/APPRISE_NOTIFICATION_TITLE=.*/", "APPRISE_NOTIFICATION_TITLE=\"$apprise_notification_title\"", $contents);
   $contents = preg_replace("/APPRISE_NOTIFICATION_BODY=.*/", "APPRISE_NOTIFICATION_BODY=\"$apprise_notification_body\"", $contents);
@@ -458,8 +464,26 @@ function runProcess() {
           <td><input name="longitude" type="number" style="width:6em;" max="180" min="-180" step="0.0001" value="<?php print($config['LONGITUDE']);?>" required/></td>
           <td></td>
         </tr>
+        <tr>
+          <td><label for="location_autoupdate">Location autoupdate: </label></td>
+          <td><input name="location_autoupdate" type="number" style="width:6em;" max="1" min="0" step="1" value="<?php print($config['LOCATION_AUTOUPDATE']);?>" required/></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><label for="location_autoupdate_interval">Location autoupdate interval: </label></td>
+          <td><input name="location_autoupdate_interval" type="number" style="width:6em;" max="86400" min="0" step="1" value="<?php print($config['LOCATION_AUTOUPDATE_INTERVAL']);?>" required/></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><label for="location_autoupdate_threshold">Location autoupdate threshold: </label></td>
+          <td><input name="location_autoupdate_threshold" type="number" style="width:6em;" max="90" min="0" step="0.0001" value="<?php print($config['LOCATION_AUTOUPDATE_THRESHOLD']);?>" required/></td>
+          <td></td>
+        </tr>
       </table>
       <p>Set your Latitude and Longitude to 4 decimal places. Get your coordinates <a href="https://latlong.net" target="_blank">here</a>.</p>
+      <p>Location autoupdate enables BirdNET-Pi to update its position from GPS device (via gpsd service).</p>
+      <p>Location autoupdate interval is set in seconds.</p>
+      <p>Location autoupdate threshold sets sensitivity for location changes, this way small fluctuations will be ingored.</p>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
       <h2>BirdWeather</h2>

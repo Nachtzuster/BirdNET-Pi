@@ -34,9 +34,16 @@ SITE_NAME="$HOSTNAME"
 ## TO BE CHANGED TO STATIC VALUES
 ## Please only go to 4 decimal places. Example:43.3984
 
-
 LATITUDE=$LATITUDE
 LONGITUDE=$LONGITUDE
+
+#--------------------- Experimental: location autoupdate ---------------------#
+
+## This is an experiment to create service for updating location from locally 
+## running gpsd daemon, requires supported GPS device to be attached.
+LOCATION_AUTOUPDATE=0
+LOCATION_AUTOUPDATE_INTERVAL=300
+LOCATION_AUTOUPDATE_THRESHOLD=0.0002
 
 #--------------------------------- Model --------------------------------------#
 #_____________The variable below configures which BirdNET model is_____________#

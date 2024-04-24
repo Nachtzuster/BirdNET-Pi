@@ -56,6 +56,22 @@ EOF
   systemctl enable birdnet_analysis.service
 }
 
+install_location_autoupdate() {
+  cat << EOF > $HOME/BirdNET-Pi/templates/location_autoupdate.service
+[Unit]
+Description=The gpsd based location autoupdate for BirdNET
+[Service]
+Restart=no
+Type=simple
+User=${USER}
+ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/location_autoupdate.py
+[Install]
+WantedBy=multi-user.target
+EOF
+  ln -sf $HOME/BirdNET-Pi/templates/location_autoupdate.service /usr/lib/systemd/system
+  systemctl enable location_autoupdate.service
+}
+
 create_necessary_dirs() {
   echo "Creating necessary directories"
   [ -d ${EXTRACTED} ] || sudo -u ${USER} mkdir -p ${EXTRACTED}
