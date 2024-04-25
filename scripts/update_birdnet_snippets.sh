@@ -161,10 +161,19 @@ if ! [ -L /etc/avahi/services/http.service ];then
 fi
 
 # Add location autoupdate service if it ain't there
-if ! [ -L /usr/lib/systemd/system/location_autoupdate.service ];then
-  # symbolic link does not work here, so just copy
-  source "install_services.sh"
-  install_location_autoupdate_service
+if ! [ -f $HOME/BirdNET-Pi/templates/location_autoupdate.service ];then
+  cat << EOF > $HOME/BirdNET-Pi/templates/location_autoupdate.service
+[Unit]
+Description=The gpsd based location autoupdate for BirdNET
+[Service]
+Restart=no
+Type=simple
+User=${USER}
+ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/location_autoupdate.py
+[Install]
+WantedBy=multi-user.target
+EOF
+  ln -sf $HOME/BirdNET-Pi/templates/location_autoupdate.service /usr/lib/systemd/system
 fi
 
 if [ -L /usr/local/bin/analyze.py ];then
