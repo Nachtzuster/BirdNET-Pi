@@ -31,6 +31,7 @@ Changes include:
  - Fix: changing advanced settings was not updating on a fresh install ed. CHANNELS, RECORDING_LENGTH, ... simplify
  - Fix: PrivacyThreshold now works as intended
  - Support for 'Species range model V2.4 - V2'
+ - **Experimental support** for automatic updates of location utilizing gpsd service. It requires GPS device (USB looger, modem with GNSS capabilities) to be connected and configured in gpsd.
 
 !! note: see 'Migrating' on how to migrate from mcguirepr89
 
