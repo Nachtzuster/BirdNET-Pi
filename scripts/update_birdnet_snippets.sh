@@ -160,6 +160,12 @@ if ! [ -L /etc/avahi/services/http.service ];then
   systemctl restart avahi-daemon.service
 fi
 
+# Add location autoupdate service if it ain't there
+if ! [ -L /usr/lib/systemd/system/location_autoupdate.service ];then
+  # symbolic link does not work here, so just copy
+  ln -sf $HOME/BirdNET-Pi/templates/location_autoupdate.service /usr/lib/systemd/system
+fi
+
 if [ -L /usr/local/bin/analyze.py ];then
   rm -f /usr/local/bin/analyze.py
 fi
