@@ -70,6 +70,7 @@ WantedBy=multi-user.target
 EOF
   ln -sf $HOME/BirdNET-Pi/templates/location_autoupdate.service /usr/lib/systemd/system
 }
+export -f install_location_autoupdate_service
 
 create_necessary_dirs() {
   echo "Creating necessary directories"
