@@ -173,6 +173,7 @@ ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/location_autoupdate.py
 [Install]
 WantedBy=multi-user.target
 EOF
+  sudo -E chown $USER:$USER $HOME/BirdNET-Pi/templates/location_autoupdate.service
   ln -sf $HOME/BirdNET-Pi/templates/location_autoupdate.service /usr/lib/systemd/system
 fi
 
