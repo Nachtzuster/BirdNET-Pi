@@ -56,7 +56,7 @@ EOF
   systemctl enable birdnet_analysis.service
 }
 
-install_location_autoupdate() {
+install_location_autoupdate_service() {
   cat << EOF > $HOME/BirdNET-Pi/templates/location_autoupdate.service
 [Unit]
 Description=The gpsd based location autoupdate for BirdNET
@@ -69,7 +69,6 @@ ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/location_autoupdate.py
 WantedBy=multi-user.target
 EOF
   ln -sf $HOME/BirdNET-Pi/templates/location_autoupdate.service /usr/lib/systemd/system
-  systemctl enable location_autoupdate.service
 }
 
 create_necessary_dirs() {
@@ -436,6 +435,7 @@ install_services() {
   install_cleanup_cron
   install_weekly_cron
   increase_caddy_timeout
+  install_location_autoupdate_service # But does not enable, as it's experimental feature 
 
   create_necessary_dirs
   generate_BirdDB
