@@ -162,7 +162,7 @@ fi
 
 # Add location autoupdate service if it ain't there
 if ! [ -f $HOME/BirdNET-Pi/templates/location_autoupdate.service ];then
-  set PYTHON_VIRTUAL_ENV="$HOME/BirdNET-Pi/birdnet/bin/python3"
+  export PYTHON_VIRTUAL_ENV="$HOME/BirdNET-Pi/birdnet/bin/python3"
   cat << EOF > $HOME/BirdNET-Pi/templates/location_autoupdate.service
 [Unit]
 Description=The gpsd based location autoupdate for BirdNET
