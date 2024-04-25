@@ -14,7 +14,7 @@ Icon made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from 
 </p>
 
 ## About this fork:
-I've been building on [mcguirepr89's](https://github.com/mcguirepr89/BirdNET-Pi) most excellent work to further update and improve BirdNET-Pi. Maybe someone will find it useful.
+I've been building on Nachtzuster's](https://github.com/Nachtzuster/BirdNET-Pi) fork, which is great. The goal is to merge my changes back to his branch when dear community finds it useful.
 
 Changes include:
 
@@ -31,6 +31,7 @@ Changes include:
  - Fix: changing advanced settings was not updating on a fresh install ed. CHANNELS, RECORDING_LENGTH, ... simplify
  - Fix: PrivacyThreshold now works as intended
  - Support for 'Species range model V2.4 - V2'
+ - **Experimental support** for automatic updates of location utilizing gpsd service. It requires GPS device (USB looger, modem with GNSS capabilities) to be connected and configured in gpsd.
 
 !! note: see 'Migrating' on how to migrate from mcguirepr89
 
