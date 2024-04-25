@@ -14,7 +14,7 @@ Icon made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from 
 </p>
 
 ## About this fork:
-I've been building on [Nachtzuster's](https://github.com/Nachtzuster/BirdNET-Pi) fork, which is great. The goal is to merge my changes back to his branch when dear community finds it useful.
+I've been building on [mcguirepr89's](https://github.com/mcguirepr89/BirdNET-Pi) most excellent work to further update and improve BirdNET-Pi. Maybe someone will find it useful.
 
 Changes include:
 
