@@ -128,7 +128,7 @@ if(isset($_GET['bydate'])){
 
   #Specific Species
 } elseif(isset($_GET['species'])) {
-  $species = $_GET['species'];
+  $species = htmlspecialchars_decode($_GET['species'], ENT_QUOTES);
   session_start();
   $_SESSION['species'] = $species;
   $resultArr_data = get_detections_by_species($species, null);
@@ -316,8 +316,9 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
     $birds = array();
 foreach ($result as $species_bird_name)
 {
-$name = $species_bird_name['Com_Name'];
-  if(realpath($home."/BirdSongs/Extracted/By_Date/".$date."/".str_replace(" ", "_",$name)) !== false){
+  $name = $species_bird_name['Com_Name'];
+  $dir_name = str_replace("'", '', $name);
+  if(realpath($home."/BirdSongs/Extracted/By_Date/".$date."/".str_replace(" ", "_", $dir_name)) !== false){
     $birds[] = $name;
   }
 }
@@ -386,7 +387,7 @@ if ($fp) {
   $disk_check_exclude_arr = [];
 }
 
-$name = $_GET['species'];
+$name = htmlspecialchars_decode($_GET['species'], ENT_QUOTES);
 $confidence = null;
 if(isset($_SESSION['date'])) {
   $date = $_SESSION['date'];

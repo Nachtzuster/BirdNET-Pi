@@ -214,7 +214,6 @@ button:hover {
 .overview-stats {
   display: flex;
   justify-content: center;
-  align-items: baseline;
 }
 
 .left-column {

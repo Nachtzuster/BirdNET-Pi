@@ -190,8 +190,6 @@ def sunrise_sunset_scatter(date_range):
     current_date = start_date
 
     for current_date in date_range:
-        # current_date = datetime.fromisocalendar(2022, week + 1, 5)
-        # time_zone = datetime.now()
         sun_rise = sun.get_local_sunrise_time(current_date)
         sun_dusk = sun.get_local_sunset_time(current_date)
 
@@ -218,7 +216,6 @@ def sunrise_sunset_scatter(date_range):
 
 
 def hms_to_dec(t):
-    # (h, m, s) = t.split(':')
     h = t.hour
     m = t.minute / 60
     s = t.second / 3600
@@ -227,11 +224,8 @@ def hms_to_dec(t):
 
 
 def hms_to_str(t):
-    # (h, m, s) = t.split(':')
     h = t.hour
     m = t.minute
-    # s = t.second / 3600
-    # result = h + m + s
     return "%02d:%02d" % (h, m)
 
 
@@ -244,7 +238,6 @@ if daily is False:
             species,
             index=0)
 
-    # filt = df2['Com_Name'] == specie
         if specie == 'All':
             df_counts = int(hourly[hourly.index == specie]['All'].iloc[0])
             fig = make_subplots(
@@ -255,10 +248,6 @@ if daily is False:
                 subplot_titles=('<b>Top ' + str(top_N) + ' Species in Date Range ' + str(start_date) + ' to ' + str(
                     end_date) + '<br>for ' + str(resample_sel) + ' sampling interval.' + '</b>',
                                 'Total Detect:' + str('{:,}'.format(df_counts))
-                                # +   '   Confidence Max:' + str(
-                                #     '{:.2f}%'.format(max(df2[df2['Com_Name'] == specie]['Confidence']) * 100)) +
-                                # '   ' + '   Median:' + str(
-                                #     '{:.2f}%'.format(np.median(df2[df2['Com_Name'] == specie]['Confidence']) * 100))
                 )
             )
             fig.layout.annotations[1].update(x=0.7, y=0.25, font_size=15)
@@ -380,29 +369,6 @@ if daily is False:
                     st.audio(userDir + '/BirdSongs/Extracted/By_Date/' + date_dir + '/' + specie_dir + '/' + recording)
                 except Exception:
                     st.title('RECORDING NOT AVAILABLE :(')
-            # try:
-            #     con = sqlite3.connect(userDir + '/BirdNET-Pi/scripts/birds.db')
-            #     cur = con.cursor()
-            cola, colb, colc, cold = st.columns((3, 1, 1, 1))
-            with colb:
-                seen = st.checkbox('Reviewed')
-            if seen:
-                with colc:
-                    verified = st.radio("Verification", ['True Positive', 'False Positive'])
-
-                    if verified == "False Positive":
-                        df_names = pd.read_csv(userDir + '/BirdNET-Pi/model/labels.txt', delimiter='_', names=['Sci_Name', 'Com_Name'])
-                        df_unknown = pd.DataFrame({"Sci_Name": ["UNKNOWN"], "Com_Name": ["UNKNOWN"]})
-                        df_names = pd.concat([df_unknown, df_names], ignore_index=True)
-                        with cold:
-                            corrected = st.selectbox('What species?', df_names['Com_Name'])
-            #     cur.execute("UPDATE detections SET  Seen = seen WHERE File_Name = recording")
-            #     con.commit()
-            #     con.close()
-
-            # except BaseException:
-            #     print("Database busy")
-            #     time.sleep(2)
 
     else:
 
@@ -411,22 +377,10 @@ if daily is False:
                               species[1:],
                               index=0)
 
-    # filt = df2[df2['Com_Name'] == specie]
-
         df_counts = int(hourly[hourly.index == specie]['All'])
         fig = st.container()
         fig = make_subplots(rows=1, cols=1)
-    #                     specs= [[{"type":"xy","rowspan":1},{"type":"heatmap","rowspan":1}]],
 
-    #                     subplot_titles=('<b>Daily Top '+ str(top_N) + ' Species in Date Range '+ str(start_date) +' to '+ str(end_date) +'</b>',
-    #                                     '<b>Daily ' + specie+ ' Detections on 15 minute intervals </b>'),
-    # #                                     'Total Detect:'+str('{:,}'.format(df_counts))+
-    # #                                     '   Confidence Max:'+str('{:.2f}%'.format(max(df2[df2['Com_Name']==specie]['Confidence'])*100))+
-    # #                                     '   '+'   Median:'+str('{:.2f}%'.format(np.median(df2[df2['Com_Name']==specie]['Confidence'])*100))
-    # #                                     )
-    #                     )
-
-#        fig.add_trace(go.Bar(y=top_N_species.index, x=top_N_species, orientation='h'), row=1,col=1)
         df4 = df2['Com_Name'][df2['Com_Name'] == specie].resample('15min').count()
         df4.index = [df4.index.date, df4.index.time]
         day_hour_freq = df4.unstack().fillna(0)
@@ -437,21 +391,15 @@ if daily is False:
         fig_y = [h.strftime('%H:%M') for h in day_hour_freq.columns.tolist()]
         day_hour_freq.columns = fig_dec_y
         fig_z = day_hour_freq.values.transpose()
-#        fig_heatmap = go.Figure(data=go.Heatmap(x=fig_x,y=fig_y,z=fig_z))
 
-        # fig.update_layout(
-        # margin=dict(l=0, r=0, t=50, b=0),
-        # yaxis={'categoryorder':'total ascending'})
         color_pals = px.colors.named_colorscales()
         selected_pal = st.sidebar.selectbox('Select Color Pallet for Daily Detections', color_pals)
 
         heatmap = go.Heatmap(
-            # x=fig_x, y=fig_y,
             x=fig_x,
             y=day_hour_freq.columns,
             z=fig_z,  # heat.values,
             showscale=False,
-            # text=labels,
             texttemplate="%{text}", autocolorscale=False, colorscale=selected_pal
         )
         daysback_range, sunrise_list, sunrise_text_list = sunrise_sunset_scatter(day_hour_freq.index.tolist())
@@ -490,16 +438,8 @@ else:
 
     plt_topN_today = (df6['Com_Name'].value_counts()[:readings])
     freq_order = pd.value_counts(df6['Com_Name']).iloc[:readings].index
-    #        confmax = df6.groupby('Com_Name')['Confidence'].max()
-    # reorder confmax to detection frequency order
-    #        confmax = confmax.reindex(freq_order)
-    #         norm = plt.Normalize(confmax.values.min(), confmax.values.max())
-    #
-    #         colors = plt.cm.Greens(norm(confmax))
     fig.add_trace(go.Bar(y=plt_topN_today.index, x=plt_topN_today, marker_color='seagreen', orientation='h'), row=1,
                   col=1)
-
-    #        plot=sns.countplot(y='Com_Name', data = df_plt_topN_today, palette = colors,  order=freq_order, ax=axs[0])
 
     df6['Hour of Day'] = [r.hour for r in df6.index.time]
     heat = pd.crosstab(df6['Com_Name'], df6['Hour of Day'])
@@ -525,15 +465,8 @@ else:
                      showgrid=True)
     fig.update_layout(xaxis_ticks="inside",
                       margin=dict(l=0, r=0, t=50, b=0))
-# container=st.container()
-# config={'displayModelBar': False}
     st.plotly_chart(fig, use_container_width=True)  # , config=config)
 
-# cols3,cols4=st.columns((1,1))
-# extract_date=Date_Slider
-# audio_file = open('/home/*/BirdSongs/Extracted/By_Date/2022-03-22/Yellow-streaked_Greenbul/Yellow-streaked_Greenbul-77-2022-03-22-birdnet-15:04:28.mp3', 'rb')
-# audio_bytes = audio_file.read()
-# cols4.audio(audio_bytes, format='audio/mp3')
 if profile:
     profiler.stop()
     profiler.print()

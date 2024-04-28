@@ -33,18 +33,35 @@ def get_data(now=None):
     return df, now
 
 
-def create_plot(df_plt_today, now, is_top):
-    readings = 10
-    if is_top:
-        plt_selection_today = (df_plt_today['Com_Name'].value_counts()[:readings])
+# Function to show value on bars - from https://stackoverflow.com/questions/43214978/seaborn-barplot-displaying-values
+def show_values_on_bars(ax, label):
+    for i, p in enumerate(ax.patches):
+        x = p.get_x() + p.get_width() * 0.9
+        y = p.get_y() + p.get_height() / 2
+        # Species confidence
+        # value = '{:.0%}'.format(label.iloc[i])
+        # Species Count Total
+        value = '{:n}'.format(p.get_width())
+        bbox = {'facecolor': 'lightgrey', 'edgecolor': 'none', 'pad': 1.0}
+        ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='darkgreen')
+
+
+def create_plot(df_plt_today, now, is_top=None):
+    if is_top is not None:
+        readings = 10
+        if is_top:
+            plt_selection_today = (df_plt_today['Com_Name'].value_counts()[:readings])
+        else:
+            plt_selection_today = (df_plt_today['Com_Name'].value_counts()[-readings:])
     else:
-        plt_selection_today = (df_plt_today['Com_Name'].value_counts()[-readings:])
+        plt_selection_today = df_plt_today['Com_Name'].value_counts()
+        readings = len(df_plt_today['Com_Name'].value_counts())
 
     df_plt_selection_today = df_plt_today[df_plt_today.Com_Name.isin(plt_selection_today.index)]
 
     # Set up plot axes and titles
-    f, axs = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='#77C487')
-    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0, hspace=0)
+    height = max(readings / 3, 0) + 1.06
+    f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='#77C487')
 
     # generate y-axis order for all figures based on frequency
     freq_order = df_plt_selection_today['Com_Name'].value_counts().index
@@ -56,11 +73,14 @@ def create_plot(df_plt_today, now, is_top):
 
     # norm values for color palette
     norm = plt.Normalize(confmax.values.min(), confmax.values.max())
-    if is_top:
+    if is_top or is_top is None:
         # Set Palette for graphics
         pal = "Greens"
         colors = plt.cm.Greens(norm(confmax)).tolist()
-        plot_type = "Top"
+        if is_top:
+            plot_type = "Top"
+        else:
+            plot_type = 'All'
         name = "Combo"
     else:
         # Set Palette for graphics
@@ -73,8 +93,11 @@ def create_plot(df_plt_today, now, is_top):
     plot = sns.countplot(y='Com_Name', hue='Com_Name', legend=False, data=df_plt_selection_today,
                          palette=colors, order=freq_order, ax=axs[0])
 
+    # Prints Max Confidence on bars
+    show_values_on_bars(axs[0], confmax)
+
     # Try plot grid lines between bars - problem at the moment plots grid lines on bars - want between bars
-    yticklabels = ['\n'.join(textwrap.wrap(ticklabel.get_text(), 15)) for ticklabel in plot.get_yticklabels()]
+    yticklabels = ['\n'.join(textwrap.wrap(ticklabel.get_text(), 16)) for ticklabel in plot.get_yticklabels()]
     plot.set_yticklabels(yticklabels, fontsize=10)
     plot.set(ylabel=None)
     plot.set(xlabel="Detections")
@@ -101,7 +124,7 @@ def create_plot(df_plt_today, now, is_top):
         if int(label.get_text()) == now.hour:
             label.set_color('yellow')
 
-    plot.set_xticklabels(plot.get_xticklabels(), rotation=0, size=7)
+    plot.set_xticklabels(plot.get_xticklabels(), rotation=0, size=8)
 
     # Set heatmap border
     for _, spine in plot.spines.items():
@@ -110,8 +133,11 @@ def create_plot(df_plt_today, now, is_top):
     plot.set(ylabel=None)
     plot.set(xlabel="Hour of Day")
     # Set combined plot layout and titles
-    f.subplots_adjust(top=0.9)
-    plt.suptitle(f"{plot_type} {readings} Last Updated: {now.strftime('%Y-%m-%d %H:%M')}")
+    y = 1 - 8 / (height * 100)
+    plt.suptitle(f"{plot_type} {readings} Last Updated: {now.strftime('%Y-%m-%d %H:%M')}", y=y)
+    f.tight_layout()
+    top = 1 - 40 / (height * 100)
+    f.subplots_adjust(left=0.125, right=0.9, top=top, wspace=0)
 
     # Save combined plot
     save_name = os.path.expanduser(f"~/BirdSongs/Extracted/Charts/{name}-{now.strftime('%Y-%m-%d')}.png")
@@ -134,6 +160,11 @@ def main(daemon, sleep_m):
     last_run = None
     while True:
         now = datetime.now()
+        # now = datetime.strptime('2023-12-13T23:59:59', "%Y-%m-%dT%H:%M:%S")
+        # now = datetime.strptime('2024-01-02T23:59:59', "%Y-%m-%dT%H:%M:%S")
+        # now = datetime.strptime('2024-02-26T23:59:59', "%Y-%m-%dT%H:%M:%S")
+        # now = datetime.strptime('2024-04-03T23:59:59', "%Y-%m-%dT%H:%M:%S")
+        # now = datetime.strptime('2024-04-07T23:59:59', "%Y-%m-%dT%H:%M:%S")
         if last_run and now.day != last_run.day:
             print("getting yesterday's dataset")
             yesterday = last_run.replace(hour=23, minute=59)
@@ -141,8 +172,7 @@ def main(daemon, sleep_m):
         else:
             data, time = get_data(now)
         if not data.empty:
-            create_plot(data, time, is_top=True)
-            create_plot(data, time, is_top=False)
+            create_plot(data, time)
         else:
             print('empty dataset')
         if daemon:
