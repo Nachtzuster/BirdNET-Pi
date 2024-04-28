@@ -166,14 +166,7 @@ I hope that if you find BirdNET-Pi has been worth your time, you will share your
 ## Homeassistant addon
 
 BirdNET-Pi can also be run as a [Homeassistant](https://www.home-assistant.io/) addon through docker.
-To do this :
-- Add the `https://github.com/alexbelgium/hassio-addons` custom add-ons repository to your home assistant instance (in supervisor addons store at top right, or click this link : https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Falexbelgium%2Fhassio-addons)
-- Install this add-on.
-- Start the add-on.
-- Check the logs of the add-on to see if everything went well.
-- Open the webUI and adapt the software options
-
-Issues specific to the addon are to be reported on https://github.com/alexbelgium/hassio-addons
+For more information : https://github.com/alexbelgium/hassio-addons/blob/master/birdnet-pi/README.md
 
 ## Cool Links
 
