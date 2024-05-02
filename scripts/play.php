@@ -24,16 +24,15 @@ if(isset($_GET['deletefile'])) {
   $statement1 = $db_writable->prepare('DELETE FROM detections WHERE File_Name = :file_name LIMIT 1');
   ensure_db_ok($statement1);
   $statement1->bindValue(':file_name', explode("/", $_GET['deletefile'])[2]);
-  $result1 = $statement1->execute();
-  if ($result1 && $db_writable->changes() > 0) {
-    $file_pointer = $home."/BirdSongs/Extracted/By_Date/".$_GET['deletefile'];
-    if (!exec("sudo rm $file_pointer && sudo rm $file_pointer.png", $output)) {
-      echo "OK";
-    } else {
-      echo "Error: File deletion failed. Error message : " . implode(", ", $output);
-    }
+  $file_pointer = $home."/BirdSongs/Extracted/By_Date/".$_GET['deletefile'];
+  if (!exec("sudo rm $file_pointer && sudo rm $file_pointer.png")) {
+    echo "OK";
   } else {
-    echo "SQLite line deletion failed or the line does not exist : " . $db_writable->lastErrorMsg();
+      echo "Error: File deletion failed : " . implode(", ", $output);
+  }
+  $result1 = $statement1->execute();
+  if ($result1 === false || $db_writable->changes() === 0) {
+    echo "SQLite line deletion failed : " . $db_writable->lastErrorMsg();
   }
   $db_writable->close();
   die();
