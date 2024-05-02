@@ -28,7 +28,7 @@ if(isset($_GET['deletefile'])) {
   if (!exec("sudo rm $file_pointer && sudo rm $file_pointer.png")) {
     echo "OK";
   } else {
-      echo "Error: File deletion failed : " . implode(", ", $output);
+    echo "Error: File deletion failed : " . implode(", ", $output);
   }
   $result1 = $statement1->execute();
   if ($result1 === false || $db_writable->changes() === 0) {
