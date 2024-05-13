@@ -18,19 +18,17 @@ I've been building on [mcguirepr89's](https://github.com/mcguirepr89/BirdNET-Pi)
 
 Changes include:
 
+ - Web ui is much more responsive
+ - Daily charts now include all species, not just top/bottom 10
+ - Bump apprise version, so more notification type are possible
+ - Swipe events on Daily Charts (by @croisez)
+ - Support for 'Species range model V2.4 - V2'
  - Bookworm support
  - Experimental support for writing transient files to tmpfs
  - Rework analysis to consolidate analysis/server/extraction. Should make analysis more robust and slightly more efficient, especially on installations with a large number of recordings
  - Bump tflite_runtime to 2.11.0, it is faster
  - Rework daily_plot.py (chart_viewer) to run as a daemon to avoid the very expensive startup
- - Bump apprise version, so more notification type are possible
- - Fix: Setting Excluded/Custom species from the UI, that have a ' now works
- - Fix: Setting apprise notification body and apprise notification title that include 'special' characters like `"{}` now is possible. So you can send json now
- - Fix: add missing languages for new model
- - Fix: Daily Chart was not including new detections due to caching
- - Fix: changing advanced settings was not updating on a fresh install ed. CHANNELS, RECORDING_LENGTH, ... simplify
- - Fix: PrivacyThreshold now works as intended
- - Support for 'Species range model V2.4 - V2'
+ - Lots of fixes & cleanups
 
 !! note: see 'Migrating' on how to migrate from mcguirepr89
 
@@ -214,7 +212,7 @@ Current database languages include the list below:
 | Ukrainian | 646 | 10.15% |
 
 ## Screenshots
-![chrome_olUUgVo1Ka](https://user-images.githubusercontent.com/103586016/219236461-c717e88b-134f-4916-a691-eb7c055c55bf.png)
+![Overview](docs/overview.png)
 ![chrome_HNMJKSPwV0](https://user-images.githubusercontent.com/103586016/217896322-aee3ecc4-e40e-40df-ade1-79f05ded21f2.png)
 
 

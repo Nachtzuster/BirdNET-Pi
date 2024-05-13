@@ -330,19 +330,20 @@ function refreshTopTen() {
   xhttp.open("GET", "overview.php?fetch_chart_string=true", true);
   xhttp.send();
 }
-window.setInterval(function(){
-  var videoelement = document.getElementsByTagName("video")[0];
-  if(typeof videoelement !== "undefined") {
-    // don't refresh the detection if the user is playing the previous one's audio, wait until they're finished
-    if(!!(videoelement.currentTime > 0 && !videoelement.paused && !videoelement.ended && videoelement.readyState > 2) == false) {
-      loadDetectionIfNewExists(videoelement.title);
+function refreshDetection() {
+  if (!document.hidden) {
+    var videoelement = document.getElementsByTagName("video")[0];
+    if(typeof videoelement !== "undefined") {
+      // don't refresh the detection if the user is playing the previous one's audio, wait until they're finished
+      if(!!(videoelement.currentTime > 0 && !videoelement.paused && !videoelement.ended && videoelement.readyState > 2) == false) {
+        loadDetectionIfNewExists(videoelement.title);
+      }
+    } else{
+      // image or audio didn't load for some reason, force a refresh in 5 seconds
+      loadDetectionIfNewExists();
     }
-  } else{
-    // image or audio didn't load for some reason, force a refresh in 5 seconds
-    loadDetectionIfNewExists();
   }
-}, <?php echo intval($dividedrefresh); ?>*1000);
-
+}
 function loadFiveMostRecentDetections() {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
@@ -357,18 +358,7 @@ function loadFiveMostRecentDetections() {
   }
   xhttp.send();
 }
-window.addEventListener("load", function(){
-  loadDetectionIfNewExists();
-});
-
-// every $refresh seconds, this loop will run and refresh the spectrogram image
-window.setInterval(function(){
-  document.getElementById("spectrogramimage").src = "/spectrogram.png?nocache="+Date.now();
-}, <?php echo $refresh; ?>*1000);
-
-<?php if(isset($config["CUSTOM_IMAGE"]) && strlen($config["CUSTOM_IMAGE"]) > 2){?>
-// every 1 second, this loop will run and refresh the custom image
-window.setInterval(function(){
+function refreshCustomImage(){
   // Find the customimage element
   var customimage = document.getElementById("customimage");
 
@@ -381,8 +371,34 @@ window.setInterval(function(){
     xhr.send();
   }
   updateCustomImage();
-}, 1000);
+}
+function startAutoRefresh() {
+    i_fn1 = window.setInterval(function(){
+                    document.getElementById("spectrogramimage").src = "/spectrogram.png?nocache="+Date.now();
+                    }, <?php echo $refresh; ?>*1000);
+    i_fn2 = window.setInterval(refreshDetection, <?php echo intval($dividedrefresh); ?>*1000);
+    if (customImage) i_fn3 = window.setInterval(refreshCustomImage, 1000);
+}
+<?php if(isset($config["CUSTOM_IMAGE"]) && strlen($config["CUSTOM_IMAGE"]) > 2){?>
+customImage = true;
+<?php } else { ?>
+customImage = false;
 <?php } ?>
+window.addEventListener("load", function(){
+  loadDetectionIfNewExists();
+});
+document.addEventListener("visibilitychange", function() {
+  console.log(document.visibilityState);
+  console.log(document.hidden);
+  if (document.hidden) {
+    clearInterval(i_fn1);
+    clearInterval(i_fn2);
+    if (customImage) clearInterval(i_fn3);
+  } else {
+    startAutoRefresh();
+  }
+});
+startAutoRefresh();
 </script>
 
 <style>
