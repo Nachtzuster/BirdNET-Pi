@@ -25,7 +25,7 @@ if(isset($_GET['deletefile'])) {
   ensure_db_ok($statement1);
   $statement1->bindValue(':file_name', explode("/", $_GET['deletefile'])[2]);
   $file_pointer = $home."/BirdSongs/Extracted/By_Date/".$_GET['deletefile'];
-  if (!exec("sudo rm $file_pointer && sudo rm $file_pointer.png", $output)) {
+  if (!exec("sudo rm $file_pointer 2>&1 & sudo rm $file_pointer.png 2>&1", $output)) {
     echo "OK";
   } else {
     echo "Error - file deletion failed : " . implode(", ", $output);
