@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 
 userDir = os.path.expanduser('~')
-INTERPRETER, M_INTERPRETER, INCLUDE_LIST, EXCLUDE_LIST = (None, None, None, None)
+INTERPRETER, M_INTERPRETER, INCLUDE_LIST, EXCLUDE_LIST, CONVERT_LIST = (None, None, None, None, None)
 PREDICTED_SPECIES_LIST = []
 model, priv_thresh, sf_thresh = (None, None, None)
 
@@ -307,7 +307,7 @@ def load_global_model():
 
 
 def run_analysis(file):
-    global INCLUDE_LIST, EXCLUDE_LIST
+    global INCLUDE_LIST, EXCLUDE_LIST, CONVERT_LIST
     INCLUDE_LIST = loadCustomSpeciesList(os.path.expanduser("~/BirdNET-Pi/include_species_list.txt"))
     EXCLUDE_LIST = loadCustomSpeciesList(os.path.expanduser("~/BirdNET-Pi/exclude_species_list.txt"))
     CONVERT_LIST = loadCustomSpeciesList(os.path.expanduser("~/BirdNET-Pi/convert_species_list.txt"))
