@@ -329,11 +329,12 @@ def run_analysis(file):
         log.info('%s-%s', time_slot, entries[0])
         for entry in entries:
             # Check if the user has requested to replace a specie by another for bias correction
-            for convert_entry in CONVERT_LIST:
-                parts = convert_entry.split(';')
-                if entry[1] == parts[0]:
-                    entry[1] = parts[1]
-                    break
+            if len(EXCLUDE_LIST) != 0:
+                for convert_entry in CONVERT_LIST:
+                    parts = convert_entry.split(';')
+                    if entry[1] == parts[0]:
+                        entry[1] = parts[1]
+                        break
             if entry[1] >= conf.getfloat('CONFIDENCE') and ((entry[0] in INCLUDE_LIST or len(INCLUDE_LIST) == 0)
                                                             and (entry[0] not in EXCLUDE_LIST or len(EXCLUDE_LIST) == 0)
                                                             and (entry[0] in PREDICTED_SPECIES_LIST
