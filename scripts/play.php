@@ -355,7 +355,7 @@ function changeDetection(filename,copylink=false) {
     window.onclick = function(event) {
       if (event.target == modal) {
         modal.style.display = "none";
-        dropdownList.selectedIndex = 0; // Reset the dropdown selection
+        dropdownList.selectedIndex = -1; // Reset the dropdown selection
       }
     }
 
@@ -381,7 +381,7 @@ function changeDetection(filename,copylink=false) {
     dropdownList.addEventListener('change', function() {
       const newname = this.value;
       // Check if the default option is selected
-      if (newname === 'Select a specie') {
+      if (newname === '') {
         return; // Exit the function early
       }
       if (confirm("Are you sure you want to change the specie identified in this detection to " + newname + "?") == true) {
@@ -402,13 +402,12 @@ function changeDetection(filename,copylink=false) {
       }
       // Hide the modal box and reset the dropdown selection
       modal.style.display = "none";
-      this.selectedIndex = 0;
+      this.selectedIndex = -1;
     });
   }
   xhttp.open("GET", "play.php?getlabels=true", true);
   xhttp.send();
 }
-
 
 </script>
 
