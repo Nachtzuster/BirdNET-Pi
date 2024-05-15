@@ -67,6 +67,28 @@ if(isset($_GET['excludefile'])) {
   }
 }
 
+if(isset($_GET['getlabels'])) {
+    $labels = file('/home/pi/BirdNET-Pi/model/labels.txt', FILE_IGNORE_NEW_LINES);
+    echo json_encode($labels);
+    die();
+}
+
+if(isset($_GET['changefile']) && isset($_GET['newname'])) {
+  ensure_authenticated('You must be authenticated to delete files.');
+  if (preg_match('~^.*(\.\.\/).+$~', $_GET['changefile'])) {
+    echo "Error";
+    die();
+  }
+  $oldname = basename(urldecode($_GET['changefile']));
+  $newname = urldecode($_GET['newname']);
+  if (!exec("$home/BirdNET-Pi/scripts/birdnet_changeidentification.sh \"$oldname\" \"$newname\" log_errors 2>&1", $output)) {
+    echo "OK";
+  } else {
+    echo "Error : " . implode(", ", $output) . "<br>";
+  }
+  die();
+}
+
 $shifted_path = $home."/BirdSongs/Extracted/By_Date/shifted/";
 
 if(isset($_GET['shiftfile'])) {
@@ -253,6 +275,41 @@ function toggleShiftFreq(filename, shiftAction, elem) {
   xhttp.send();
   elem.setAttribute("src","images/spinner.gif");
 }
+
+function changeDetection(filename,copylink=false) {
+  const xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    const labels = JSON.parse(this.responseText);
+    let dropdown = '<select id="labelDropdown">';
+    labels.forEach(label => {
+      dropdown += `<option value="${label}">${label}</option>`;
+    });
+    dropdown += '</select>';
+    document.body.innerHTML += dropdown;
+    document.getElementById('labelDropdown').addEventListener('change', function() {
+      const newname = this.value;
+      if (confirm("Are you sure you want to change the specie identified in this detection to " + newname + "?") == true) {
+        const xhttp2 = new XMLHttpRequest();
+        xhttp2.onload = function() {
+          if(this.responseText == "OK"){
+            if(copylink == true) {
+              window.top.close();
+            } else {
+              location.reload();
+            }
+          } else {
+            alert(this.responseText);
+          }
+        }
+        xhttp2.open("GET", "play.php?changefile="+filename+"&newname="+newname, true);
+        xhttp2.send();
+      }
+    });
+  }
+  xhttp.open("GET", "play.php?getlabels=true", true);
+  xhttp.send();
+}
+  
 </script>
 
 <?php
@@ -479,7 +536,8 @@ echo "<table>
       echo "<tr>
   <td class=\"relative\"> 
 
-<img style='cursor:pointer;right:90px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Delete Detection'> 
+<img style='cursor:pointer;right:120px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Delete Detection'> 
+<img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
 <img style='cursor:pointer' onclick='toggleShiftFreq(\"".$filename_formatted."\",\"".$shiftAction."\", this)' class=\"copyimage\" width=25 title=\"".$shiftTitle."\" src=\"".$shiftImageIcon."\"> $date $time<br>$confidence<br>
 
@@ -553,7 +611,8 @@ echo "<table>
           echo "<tr>
       <td class=\"relative\"> 
 
-<img style='cursor:pointer;right:90px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\", true)' class=\"copyimage\" width=25 title='Delete Detection'> 
+<img style='cursor:pointer;right:120px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\", true)' class=\"copyimage\" width=25 title='Delete Detection'> 
+<img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
 <img style='cursor:pointer' onclick='toggleShiftFreq(\"".$filename_formatted."\",\"".$shiftAction."\", this)' class=\"copyimage\" width=25 title=\"".$shiftTitle."\" src=\"".$shiftImageIcon."\">$date $time<br>$confidence<br>
 
