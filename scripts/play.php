@@ -185,6 +185,7 @@ if (get_included_files()[0] === __FILE__) {
 
 ?>
 <script>
+
 function deleteDetection(filename,copylink=false) {
   if (confirm("Are you sure you want to delete this detection from the database?") == true) {
     const xhttp = new XMLHttpRequest();
@@ -280,11 +281,7 @@ function changeDetection(filename,copylink=false) {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
     const labels = JSON.parse(this.responseText);
-    let dropdown = '<select id="labelDropdown" style="display: block; margin: 0 auto;"><option selected disabled hidden>Select a specie</option>';
-    labels.forEach(label => {
-      dropdown += `<option value="${label}">${label}</option>`;
-    });
-    dropdown += '</select>';
+    let dropdown = '<input type="text" id="filterInput" placeholder="Type to filter..."><select id="labelDropdown" size="5" style="display: block; margin: 0 auto;"></select>';
 
     // Check if the modal already exists
     let modal = document.getElementById('myModal');
@@ -345,15 +342,43 @@ function changeDetection(filename,copylink=false) {
     // Display the modal
     modal.style.display = "block";
 
+    // Populate the dropdown list
+    let dropdownList = document.getElementById('labelDropdown');
+    labels.forEach(label => {
+      let option = document.createElement('option');
+      option.value = label;
+      option.text = label;
+      dropdownList.appendChild(option);
+    });
+
     // Add an event listener to the modal box to hide it when clicked outside
     window.onclick = function(event) {
       if (event.target == modal) {
         modal.style.display = "none";
-        document.getElementById('labelDropdown').selectedIndex = 0; // Reset the dropdown selection
+        dropdownList.selectedIndex = 0; // Reset the dropdown selection
       }
     }
 
-    document.getElementById('labelDropdown').addEventListener('change', function() {
+    // Add an event listener to the input box to filter the dropdown list
+    document.getElementById('filterInput').addEventListener('keyup', function() {
+      let filter = this.value.toUpperCase();
+      let options = dropdownList.options;
+      // Clear the dropdown list
+      while (dropdownList.firstChild) {
+        dropdownList.removeChild(dropdownList.firstChild);
+      }
+      // Populate the dropdown list with the filtered labels
+      labels.forEach(label => {
+        if (label.toUpperCase().indexOf(filter) > -1) {
+          let option = document.createElement('option');
+          option.value = label;
+          option.text = label;
+          dropdownList.appendChild(option);
+        }
+      });
+    });
+
+    dropdownList.addEventListener('change', function() {
       const newname = this.value;
       // Check if the default option is selected
       if (newname === 'Select a specie') {
@@ -383,6 +408,7 @@ function changeDetection(filename,copylink=false) {
   xhttp.open("GET", "play.php?getlabels=true", true);
   xhttp.send();
 }
+
 
 </script>
 
