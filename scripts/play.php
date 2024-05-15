@@ -280,14 +280,85 @@ function changeDetection(filename,copylink=false) {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
     const labels = JSON.parse(this.responseText);
-    let dropdown = '<select id="labelDropdown">';
+    let dropdown = '<select id="labelDropdown" style="display: block; margin: 0 auto;"><option selected disabled hidden>Select a specie</option>';
     labels.forEach(label => {
       dropdown += `<option value="${label}">${label}</option>`;
     });
     dropdown += '</select>';
-    document.body.innerHTML += dropdown;
+
+    // Check if the modal already exists
+    let modal = document.getElementById('myModal');
+    if (!modal) {
+      // Create a modal box
+      modal = document.createElement('div');
+      modal.setAttribute('id', 'myModal');
+      modal.setAttribute('class', 'modal');
+
+      // Create a content box
+      let content = document.createElement('div');
+      content.setAttribute('class', 'modal-content');
+
+      // Add a title to the modal box
+      let title = document.createElement('h2');
+      title.textContent = 'Please select the correct specie here:';
+      content.appendChild(title);
+
+      // Add the dropdown to the content
+      let selectElement = document.createElement('div');
+      selectElement.innerHTML = dropdown;
+      content.appendChild(selectElement);
+
+      // Append the content to the modal
+      modal.appendChild(content);
+
+      // Append the modal to the body
+      document.body.appendChild(modal);
+
+      // Create a style element
+      let style = document.createElement('style');
+      style.innerHTML = `
+        .modal {
+          display: none;
+          position: fixed;
+          z-index: 1;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+          background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+          background-color: #fefefe;
+          margin: 15% auto;
+          padding: 20px;
+          border: 1px solid #888;
+          width: 80%;
+          text-align: center; /* Center the content */
+        }
+      `;
+
+      // Append the style to the head
+      document.head.appendChild(style);
+    }
+
+    // Display the modal
+    modal.style.display = "block";
+
+    // Add an event listener to the modal box to hide it when clicked outside
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+        document.getElementById('labelDropdown').selectedIndex = 0; // Reset the dropdown selection
+      }
+    }
+
     document.getElementById('labelDropdown').addEventListener('change', function() {
       const newname = this.value;
+      // Check if the default option is selected
+      if (newname === 'Select a specie') {
+        return; // Exit the function early
+      }
       if (confirm("Are you sure you want to change the specie identified in this detection to " + newname + "?") == true) {
         const xhttp2 = new XMLHttpRequest();
         xhttp2.onload = function() {
@@ -304,12 +375,15 @@ function changeDetection(filename,copylink=false) {
         xhttp2.open("GET", "play.php?changefile="+filename+"&newname="+newname, true);
         xhttp2.send();
       }
+      // Hide the modal box and reset the dropdown selection
+      modal.style.display = "none";
+      this.selectedIndex = 0;
     });
   }
   xhttp.open("GET", "play.php?getlabels=true", true);
   xhttp.send();
 }
-  
+
 </script>
 
 <?php
