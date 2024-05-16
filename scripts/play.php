@@ -352,12 +352,12 @@ function changeDetection(filename,copylink=false) {
     });
 
     // Add an event listener to the modal box to hide it when clicked outside
-    window.onclick = function(event) {
+    document.addEventListener('click', function(event) {
       if (event.target == modal) {
         modal.style.display = "none";
         dropdownList.selectedIndex = -1; // Reset the dropdown selection
       }
-    }
+    });
 
     // Add an event listener to the input box to filter the dropdown list
     document.getElementById('filterInput').addEventListener('keyup', function() {
