@@ -310,33 +310,6 @@ function changeDetection(filename,copylink=false) {
 
       // Append the modal to the body
       document.body.appendChild(modal);
-
-      // Create a style element
-      let style = document.createElement('style');
-      style.innerHTML = `
-        .modal {
-          display: none;
-          position: fixed;
-          z-index: 1;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
-          overflow: auto;
-          background-color: rgba(0,0,0,0.4);
-        }
-        .modal-content {
-          background-color: #fefefe;
-          margin: 15% auto;
-          padding: 20px;
-          border: 1px solid #888;
-          width: 80%;
-          text-align: center; /* Center the content */
-        }
-      `;
-
-      // Append the style to the head
-      document.head.appendChild(style);
     }
 
     // Display the modal
