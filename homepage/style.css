@@ -160,6 +160,17 @@ button:hover {
   text-align: center; /* Center the content */
 }
 
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    margin: 10% auto;
+  }
+  #labelDropdown {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
 .topnav {
   background-color: rgb(159, 226, 155);
   display: flex;
