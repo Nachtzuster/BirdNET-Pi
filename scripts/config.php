@@ -469,7 +469,7 @@ function runProcess() {
         Stations around the world supply audio and video streams to BirdWeather where they are then analyzed by BirdNET 
         and compared to eBird Grid data. BirdWeather catalogues the bird audio and spectrogram visualizations so that you 
         can listen to, view, and read about birds throughout the world. <br><br> 
-        To request a BirdWeather ID, You'll first need to create an account - <a href="https://app.birdweather.com/login" target="_blank">https://app.birdweather.com/lo>
+        To request a BirdWeather ID, You'll first need to create an account - <a href="https://app.birdweather.com/login" target="_blank">https://app.birdweather.com/</a>
         Once that's done - you can go to - <a href="https://app.birdweather.com/account/stations" target="_blank">https://app.birdweather.com/account/stations</a><br>
         Make sure that the Latitude and Longitude match what is in your BirdNET-Pi configuration.
         <br><br>
