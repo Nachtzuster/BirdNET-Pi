@@ -212,7 +212,7 @@ if(isset($_GET['submit'])) {
   if (isset($_GET["LogLevel_SpectrogramViewerService"])) {
     $spectrogram_viewer_service_log_level = trim($_GET["LogLevel_SpectrogramViewerService"]);
 	if (strcmp($birdnet_recording_service_log_level, $config['LogLevel_BirdnetRecordingService']) !== 0) {
-		$contents = preg_replace("/LogLevel_SpectrogramViewerService=.*/", "LogLevel_BirdnetRecordingService=\"$spectrogram_viewer_service_log_level\"", $contents);
+		$contents = preg_replace("/LogLevel_SpectrogramViewerService=.*/", "LogLevel_SpectrogramViewerService=\"$spectrogram_viewer_service_log_level\"", $contents);
 	}
   }
   if (isset($_GET["LogLevel_LiveAudioStreamService"])) {
