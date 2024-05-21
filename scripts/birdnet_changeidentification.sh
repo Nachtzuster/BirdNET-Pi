@@ -6,7 +6,7 @@
 # SET VARIABLES #
 #################
 
-HOME="${$HOME:-/home/pi}"
+HOME="${HOME:-/home/pi}"
 source /etc/birdnet/birdnet.conf &>/dev/null
 
 # Get arguments
