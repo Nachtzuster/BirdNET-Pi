@@ -68,7 +68,7 @@ if(isset($_GET['excludefile'])) {
 }
 
 if(isset($_GET['getlabels'])) {
-    $labels = file('/home/pi/BirdNET-Pi/model/labels.txt', FILE_IGNORE_NEW_LINES);
+    $labels = file('./scripts/labels.txt', FILE_IGNORE_NEW_LINES);
     echo json_encode($labels);
     die();
 }
