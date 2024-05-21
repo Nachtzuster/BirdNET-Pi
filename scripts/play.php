@@ -281,9 +281,9 @@ function changeDetection(filename,copylink=false) {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
     const labels = JSON.parse(this.responseText);
-    let dropdown = '<input type="text" id="filterInput" placeholder="Type to filter..."><select id="labelDropdown" size="5" style="display: block; margin: 0 auto;"></select>';
+    let dropdown = '<input type="text" id="filterInput" placeholder="Type to filter..."> <button id="cancelButton">Cancel</button> <br><select id="labelDropdown" size="5" style="display: block; margin: 0 auto;"></select>';
 
-    // Check if the modal already exists
+	// Check if the modal already exists
     let modal = document.getElementById('myModal');
     if (!modal) {
       // Create a modal box
@@ -349,6 +349,12 @@ function changeDetection(filename,copylink=false) {
           dropdownList.appendChild(option);
         }
       });
+    });
+
+    // Add an event listener to the cancel button to hide the modal box
+    document.getElementById('cancelButton').addEventListener('click', function() {
+      modal.style.display = "none";
+      dropdownList.selectedIndex = -1; // Reset the dropdown selection
     });
 
     dropdownList.addEventListener('change', function() {
