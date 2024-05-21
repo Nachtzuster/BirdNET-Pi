@@ -9,6 +9,7 @@ ini_set('display_errors',1);
 require_once 'scripts/common.php';
 $home = get_home();
 $config = get_config();
+$user = get_user();
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
@@ -81,7 +82,7 @@ if(isset($_GET['changefile']) && isset($_GET['newname'])) {
   }
   $oldname = basename(urldecode($_GET['changefile']));
   $newname = urldecode($_GET['newname']);
-  if (!exec("$home/BirdNET-Pi/scripts/birdnet_changeidentification.sh \"$oldname\" \"$newname\" log_errors 2>&1", $output)) {
+  if (!exec("sudo -u $user $home/BirdNET-Pi/scripts/birdnet_changeidentification.sh \"$oldname\" \"$newname\" log_errors 2>&1", $output)) {
     echo "OK";
   } else {
     echo "Error : " . implode(", ", $output) . "<br>";
