@@ -65,7 +65,7 @@ $eachlines = file($filename, FILE_IGNORE_NEW_LINES);
 
     document.getElementById("add").addEventListener("submit", function(event) {
       var speciesSelect = document.getElementById("species");
-      if (speciesSelect.selectedIndex < 1) {
+      if (speciesSelect.selectedIndex < 0) {
         alert("Please click the species you want to add.");
         document.querySelector('.views').style.opacity = 1;
         event.preventDefault();
