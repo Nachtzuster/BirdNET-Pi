@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This scripts allows to change the identification of a Birdnet-pi detection
 
