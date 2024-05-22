@@ -40,7 +40,7 @@
   <h3>Excluded Species List</h3>
   <br><br><br>
   <select name="species[]" id="value2" multiple size="25">
-  <option selected value="base">Please Select</option>
+  <option disabled value="base">Please Select</option>
 <?php
   $filename = './scripts/exclude_species_list.txt';
   $eachline = file($filename, FILE_IGNORE_NEW_LINES);
