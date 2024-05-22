@@ -20,7 +20,7 @@ $eachlines = file($filename, FILE_IGNORE_NEW_LINES);
 <form action="" method="GET" id="add">
   <h2>All Species Labels</h2>
   <input autocomplete="off" size="18" type="text" placeholder="Search Species..." id="species_searchterm" name="species_searchterm">
-  <select name="species[]" id="species" multiple size="30">ol
+  <select name="species[]" id="species" multiple size="25">
       <?php   
         foreach($eachlines as $lines){echo 
     "<option value=\"".$lines."\">$lines</option>";}
@@ -44,7 +44,7 @@ $eachlines = file($filename, FILE_IGNORE_NEW_LINES);
 <div class="customlabels2 column3">
 <form action="" method="GET" id="del">
   <h2>Custom Species List</h2>
-  <select name="species[]" id="value2" multiple size="30">
+  <select name="species[]" id="value2" multiple size="25">
       <?php
         $filename = './scripts/include_species_list.txt';
         $eachlines = file($filename, FILE_IGNORE_NEW_LINES);
