@@ -369,8 +369,10 @@ function changeDetection(filename,copylink=false) {
         xhttp2.onload = function() {
           if(this.responseText == "OK"){
             if(copylink == true) {
+              alert("Successfully converted");
               window.top.close();
             } else {
+              alert("Successfully converted");
               location.reload();
             }
           } else {
