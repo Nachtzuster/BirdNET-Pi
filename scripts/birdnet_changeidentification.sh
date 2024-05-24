@@ -6,7 +6,10 @@
 # SET VARIABLES #
 #################
 
+# Define HOME in case environment is not correctly set
 HOME="${HOME:-/home/pi}"
+
+# shellcheck disable=sc1091
 source /etc/birdnet/birdnet.conf &>/dev/null
 
 # Get arguments
@@ -76,12 +79,12 @@ fi
 NEWNAME_comname="${NEWNAME#*_}"
 NEWNAME_sciname="${NEWNAME%%_*}"
 
-# Replace spaces with underscores
-NEWNAME_comname2="${NEWNAME_comname// /_}"
-OLDNAME_comname2="${OLDNAME_comname// /_}"
+# Replace spaces with underscores, and ' with "" (same logic as helpers.py)
+NEWNAME_comname_safe="$(echo "$NEWNAME_comname" | tr -d "'" | tr ' ' '_')"
+OLDNAME_comname_safe="$(echo "$OLDNAME_comname" | tr -d "'" | tr ' ' '_')"
 
-# Replace OLDNAME_comname2 with NEWNAME_comname2 in OLDNAME
-NEWNAME_filename="${OLDNAME//$OLDNAME_comname2/$NEWNAME_comname2}"
+# Replace OLDNAME_comname_safe with NEWNAME_comname_safe in OLDNAME
+NEWNAME_filename="${OLDNAME//$OLDNAME_comname_safe/$NEWNAME_comname_safe}"
 
 [[ "$OUTPUT_TYPE" == "debug" ]] && echo "This script will change the identification $OLDNAME from $OLDNAME_comname to ${NEWNAME#*_}"
 
@@ -90,10 +93,10 @@ NEWNAME_filename="${OLDNAME//$OLDNAME_comname2/$NEWNAME_comname2}"
 ########################
 
 # Check if the file exists
-FILE_PATH="$HOME/BirdSongs/Extracted/By_Date/$OLDNAME_date/$OLDNAME_comname2/$OLDNAME"
+FILE_PATH="$HOME/BirdSongs/Extracted/By_Date/$OLDNAME_date/$OLDNAME_comname_safe/$OLDNAME"
 if [[ -f $FILE_PATH ]]; then
     # Ensure the new directory exists
-    NEW_DIR="$HOME/BirdSongs/Extracted/By_Date/$OLDNAME_date/$NEWNAME_comname2"
+    NEW_DIR="$HOME/BirdSongs/Extracted/By_Date/$OLDNAME_date/$NEWNAME_comname_safe"
     mkdir -p "$NEW_DIR"
     
     # Move and rename the file
