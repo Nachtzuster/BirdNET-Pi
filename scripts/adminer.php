@@ -1,4 +1,5 @@
 <?php
+echo '<a href="'.$_SERVER['PHP_SELF'].'" target="_blank">Open in new page</a>';
 /** Adminer - Compact database management
 * @link https://www.adminer.org/
 * @author Jakub Vrana, https://www.vrana.cz/
