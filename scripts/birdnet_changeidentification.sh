@@ -113,7 +113,7 @@ fi
 ###################################
 
 # Update the database
-sqlite3 "$DB_FILE" "UPDATE $DETECTIONS_TABLE SET Sci_Name = '$NEWNAME_sciname', Com_Name = '$NEWNAME_comname', Confidence = '1.001', File_Name = '$NEWNAME_filename' WHERE File_Name = '$OLDNAME';"
+sqlite3 "$DB_FILE" "UPDATE $DETECTIONS_TABLE SET Sci_Name = '$NEWNAME_sciname', Com_Name = '$NEWNAME_comname', Confidence = '0', File_Name = '$NEWNAME_filename' WHERE File_Name = '$OLDNAME';"
 
 [[ "$OUTPUT_TYPE" == "debug" ]] && echo "Database entry removed"
 
