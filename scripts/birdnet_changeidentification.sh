@@ -20,7 +20,7 @@ NEWNAME="$2" #NEWNAME="Lapinus atricapilla_Lapinu à tête noire"
 OUTPUT_TYPE="${3:-debug}" # Set 3rd argument to debug to have all outputs
 
 # Ask for user input if no arguments
-if [ -z "$OLDNAME" ]; then read -r -p 'OLDNAME (finishing by mp3): ' OLDNAME; fi
+if [ -z "$OLDNAME" ]; then read -r -p 'OLDNAME (finishing by file extension): ' OLDNAME; fi
 if [ -z "$NEWNAME" ]; then read -r -p 'NEWNAME (sciname_commoname): ' NEWNAME; fi
 
 # Fixed values
@@ -37,8 +37,8 @@ if [ ! -f "$LABELS_FILE" ]; then echo "$LABELS_FILE doesn't exist, exiting" && e
 if [ ! -f "$DB_FILE" ]; then echo "$DB_FILE doesn't exist, exiting" && exit 1; fi
 
 # Check if inputs are valid
-if [[ "$1" != *".mp3" ]]; then
-  echo "The first argument should be a filename starting with the common name of the bird and finishing by mp3!"
+if [[ "$1" != *"."* ]]; then
+  echo "The first argument should be a filename starting with the common name of the bird and finishing by the file extension!"
   echo "Instead, it is : $1"
   exit 1
 elif [[ "$2" != *"_"* ]]; then
