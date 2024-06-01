@@ -9,7 +9,6 @@
   <br>
   <span>Once the desired species has been highlighted, click it and then click ADD to have it excluded.</span>
   <select name="species[]" id="species" multiple size="25">
-  <option selected value="base">Please Select</option>
   <?php
     error_reporting(E_ALL);
     ini_set('display_errors',1);
@@ -41,7 +40,7 @@
   <h3>Excluded Species List</h3>
   <br><br><br>
   <select name="species[]" id="value2" multiple size="25">
-  <option selected value="base">Please Select</option>
+  <option disabled value="base">Please Select</option>
 <?php
   $filename = './scripts/exclude_species_list.txt';
   $eachline = file($filename, FILE_IGNORE_NEW_LINES);
@@ -58,9 +57,12 @@
 </div>
 
 <script>
+    // Store the original list of options in a variable
+    var originalOptions = {};
+
     document.getElementById("add").addEventListener("submit", function(event) {
       var speciesSelect = document.getElementById("species");
-      if (speciesSelect.selectedIndex < 1) {
+      if (speciesSelect.selectedIndex < 0) {
         alert("Please click the species you want to add.");
         document.querySelector('.views').style.opacity = 1;
         event.preventDefault();
@@ -68,72 +70,35 @@
     });
 
     var search_term = document.querySelector("input#exclude_species_searchterm");
-    search_term.addEventListener("keydown", doSearch);
-    //Index where we found a match
-    var search_match_idx = 1;
-    var last_search_term = "";
+    search_term.addEventListener("keyup", function() {
+      filterOptions("species");
+    });
 
-    function doSearch(eventObj) {
-        //Don't do anything if the user is till composing
-        if (eventObj.isComposing || eventObj.keyCode === 229) {
-            return;
+    // Function to filter options in a select element
+    function filterOptions(id) {
+      var input = document.getElementById("exclude_species_searchterm");
+      var filter = input.value.toUpperCase();
+      var select = document.getElementById(id);
+      var options = select.getElementsByTagName("option");
+
+      // If the original list of options for this select element hasn't been stored yet, store it
+      if (!originalOptions[id]) {
+        originalOptions[id] = Array.from(options).map(option => option.value);
+      }
+
+      // Clear the select element
+      while (select.firstChild) {
+        select.removeChild(select.firstChild);
+      }
+
+      // Populate the select element with the filtered labels
+      originalOptions[id].forEach(label => {
+        if (label.toUpperCase().indexOf(filter) > -1) {
+          let option = document.createElement('option');
+          option.value = label;
+          option.text = label;
+          select.appendChild(option);
         }
-
-        //If the key pressed is the enter key capture it, stop the form submitting and do the search
-        if (eventObj.key === 'Enter' || eventObj.keyCode === 13) {
-            eventObj.preventDefault();
-
-            //User wants to submit the text as a search
-            var search_text = search_term.value.toLowerCase();
-
-            //Now look at the select list, loop over the options and try find part of the text in the option's name/text
-            var species_select_list = document.querySelector('select#species');
-
-            //if the search text differs from last time start the search from the beginning of te list
-            if (search_text !== last_search_term) {
-                //Also unselect the last match
-                species_select_list[search_match_idx].removeAttribute('class');
-                search_match_idx = 1;
-            }
-
-            //Start the loop at 1 so we skip the very initial value asking the user to select a option
-            for (let i = search_match_idx; i < species_select_list.length; i++) {
-                // if (species_select_list[i] !== 'undefined') {
-                option_text = species_select_list[i].value;
-                search_match_text = option_text.toLowerCase().includes(search_text)
-
-                //Check if the item is already selected, that could mean that user may be searching the same phrase
-                if (species_select_list[search_match_idx].getAttribute('class') === "exclude_species_list_option_highlight") {
-                    species_select_list[search_match_idx].removeAttribute('class');
-                    // species_select_list[search_match_idx].removeAttribute('style');
-                    //Go to the next item
-                    i++
-                    continue;
-                }
-
-                //There was a match,
-                if (search_match_text === true) {
-                    //already on this item so skip it and continue with list
-                    if (search_match_idx === i) {
-                        i++
-                        continue;
-                    }
-                    //Finally we havent found this item before
-                    search_match_idx = i;
-
-                    //Scroll into view and select it
-                    species_select_list[search_match_idx].scrollIntoView({behavior: 'smooth', block: 'start'});
-                    //Apply a style to the option since setting the selected value to true breaks scrolling on chrome :(
-                    //the style is nicer anyway :)
-                    species_select_list[search_match_idx].setAttribute('class', "exclude_species_list_option_highlight");
-                    // species_select_list[search_match_idx].setAttribute('selected', 'true');
-
-                    //break the loop
-                    break;
-                }
-            }
-            //Track what search term was used so we know when to start over
-            last_search_term = search_text
-        }
+      });
     }
 </script>

@@ -19,8 +19,8 @@ $eachlines = file($filename, FILE_IGNORE_NEW_LINES);
 <div class="customlabels2 column1">
 <form action="" method="GET" id="add">
   <h2>All Species Labels</h2>
-  <select name="species[]" id="species" multiple size="30">
-    <option selected value="base">Please Select</option>
+  <input autocomplete="off" size="18" type="text" placeholder="Search Species..." id="species_searchterm" name="species_searchterm">
+  <select name="species[]" id="species" multiple size="25">
       <?php   
         foreach($eachlines as $lines){echo 
     "<option value=\"".$lines."\">$lines</option>";}
@@ -44,8 +44,8 @@ $eachlines = file($filename, FILE_IGNORE_NEW_LINES);
 <div class="customlabels2 column3">
 <form action="" method="GET" id="del">
   <h2>Custom Species List</h2>
-  <select name="species[]" id="value2" multiple size="30">
-    <option selected value="base">Please Select</option>
+  <select name="species[]" id="value2" multiple size="25">
+  <option disabled value="base">Please Select</option>
       <?php
         $filename = './scripts/include_species_list.txt';
         $eachlines = file($filename, FILE_IGNORE_NEW_LINES);
@@ -59,4 +59,50 @@ $eachlines = file($filename, FILE_IGNORE_NEW_LINES);
   <button type="submit" name="view" value="Included" form="del">REMOVE</button>
 </div>
 </div>
-</body>
+
+<script>
+    // Store the original list of options in a variable
+    var originalOptions = {};
+
+    document.getElementById("add").addEventListener("submit", function(event) {
+      var speciesSelect = document.getElementById("species");
+      if (speciesSelect.selectedIndex < 0) {
+        alert("Please click the species you want to add.");
+        document.querySelector('.views').style.opacity = 1;
+        event.preventDefault();
+      }
+    });
+
+    var search_term = document.querySelector("input#species_searchterm");
+    search_term.addEventListener("keyup", function() {
+      filterOptions("species");
+    });
+
+    // Function to filter options in a select element
+    function filterOptions(id) {
+      var input = document.getElementById(id + "_searchterm");
+      var filter = input.value.toUpperCase();
+      var select = document.getElementById(id);
+      var options = select.getElementsByTagName("option");
+
+      // If the original list of options for this select element hasn't been stored yet, store it
+      if (!originalOptions[id]) {
+        originalOptions[id] = Array.from(options).map(option => option.value);
+      }
+
+      // Clear the select element
+      while (select.firstChild) {
+        select.removeChild(select.firstChild);
+      }
+
+      // Populate the select element with the filtered labels
+      originalOptions[id].forEach(label => {
+        if (label.toUpperCase().indexOf(filter) > -1) {
+          let option = document.createElement('option');
+          option.value = label;
+          option.text = label;
+          select.appendChild(option);
+        }
+      });
+    }
+</script>

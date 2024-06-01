@@ -9,6 +9,7 @@ ini_set('display_errors',1);
 require_once 'scripts/common.php';
 $home = get_home();
 $config = get_config();
+$user = get_user();
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
@@ -65,6 +66,28 @@ if(isset($_GET['excludefile'])) {
     echo "OK";
     die();
   }
+}
+
+if(isset($_GET['getlabels'])) {
+    $labels = file('./scripts/labels.txt', FILE_IGNORE_NEW_LINES);
+    echo json_encode($labels);
+    die();
+}
+
+if(isset($_GET['changefile']) && isset($_GET['newname'])) {
+  ensure_authenticated('You must be authenticated to delete files.');
+  if (preg_match('~^.*(\.\.\/).+$~', $_GET['changefile'])) {
+    echo "Error";
+    die();
+  }
+  $oldname = basename(urldecode($_GET['changefile']));
+  $newname = urldecode($_GET['newname']);
+  if (!exec("sudo -u ".$user." ".$home."/BirdNET-Pi/scripts/birdnet_changeidentification.sh \"$oldname\" \"$newname\" log_errors 2>&1", $output)) {
+    echo "OK";
+  } else {
+    echo "Error : " . implode(", ", $output) . "<br>";
+  }
+  die();
 }
 
 $shifted_path = $home."/BirdSongs/Extracted/By_Date/shifted/";
@@ -163,6 +186,7 @@ if (get_included_files()[0] === __FILE__) {
 
 ?>
 <script>
+
 function deleteDetection(filename,copylink=false) {
   if (confirm("Are you sure you want to delete this detection from the database?") == true) {
     const xhttp = new XMLHttpRequest();
@@ -253,6 +277,120 @@ function toggleShiftFreq(filename, shiftAction, elem) {
   xhttp.send();
   elem.setAttribute("src","images/spinner.gif");
 }
+
+function changeDetection(filename,copylink=false) {
+  const xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    const labels = JSON.parse(this.responseText);
+    let dropdown = '<input type="text" id="filterInput" placeholder="Type to filter..."> <button id="cancelButton">Cancel</button> <br><select id="labelDropdown" size="5" style="display: block; margin: 0 auto;"></select>';
+
+	// Check if the modal already exists
+    let modal = document.getElementById('myModal');
+    if (!modal) {
+      // Create a modal box
+      modal = document.createElement('div');
+      modal.setAttribute('id', 'myModal');
+      modal.setAttribute('class', 'modal');
+
+      // Create a content box
+      let content = document.createElement('div');
+      content.setAttribute('class', 'modal-content');
+
+      // Add a title to the modal box
+      let title = document.createElement('h2');
+      title.textContent = 'Please select the correct specie here:';
+      content.appendChild(title);
+
+      // Add the dropdown to the content
+      let selectElement = document.createElement('div');
+      selectElement.innerHTML = dropdown;
+      content.appendChild(selectElement);
+
+      // Append the content to the modal
+      modal.appendChild(content);
+
+      // Append the modal to the body
+      document.body.appendChild(modal);
+    }
+
+    // Display the modal
+    modal.style.display = "block";
+
+    // Populate the dropdown list
+    let dropdownList = document.getElementById('labelDropdown');
+    labels.forEach(label => {
+      let option = document.createElement('option');
+      option.value = label;
+      option.text = label;
+      dropdownList.appendChild(option);
+    });
+
+    // Add an event listener to the modal box to hide it when clicked outside
+    document.addEventListener('click', function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+        dropdownList.selectedIndex = -1; // Reset the dropdown selection
+      }
+    });
+
+    // Add an event listener to the input box to filter the dropdown list
+    document.getElementById('filterInput').addEventListener('keyup', function() {
+      let filter = this.value.toUpperCase();
+      let options = dropdownList.options;
+      // Clear the dropdown list
+      while (dropdownList.firstChild) {
+        dropdownList.removeChild(dropdownList.firstChild);
+      }
+      // Populate the dropdown list with the filtered labels
+      labels.forEach(label => {
+        if (label.toUpperCase().indexOf(filter) > -1) {
+          let option = document.createElement('option');
+          option.value = label;
+          option.text = label;
+          dropdownList.appendChild(option);
+        }
+      });
+    });
+
+    // Add an event listener to the cancel button to hide the modal box
+    document.getElementById('cancelButton').addEventListener('click', function() {
+      modal.style.display = "none";
+      dropdownList.selectedIndex = -1; // Reset the dropdown selection
+    });
+
+    dropdownList.addEventListener('change', function() {
+      const newname = this.value;
+      // Check if the default option is selected
+      if (newname === '') {
+        return; // Exit the function early
+      }
+      if (confirm("Are you sure you want to change the specie identified in this detection to " + newname + "?") == true) {
+        const xhttp2 = new XMLHttpRequest();
+        xhttp2.onload = function() {
+          if(this.responseText == "OK"){
+            if(copylink == true) {
+              alert("Successfully converted");
+              window.top.close();
+            } else {
+              alert("Successfully converted");
+              location.reload();
+            }
+          } else {
+            alert(this.responseText);
+          }
+        }
+        xhttp2.open("GET", "play.php?changefile="+filename+"&newname="+newname, true);
+        xhttp2.send();
+      }
+      // Hide the modal box and reset the dropdown selection
+      modal.style.display = "none";
+      this.selectedIndex = -1;
+    });
+  }
+  xhttp.open("GET", "play.php?getlabels=true", true);
+  xhttp.send();
+}
+
 </script>
 
 <?php
@@ -479,7 +617,8 @@ echo "<table>
       echo "<tr>
   <td class=\"relative\"> 
 
-<img style='cursor:pointer;right:90px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Delete Detection'> 
+<img style='cursor:pointer;right:120px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Delete Detection'> 
+<img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
 <img style='cursor:pointer' onclick='toggleShiftFreq(\"".$filename_formatted."\",\"".$shiftAction."\", this)' class=\"copyimage\" width=25 title=\"".$shiftTitle."\" src=\"".$shiftImageIcon."\"> $date $time<br>$confidence<br>
 
@@ -553,7 +692,8 @@ echo "<table>
           echo "<tr>
       <td class=\"relative\"> 
 
-<img style='cursor:pointer;right:90px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\", true)' class=\"copyimage\" width=25 title='Delete Detection'> 
+<img style='cursor:pointer;right:120px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\", true)' class=\"copyimage\" width=25 title='Delete Detection'> 
+<img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
 <img style='cursor:pointer' onclick='toggleShiftFreq(\"".$filename_formatted."\",\"".$shiftAction."\", this)' class=\"copyimage\" width=25 title=\"".$shiftTitle."\" src=\"".$shiftImageIcon."\">$date $time<br>$confidence<br>
 

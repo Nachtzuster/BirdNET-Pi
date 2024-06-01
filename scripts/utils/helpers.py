@@ -12,7 +12,6 @@ from tzlocal import get_localzone
 _settings = None
 
 DB_PATH = os.path.expanduser('~/BirdNET-Pi/scripts/birds.db')
-THISRUN = os.path.expanduser('~/BirdNET-Pi/scripts/thisrun.txt')
 ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
 
 
@@ -41,14 +40,6 @@ def _load_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False
 def get_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False):
     settings = _load_settings(settings_path, force_reload)
     return settings
-
-
-def write_settings(file_name=THISRUN):
-    settings = _load_settings()
-    with open(file_name, 'w') as configfile:
-        for key in settings.keys():
-            configfile.write(f'{key}={settings.get(key, raw=True)}\n')
-    os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
 
 
 class Detection:

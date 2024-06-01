@@ -89,6 +89,20 @@ function debug_log($message) {
   error_log($message . "\n", 3, $_SERVER['DOCUMENT_ROOT'] . "/debug_log.log");
 }
 
+function get_com_en_name($sci_name) {
+  if (!isset($_labels_flickr)) {
+    $_labels_flickr = file(get_home() . "/BirdNET-Pi/model/labels_flickr.txt");
+  }
+  $engname = null;
+  foreach ($_labels_flickr as $label) {
+    if (strpos($label, $sci_name) !== false) {
+      $engname = trim(explode("_", $label)[1]);
+      break;
+    }
+  }
+  return $engname;
+}
+
 define('DB', './scripts/flickr.db');
 
 class Flickr {
@@ -186,7 +200,7 @@ class Flickr {
   }
 
   private function get_from_flickr($sci_name) {
-    $engname = $this->get_com_en_name($sci_name);
+    $engname = get_com_en_name($sci_name);
 
     $flickrjson = json_decode(file_get_contents("https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=" . $this->flickr_api_key . "&text=" . str_replace(" ", "%20", $engname) . $this->comnameprefix . "&sort=relevance" . $this->args . "&per_page=5&media=photos&format=json&nojsoncallback=1"), true)["photos"]["photo"];
     // could be null!!
@@ -245,18 +259,26 @@ class Flickr {
     $this->set_uid_in_db($uid);
   }
 
-  private function get_com_en_name($sci_name) {
-    if ($this->labels_flickr === null) {
-      $this->labels_flickr = file(get_home() . "/BirdNET-Pi/model/labels_flickr.txt");
-    }
-    $engname = null;
-    foreach ($this->labels_flickr as $label) {
-      if (strpos($label, $sci_name) !== false) {
-        $engname = trim(explode("_", $label)[1]);
-        break;
-      }
-    }
-    return $engname;
-  }
+}
 
+function get_info_url($sciname){
+  $engname = get_com_en_name($sciname);
+  $config = get_config();
+  if ($config['INFO_SITE'] === 'EBIRD'){
+    require 'scripts/ebird.php';
+    $ebird = $ebirds[$sciname];
+    debug_log($ebird);
+    $language = $config['DATABASE_LANG'];
+    $url = "https://ebird.org/species/$ebird?siteLanguage=$language";
+    $url_title = "eBirds";
+  } else {
+    $engname_url = str_replace("'", '', str_replace(' ', '_', $engname));
+    $url = "https://allaboutbirds.org/guide/$engname_url";
+    $url_title = "All About Birds";
+  }
+  $ret = array(
+      'URL' => $url,
+      'TITLE' => $url_title
+          );
+  return $ret;
 }

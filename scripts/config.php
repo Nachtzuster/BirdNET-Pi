@@ -62,6 +62,7 @@ if(isset($_GET["latitude"])){
   $flickr_api_key = $_GET['flickr_api_key'];
   $flickr_filter_email = $_GET["flickr_filter_email"];
   $language = $_GET["language"];
+  $info_site = $_GET["info_site"];
   $timezone = $_GET["timezone"];
   $model = $_GET["model"];
   $sf_thresh = $_GET["sf_thresh"];
@@ -154,6 +155,7 @@ if(isset($_GET["latitude"])){
   $contents = preg_replace("/APPRISE_WEEKLY_REPORT=.*/", "APPRISE_WEEKLY_REPORT=$apprise_weekly_report", $contents);
   $contents = preg_replace("/FLICKR_API_KEY=.*/", "FLICKR_API_KEY=$flickr_api_key", $contents);
   $contents = preg_replace("/DATABASE_LANG=.*/", "DATABASE_LANG=$language", $contents);
+  $contents = preg_replace("/INFO_SITE=.*/", "INFO_SITE=$info_site", $contents);
   $contents = preg_replace("/FLICKR_FILTER_EMAIL=.*/", "FLICKR_FILTER_EMAIL=$flickr_filter_email", $contents);
   $contents = preg_replace("/APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=.*/", "APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=$minimum_time_limit", $contents);
   $contents = preg_replace("/MODEL=.*/", "MODEL=$model", $contents);
@@ -465,7 +467,15 @@ function runProcess() {
       <h2>BirdWeather</h2>
       <label for="birdweather_id">BirdWeather ID: </label>
       <input name="birdweather_id" type="text" value="<?php print($config['BIRDWEATHER_ID']);?>" /><br>
-      <p><a href="https://app.birdweather.com" target="_blank">BirdWeather.com</a> is a weather map for bird sounds. Stations around the world supply audio and video streams to BirdWeather where they are then analyzed by BirdNET and compared to eBird Grid data. BirdWeather catalogues the bird audio and spectrogram visualizations so that you can listen to, view, and read about birds throughout the world. <a href="mailto:birdnetpi@birdweather.com?subject=Request%20BirdWeather%20ID&body=<?php include($home.'/BirdNET-Pi/scripts/birdweather_request.php'); ?>" target="_blank">Email Tim</a> to request a BirdWeather ID</p>
+           <p><a href="https://app.birdweather.com" target="_blank">BirdWeather.com</a> is a weather map for bird sounds. 
+        Stations around the world supply audio and video streams to BirdWeather where they are then analyzed by BirdNET 
+        and compared to eBird Grid data. BirdWeather catalogues the bird audio and spectrogram visualizations so that you 
+        can listen to, view, and read about birds throughout the world. <br><br> 
+        To request a BirdWeather ID, You'll first need to create an account - <a href="https://app.birdweather.com/login" target="_blank">https://app.birdweather.com/</a><br>
+        Once that's done - you can go to - <a href="https://app.birdweather.com/account/stations" target="_blank">https://app.birdweather.com/account/stations</a><br>
+        Make sure that the Latitude and Longitude match what is in your BirdNET-Pi configuration.
+        <br><br>
+        <dt>NOTE - by using your BirdWeather ID - you are consenting to sharing your soundscapes and detections with BirdWeather</dt></p>
       </td></tr></table><br>
       <table class="settingstable" style="width:100%"><tr><td>
       <h2>Notifications</h2>
@@ -596,6 +606,33 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <p>! Only modify this at initial setup !</p>
       </td></tr></table>
       <br>
+
+      <table class="settingstable"><tr><td>
+      <h2>Additional Info </h2>
+      <label for="info_site">Site to pull additional species info from: </label>
+      <select name="info_site">
+      <?php
+        $info_site = array(
+          'ALLABOUTBIRDS' => 'allaboutbirds.org',
+          "EBIRD" => "ebird.org"
+        );
+
+        // Create options for each site
+        foreach($info_site as $infoTag => $infoName){
+          $isSelected = "";
+          if($config['INFO_SITE'] == $infoTag){
+            $isSelected = 'selected="selected"';
+          }
+
+          echo "<option value='{$infoTag}' $isSelected>$infoName</option>";
+        }
+      ?>
+
+      </select>
+      <p>allaboutbirds.org default
+      <br>ebirds.org has more European species</p>
+      </td></tr></table><br>
+
       <script>
         function handleChange(checkbox) {
           // this disables the input of manual date and time if the user wants to use the internet time

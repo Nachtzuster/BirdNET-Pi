@@ -117,6 +117,12 @@ APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2=""
 FLICKR_API_KEY=
 FLICKR_FILTER_EMAIL=
 
+#----------------------  Site to pull info from Images  ------------------------#
+## ALLABOUTBIRDS or EBIRD
+## default ALLABOUTBIRDS, EBIRD better for eurasian locations
+
+INFO_SITE="ALLABOUTBIRDS"
+
 ################################################################################
 #--------------------------------  Defaults  ----------------------------------#
 ################################################################################
