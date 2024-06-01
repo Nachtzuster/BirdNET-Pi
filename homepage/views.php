@@ -63,8 +63,8 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <button type="submit" name="view" value="Species Stats" form="views">Best Recordings</button>
   <button type="submit" name="view" value="Streamlit" form="views">Species Stats</button>
   <button type="submit" name="view" value="Daily Charts" form="views">Daily Charts</button>
-  <button type="submit" name="view" value="Recordings" form="views">Recordings</button>
   <button type="submit" name="view" value="Weekly Report" form="views">Weekly Report</button>
+  <button type="submit" name="view" value="Recordings" form="views">Recordings</button>
   <button type="submit" name="view" value="View Log" form="views">View Log</button>
   <button type="submit" name="view" value="Tools" form="views">Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
   <button type="button" href="javascript:void(0);" class="icon" onclick="myFunction()"><img src="images/menu.png"></button>
