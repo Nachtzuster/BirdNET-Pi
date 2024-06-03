@@ -633,6 +633,24 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <br>ebirds.org has more European species</p>
       </td></tr></table><br>
 
+
+      <table class="settingstable"><tr><td>
+      <h2>Color scheme </h2>
+      <label for="color_scheme">Color scheme for the site : </label>
+      <select name="color_scheme">
+      <?php
+      $scheme = array("light", "dark");
+      foreach($scheme as $color_scheme){
+          $isSelected = "";
+          if($config['COLOR_SCHEME'] == $color_scheme){
+            $isSelected = 'selected="selected"';
+          }
+
+          echo "<option value='{$color_scheme}' $isSelected>$color_scheme</option>";
+        }
+      ?>
+      </td></tr></table><br>
+        
       <script>
         function handleChange(checkbox) {
           // this disables the input of manual date and time if the user wants to use the internet time
