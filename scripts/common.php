@@ -286,7 +286,7 @@ function get_info_url($sciname){
 function get_color_scheme(){
   $config = get_config();
   if (strtolower($config['COLOR_SCHEME']) === 'dark'){
-    return 'dark-style.css';
+    return 'static/dark-style.css';
   } else {
     return 'style.css';
   }
