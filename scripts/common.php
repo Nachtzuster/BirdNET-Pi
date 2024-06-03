@@ -282,3 +282,12 @@ function get_info_url($sciname){
           );
   return $ret;
 }
+
+function get_color_scheme(){
+  $config = get_config();
+  if ($config['COLOR_SCHEME'] === 'DARK'){
+    return 'dark-style.css';
+  } else {
+    return 'style.css';
+  }
+}
