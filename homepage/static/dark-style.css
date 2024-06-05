@@ -581,6 +581,7 @@ button:hover {
   .banner {
     height: auto;
     margin-left: auto;
+    text-align: center;
   }
   .banner img {
     display: none;
