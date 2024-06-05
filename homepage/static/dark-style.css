@@ -580,7 +580,7 @@ button:hover {
   }
   .banner {
     height: auto;
-    margin-left: 60px;
+    margin-left: auto;
   }
   .banner img {
     display: none;
