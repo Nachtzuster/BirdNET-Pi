@@ -730,7 +730,7 @@ dt {
   width: auto;
   text-align: left;
   font-weight: bold;
-  color: black;
+  color: gray;
 }
 dd::before {
   content: ": ";
