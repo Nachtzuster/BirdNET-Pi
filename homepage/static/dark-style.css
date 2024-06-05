@@ -193,6 +193,7 @@ button:hover {
 .topimage {
   width:175px;
   display:initial !important;
+  margin-left: 60px;
 }
 
 .topnav form {
