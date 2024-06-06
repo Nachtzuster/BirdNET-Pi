@@ -529,7 +529,7 @@ button:hover {
   .systemcontrols button,.servicecontrols button {
     width: 60%;
     padding: 12px;
-    background-color: #004400;
+    background-color: #3b3b3b;
   }
   .topnav {
     flex: 100%;
@@ -569,7 +569,7 @@ button:hover {
   .systemcontrols button,.servicecontrols button {
     width: 80%;
     padding: 12px;
-    background-color: #004400;
+    background-color: #3b3b3b;
   }
   .stats img {
     width: 100%;
@@ -651,7 +651,7 @@ button:hover {
 .sortbutton {
   margin-top:10px;
   font-size:x-large;
-  background:#004400;
+  background:#3b3b3b;
   padding:5px;
   box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.10);
 }
@@ -664,7 +664,7 @@ button.legacyview {
   z-index:100;
   position:relative;
   font-size:small;
-  background:#004400;
+  background:#3b3b3b;
   padding:5px;
   transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow:0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 1px 5px 0px rgb(0 0 0 / 12%);
@@ -677,7 +677,7 @@ button.legacyview:hover  {
 button.loadmore {
   margin-top:10px;
   font-size:x-large;
-  background:#004400;
+  background:#3b3b3b;
   padding:10px;
   transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow:0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 1px 5px 0px rgb(0 0 0 / 12%);
@@ -697,7 +697,7 @@ button.loadmore:hover {
 }
 
 tr {
-  background-color:#004400;
+  background-color:#3b3b3b;
 }
 
 .history.centered form {
@@ -803,7 +803,7 @@ dialog::backdrop {
 
 .brbanner {
   padding:15px;
-  background-color:#004400;
+  background-color:#3b3b3b;
   text-align:center;
   font-size:large;
   color: #f5f5f5;
@@ -880,7 +880,7 @@ form#views button .updatenumber {
 }
 
 .testbtn {
-  background:#004400 !important;
+  background:#3b3b3b !important;
   color: #f5f5f5;
 }
 
@@ -908,7 +908,7 @@ pre#timer.bash {
   height:5px;
   line-height:5px;
   padding:3px;
-  background-color:#004400;
+  background-color:#3b3b3b;
   color: #f5f5f5;
 }
 
@@ -918,13 +918,13 @@ pre#timer.bash {
   height: 5px;
   line-height: 5px;
   padding: 3px;
-  background-color: #004400;
+  background-color: #3b3b3b;
   color: #f5f5f5;
 }
 
 .exclude_species_list_option_highlight {
   color: #f5f5f5;
-  background-color: #004400;
+  background-color: #3b3b3b;
   font-weight: bolder;
 }
 
