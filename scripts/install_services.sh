@@ -386,6 +386,10 @@ install_weekly_cron() {
   sed "s/\$USER/$USER/g" $my_dir/templates/weekly_report.cron >> /etc/crontab
 }
 
+install_apprise_healthcheck() {
+  sed "s/\$USER/$USER/g" $my_dir/templates/apprise_healthcheck.cron >> /etc/crontab
+}
+
 chown_things() {
   chown -R $USER:$USER $HOME/Bird*
 }
@@ -420,6 +424,7 @@ install_services() {
   install_birdnet_mount
   install_cleanup_cron
   install_weekly_cron
+  install_apprise_healthcheck
   increase_caddy_timeout
 
   create_necessary_dirs
