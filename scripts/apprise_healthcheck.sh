@@ -3,12 +3,11 @@ source /etc/birdnet/birdnet.conf
 
 # Check if the analysis and recording services are running, or alert the user if apprise is configured
 
-if [ -s "$HOME/BirdNET-Pi/apprise.txt" ] && [ ${APPRISE_HOURLY_HEALTHCHECK} == 1 ]; then
+if [ -s "$HOME/BirdNET-Pi/apprise.txt" ]; then
     if [[ "$(sudo systemctl is-active birdnet_analysis.service)" == "active" ]] && [[ "$(sudo systemctl is-active birdnet_recording.service)" == "active" ]]; then
         export LASTCHECK="$(date +%c)"
     else
-        NOTIFICATION="<br><b>Since:</b> ${LASTCHECK:-unknown}"
-        NOTIFICATION="<br><b>System:</b> ${SITE_NAME:-$(hostname)}"
+        NOTIFICATION=""
         STOPPEDSERVICE="<br><b>Stopped services:</b> "
         services=(birdnet_analysis
             chart_viewer
@@ -23,8 +22,12 @@ if [ -s "$HOME/BirdNET-Pi/apprise.txt" ] && [ ${APPRISE_HOURLY_HEALTHCHECK} == 1
             fi
         done
         NOTIFICATION+="$STOPPEDSERVICE"
+        NOTIFICATION+="<br><b>Additional informations</b>: "
+        NOTIFICATION+="<br><b>Since:</b> ${LASTCHECK:-unknown}"
+        NOTIFICATION+="<br><b>System:</b> ${SITE_NAME:-$(hostname)}"
+        NOTIFICATION+="<br>Available disk space: $(df -h "$(readlink -f "$HOME/BirdSongs")" | awk 'NR==2 {print $4}')"
         if [ -n "$BIRDNETPI_URL" ]; then
-            NOTIFICATION+="<br> <a href=\"$BIRDNETPI_URL\">Access your BirdNET-Pi instance</a>"
+            NOTIFICATION+="<br> <a href=\"$BIRDNETPI_URL\">Access your BirdNET-Pi</a>"
         fi
         TITLE="BirdNET-Analyzer stopped"
         $HOME/BirdNET-Pi/birdnet/bin/apprise -vv -t "$TITLE" -b "${NOTIFICATION}" --input-format=html --config="$HOME/BirdNET-Pi/apprise.txt"
