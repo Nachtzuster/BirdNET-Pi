@@ -5,8 +5,12 @@ source /etc/birdnet/birdnet.conf
 
 if [ -s "$HOME/BirdNET-Pi/apprise.txt" ]; then
     if [[ "$(sudo systemctl is-active birdnet_analysis.service)" == "active" ]] && [[ "$(sudo systemctl is-active birdnet_recording.service)" == "active" ]]; then
+        # Remove failed check
+        if [ -f "$HOME"/BirdNET-Pi/failed_servicescheck ]; then rm "$HOME"/BirdNET-Pi/failed_servicescheck; fi
         export LASTCHECK="$(date +%c)"
-    else
+    elif [ ! -f "$HOME"/BirdNET-Pi/failed_servicescheck ]; then
+        # Set failed check so it only runs once
+        touch "$HOME"/BirdNET-Pi/failed_servicescheck
         NOTIFICATION=""
         STOPPEDSERVICE="<br><b>Stopped services:</b> "
         services=(birdnet_analysis
