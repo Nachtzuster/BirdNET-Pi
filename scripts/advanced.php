@@ -579,11 +579,10 @@ foreach($formats as $format){
 <div class="float">
       <button onclick="if(<?php print($newconfig['PRIVACY_THRESHOLD']);?> != document.getElementById('privacy_threshold').value){return confirm('This will take about 90 seconds.')} collectrtspUrls();" type="submit" name="submit" value="advanced">
 <?php
-if(isset($_GET['submit'])){
-  echo "Success!";
-} else {
-  echo "Update Settings";
+if(isset($_GET['status'])){
+  echo '<script>alert("Settings successfully updated");</script>';
 }
+echo "Update Settings";
 ?>
       </button></div>
       </form>
