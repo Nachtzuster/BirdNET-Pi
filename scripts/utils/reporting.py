@@ -11,8 +11,8 @@ from time import sleep
 import requests
 from tzlocal import get_localzone
 
-from .helpers import get_settings, ParseFileName, Detection, DB_PATH
-from .notifications import sendAppriseNotifications
+from helpers import get_settings, ParseFileName, Detection, DB_PATH
+from notifications import sendAppriseNotifications
 
 log = logging.getLogger(__name__)
 
