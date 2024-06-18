@@ -650,7 +650,7 @@ echo "<table>
     $url = $info_url['URL'];
     echo "<table>
       <tr>
-      <th><a href=\"$url\" target=\"top\">$comname ($name)</a></th>
+      <th><a href=\"$url\" target=\"top\">$name</a></th>
       </tr>";
       while($results=$result2->fetchArray(SQLITE3_ASSOC))
       {
