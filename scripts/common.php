@@ -109,7 +109,7 @@ function get_sci_name($com_name) {
   }
   $sciname = null;
   foreach ($_labels_flickr as $label) {
-    if (strpos($label, $sci_name) !== false) {
+    if (strpos($label, $com_name) !== false) {
       $sciname = trim(explode("_", $label)[0]);
       break;
     }
