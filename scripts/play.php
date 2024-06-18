@@ -558,6 +558,13 @@ while ($result2->fetchArray(SQLITE3_ASSOC)) {
     $num_rows++;
 }
 $result2->reset(); // reset the pointer to the beginning of the result set
+$sciname = get_sci_name($name);
+$info_url = get_info_url($sciname);
+$url = $info_url['URL'];
+echo "<table>
+  <tr>
+  <th><a href=\"$url\" target=\"top\">$name</a></th>
+  </tr>";
   $iter=0;
   while($results=$result2->fetchArray(SQLITE3_ASSOC))
   {
@@ -609,10 +616,10 @@ $result2->reset(); // reset the pointer to the beginning of the result set
         $shiftTitle = "This file is not shifted in frequency.";
         $shiftAction = "shift";
       }
-  $info_url = get_info_url($results['Sci_Name']);
-  $url = $info_url['URL'];
-  echo "<table><tr><th><a href=\"$url\" target=\"top\">$name</a></th>
-</tr><td class=\"relative\">
+
+      echo "<tr>
+  <td class=\"relative\"> 
+
 <img style='cursor:pointer;right:120px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Delete Detection'> 
 <img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
@@ -637,9 +644,12 @@ $result2->reset(); // reset the pointer to the beginning of the result set
     $statement2 = $db->prepare("SELECT * FROM detections where File_name == \"$name\" ORDER BY Date DESC, Time DESC");
     ensure_db_ok($statement2);
     $result2 = $statement2->execute();
+    $sciname = get_sci_name($name);
+    $info_url = get_info_url($sciname);
+    $url = $info_url['URL'];
     echo "<table>
       <tr>
-      <th>$name</th>
+      <th><a href=\"$url\" target=\"top\">$name</a></th>
       </tr>";
       while($results=$result2->fetchArray(SQLITE3_ASSOC))
       {
