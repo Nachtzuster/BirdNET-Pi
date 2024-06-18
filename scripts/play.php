@@ -536,7 +536,6 @@ if ($fp) {
   $disk_check_exclude_arr = [];
 }
 
-$sciname = 
 $name = htmlspecialchars_decode($_GET['species'], ENT_QUOTES);
 if(isset($_SESSION['date'])) {
   $date = $_SESSION['date'];
@@ -610,14 +609,10 @@ $result2->reset(); // reset the pointer to the beginning of the result set
         $shiftTitle = "This file is not shifted in frequency.";
         $shiftAction = "shift";
       }
-  $info_url = get_info_url($sciname);
-      echo "<table>
-  <tr>
-  <th><a href=\"$info_url\">$name</a></th>
-  </tr>";
-      echo "<tr>
-  <td class=\"relative\"> 
-
+  $info_url = get_info_url($results['Sci_Name']);
+  $url = $info_url['URL'];
+  echo "<table><tr><th><a href=\"$url\" target=\"top\">$name</a></th>
+</tr><td class=\"relative\">
 <img style='cursor:pointer;right:120px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Delete Detection'> 
 <img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
