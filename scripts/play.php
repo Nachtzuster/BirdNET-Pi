@@ -536,6 +536,7 @@ if ($fp) {
   $disk_check_exclude_arr = [];
 }
 
+$sciname = 
 $name = htmlspecialchars_decode($_GET['species'], ENT_QUOTES);
 if(isset($_SESSION['date'])) {
   $date = $_SESSION['date'];
@@ -558,10 +559,6 @@ while ($result2->fetchArray(SQLITE3_ASSOC)) {
     $num_rows++;
 }
 $result2->reset(); // reset the pointer to the beginning of the result set
-echo "<table>
-  <tr>
-  <th>$name</th>
-  </tr>";
   $iter=0;
   while($results=$result2->fetchArray(SQLITE3_ASSOC))
   {
@@ -613,7 +610,11 @@ echo "<table>
         $shiftTitle = "This file is not shifted in frequency.";
         $shiftAction = "shift";
       }
-
+  $info_url = get_info_url($sciname);
+      echo "<table>
+  <tr>
+  <th><a href=\"$info_url\">$name</a></th>
+  </tr>";
       echo "<tr>
   <td class=\"relative\"> 
 
