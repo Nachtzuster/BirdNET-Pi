@@ -644,12 +644,9 @@ echo "<table>
     $statement2 = $db->prepare("SELECT * FROM detections where File_name == \"$name\" ORDER BY Date DESC, Time DESC");
     ensure_db_ok($statement2);
     $result2 = $statement2->execute();
-    $sciname = get_sci_name($name);
-    $info_url = get_info_url($sciname);
-    $url = $info_url['URL'];
     echo "<table>
       <tr>
-      <th><a href=\"$url\" target=\"top\">$name</a></th>
+      <th>$name</th>
       </tr>";
       while($results=$result2->fetchArray(SQLITE3_ASSOC))
       {
