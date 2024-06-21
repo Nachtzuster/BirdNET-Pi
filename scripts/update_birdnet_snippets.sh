@@ -86,6 +86,14 @@ SRC='^APPRISE_NOTIFICATION_BODY="A \$comname \(\$sciname\)  was just detected wi
 DST='APPRISE_NOTIFICATION_BODY="A \$comname (\$sciname)  was just detected with a confidence of \$confidence (\$reason)"'
 sed -i -E "s/$SRC/$DST/" /etc/birdnet/birdnet.conf
 
+if ! grep -E '^INFO_SITE=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo "INFO_SITE=\"ALLABOUTBIRDS\"" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^COLOR_SCHEME=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo "COLOR_SCHEME=\"light\"" >> /etc/birdnet/birdnet.conf
+fi
+
 [ -d $RECS_DIR/StreamData ] || sudo_with_user mkdir -p $RECS_DIR/StreamData
 [ -L ${EXTRACTED}/spectrogram.png ] || sudo_with_user ln -sf ${RECS_DIR}/StreamData/spectrogram.png ${EXTRACTED}/spectrogram.png
 
@@ -99,7 +107,7 @@ if ! which gcc &>/dev/null;then
 fi
 
 apprise_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import apprise; print(apprise.__version__)")
-[[ $apprise_version != "1.7.5" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install apprise==1.7.5
+[[ $apprise_version != "1.8.0" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install apprise==1.8.0
 version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import streamlit; print(streamlit.__version__)")
 [[ $version != "1.31.0" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install streamlit==1.31.0
 version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import seaborn; print(seaborn.__version__)")

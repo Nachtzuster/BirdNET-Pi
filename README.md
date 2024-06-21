@@ -78,6 +78,7 @@ Currently listening in these countries . . . that I know of . . .
 - Oman
 - Belarus
 - Czech Republic
+- Japan
 
 ## Features
 * **24/7 recording and automatic identification** of bird songs, chirps, and peeps using BirdNET machine learning
@@ -93,7 +94,7 @@ Currently listening in these countries . . . that I know of . . .
 * SQLite3 Database
 * [Adminer](https://www.adminer.org/) database maintenance
 * [phpSysInfo](https://github.com/phpsysinfo/phpsysinfo)
-* [Apprise Notifications](https://github.com/caronc/apprise) supporting 70+ notification platforms
+* [Apprise Notifications](https://github.com/caronc/apprise) supporting 90+ notification platforms
 * Localization supported
 
 ## Requirements

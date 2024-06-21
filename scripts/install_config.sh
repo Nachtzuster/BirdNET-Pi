@@ -9,7 +9,7 @@ birdnet_conf=$my_dir/birdnet.conf
 
 # Retrieve latitude and longitude from web
 json=$(curl -s4 http://ip-api.com/json)
-if [ "$(echo "$json" | jq -r .status)" = "success" ]; then
+if [ -n "$json" ] && [ "$(echo "$json" | jq -r .status)" = "success" ]; then
   LATITUDE=$(echo "$json" | jq .lat)
   LONGITUDE=$(echo "$json" | jq .lon)
 else
@@ -116,6 +116,18 @@ APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2=""
 
 FLICKR_API_KEY=
 FLICKR_FILTER_EMAIL=
+
+#----------------------  Site to pull info from Images  ------------------------#
+## ALLABOUTBIRDS or EBIRD
+## default ALLABOUTBIRDS, EBIRD better for eurasian locations
+
+INFO_SITE="ALLABOUTBIRDS"
+
+#-------------------------------  Color scheme  --------------------------------#
+## light or dark
+## default light
+
+COLOR_SCHEME="light"
 
 ################################################################################
 #--------------------------------  Defaults  ----------------------------------#

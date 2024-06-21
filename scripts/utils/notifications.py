@@ -49,6 +49,7 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
             .replace("$confidencepct", confidencepct) \
             .replace("$confidence", confidence) \
             .replace("$listenurl", listenurl) \
+            .replace("$friendlyurl", friendlyurl) \
             .replace("$date", date) \
             .replace("$time", time) \
             .replace("$week", week) \
@@ -97,6 +98,7 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
             websiteurl = "http://"+socket.gethostname()+".local"
 
         listenurl = websiteurl+"?filename="+path
+        friendlyurl = "[Listen here]("+listenurl+")"
         image_url = ""
 
         if len(settings_dict.get('FLICKR_API_KEY')) > 0 and "$flickrimage" in body:

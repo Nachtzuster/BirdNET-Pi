@@ -252,7 +252,7 @@ $count = $count_labels;
 $newconfig = get_config();
 ?>
       <div class="brbanner"><h1>Advanced Settings</h1></div><br>
-    <form action="" method="GET">
+    <form id="advancedform" action="" method="GET">
       <table class="settingstable"><tr><td>
       <h2>Privacy Threshold</h2>
       <div class="slidecontainer">
@@ -577,13 +577,12 @@ foreach($formats as $format){
       <br><br>
       <input type="hidden" name="view" value="Advanced">
 <div class="float">
-      <button onclick="if(<?php print($newconfig['PRIVACY_THRESHOLD']);?> != document.getElementById('privacy_threshold').value){return confirm('This will take about 90 seconds.')} collectrtspUrls();" type="submit" name="submit" value="advanced">
+      <button type="submit" id="advancedformsubmit" onclick="collectrtspUrls(); if(document.getElementById('advancedform').checkValidity()){this.innerHTML = 'Updating... please wait.';this.classList.add('disabled')}" name="submit" value="advanced">
 <?php
 if(isset($_GET['submit'])){
-  echo "Success!";
-} else {
-  echo "Update Settings";
+  echo '<script>alert("Settings successfully updated");</script>';
 }
+echo "Update Settings";
 ?>
       </button></div>
       </form>

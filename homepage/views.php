@@ -10,6 +10,7 @@ require_once 'scripts/common.php';
 $user = get_user();
 $home = get_home();
 $config = get_config();
+$color_scheme = get_color_scheme();
 set_timezone();
 
 if(is_authenticated() && (!isset($_SESSION['behind']) || !isset($_SESSION['behind_time']) || time() > $_SESSION['behind_time'] + 86400)) {
@@ -52,7 +53,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BirdNET-Pi DB</title>
-  <link rel="stylesheet" href="style.css?v=<?php echo date ('n.d.y', filemtime('style.css')); ?>">
+  <link rel="stylesheet" href="<?php echo $color_scheme . '?v=' . date('n.d.y', filemtime($color_scheme)); ?>">
 </head>
 <body>
 <form action="views.php" method="GET" id="views">
@@ -63,6 +64,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <button type="submit" name="view" value="Species Stats" form="views">Best Recordings</button>
   <button type="submit" name="view" value="Streamlit" form="views">Species Stats</button>
   <button type="submit" name="view" value="Daily Charts" form="views">Daily Charts</button>
+  <button type="submit" name="view" value="Weekly Report" form="views">Weekly Report</button>
   <button type="submit" name="view" value="Recordings" form="views">Recordings</button>
   <button type="submit" name="view" value="View Log" form="views">View Log</button>
   <button type="submit" name="view" value="Tools" form="views">Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
@@ -136,7 +138,7 @@ if(isset($_GET['view'])){
       <button type=\"submit\" name=\"view\" value=\"System Controls\" form=\"views\">System Controls".$updatediv."</button>
       <button type=\"submit\" name=\"view\" value=\"Services\" form=\"views\">Services</button>
       <button type=\"submit\" name=\"view\" value=\"File\" form=\"views\">File Manager</button>
-      <a href=\"scripts/adminer.php\" target=\"_blank\"><button type=\"submit\" form=\"\">Database Maintenance</button></a>
+      <button type=\"submit\" name=\"view\" value=\"Adminer\" form=\"views\">Database Maintenance</button>
       <button type=\"submit\" name=\"view\" value=\"Webterm\" form=\"views\">Web Terminal</button>
       <button type=\"submit\" name=\"view\" value=\"Included\" form=\"views\">Custom Species List</button>
       <button type=\"submit\" name=\"view\" value=\"Excluded\" form=\"views\">Excluded Species List</button>
@@ -204,6 +206,9 @@ if(isset($_GET['view'])){
   }
   if($_GET['view'] == "File"){
     echo "<iframe src='scripts/filemanager/filemanager.php'></iframe>";
+  }
+  if($_GET['view'] == "Adminer"){
+    echo "<iframe src='scripts/adminer.php'></iframe>";
   }
   if($_GET['view'] == "Webterm"){
     ensure_authenticated('You cannot access the web terminal');

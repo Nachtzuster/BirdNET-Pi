@@ -15,11 +15,17 @@ get_tf_whl () {
     aarch64-311)
       WHL=tflite_runtime-2.11.0-cp311-cp311-linux_aarch64.whl
       ;;
+    aarch64-312)
+      WHL=tflite_runtime-2.11.0-cp312-cp312-linux_aarch64.whl
+      ;;
     x86_64-39)
       WHL=tflite_runtime-2.11.0-cp39-cp39-linux_x86_64.whl
       ;;
     x86_64-311)
       WHL=tflite_runtime-2.11.0-cp311-cp311-linux_x86_64.whl
+      ;;
+    x86_64-312)
+      WHL=tflite_runtime-2.11.0-cp312-cp312-linux_x86_64.whl
       ;;
     *)
       echo "No tflite version found"

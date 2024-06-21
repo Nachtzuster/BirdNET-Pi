@@ -1,7 +1,10 @@
-import numpy as np
-import os
 import argparse
 import datetime
+import os
+
+import numpy as np
+
+from utils.helpers import get_settings
 
 try:
     import tflite_runtime.interpreter as tflite
@@ -94,11 +97,10 @@ def getSpeciesList(lat, lon, week, threshold=0.05, sort=False):
 
 userDir = os.path.expanduser('~')
 DB_PATH = userDir + '/BirdNET-Pi/scripts/birds.db'
-with open(userDir + '/BirdNET-Pi/scripts/thisrun.txt', 'r') as f:
 
-    this_run = f.readlines()
-    lat = str(str(str([i for i in this_run if i.startswith('LATITUDE')]).split('=')[1]).split('\\')[0])
-    lon = str(str(str([i for i in this_run if i.startswith('LONGITUDE')]).split('=')[1]).split('\\')[0])
+conf = get_settings()
+lat = conf.getfloat('LATITUDE')
+lon = conf.getfloat('LONGITUDE')
 
 weekofyear = datetime.datetime.today().isocalendar()[1]
 if __name__ == '__main__':

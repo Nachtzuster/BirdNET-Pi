@@ -13,7 +13,7 @@ import seaborn as sns
 from matplotlib import rcParams
 from matplotlib.colors import LogNorm
 
-from utils.helpers import DB_PATH
+from utils.helpers import DB_PATH, get_settings
 
 
 def get_data(now=None):
@@ -150,12 +150,18 @@ def create_plot(df_plt_today, now, is_top=None):
 
 
 def load_fonts():
+    conf = get_settings()
     # Add every font at the specified location
     font_dir = [os.path.expanduser('~/BirdNET-Pi/homepage/static')]
     for font in font_manager.findSystemFonts(font_dir, fontext='ttf'):
         font_manager.fontManager.addfont(font)
     # Set font family globally
-    rcParams['font.family'] = 'Roboto Flex'
+    if conf['DATABASE_LANG'] in ['ja', 'zh']:
+        rcParams['font.family'] = 'Noto Sans JP'
+    elif conf['DATABASE_LANG'] == 'th':
+        rcParams['font.family'] = 'Noto Sans Thai'
+    else:
+        rcParams['font.family'] = 'Roboto Flex'
 
 
 def main(daemon, sleep_m):

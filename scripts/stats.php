@@ -151,7 +151,7 @@ function setModalText(iter, title, text, authorlink) {
 <?php if(isset($_GET['species'])){
   $species = $_GET['species'];
   $iter=0;
-  $lines;
+  $config = get_config();
 while($results=$result3->fetchArray(SQLITE3_ASSOC)){
   $count = $results['COUNT(*)'];
   $maxconf = round((float)round($results['MAX(Confidence)'],2) * 100 ) . '%';
@@ -164,13 +164,18 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
   $comname = preg_replace('/\'/', '', $comname);
   $linkname = preg_replace('/_/', '+', $dbsciname);
   $filename = "/By_Date/".$date."/".$comname."/".$results['File_Name'];
+  $engname = get_com_en_name($sciname);
+
+  $info_url = get_info_url($results['Sci_Name']);
+  $url = $info_url['URL'];
+  $url_title = $info_url['TITLE'];
   echo str_pad("<h3>$species</h3>
     <table><tr>
   <td class=\"relative\"><a target=\"_blank\" href=\"index.php?filename=".$results['File_Name']."\"><img title=\"Open in new tab\" class=\"copyimage\" width=25 src=\"images/copy.png\"></a> <a href=\"https://wikipedia.org/wiki/$dbsciname\" target=\"top\"/><i>$sciname</i></a><br>
   <b>Occurrences: </b>$count<br>
   <b>Max Confidence: </b>$maxconf<br>
   <b>Best Recording: </b>$date $time<br>
-  <a href=\"https://allaboutbirds.org/guide/$comname\" target=\"top\"/>All About Birds</a><br>
+  <a href=\"$url\" target=\"top\"/>$url_title</a><br>
   <video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename.png\" title=\"$filename\"><source src=\"$filename\"></video></td>
   </tr>
     </table>
@@ -180,21 +185,8 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
   
   ob_flush();
   flush();
-  $config = get_config();
 
   if (! empty($config["FLICKR_API_KEY"])) {
-    // only open the file once per script execution
-    if(!isset($lines)) {
-      $lines = file($home."/BirdNET-Pi/model/labels_flickr.txt");
-    }
-    // convert sci name to English name
-    foreach($lines as $line){ 
-      if(strpos($line, $results['Sci_Name']) !== false){
-        $engname = trim(explode("_", $line)[1]);
-        break;
-      }
-    }
-
     $flickrjson = json_decode(file_get_contents("https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=".$config["FLICKR_API_KEY"]."&text=\"".str_replace(' ', '%20', $engname)."\"&license=2%2C3%2C4%2C5%2C6%2C9&sort=relevance&per_page=15&format=json&nojsoncallback=1"), true)["photos"]["photo"];
 
     foreach ($flickrjson as $val) {
