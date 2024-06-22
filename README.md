@@ -138,6 +138,20 @@ Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki)
 
 Use the web interface and go to "Tools" > "System Controls" > "Update." If you encounter any issues with that, or suspect that the update did not work for some reason, please save its output and post it in an issue where we can help.
 
+## Backup and Restore
+
+This script is primary meant for migrating your data for one system to another. Since the time required to create or restore a backup depends on the size of the data set and the speed of the storage, this could take quite a while.
+These examples assume the backup medium is mounted on `/mnt`
+
+To backup:
+```commandline
+./scripts/backup_data.sh -a backup -f /mnt/birds/backup-2024-07-09.tar
+```
+To restore:
+```commandline
+./scripts/backup_data.sh -a restore -f /mnt/birds/backup-2024-07-09.tar
+```
+
 ## Uninstallation
 ```
 /usr/local/bin/uninstall.sh && cd ~ && rm -drf BirdNET-Pi
