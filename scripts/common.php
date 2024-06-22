@@ -104,11 +104,11 @@ function get_com_en_name($sci_name) {
 }
 
 function get_sci_name($com_name) {
-  if (!isset($_labels_flickr)) {
-    $_labels_flickr = file(get_home() . "/BirdNET-Pi/model/labels.txt");
+  if (!isset($_labels)) {
+    $_labels = file(get_home() . "/BirdNET-Pi/model/labels.txt");
   }
   $sciname = null;
-  foreach ($_labels_flickr as $label) {
+  foreach ($_labels as $label) {
     if (strpos($label, $com_name) !== false) {
       $sciname = trim(explode("_", $label)[0]);
       break;
