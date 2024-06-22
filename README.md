@@ -72,7 +72,7 @@ Currently listening in these countries . . . that I know of . . .
 - Colombia
 - Estonia
 - Tasmania
-- Luxembourgh
+- Luxembourg
 - Crete
 - Rwanda
 - Oman
