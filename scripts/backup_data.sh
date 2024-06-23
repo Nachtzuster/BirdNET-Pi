@@ -13,6 +13,7 @@ usage() { echo "Usage: $0 -a backup|restore -f <backup_file>" 1>&2; exit 1; }
 
 unset -v ACTION
 unset -v ARCHIVE
+unset -v QUIET
 while getopts "a:f:" o; do
   case "${o}" in
     a)
@@ -30,26 +31,31 @@ done
 
 [ -z "$ACTION" ] && usage && exit 1
 [ -z "$ARCHIVE" ] && usage && exit 1
+[ "$ARCHIVE" == '-' ] && QUIET=1
 
 PHP_SERVICE=$(systemctl list-unit-files -t service --output json --no-pager php*-fpm.service | jq --raw-output '.[0].unit_file')
 [ -z "$PHP_SERVICE" ] || [ "$PHP_SERVICE" == 'null' ] && echo "Could not determine the php service name, this is most likely a bug." && exit 1
 
+log() {
+  [ -z "$QUIET" ] && echo "$1"
+}
+
 backup_check() {
-  [ -f $ARCHIVE ] && echo $ARCHIVE already exists && exit 1
+  [ "$ARCHIVE" != '-' ] && [ -f "$ARCHIVE" ] && echo "$ARCHIVE already exists" && exit 1
 }
 
 backup() {
-  echo "Starting backup"
-  TAR_ACTION="create"
+  log "Starting backup"
+  CMD='tar --create -f "$ARCHIVE"'
   for obj in  "${objects[@]}";do
-    tar --"$TAR_ACTION" -f "$ARCHIVE" -C "$(dirname "$obj")" "$(basename "$obj")"
-    [ $TAR_ACTION != "append" ] && TAR_ACTION="append"
+    CMD="$CMD -C $(dirname "$obj") $(basename "$obj")"
   done
-  echo "Backup done"
+  eval "$CMD"
+  log "Backup done"
 }
 
 restore_check() {
-  [ ! -f $ARCHIVE ] && echo $ARCHIVE not found && exit 1
+  [ ! -f "$ARCHIVE" ] && echo "$ARCHIVE" not found && exit 1
   arch_list=$(tar --list --exclude="*/*" -f "$ARCHIVE" | sed 's/\///')
   for obj in  "${objects[@]}";do
     part2=$(basename "$obj")
@@ -58,12 +64,12 @@ restore_check() {
 }
 
 restore() {
-  echo "Starting restore"
+  log "Starting restore"
   for obj in  "${objects[@]}";do
     tar --extract - p -f "$ARCHIVE" -C "$(dirname "$obj")" "$(basename "$obj")"
   done
   sed -i "s/BIRDNET_USER=.*/BIRDNET_USER=$BIRDNET_USER/" "/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf"
-  echo "Restore done"
+  log "Restore done"
 }
 
 objects=("/home/$BIRDNET_USER/BirdSongs/Extracted/By_Date"
@@ -72,19 +78,17 @@ objects=("/home/$BIRDNET_USER/BirdSongs/Extracted/By_Date"
 "/home/$BIRDNET_USER/BirdNET-Pi/scripts/birds.db"
 "/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf")
 
-set -x # Debugging
-
 [ $ACTION == "backup" ] && backup_check
 [ $ACTION == "restore" ] && restore_check
 
-echo "Stopping services"
+log "Stopping services"
 "$my_dir/stop_core_services.sh"
 sudo systemctl stop "$PHP_SERVICE"
 
 [ $ACTION == "backup" ] && backup
 [ $ACTION == "restore" ] && restore
 
-echo "Restarting services"
+log "Restarting services"
 sudo systemctl restart "$PHP_SERVICE"
 sudo systemctl restart caddy.service
-"$my_dir/restart_services.sh"
+"$my_dir/restart_services.sh" &>/dev/null
