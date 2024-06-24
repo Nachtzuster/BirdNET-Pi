@@ -6,8 +6,12 @@ import logging
 import os
 import sqlite3
 import subprocess
-from time import sleep
-
+from scipy.io import wavfile
+from scipy import signal
+import noisereduce
+import numpy as np
+import time
+import pkg_resources
 import requests
 from tzlocal import get_localzone
 
@@ -23,14 +27,38 @@ def get_safe_title(title):
     ret = result.stdout.decode('utf-8')
     return ret
 
-
 def extract(in_file, out_file, start, stop):
-    result = subprocess.run(['sox', '-V1', f'{in_file}', f'{out_file}', 'trim', f'={start}', f'={stop}'],
-                            check=True, capture_output=True)
-    ret = result.stdout.decode('utf-8')
-    err = result.stderr.decode('utf-8')
-    if err:
-        raise RuntimeError(f'{ret}:\n {err}')
+    log.info(f"Using python to trim input {in_file}, reduce noise, highpass filter, normalize, then output to {out_file}")
+   
+    tstart = time.time()
+
+    rate, data = wavfile.read(in_file)
+
+    # perform noise reduction before trimming so it has some background
+    reduced_noise = noisereduce.reduce_noise(y=data, sr=rate)
+
+    # trim to start and stop of detection 
+    s=int(start*rate)
+    e=int(stop*rate)
+    #log.info(f"Trimming file of {data.size} samples to range {s} - {e}") 
+    trimmed = reduced_noise[s:e]
+
+    # design and apply highpass filter
+    cutoff = 1000.0
+    b, a = signal.butter(N=6, Wn=cutoff, btype='highpass', fs=rate)
+    filtered = signal.filtfilt(b, a, reduced_noise)
+
+    # normalize for 16 bit integer output
+    normalization = int(32000 / max(filtered))
+
+    output = (filtered * normalization).astype(np.int16)
+
+    wavfile.write(out_file, rate, output)
+
+    elapsed = time.time() - tstart
+    log.info(f"Performed noise reduction, filter, normalize in {elapsed:.1f} seconds.")
+
+    ret = 0
     return ret
 
 
@@ -97,7 +125,7 @@ def write_to_db(file: ParseFileName, detection: Detection):
             break
         except BaseException as e:
             log.warning("Database busy: %s", e)
-            sleep(2)
+            time.sleep(2)
 
 
 def summary(file: ParseFileName, detection: Detection):
