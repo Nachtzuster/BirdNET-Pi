@@ -130,6 +130,28 @@ if(isset($_GET['submit'])) {
     }
   }
 
+if (isset($_GET["max_files_species"])) {
+    $max_files_species = $_GET["max_files_species"];
+    if (empty($max_files_species)) {
+        $max_files_species = "1000";
+        $contents .= "\n" . ($additional_text = "MAX_FILE_SPECIES=$max_files_species");
+    }
+    if (strcmp($max_files_species, $config['MAX_FILES_SPECIES']) !== 0) {
+        $contents = preg_replace("/MAX_FILES_SPECIES=.*/", "MAX_FILES_SPECIES=$max_files_species", $contents);
+    }
+}
+
+if (isset($_GET["max_disk_usage"])) {
+    $max_disk_usage = $_GET["max_disk_usage"];
+    if (empty($max_disk_usage)) {
+        $max_disk_usage = "95";
+        $contents .= "\n" . ($additional_text = "MAX_DISK_USAGE=$max_disk_usage");
+    }
+    if (strcmp($max_disk_usage, $config['MAX_DISK_USAGE']) !== 0) {
+        $contents = preg_replace("/MAX_DISK_USAGE=.*/", "MAX_DISK_USAGE=$max_disk_usage", $contents);
+    }
+}
+	
   if(isset($_GET["privacy_threshold"])) {
     $privacy_threshold = $_GET["privacy_threshold"];
     if(strcmp($privacy_threshold,$config['PRIVACY_THRESHOLD']) !== 0) {
@@ -274,12 +296,24 @@ $newconfig = get_config();
       </td></tr></table><br>
       
       <table class="settingstable"><tr><td>
-      <h2>Full Disk Behaviour</h2>
+      <h2>Disk Management</h2>
       <label for="purge">
       <input name="full_disk" type="radio" id="purge" value="purge" <?php if (strcmp($newconfig['FULL_DISK'], "purge") == 0) { echo "checked"; }?>>Purge</label>
       <label for="keep">
       <input name="full_disk" type="radio" id="keep" value="keep" <?php if (strcmp($newconfig['FULL_DISK'], "keep") == 0) { echo "checked"; }?>>Keep</label>
       <p>When the disk becomes full, you can choose to 'purge' old files to make room for new ones or 'keep' your data and stop all services instead.<br>Note: you can exclude specific files from 'purge' on the Recordings page.</p>
+      <br>
+      <label for="max_disk_usage">Max disk space usage before purge :</label>
+      <input name="max_disk_usage" type="number" style="width:6em;" max="95" min="0" step="1" value="<?php print($newconfig['MAX_DISK_USAGE']);?>"/>
+      </td></tr><tr><td>
+      Defines the maximum of disk size that BirdNET-Pi is allowed to use before purging files
+      <br><br>
+      <label for="max_files_species">Amount of files to keep for each specie :</label>
+      <input name="max_files_species" type="number" style="width:6em;" min="0" step="1" value="<?php print($newconfig['MAX_FILES_SPECIES']);?>"/>
+      </td></tr><tr><td>
+      If different than 0 (keep all), defines the maximum number of files to be kept for each species, with priority give to files with highest confidence. 
+      This value does not take into account the last 7 days (protected by default) nor the files protected of purge through the "lock" icon. 
+      The observations in sqlite, and therefore statistics are not impacted by this settings.<br>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
 

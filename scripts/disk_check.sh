@@ -3,8 +3,9 @@ set -x
 
 source /etc/birdnet/birdnet.conf
 used="$(df -h ${EXTRACTED} | tail -n1 | awk '{print $5}')"
+max_disk_usage="${MAX_DISK_USAGE:-95}"
 
-if [ "${used//%}" -ge 95 ]; then
+if [ "${used//%}" -ge "$max_disk_usage" ]; then
 
   case $FULL_DISK in
     purge) echo "Removing oldest data"
