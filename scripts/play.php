@@ -562,9 +562,11 @@ $sciname = get_sci_name($name);
 $info_url = get_info_url($sciname);
 $url = $info_url['URL'];
 echo "<table>
-  <tr>
-  <th><a href=\"$url\" target=\"top\">$name</a></th>
-  </tr>";
+  <tr><th>$name<br><span style=\"font-weight:normal;\">
+  <i>$sciname</i></span><br>
+    <a href=\"$url\" target=\"_blank\"><img title=\"$url_title\" src=\"images/info.png\" width=\"20\"></a>
+    <a href=\"https://wikipedia.org/wiki/$sciname\" target=\"_blank\"><img title=\"Wikipedia\" src=\"images/wiki.png\" width=\"20\"></a>
+  </th></tr>";
   $iter=0;
   while($results=$result2->fetchArray(SQLITE3_ASSOC))
   {
@@ -649,9 +651,11 @@ echo "<table>
     $info_url = get_info_url($sciname);
     $url = $info_url['URL'];
     echo "<table>
-      <tr>
-      <th><a href=\"$url\" target=\"top\">$name</a></th>
-      </tr>";
+      <tr><th>$name<br>
+      <i>$sciname</i><br>
+          <a href=\"$url\" target=\"_blank\"><img title=\"$url_title\" src=\"images/info.png\" width=\"20\"></a>
+          <a href=\"https://wikipedia.org/wiki/$sciname\" target=\"_blank\"><img title=\"Wikipedia\" src=\"images/wiki.png\" width=\"20\"></a>
+      </th></tr>";
       while($results=$result2->fetchArray(SQLITE3_ASSOC))
       {
         $comname = preg_replace('/ /', '_', $results['Com_Name']);

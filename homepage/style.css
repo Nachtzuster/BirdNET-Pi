@@ -814,7 +814,9 @@ form#views button .updatenumber {
 }
 #recent_detection_middle_td img{
   width:unset !important;
-  height:75px;
+  max-width:50px;
+  max-height:50px;
+  padding:0px;
   float:left;
 }
 
