@@ -432,17 +432,6 @@ function generateMiniGraph(elem, comname) {
       }
       var chartWindow = document.createElement('div');
       chartWindow.className = "chartdiv"
-      chartWindow.style.position = 'fixed';
-      chartWindow.style.top = '0%';
-      chartWindow.style.left = '50%';
-      chartWindow.style.width = window.innerWidth < 700 ? '40%' : '20%';
-      chartWindow.style.height = window.innerWidth < 700 ? '25%' : '16%';
-      chartWindow.style.backgroundColor = '#fff';
-      chartWindow.style.zIndex = '9999';
-      chartWindow.style.overflow = 'auto';
-      chartWindow.style.borderRadius = '5px';
-      chartWindow.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-
       document.body.appendChild(chartWindow);
 
 

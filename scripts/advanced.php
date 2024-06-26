@@ -331,7 +331,7 @@ $newconfig = get_config();
       <input name="extraction_length" oninput="this.setAttribute('max', document.getElementsByName('recording_length')[0].value);" type="number" style="width:3em;" min="3" value="<?php print($newconfig['EXTRACTION_LENGTH']);?>" /><br>
       <p>Set Extraction Length to something less than your Recording Length. Min=3 Max=Recording Length</p>
       <label for="audiofmt">Extractions Audio Format</label>
-      <select name="audiofmt">
+      <select name="audiofmt" class="testbtn">
       <option selected="<?php print($newconfig['AUDIOFMT']);?>"><?php print($newconfig['AUDIOFMT']);?></option>
 <?php
   $formats = array("8svx", "aif", "aifc", "aiff", "aiffc", "al", "amb", "amr-nb", "amr-wb", "anb", "au", "avr", "awb", "caf", "cdda", "cdr", "cvs", "cvsd", "cvu", "dat", "dvms", "f32", "f4", "f64", "f8", "fap", "flac", "fssd", "gsm", "gsrt", "hcom", "htk", "ima", "ircam", "la", "lpc", "lpc10", "lu", "mat", "mat4", "mat5", "maud", "mp2", "mp3", "nist", "ogg", "paf", "prc", "pvf", "raw", "s1", "s16", "s2", "s24", "s3", "s32", "s4", "s8", "sb", "sd2", "sds", "sf", "sl", "sln", "smp", "snd", "sndfile", "sndr", "sndt", "sou", "sox", "sph", "sw", "txw", "u1", "u16", "u2", "u24", "u3", "u32", "u4", "u8", "ub", "ul", "uw", "vms", "voc", "vorbis", "vox", "w64", "wav", "wavpcm", "wv", "wve", "xa", "xi");
@@ -494,7 +494,7 @@ foreach($formats as $format){
         <p style="margin-left: 40px">
 
       <label for="freqshift_tool">Shifting tool: </label>
-      <select name="freqshift_tool">
+      <select name="freqshift_tool" class="testbtn">
             <option selected="<?php print($newconfig['FREQSHIFT_TOOL']);?>"><?php print($newconfig['FREQSHIFT_TOOL']);?></option>
       <?php
         $formats = array("sox","ffmpeg");
@@ -545,7 +545,7 @@ foreach($formats as $format){
             </tr>
             <tr>
                 <td>Birdnet Recording:
-                    <select id="LogLevel_BirdnetRecordingService" name="LogLevel_BirdnetRecordingService">
+                    <select class="testbtn" id="LogLevel_BirdnetRecordingService" name="LogLevel_BirdnetRecordingService">
                         <option value="error" <?php echo $newconfig['LogLevel_BirdnetRecordingService'] == "error" || !array_key_exists('LogLevel_BirdnetRecordingService', $newconfig) ? "selected=''" : "" ?>>
                             Errors Only
                         </option>
@@ -563,7 +563,7 @@ foreach($formats as $format){
             </tr>
             <tr>
                 <td>Live Audio Stream:
-                    <select id="LogLevel_LiveAudioStreamService" name="LogLevel_LiveAudioStreamService">
+                    <select class="testbtn" id="LogLevel_LiveAudioStreamService" name="LogLevel_LiveAudioStreamService">
                         <option value="error" <?php echo $newconfig['LogLevel_LiveAudioStreamService'] == "error" || !array_key_exists('LogLevel_LiveAudioStreamService', $newconfig) ? "selected=''" : "" ?>>
                             Errors Only
                         </option>
@@ -581,7 +581,7 @@ foreach($formats as $format){
             </tr>
             <tr>
                 <td>Spectrogram Service:
-                    <select id="LogLevel_SpectrogramViewerService" name="LogLevel_SpectrogramViewerService">
+                    <select class="testbtn" id="LogLevel_SpectrogramViewerService" name="LogLevel_SpectrogramViewerService">
                         <option value="error" <?php echo $newconfig['LogLevel_SpectrogramViewerService'] == "error" || !array_key_exists('LogLevel_SpectrogramViewerService', $newconfig) ? "selected=''" : "" ?>>
                             Errors Only
                         </option>
