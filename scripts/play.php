@@ -399,8 +399,8 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
 ?>
 <div class="play">
 <?php if($view == "byspecies" || $view == "date") { ?>
-  <div style="width: auto;
-   text-align: center"> 
+<div style="width: auto;
+   text-align: center">
    <form action="views.php" method="GET">
       <input type="hidden" name="view" value="Recordings">
       <input type="hidden" name="<?php echo $view; ?>" value="<?php echo $_GET['date']; ?>">
