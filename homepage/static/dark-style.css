@@ -208,7 +208,7 @@ button:hover {
   width:175px;
   display:initial !important;
   margin-left: 60px;
-  filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 0.6));
+  filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 1.0));
 }
 
 .topnav form {
@@ -243,7 +243,6 @@ button:hover {
 .topnav .icon {
   display: none;
   color: #f5f5f5;
-  filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 0.6));
 }
 
 .overview th {
@@ -564,13 +563,12 @@ button:hover {
   }
   .banner img {
     display: none;
-    filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 0.6));
   }
   .logo img {
     display: block;
     width: 60px;
     height: 60px;
-    filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 0.6));
+    filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 1.0));
   }
   .topnav.responsive {position: relative;}
   .topnav.responsive button {
@@ -604,7 +602,6 @@ button:hover {
   }
   .banner img {
     display: none;
-    filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 0.6));
   }
   .stream {
     float: right;
@@ -615,7 +612,7 @@ button:hover {
     display: block;
     width: 60px;
     height: 60px;
-    filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 0.6));
+    filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 1.0));
   }
   .play table,.overview table,.stats table {
     width: 100%;
