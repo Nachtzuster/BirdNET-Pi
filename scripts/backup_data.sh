@@ -9,7 +9,7 @@ if [ "$EUID" == 0 ]
   exit
 fi
 
-usage() { echo "Usage: $0 -a backup|restore -f <backup_file>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 -a backup|restore|size -f <backup_file>" 1>&2; exit 1; }
 
 unset -v ACTION
 unset -v ARCHIVE
@@ -18,7 +18,7 @@ while getopts "a:f:" o; do
   case "${o}" in
     a)
       ACTION=${OPTARG}
-      [ $ACTION == "backup" ] || [ $ACTION == "restore" ] || usage
+      [ $ACTION == "backup" ] || [ $ACTION == "restore" ] || [ $ACTION == "size" ] || usage
       ;;
     f)
       ARCHIVE=${OPTARG}
@@ -29,9 +29,11 @@ while getopts "a:f:" o; do
   esac
 done
 
-[ -z "$ACTION" ] && usage && exit 1
-[ -z "$ARCHIVE" ] && usage && exit 1
-[ "$ARCHIVE" == '-' ] && QUIET=1
+if [ $ACTION != "size" ]; then
+  [ -z "$ACTION" ] && usage && exit 1
+  [ -z "$ARCHIVE" ] && usage && exit 1
+  [ "$ARCHIVE" == '-' ] && QUIET=1
+fi
 
 PHP_SERVICE=$(systemctl list-unit-files -t service --output json --no-pager php*-fpm.service | jq --raw-output '.[0].unit_file')
 [ -z "$PHP_SERVICE" ] || [ "$PHP_SERVICE" == 'null' ] && echo "Could not determine the php service name, this is most likely a bug." && exit 1
@@ -52,6 +54,14 @@ backup() {
   done
   eval "$CMD"
   log "Backup done"
+}
+
+estimate_size() {
+  CMD='du -s -c -b '
+  for obj in  "${objects[@]}";do
+    CMD="$CMD $obj"
+  done
+  eval "$CMD | grep total | cut -f 1"
 }
 
 restore_check() {
@@ -80,6 +90,10 @@ objects=("/home/$BIRDNET_USER/BirdSongs/Extracted/By_Date"
 
 [ $ACTION == "backup" ] && backup_check
 [ $ACTION == "restore" ] && restore_check
+if [ $ACTION == "size" ]; then
+  estimate_size
+  exit
+fi
 
 log "Stopping services"
 "$my_dir/stop_core_services.sh"
