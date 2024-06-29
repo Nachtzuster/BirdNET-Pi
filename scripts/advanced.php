@@ -291,7 +291,7 @@ $newconfig = get_config();
       <label for="keep">
       <input name="full_disk" type="radio" id="keep" value="keep" <?php if (strcmp($newconfig['FULL_DISK'], "keep") == 0) { echo "checked"; }?>>Keep</label>
       <p>When the disk becomes full, you can choose to 'purge' old files to make room for new ones or 'keep' your data and stop all services instead.<br>Note: you can exclude specific files from 'purge' on the Recordings page.</p>
-      <br><br>
+      <br>
       <label for="max_files_species">Amount of files to keep for each specie :</label>
       <input name="max_files_species" type="number" style="width:6em;" min="0" step="1" value="<?php print($newconfig['MAX_FILES_SPECIES']);?>"/>
       </td></tr><tr><td>
