@@ -76,7 +76,7 @@ restore_check() {
 restore() {
   log "Starting restore"
   for obj in  "${objects[@]}";do
-    tar --extract - p -f "$ARCHIVE" -C "$(dirname "$obj")" "$(basename "$obj")"
+    tar --extract -p -f "$ARCHIVE" -C "$(dirname "$obj")" "$(basename "$obj")"
   done
   sed -i "s/BIRDNET_USER=.*/BIRDNET_USER=$BIRDNET_USER/" "/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf"
   log "Restore done"
