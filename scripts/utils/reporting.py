@@ -34,6 +34,10 @@ def extract(in_file, out_file, start, stop):
 
     rate, data = wavfile.read(in_file)
 
+    if (data.ndim > 1):
+        log.info(f"reducing stereo input of {data.shape} samples to mono")
+        data = data[:,0]
+
     # perform noise reduction before trimming so it has some background
     reduced_noise = noisereduce.reduce_noise(y=data, sr=rate)
 
@@ -91,19 +95,25 @@ def spectrogram(in_file, title, comment, raw=False):
     return ret
 
 
-def extract_detection(file: ParseFileName, detection: Detection):
+def build_output_filename(file: ParseFileName, detection: Detection):
     conf = get_settings()
     new_file_name = f'{detection.common_name_safe}-{detection.confidence_pct}-{file.root}.{conf["AUDIOFMT"]}'
     new_dir = os.path.join(conf['EXTRACTED'], 'By_Date', f'{file.date}', f'{detection.common_name_safe}')
     new_file = os.path.join(new_dir, new_file_name)
+
+    file_exists=False
     if os.path.isfile(new_file):
         log.warning('Extraction exists. Moving on: %s', new_file)
-    else:
+        file_exists=True
+    return (file_exists, new_file, new_dir)
+
+def extract_detection(file: ParseFileName, detection: Detection):
+    (file_exists, new_file, new_dir) = build_output_filename(file, detection)
+    if (not file_exists):
         os.makedirs(new_dir, exist_ok=True)
         extract_safe(file.file_name, new_file, detection.start, detection.stop)
         spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''))
     return new_file
-
 
 def write_to_db(file: ParseFileName, detection: Detection):
     conf = get_settings()
