@@ -136,11 +136,6 @@ COLOR_SCHEME="light"
 
 FULL_DISK=purge
 
-## Maximum disk size used before files starts getting removed
-## Number is the % of file size before purge starts
-
-MAX_DISK_SIZE=95
-
 ## Maximum amount of files to keep for a given specie (0 = keep all)
 ## Files from the last 7 days, and files protected from purge, are not taken into
 ## account in this number
