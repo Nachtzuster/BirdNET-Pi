@@ -129,8 +129,6 @@ def explore(lat, lon, week):
 
 def predictSpeciesList(lat, lon, week):
 
-    WHITELIST_LIST = None
-    WHITELIST_LIST = loadCustomSpeciesList(os.path.expanduser("~/BirdNET-Pi/whitelist_species_list.txt"))
     l_filter = explore(lat, lon, week)
     for s in l_filter:
         if s[0] >= float(sf_thresh):
