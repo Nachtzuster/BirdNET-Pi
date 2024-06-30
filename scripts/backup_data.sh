@@ -56,12 +56,12 @@ backup() {
   log "Backup done"
 }
 
-estimate_size() {
+estimated_size() {
   CMD='du -s -c -b '
   for obj in  "${objects[@]}";do
     CMD="$CMD $obj"
   done
-  eval "$CMD | grep total | cut -f 1"
+  ESTIMATED=$(eval "$CMD | grep total | cut -f 1")
 }
 
 restore_check() {
@@ -91,7 +91,8 @@ objects=("/home/$BIRDNET_USER/BirdSongs/Extracted/By_Date"
 [ $ACTION == "backup" ] && backup_check
 [ $ACTION == "restore" ] && restore_check
 if [ $ACTION == "size" ]; then
-  estimate_size
+  estimated_size
+  echo $ESTIMATED
   exit
 fi
 
