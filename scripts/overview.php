@@ -128,8 +128,13 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
               <?php } ?>
               <form action="" method="GET">
                   <input type="hidden" name="view" value="Species Stats">
-                  <button type="submit" name="species" value="<?php echo $mostrecent['Com_Name'];?>"><?php echo $mostrecent['Com_Name'];?></button><img style="width: unset !important;display: inline;height: 1em;cursor:pointer" title="View species stats" onclick="generateMiniGraph(this, '<?php echo $comname; ?>')" width=25 src="images/chart.svg"><br>
-                  <a href="https://wikipedia.org/wiki/<?php echo $sciname;?>" target="_blank"><i><?php echo $mostrecent['Sci_Name'];?></i></a>
+                  <button type="submit" name="species" value="<?php echo $mostrecent['Com_Name'];?>"><?php echo $mostrecent['Com_Name'];?></button>
+                  <br>
+                  <i><?php echo $mostrecent['Sci_Name'];?></i>
+                  <a href="<?php $info_url = get_info_url($mostrecent['Sci_Name']); $url = $info_url['URL']; echo $url ?>" target="_blank">
+                  <img style="width: unset !important; display: inline; height: 1em; cursor: pointer;" title="Info" src="images/info.png" width="25"></a>
+                  <a href="https://wikipedia.org/wiki/<?php echo $sciname;?>" target="_blank"><img style="width: unset !important; display: inline; height: 1em; cursor: pointer;" title="Wikipedia" src="images/wiki.png" width="25"></a>
+                  <img style="width: unset !important;display: inline;height: 1em;cursor:pointer" title="View species stats" onclick="generateMiniGraph(this, '<?php echo $comname; ?>')" width=25 src="images/chart.svg">
                   <br>Confidence: <?php echo $percent = round((float)round($mostrecent['Confidence'],2) * 100 ) . '%';?><br></div><br>
                   <video style="margin-top:10px" onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster="<?php echo $filename.".png";?>" preload="none" title="<?php echo $filename;?>"><source src="<?php echo $filename;?>"></video></td>
               </form>
@@ -427,17 +432,6 @@ function generateMiniGraph(elem, comname) {
       }
       var chartWindow = document.createElement('div');
       chartWindow.className = "chartdiv"
-      chartWindow.style.position = 'fixed';
-      chartWindow.style.top = '0%';
-      chartWindow.style.left = '50%';
-      chartWindow.style.width = window.innerWidth < 700 ? '40%' : '20%';
-      chartWindow.style.height = window.innerWidth < 700 ? '25%' : '16%';
-      chartWindow.style.backgroundColor = '#fff';
-      chartWindow.style.zIndex = '9999';
-      chartWindow.style.overflow = 'auto';
-      chartWindow.style.borderRadius = '5px';
-      chartWindow.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-
       document.body.appendChild(chartWindow);
 
 

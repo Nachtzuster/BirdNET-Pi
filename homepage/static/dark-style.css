@@ -8,7 +8,6 @@
   box-sizing: border-box;
   font-size: medium;
   color: #f5f5f5;
-  background-color: transparent;
 }
 
 a {
@@ -31,6 +30,7 @@ iframe {
   height: 85%;
   width: 100%;
   position: fixed;
+  background-color: grey;
 }
 
 body {
@@ -137,12 +137,26 @@ button:hover {
   font-size: x-large;
 }
 
+.chartdiv {
+  position: fixed;
+  top: 0%;
+  left: 50%;
+  width: calc(40% - 2px);
+  height: calc(25% - 2px);
+  background-color: #2b2b2b;
+  z-index: 9999;
+  overflow: auto;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px #f5f5f5;
+}
+
 .logo img {
   position: absolute;
   top: 0;
   left: 0;
   padding: 10px;
   opacity: 0.7;
+  filter: none !important;
 }
 
 .modal {
@@ -187,7 +201,6 @@ button:hover {
   margin-left: auto;
   margin-right: auto;
   margin-bottom: 15px;
-  box-shadow: 0px 0px 28px 1px rgba(255, 255, 255, 0.10) !important;
   border-radius: 4px;
 }
 
@@ -195,6 +208,7 @@ button:hover {
   width:175px;
   display:initial !important;
   margin-left: 60px;
+  filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 1.0));
 }
 
 .topnav form {
@@ -467,7 +481,7 @@ button:hover {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: #04AA6D;
+  background: #f5f5f5;
   cursor: pointer;
 }
 
@@ -475,7 +489,7 @@ button:hover {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: #04AA6D;
+  background: #f5f5f5;
   cursor: pointer;
 }
 
@@ -554,6 +568,7 @@ button:hover {
     display: block;
     width: 60px;
     height: 60px;
+    filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 1.0));
   }
   .topnav.responsive {position: relative;}
   .topnav.responsive button {
@@ -597,6 +612,7 @@ button:hover {
     display: block;
     width: 60px;
     height: 60px;
+    filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 1.0));
   }
   .play table,.overview table,.stats table {
     width: 100%;
@@ -651,9 +667,19 @@ button:hover {
 .sortbutton {
   margin-top:10px;
   font-size:x-large;
-  background:#3b3b3b;
+  background: #3b3b3b;
   padding:5px;
   box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.10);
+}
+
+.sortbutton:hover {
+  background-color: #AAAAAA;
+  color: white;
+}
+
+.sortbutton.active {
+  background-color: #777777;
+  color: white;
 }
 
 button.legacyview {
@@ -730,7 +756,7 @@ dt {
   width: auto;
   text-align: left;
   font-weight: bold;
-  color: gray;
+  color: #b2b2b2;
 }
 dd::before {
   content: ": ";
@@ -738,23 +764,24 @@ dd::before {
 
 input {
   box-shadow: 0px 0px 17px 1px rgba(0, 0, 0, 0.10);
-  background-color: #333;
-  color: #fff;
+  background-color: #3b3b3b;
+  color: #f5f5f5;
 }
 
 dialog {
   border:none;
+  background-color:rgba(59, 59, 59, 0.9);
 }
 
 dialog::backdrop {
   background: repeating-linear-gradient(
     30deg,
-    rgba(24, 194, 236, 0.2),
-    rgba(24, 194, 236, 0.2) 1px,
-    rgba(24, 194, 236, 0.3) 1px,
-    rgba(24, 194, 236, 0.3) 20px
+    rgba(30, 50, 80, 0.2),
+    rgba(30, 50, 80, 0.2) 1px,
+    rgba(30, 50, 80, 0.3) 1px,
+    rgba(30, 50, 80, 0.3) 20px
   );
-  backdrop-filter: blur(1px);
+  backdrop-filter: blur(3px);
 }
 
 .centered_image_container {
@@ -818,7 +845,7 @@ dialog::backdrop {
   position:absolute;
   display:inline-block;
   background-color:#c8191a;
-  color:white;
+  color:#f5f5f5;
   width:20px;
   line-height:20px;
   border-radius:12px;
@@ -845,7 +872,9 @@ form#views button .updatenumber {
 }
 #recent_detection_middle_td img{
   width:unset !important;
-  height:75px;
+  max-width:50px;
+  max-height:50px;
+  padding:0px;
   float:left;
 }
 

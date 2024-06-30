@@ -413,7 +413,7 @@ h1 {
 		?>
         <div style="display:inline" id="RTSP_streams">
             <label>RTSP Stream: </label>
-            <select id="rtsp_stream_select" name="RTSP Streams">
+            <select id="rtsp_stream_select" class="testbtn" name="RTSP Streams">
 				<?php
 				//The setting representing which livestream to stream is more than the number of RTSP streams available
 				//maybe the list of streams has been modified

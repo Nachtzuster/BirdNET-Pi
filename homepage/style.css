@@ -132,6 +132,19 @@ button:hover {
   font-size: x-large;
 }
 
+.chartdiv {
+  position: fixed;
+  top: 0%;
+  left: 50%;
+  width: calc(40% - 2px);
+  height: calc(25% - 2px);
+  background-color: #fff;
+  z-index: 9999;
+  overflow: auto;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 .logo img {
   position: absolute;
   top: 0;
@@ -623,9 +636,19 @@ button:hover {
 .sortbutton {
   margin-top:10px;
   font-size:x-large;
-  background:#dbffeb;
+  background:#77c487;
   padding:5px;
   box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.10);
+}
+
+.sortbutton:hover {
+  background-color: #dbffeb;
+  color: white;
+}
+
+.sortbutton.active {
+  background-color: #dbffeb;
+  color: white;
 }
 
 button.legacyview {
@@ -814,7 +837,9 @@ form#views button .updatenumber {
 }
 #recent_detection_middle_td img{
   width:unset !important;
-  height:75px;
+  max-width:50px;
+  max-height:50px;
+  padding:0px;
   float:left;
 }
 
@@ -845,7 +870,7 @@ form#views button .updatenumber {
 }
 
 .testbtn {
-  background:#77c487 !important;
+  background: white !important;
 }
 
 pre.bash {

@@ -281,7 +281,6 @@ function get_info_url($sciname){
   if ($config['INFO_SITE'] === 'EBIRD'){
     require 'scripts/ebird.php';
     $ebird = $ebirds[$sciname];
-    debug_log($ebird);
     $language = $config['DATABASE_LANG'];
     $url = "https://ebird.org/species/$ebird?siteLanguage=$language";
     $url_title = "eBirds";

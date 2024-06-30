@@ -163,7 +163,7 @@ while($detection=$result1->fetchArray(SQLITE3_ASSOC))
 ?>
 <br>
 <?php // TODO: fix the box shadows, maybe make them a bit smaller on the tr ?>
-<table align="center" style="box-shadow:unset"><tr><td style="background-color:#77c487">
+<table align="center" style="box-shadow:unset"><tr><td style="background-color:transparent">
 	<table>
 	<thead>
 		<tr>
@@ -197,7 +197,7 @@ while($detection=$result1->fetchArray(SQLITE3_ASSOC))
 	?>
 	</tbody>
 	</table>
-	</td><td style="background-color:#77c487">
+	</td><td style="background-color:transparent">
 
 	<table >
 	<thead>

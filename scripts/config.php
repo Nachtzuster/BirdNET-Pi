@@ -324,7 +324,7 @@ function sendTestNotification(e) {
       <h2>Model</h2>
 
       <label for="model">Select a Model: </label>
-      <select id="modelsel" name="model">
+      <select id="modelsel" name="model" class="testbtn">
       <?php
       $models = array("BirdNET_GLOBAL_6K_V2.4_Model_FP16", "BirdNET_6K_GLOBAL_MODEL");
       foreach($models as $modelName){
@@ -496,7 +496,7 @@ function runProcess() {
 tgram://{bot_token}/{chat_id}
 twitter://{ConsumerKey}/{ConsumerSecret}/{AccessToken}/{AccessSecret}
 https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
-..." style="vertical-align: top" name="apprise_input" rows="5" type="text" ><?php print($apprise_config);?></textarea>
+..." style="vertical-align: top" class="testbtn" name="apprise_input" rows="5" type="text" ><?php print($apprise_config);?></textarea>
       <dl>
       <dt>$sciname</dt>
       <dd>Scientific Name</dd>
@@ -569,7 +569,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <table class="settingstable"><tr><td>
       <h2>Localization</h2>
       <label for="language">Database Language: </label>
-      <select name="language">
+      <select name="language" class="testbtn">
       <?php
         $langs = array(
           'not-selected' => 'Not Selected',
@@ -623,7 +623,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <table class="settingstable"><tr><td>
       <h2>Additional Info </h2>
       <label for="info_site">Site to pull additional species info from: </label>
-      <select name="info_site">
+      <select name="info_site" class="testbtn">
       <?php
         $info_site = array(
           'ALLABOUTBIRDS' => 'allaboutbirds.org',
@@ -650,7 +650,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <table class="settingstable"><tr><td>
       <h2>Color scheme </h2>
       <label for="color_scheme">Color scheme for the site : </label>
-      <select name="color_scheme">
+      <select name="color_scheme" class="testbtn">
       <?php
       $scheme = array("light", "dark");
       foreach($scheme as $color_scheme){
@@ -700,7 +700,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <input onclick="this.showPicker()" type="time" id="time" name="time" value="<?php echo $date->format('H:i'); ?>" <?php echo $disabledvalue; ?>><br>
       <br>
       <label for="timezone">Select a Timezone: </label>
-      <select name="timezone">
+      <select name="timezone" class="testbtn">
       <option disabled selected>
         Select a timezone
       </option>
