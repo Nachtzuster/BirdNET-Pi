@@ -132,10 +132,6 @@ if(isset($_GET['submit'])) {
 
 if (isset($_GET["max_files_species"])) {
     $max_files_species = $_GET["max_files_species"];
-    if (empty($max_files_species)) {
-        $max_files_species = "1000";
-        $contents .= "\n" . ($additional_text = "MAX_FILE_SPECIES=$max_files_species");
-    }
     if (strcmp($max_files_species, $config['MAX_FILES_SPECIES']) !== 0) {
         $contents = preg_replace("/MAX_FILES_SPECIES=.*/", "MAX_FILES_SPECIES=$max_files_species", $contents);
     }
