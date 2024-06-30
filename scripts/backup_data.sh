@@ -43,7 +43,12 @@ log() {
 }
 
 backup_check() {
-  [ "$ARCHIVE" != '-' ] && [ -f "$ARCHIVE" ] && echo "$ARCHIVE already exists" && exit 1
+  if [ "$ARCHIVE" != '-' ]; then
+    [ -f "$ARCHIVE" ] && echo "$ARCHIVE already exists" && exit 1
+    estimated_size
+    available_size
+    [ $ESTIMATED -gt $AVAILABLE ] && echo "Not enough space available on $(dirname "$ARCHIVE")"  && exit 1
+  fi
 }
 
 backup() {
@@ -62,6 +67,10 @@ estimated_size() {
     CMD="$CMD $obj"
   done
   ESTIMATED=$(eval "$CMD | grep total | cut -f 1")
+}
+
+available_size() {
+  AVAILABLE=$(df --output=avail --block-size=1 "$(dirname "$ARCHIVE")" | grep [[:digit:]])
 }
 
 restore_check() {
