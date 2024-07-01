@@ -1,6 +1,8 @@
 #birdnet
 */5 * * * * $USER /usr/local/bin/disk_check.sh >/dev/null 2>&1
 #birdnet
+0 2 * * * $USER /usr/local/bin/disk_species_clean.sh >/dev/null 2>&1
+#birdnet
 */3 * * * * $USER /usr/local/bin/cleanup.sh >/dev/null 2>&1
 #birdnet
 @reboot $USER /usr/local/bin/cleanup.sh >/dev/null 2>&1
