@@ -282,7 +282,7 @@ function changeDetection(filename,copylink=false) {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
     const labels = JSON.parse(this.responseText);
-    let dropdown = '<input type="text" id="filterInput" placeholder="Type to filter..."> <button id="cancelButton">Cancel</button> <br><select id="labelDropdown" size="5" style="display: block; margin: 0 auto;"></select>';
+    let dropdown = '<input type="text" id="filterInput" placeholder="Type to filter..."> <button id="cancelButton">Cancel</button> <br><select id="labelDropdown" class="testbtn" size="5" style="display: block; margin: 0 auto;"></select>';
 
 	// Check if the modal already exists
     let modal = document.getElementById('myModal');
@@ -298,7 +298,7 @@ function changeDetection(filename,copylink=false) {
 
       // Add a title to the modal box
       let title = document.createElement('h2');
-      title.textContent = 'Please select the correct specie here:';
+      title.textContent = 'Please select the correct species here:';
       content.appendChild(title);
 
       // Add the dropdown to the content
