@@ -293,7 +293,7 @@ $newconfig = get_config();
       </td></tr><tr><td>
       If different than 0 (keep all), defines the maximum number of files to be kept for each species, with priority give to files with highest confidence. 
       This value does not take into account the last 7 days (protected by default) nor the files protected of purge through the "lock" icon. 
-      The observations in sqlite, and therefore statistics are not impacted by this settings.<br>
+      The observations in sqlite, and therefore statistics, are not impacted by this settings.<br>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
 
