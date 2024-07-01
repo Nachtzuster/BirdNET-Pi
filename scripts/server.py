@@ -135,6 +135,9 @@ def predictSpeciesList(lat, lon, week):
             # if there's a custom user-made include list, we only want to use the species in that
             if (len(INCLUDE_LIST) == 0):
                 PREDICTED_SPECIES_LIST.append(s[1])
+    WHITELIST_LIST = loadCustomSpeciesList(os.path.expanduser("~/BirdNET-Pi/whitelist_species_list.txt"))
+    for species in WHITELIST_LIST:
+        PREDICTED_SPECIES_LIST.append(species)
 
 
 def loadCustomSpeciesList(path):
