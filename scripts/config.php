@@ -147,7 +147,6 @@ if(isset($_GET["latitude"])){
     }
   }
 
-
   $contents = file_get_contents("/etc/birdnet/birdnet.conf");
   $contents = preg_replace("/SITE_NAME=.*/", "SITE_NAME=\"$site_name\"", $contents);
   $contents = preg_replace("/LATITUDE=.*/", "LATITUDE=$latitude", $contents);
@@ -189,6 +188,11 @@ if(isset($_GET["latitude"])){
 
   syslog(LOG_INFO, "Restarting Services");
   shell_exec("sudo restart_services.sh");
+}
+
+if(isset($_GET['clearFlickrCache']) && $_GET['clearFlickrCache'] == "true") {
+    unset($_SESSION['images']);
+    $_SESSION['images'] = [];
 }
 
 if(isset($_GET['sendtest']) && $_GET['sendtest'] == "true") {
@@ -301,6 +305,7 @@ $config = get_config($force_reload=true);
     }
   });
 }, false);
+
 function sendTestNotification(e) {
   document.getElementById("testsuccessmsg").innerHTML = "";
   e.classList.add("disabled");
@@ -319,7 +324,17 @@ function sendTestNotification(e) {
     xmlHttp.open("GET", "scripts/config.php?sendtest=true&apprise_notification_title="+apprise_notification_title+"&apprise_notification_body="+apprise_notification_body+"&apprise_config="+apprise_config, true); // true for asynchronous 
     xmlHttp.send(null);
 }
+
+function clearFlickrCache() {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", "scripts/config.php?clearFlickrCache=true", true); // true for asynchronous 
+    xmlHttp.send(null);
+
+    alert("Flickr cache cleared");
+}
+
 </script>
+
       <table class="settingstable"><tr><td>
       <h2>Model</h2>
 
@@ -564,8 +579,11 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <input name="flickr_api_key" type="text" size="32" value="<?php print($config['FLICKR_API_KEY']);?>"/><br>
       <label for="flickr_filter_email">Only search photos from this Flickr user: </label>
       <input name="flickr_filter_email" type="email" placeholder="myflickraccount@gmail.com" value="<?php print($config['FLICKR_FILTER_EMAIL']);?>"/><br>
-      <p>Set your Flickr API key to enable the display of bird images next to detections. <a target="_blank" href="https://www.flickr.com/services/api/misc.api_keys.html">Get your free key here.</a></p>
+      <p>Set your Flickr API key to enable the display of bird images next to detections. <a target="_blank" href="https://www.flickr.com/services/api/misc.api_keys.html">Get your free key here.</a></p><br>
+      <!-- bug #135 https://github.com/Nachtzuster/BirdNET-Pi/issues/135 --> 
+      <button type="button" class="testbtn" onclick="clearFlickrCache()">Clear Flickr Cache</button><br>
       </td></tr></table><br>
+
       <table class="settingstable"><tr><td>
       <h2>Localization</h2>
       <label for="language">Database Language: </label>
