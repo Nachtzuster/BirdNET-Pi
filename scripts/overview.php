@@ -95,6 +95,8 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
         } else {
           $flickr_cache = $flickr->get_image($mostrecent['Sci_Name']);
           $modaltext = $flickr_cache["author_url"] . "/" . $flickr_cache["id"];
+          // bug #135 https://github.com/Nachtzuster/BirdNET-Pi/issues/135
+          $modaltext = str_replace("people", "photos", $modaltext);
           array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $modaltext, $flickr_cache["author_url"], $flickr_cache["license_url"]));
           $image = $_SESSION['images'][count($_SESSION['images']) - 1];
         }

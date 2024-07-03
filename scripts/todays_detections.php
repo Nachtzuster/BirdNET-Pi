@@ -218,6 +218,8 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
       } else {
         $flickr_cache = $flickr->get_image($todaytable['Sci_Name']);
         $modaltext = $flickr_cache["author_url"] . "/" . $flickr_cache["id"];
+        // bug #135 https://github.com/Nachtzuster/BirdNET-Pi/issues/135
+        $modaltext = str_replace("people", "photos", $modaltext);
         array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $modaltext, $flickr_cache["author_url"], $flickr_cache["license_url"]));
         $image = $_SESSION['images'][count($_SESSION['images']) - 1];
       }
@@ -393,14 +395,14 @@ if (get_included_files()[0] === __FILE__) {
 
   }
 
-  function setModalText(iter, title, text, authorlink, photolink, licenseurl) {
+  function setModalText(iter, title, imagelink, authorlink, photolink, licenseurl) {
     document.getElementById('modalHeading').innerHTML = "Photo: \""+decodeURIComponent(title.replaceAll("+"," "))+"\" Attribution";
     <?php if($kiosk == false) { ?>
-      document.getElementById('modalText').innerHTML = "<div><img style='border-radius:5px;max-height: calc(100vh - 15rem);display: block;margin: 0 auto;' src='"+photolink+"'></div><br><div style='white-space:nowrap'>Image link: <a target='_blank' href="+text+">"+text+"</a><br>Author link: <a target='_blank' href="+authorlink+">"+authorlink+"</a><br>License URL: <a href="+licenseurl+" target='_blank'>"+licenseurl+"</a></div>";
+      document.getElementById('modalText').innerHTML = "<div><img style='border-radius:5px;max-height: calc(100vh - 15rem);display: block;margin: 0 auto;' src='"+photolink+"'></div><br><div style='white-space:nowrap'>Image link: <a target='_blank' href="+imagelink+">"+imagelink+"</a><br>Author link: <a target='_blank' href="+authorlink+">"+authorlink+"</a><br>License URL: <a href="+licenseurl+" target='_blank'>"+licenseurl+"</a></div>";
     <?php } else { ?>
-      document.getElementById('modalText').innerHTML = "<div><img style='border-radius:5px;max-height: calc(100vh - 15rem);display: block;margin: 0 auto;' src='"+photolink+"'></div><br><div style='white-space:nowrap'>Image link: <a target='_blank'>"+text+"</a><br>Author link: <a target='_blank'>"+authorlink+"</a><br>License URL: <a target='_blank'>"+licenseurl+"</a></div>";
+      document.getElementById('modalText').innerHTML = "<div><img style='border-radius:5px;max-height: calc(100vh - 15rem);display: block;margin: 0 auto;' src='"+photolink+"'></div><br><div style='white-space:nowrap'>Image link: <a target='_blank'>"+imagelink+"</a><br>Author link: <a target='_blank'>"+authorlink+"</a><br>License URL: <a target='_blank'>"+licenseurl+"</a></div>";
     <?php } ?>
-    last_photo_link = text;
+    last_photo_link = imagelink;
     showDialog();
   }
   </script>  
