@@ -29,8 +29,8 @@ while getopts "a:f:" o; do
   esac
 done
 
+[ -z "$ACTION" ] && usage && exit 1
 if [ $ACTION != "size" ]; then
-  [ -z "$ACTION" ] && usage && exit 1
   [ -z "$ARCHIVE" ] && usage && exit 1
   [ "$ARCHIVE" == '-' ] && QUIET=1
 fi
