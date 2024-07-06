@@ -292,8 +292,10 @@ $newconfig = get_config();
       <input name="max_files_species" type="number" style="width:6em;" min="0" step="1" value="<?php print($newconfig['MAX_FILES_SPECIES']);?>"/>
       </td></tr><tr><td>
       If different than 0 (keep all), defines the maximum number of files to be kept for each species, with priority give to files with highest confidence. 
-      This value does not take into account the last 7 days (protected by default) nor the files protected of purge through the "lock" icon. 
-      The observations in sqlite, and therefore statistics, are not impacted by this settings.<br>
+      This value does not take into account the last 7 days (protected by default).
+      </td></tr><tr><td>
+      Note only the spectrogram and audio files are deleted, the obsevation data remains in the database.
+      The files protected through the "lock" icon are also not affected.
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
 
