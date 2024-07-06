@@ -94,8 +94,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
           $image = $_SESSION['images'][$key];
         } else {
           $flickr_cache = $flickr->get_image($mostrecent['Sci_Name']);
-          $modaltext = $flickr_cache["author_url"] . "/" . $flickr_cache["id"];
-          array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $modaltext, $flickr_cache["author_url"], $flickr_cache["license_url"]));
+          array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $flickr_cache["photos_url"], $flickr_cache["author_url"], $flickr_cache["license_url"]));
           $image = $_SESSION['images'][count($_SESSION['images']) - 1];
         }
       }

@@ -190,6 +190,8 @@ class Flickr {
       $this->get_from_flickr($sci_name);
       $image = $this->get_image_from_db($sci_name);
     }
+    $photos_url = str_replace('/people/', '/photos/', $image['author_url'].'/'.$image['id']);
+    $image['photos_url'] = $photos_url;
     return $image;
   }
 
