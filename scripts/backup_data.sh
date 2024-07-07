@@ -122,12 +122,12 @@ fi
 
 log "Stopping services"
 "$my_dir/stop_core_services.sh"
-sudo systemctl stop "$PHP_SERVICE"
+#sudo systemctl stop "$PHP_SERVICE"
 
 [ $ACTION == "backup" ] && backup
 [ $ACTION == "restore" ] && restore
 
 log "Restarting services"
-sudo systemctl restart "$PHP_SERVICE"
+#sudo systemctl restart "$PHP_SERVICE"
 sudo systemctl restart caddy.service
 "$my_dir/restart_services.sh" &>/dev/null
