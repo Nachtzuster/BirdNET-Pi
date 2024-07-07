@@ -101,7 +101,7 @@ restore() {
   log "Restore done"
 }
 
-required=("/home/$BIRDNET_USER/birdnet/birdnet.conf"
+required=("/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf"
 "/home/$BIRDNET_USER/BirdNET-Pi/scripts/birds.db"
 "/home/$BIRDNET_USER/BirdNET-Pi/BirdDB.txt"
 "/home/$BIRDNET_USER/BirdSongs/Extracted/Charts"
