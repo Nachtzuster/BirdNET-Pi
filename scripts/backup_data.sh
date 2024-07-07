@@ -52,7 +52,7 @@ backup_check() {
 }
 
 backup() {
-  log "Starting backup"
+  log "Starting backup, this might take a while"
   CMD='tar --create -f "$ARCHIVE"'
   for obj in  "${optional[@]}";do
     [ -f $obj ] && CMD="$CMD -C $(dirname "$obj") $(basename "$obj")"
@@ -90,7 +90,7 @@ restore_check() {
 }
 
 restore() {
-  log "Starting restore"
+  log "Starting restore, this might take a while"
   for obj in  "${required[@]}";do
     tar --extract -p -f "$ARCHIVE" -C "$(dirname "$obj")" "$(basename "$obj")"
   done
@@ -101,7 +101,7 @@ restore() {
   log "Restore done"
 }
 
-required=("/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf"
+required=("/etc/birdnet/birdnet.conf"
 "/home/$BIRDNET_USER/BirdNET-Pi/scripts/birds.db"
 "/home/$BIRDNET_USER/BirdNET-Pi/BirdDB.txt"
 "/home/$BIRDNET_USER/BirdSongs/Extracted/Charts"
