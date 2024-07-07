@@ -54,7 +54,7 @@ backup_check() {
 backup() {
   log "Starting backup"
   CMD='tar --create -f "$ARCHIVE"'
-  for obj in  "${objects[@]}";do
+  for obj in  "${required[@]}";do
     CMD="$CMD -C $(dirname "$obj") $(basename "$obj")"
   done
   eval "$CMD"
@@ -63,7 +63,7 @@ backup() {
 
 estimated_size() {
   CMD='du -s -c -b '
-  for obj in  "${objects[@]}";do
+  for obj in  "${required[@]}";do
     CMD="$CMD $obj"
   done
   ESTIMATED=$(eval "$CMD | grep total | cut -f 1")
@@ -75,8 +75,9 @@ available_size() {
 
 restore_check() {
   [ ! -f "$ARCHIVE" ] && echo "$ARCHIVE" not found && exit 1
+  log "Checking backup file"
   arch_list=$(tar --list --exclude="*/*" -f "$ARCHIVE" | sed 's/\///')
-  for obj in  "${objects[@]}";do
+  for obj in  "${required[@]}";do
     part2=$(basename "$obj")
     ! (echo $arch_list | grep -F -q "$part2") && echo corrupted backup file && exit 1
   done
@@ -84,18 +85,23 @@ restore_check() {
 
 restore() {
   log "Starting restore"
-  for obj in  "${objects[@]}";do
+  for obj in  "${required[@]}";do
     tar --extract -p -f "$ARCHIVE" -C "$(dirname "$obj")" "$(basename "$obj")"
   done
   sed -i "s/BIRDNET_USER=.*/BIRDNET_USER=$BIRDNET_USER/" "/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf"
   log "Restore done"
 }
 
-objects=("/home/$BIRDNET_USER/BirdSongs/Extracted/By_Date"
+required=("/home/$BIRDNET_USER/BirdSongs/Extracted/By_Date"
 "/home/$BIRDNET_USER/BirdSongs/Extracted/Charts"
 "/home/$BIRDNET_USER/BirdNET-Pi/BirdDB.txt"
 "/home/$BIRDNET_USER/BirdNET-Pi/scripts/birds.db"
 "/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf")
+
+optional=("/home/$BIRDNET_USER/BirdNET-Pi/scripts/blacklisted_images.txt"
+"/home/$BIRDNET_USER/BirdNET-Pi/scripts/disk_check_exclude.txt"
+"/home/$BIRDNET_USER/BirdNET-Pi/scripts/exclude_species_list.txt"
+"/home/$BIRDNET_USER/BirdNET-Pi/scripts/include_species_list.txt")
 
 [ $ACTION == "backup" ] && backup_check
 [ $ACTION == "restore" ] && restore_check
