@@ -101,7 +101,7 @@ restore() {
   log "Restore done"
 }
 
-required=("/etc/birdnet/birdnet.conf"
+required=("/home/$BIRDNET_USER/birdnet/birdnet.conf"
 "/home/$BIRDNET_USER/BirdNET-Pi/scripts/birds.db"
 "/home/$BIRDNET_USER/BirdNET-Pi/BirdDB.txt"
 "/home/$BIRDNET_USER/BirdSongs/Extracted/Charts"
@@ -109,8 +109,8 @@ required=("/etc/birdnet/birdnet.conf"
 
 optional=("/home/$BIRDNET_USER/BirdNET-Pi/scripts/blacklisted_images.txt"
 "/home/$BIRDNET_USER/BirdNET-Pi/scripts/disk_check_exclude.txt"
-"/home/$BIRDNET_USER/BirdNET-Pi/scripts/exclude_species_list.txt"
-"/home/$BIRDNET_USER/BirdNET-Pi/scripts/include_species_list.txt")
+"/home/$BIRDNET_USER/BirdNET-Pi/exclude_species_list.txt"
+"/home/$BIRDNET_USER/BirdNET-Pi/include_species_list.txt")
 
 [ $ACTION == "backup" ] && backup_check
 [ $ACTION == "restore" ] && restore_check
