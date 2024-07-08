@@ -187,8 +187,8 @@ fi
 
 # Update cron if all scripts are not installed
 if [ "$(grep -o "#birdnet" /etc/crontab | wc -l)" -lt 5 ]; then
-  install_cleanup_cron()
-  install_weekly_cron()
+  install_cleanup_cron
+  install_weekly_cron
 fi
 
 # update snippets above
