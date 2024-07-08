@@ -187,6 +187,7 @@ fi
 
 # Update cron if all scripts are not installed
 if [ "$(grep -o "#birdnet" /etc/crontab | wc -l)" -lt 5 ]; then
+  sudo sed -i '/birdnet/,+1d' /etc/crontab
   install_cleanup_cron
   install_weekly_cron
 fi
