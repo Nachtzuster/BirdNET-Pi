@@ -98,6 +98,12 @@ restore() {
     tar --extract --ignore-failed-read -p -f "$ARCHIVE" -C "$(dirname "$obj")" "$(basename "$obj")" || log "$(basename "$obj") not found in backup file"
   done
   sed -i "s/BIRDNET_USER=.*/BIRDNET_USER=$BIRDNET_USER/" "/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf"
+  source /etc/birdnet/birdnet.conf
+  if [ "$MODEL" == "BirdNET_GLOBAL_6K_V2.4_Model_FP16" ]; then
+    /home/$BIRDNET_USER/BirdNET-Pi/scripts/install_language_label_nm.sh -l $DATABASE_LANG
+  else
+    /home/$BIRDNET_USER/BirdNET-Pi/scripts/install_language_label.sh -l $DATABASE_LANG
+  fi
   log "Restore done"
 }
 
