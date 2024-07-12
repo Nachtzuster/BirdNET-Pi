@@ -27,7 +27,6 @@
 *.pyc
 *.flac
 .vscode
-model/*
 datasets/
 birdnet.conf
 IdentifiedSoFar.txt
