@@ -169,12 +169,12 @@ function get_chart_data($db, $force_regen = false) {
     $result3 = $statement3->execute();
     $hourcount = $result3->fetchArray(SQLITE3_ASSOC);
 
-    $statement5 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections WHERE Date == Date(\'now\',\'localtime\')');
+    $statement5 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections WHERE Date == Date(\'now\',\'localtime\')');
     ensure_db_ok($statement5);
     $result5 = $statement5->execute();
     $speciestally = $result5->fetchArray(SQLITE3_ASSOC);
 
-    $statement6 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections');
+    $statement6 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections');
     ensure_db_ok($statement6);
     $result6 = $statement6->execute();
     $totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
@@ -213,12 +213,12 @@ if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
   </tr>
   <tr>
     <th>Species Detected Today</th>
-    <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally']['COUNT(DISTINCT(Com_Name))'];?></button></td>
+    <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td>
     </form>
   </tr>
   <tr>
     <th>Total Number of Species</th>
-    <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally']['COUNT(DISTINCT(Com_Name))'];?></button></td>
+    <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td>
     </form>
   </tr>
 </table>
@@ -242,8 +242,8 @@ if(isset($_GET['ajax_center_chart']) && $_GET['ajax_center_chart'] == "true") {
       <td><?php echo $chart_data['totalcount']['COUNT(*)'];?></td>
       <td><form action="" method="GET"><input type="hidden" name="view" value="Todays Detections"><?php echo $chart_data['todaycount']['COUNT(*)'];?></td></form>
       <td><?php echo $chart_data['hourcount']['COUNT(*)'];?></td>
-      <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally']['COUNT(DISTINCT(Com_Name))'];?></button></td></form>
-      <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally']['COUNT(DISTINCT(Com_Name))'];?></button></td></form>
+      <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td></form>
+      <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td></form>
   </tr>
   </table>
 
@@ -317,11 +317,11 @@ if (get_included_files()[0] === __FILE__) {
 $statement = $db->prepare("
 SELECT d_today.Com_Name, d_today.Sci_Name, d_today.Date, d_today.Time, d_today.Confidence, d_today.File_Name, 
        MAX(d_today.Confidence) as MaxConfidence,
-       (SELECT MAX(Date) FROM detections d_prev WHERE d_prev.Com_Name = d_today.Com_Name AND d_prev.Date < DATE('now', 'localtime')) as LastSeenDate,
-       (SELECT COUNT(*) FROM detections d_occ WHERE d_occ.Com_Name = d_today.Com_Name AND d_occ.Date = DATE('now', 'localtime')) as OccurrenceCount
+       (SELECT MAX(Date) FROM detections d_prev WHERE d_prev.Sci_Name = d_today.Sci_Name AND d_prev.Date < DATE('now', 'localtime')) as LastSeenDate,
+       (SELECT COUNT(*) FROM detections d_occ WHERE d_occ.Sci_Name = d_today.Sci_Name AND d_occ.Date = DATE('now', 'localtime')) as OccurrenceCount
 FROM detections d_today
 WHERE d_today.Date = DATE('now', 'localtime')
-GROUP BY d_today.Com_Name
+GROUP BY d_today.Sci_Name
 ");
 ensure_db_ok($statement);
 $result = $statement->execute();
