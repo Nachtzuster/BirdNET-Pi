@@ -130,23 +130,6 @@ if(isset($_GET["latitude"])){
       sleep(3);
     }
   }
-  if ($model != $config['MODEL'] || $language != $config['DATABASE_LANG']){
-    if(strlen($language) == 2){
-
-      // Archive old language file
-      syslog_shell_exec("cp -f $home/BirdNET-Pi/model/labels.txt $home/BirdNET-Pi/model/labels.txt.old", $user);
-
-      if($model == "BirdNET_GLOBAL_6K_V2.4_Model_FP16"){
-      // Install new language label file
-        syslog_shell_exec("chmod +x $home/BirdNET-Pi/scripts/install_language_label_nm.sh && $home/BirdNET-Pi/scripts/install_language_label_nm.sh -l $language", $user);
-      } else {
-        syslog_shell_exec("$home/BirdNET-Pi/scripts/install_language_label.sh -l $language", $user);
-      }
-
-      syslog(LOG_INFO, "Successfully changed language to '$language' and model to '$model'");
-    }
-  }
-
 
   $contents = file_get_contents("/etc/birdnet/birdnet.conf");
   $contents = preg_replace("/SITE_NAME=.*/", "SITE_NAME=\"$site_name\"", $contents);
@@ -186,7 +169,12 @@ if(isset($_GET["latitude"])){
     fwrite($appriseconfig, $apprise_input);
     $apprise_config = $apprise_input;
   }
-
+  if ($model != $config['MODEL'] || $language != $config['DATABASE_LANG']){
+    if(strlen($language) == 2){
+      syslog_shell_exec("$home/BirdNET-Pi/scripts/install_language_label.sh", $user);
+      syslog(LOG_INFO, "Successfully changed language to '$language' and model to '$model'");
+    }
+  }
   syslog(LOG_INFO, "Restarting Services");
   shell_exec("sudo restart_services.sh");
 }
