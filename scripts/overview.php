@@ -163,12 +163,12 @@ ensure_db_ok($statement3);
 $result3 = $statement3->execute();
 $hourcount = $result3->fetchArray(SQLITE3_ASSOC);
 
-$statement5 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections WHERE Date == Date(\'now\',\'localtime\')');
+$statement5 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections WHERE Date == Date(\'now\',\'localtime\')');
 ensure_db_ok($statement5);
 $result5 = $statement5->execute();
 $speciestally = $result5->fetchArray(SQLITE3_ASSOC);
 
-$statement6 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections');
+$statement6 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections');
 ensure_db_ok($statement6);
 $result6 = $statement6->execute();
 $totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
@@ -190,12 +190,12 @@ $totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
   </tr>
   <tr>
     <th>Species Detected Today</th>
-    <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $speciestally['COUNT(DISTINCT(Com_Name))'];?></button></td>
+    <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $speciestally['COUNT(DISTINCT(Sci_Name))'];?></button></td>
     </form>
   </tr>
   <tr>
     <th>Total Number of Species</th>
-    <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally['COUNT(DISTINCT(Com_Name))'];?></button></td>
+    <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button></td>
     </form>
   </tr>
 </table>
