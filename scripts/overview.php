@@ -213,12 +213,12 @@ if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
   </tr>
   <tr>
     <th>Species Detected Today</th>
-    <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally']['COUNT(DISTINCT(Com_Name))'];?></button></td>
+    <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td>
     </form>
   </tr>
   <tr>
     <th>Total Number of Species</th>
-    <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally']['COUNT(DISTINCT(Com_Name))'];?></button></td>
+    <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td>
     </form>
   </tr>
 </table>

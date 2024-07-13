@@ -46,12 +46,12 @@ ensure_db_ok($statement4);
 $result4 = $statement4->execute();
 $mostrecent = $result4->fetchArray(SQLITE3_ASSOC);
 
-$statement5 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections WHERE Date == Date(\'now\', \'localtime\')');
+$statement5 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections WHERE Date == Date(\'now\', \'localtime\')');
 ensure_db_ok($statement5);
 $result5 = $statement5->execute();
 $todayspeciestally = $result5->fetchArray(SQLITE3_ASSOC);
 
-$statement6 = $db->prepare('SELECT COUNT(DISTINCT(Com_Name)) FROM detections');
+$statement6 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections');
 ensure_db_ok($statement6);
 $result6 = $statement6->execute();
 $totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
@@ -315,10 +315,10 @@ if(isset($_GET['today_stats'])) {
       </form>
       <td><?php echo $hourcount['COUNT(*)'];?></td>
       <form action="" method="GET">
-      <td><?php if($kiosk == false){?><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally['COUNT(DISTINCT(Com_Name))'];?></button><?php }else { echo $totalspeciestally['COUNT(DISTINCT(Com_Name))']; }?></td>
+      <td><?php if($kiosk == false){?><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button><?php }else { echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))']; }?></td>
       </form>
       <form action="" method="GET">
-      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todayspeciestally['COUNT(DISTINCT(Com_Name))'];?></button><?php } else { echo $todayspeciestally['COUNT(DISTINCT(Com_Name))']; }?></td>
+      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todayspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button><?php } else { echo $todayspeciestally['COUNT(DISTINCT(Sci_Name))']; }?></td>
       </form>
       </tr>
     </table>
@@ -419,8 +419,8 @@ if (get_included_files()[0] === __FILE__) {
       <td><?php echo $totalcount['COUNT(*)'];?></td>
       <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todaycount['COUNT(*)'];?></button><?php } else { echo $todaycount['COUNT(*)']; }?></td>
       <td><?php echo $hourcount['COUNT(*)'];?></td>
-      <td><?php if($kiosk == false){?><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally['COUNT(DISTINCT(Com_Name))'];?></button><?php }else { echo $totalspeciestally['COUNT(DISTINCT(Com_Name))']; }?></td>
-      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todayspeciestally['COUNT(DISTINCT(Com_Name))'];?></button><?php } else { echo $todayspeciestally['COUNT(DISTINCT(Com_Name))']; }?></td>
+      <td><?php if($kiosk == false){?><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button><?php }else { echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))']; }?></td>
+      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todayspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button><?php } else { echo $todayspeciestally['COUNT(DISTINCT(Sci_Name))']; }?></td>
       </tr>
     </table></form></div>
 
