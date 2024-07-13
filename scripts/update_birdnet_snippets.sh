@@ -191,6 +191,13 @@ if [ "$(grep -o "#birdnet" /etc/crontab | wc -l)" -lt 5 ]; then
   sed "s/\$USER/$USER/g" "$HOME"/BirdNET-Pi/templates/weekly_report.cron >> /etc/crontab
 fi
 
+if ! [ -L $HOME/BirdNET-Pi/model/labels_flickr.txt ]; then
+  sudo_with_user ln -sf labels_nm/labels_en.txt $HOME/BirdNET-Pi/model/labels_flickr.txt
+fi
+if ! [ -L $HOME/BirdNET-Pi/model/labels.txt ]; then
+  sudo_with_user install_language_label.sh
+fi
+
 # update snippets above
 
 systemctl daemon-reload
