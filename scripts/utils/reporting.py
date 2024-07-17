@@ -63,6 +63,41 @@ def spectrogram(in_file, title, comment, raw=False):
     return ret
 
 
+def spectrogram2(in_file, title, comment, raw=False):
+    import numpy as np
+    import librosa
+    from scipy.io import wavfile
+    from scipy import signal
+    import matplotlib.pyplot as plt
+
+    plt.style.use('dark_background')
+    my_dpi =96
+    plt.figure(figsize=(944 / my_dpi, 611 / my_dpi), dpi=my_dpi)
+
+    # input_file = 'romance_gt.wav'
+    x, fs = librosa.load(in_file)
+    print('fs', fs)
+    print('x.shape', x.shape)
+
+    nperseg = 1025
+    noverlap = nperseg - 1
+    f, t, Sxx = signal.spectrogram(x, fs,
+                                   nperseg=512,
+                                   # noverlap=noverlap,
+                                   window='hann')
+    print('f.shape', f.shape)
+    print('t.shape', t.shape)
+    print('Sxx.shape', Sxx.shape)
+    plt.pcolormesh(t, f/1000, 10 * np.log10(Sxx),
+                   vmin=-120, vmax=0, cmap='inferno')
+
+    plt.title(title)
+    # plt.text(comment)
+    plt.ylabel('Frequency (kHz)')
+    plt.xlabel('Time (s)')
+    plt.colorbar()
+    plt.savefig(f'{in_file}.png')
+
 def extract_detection(file: ParseFileName, detection: Detection):
     conf = get_settings()
     new_file_name = f'{detection.common_name_safe}-{detection.confidence_pct}-{file.root}.{conf["AUDIOFMT"]}'
