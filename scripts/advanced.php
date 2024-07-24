@@ -302,16 +302,16 @@ $newconfig = get_config();
       <h2>Audio Settings</h2>
       <label for="rec_card">Audio Card: </label>
       <input name="rec_card" type="text" size="12" value="<?php print($newconfig['REC_CARD']);?>" required/><br>
-      <p>Set Audio Card to 'default' to use PulseAudio (always recommended), or an ALSA recognized sound card device from the output of `arecord -L`. Choose the `dsnoop` device if it is available</p>
+      Set Audio Card to 'default' to use PulseAudio (always recommended), or an ALSA recognized sound card device from the output of `arecord -L`. Choose the `dsnoop` device if it is available.<br><br>
       <label for="channels">Audio Channels: </label>
       <input name="channels" type="number" style="width:3em;" min="1" max="32" step="1" value="<?php print($newconfig['CHANNELS']);?>" required/><br>
-      <p>Set Channels to the number of channels supported by your sound card. 32 max.</p>
+      Set Channels to the number of channels supported by your sound card. 32 max.<br><br>
       <label for="recording_length">Recording Length: </label>
       <input name="recording_length" oninput="document.getElementsByName('extraction_length')[0].setAttribute('max', this.value);" type="number" style="width:3em;" min="3" max="60" step="1" value="<?php print($newconfig['RECORDING_LENGTH']);?>" required/><br>
-      <p>Set Recording Length in seconds between 6 and 60. Multiples of 3 are recommended, as BirdNET analyzes in 3-second chunks.</p> 
+      Set Recording Length in seconds between 6 and 60. Multiples of 3 are recommended, as BirdNET analyzes in 3-second chunks.<br><br> 
       <label for="extraction_length">Extraction Length: </label>
       <input name="extraction_length" oninput="this.setAttribute('max', document.getElementsByName('recording_length')[0].value);" type="number" style="width:3em;" min="3" value="<?php print($newconfig['EXTRACTION_LENGTH']);?>" /><br>
-      <p>Set Extraction Length to something less than your Recording Length. Min=3 Max=Recording Length</p>
+      Set Extraction Length to something less than your Recording Length. Min=3 Max=Recording Length<br><br>
       <label for="audiofmt">Extractions Audio Format</label>
       <select name="audiofmt" class="testbtn">
       <option selected="<?php print($newconfig['AUDIOFMT']);?>"><?php print($newconfig['AUDIOFMT']);?></option>
