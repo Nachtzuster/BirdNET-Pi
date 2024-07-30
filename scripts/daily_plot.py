@@ -61,7 +61,6 @@ def wrap_width(txt):
             w += 0.33
     return round(w)
 
-
 def create_plot(df_plt_today, now, is_top=None):
     if is_top is not None:
         readings = 10
