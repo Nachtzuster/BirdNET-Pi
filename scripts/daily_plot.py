@@ -45,11 +45,12 @@ def show_values_on_bars(ax, label):
         # Species Count Total
         value = '{:n}'.format(p.get_width())
         bbox = {'facecolor': 'lightgrey', 'edgecolor': 'none', 'pad': 1.0}
-        match conf['COLOR_SCHEME']:
+        match (conf['COLOR_SCHEME']):
             case "dark":
                 ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='black')
             case _:
                 ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='darkgreen')
+
 
 def wrap_width(txt):
     # try to estimate wrap width
@@ -60,6 +61,7 @@ def wrap_width(txt):
         if c in ['I', 'i', 'j', 'l']:
             w += 0.33
     return round(w)
+
 
 def create_plot(df_plt_today, now, is_top=None):
     if is_top is not None:
