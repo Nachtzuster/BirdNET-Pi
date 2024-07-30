@@ -45,7 +45,7 @@ def show_values_on_bars(ax, label):
         # Species Count Total
         value = '{:n}'.format(p.get_width())
         bbox = {'facecolor': 'lightgrey', 'edgecolor': 'none', 'pad': 1.0}
-        match (conf['COLOR_SCHEME']):
+        match conf['COLOR_SCHEME']:
             case "dark":
                 ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='black')
             case _:
