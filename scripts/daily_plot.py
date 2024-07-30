@@ -81,7 +81,7 @@ def create_plot(df_plt_today, now, is_top=None):
     height = max(readings / 3, 0) + 1.06
     match conf['COLOR_SCHEME']:
         case "dark":
-            f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='#F9F9F9')
+            f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='darkgrey')
         case _:
             f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='none')
 
@@ -154,7 +154,7 @@ def create_plot(df_plt_today, now, is_top=None):
         if int(label.get_text()) == now.hour:
             match conf['COLOR_SCHEME']:
                 case "dark":
-                    label.set_color('black')
+                    label.set_color('white')
                 case _:
                     label.set_color('yellow')
 
