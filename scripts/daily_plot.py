@@ -45,11 +45,10 @@ def show_values_on_bars(ax, label):
         # Species Count Total
         value = '{:n}'.format(p.get_width())
         bbox = {'facecolor': 'lightgrey', 'edgecolor': 'none', 'pad': 1.0}
-        match conf['COLOR_SCHEME']:
-            case "dark":
-                ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='black')
-            case _:
-                ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='darkgreen')
+        if conf['COLOR_SCHEME'] == "dark":
+            ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='black')
+        else:
+            ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='darkgreen')
 
 
 def wrap_width(txt):
@@ -80,11 +79,10 @@ def create_plot(df_plt_today, now, is_top=None):
 
     # Set up plot axes and titles
     height = max(readings / 3, 0) + 1.06
-    match conf['COLOR_SCHEME']:
-        case "dark":
-            f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='darkgrey')
-        case _:
-            f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='none')
+    if conf['COLOR_SCHEME'] == "dark":
+        f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='darkgrey')
+    else:
+        f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='none')
 
     # generate y-axis order for all figures based on frequency
     freq_order = df_plt_selection_today['Com_Name'].value_counts().index
@@ -98,13 +96,12 @@ def create_plot(df_plt_today, now, is_top=None):
     norm = plt.Normalize(confmax.values.min(), confmax.values.max())
     if is_top or is_top is None:
         # Set Palette for graphics
-        match conf['COLOR_SCHEME']:
-            case "dark":
-                pal = "Greys"
-                colors = plt.cm.Greys(norm(confmax)).tolist()
-            case _:
-                pal = "Greens"
-                colors = plt.cm.Greens(norm(confmax)).tolist()
+        if conf['COLOR_SCHEME'] == "dark":
+            pal = "Greys"
+            colors = plt.cm.Greys(norm(confmax)).tolist()
+        else:
+            pal = "Greens"
+            colors = plt.cm.Greens(norm(confmax)).tolist()
         if is_top:
             plot_type = "Top"
         else:
@@ -153,11 +150,10 @@ def create_plot(df_plt_today, now, is_top=None):
     # Set color and weight of tick label for current hour
     for label in plot.get_xticklabels():
         if int(label.get_text()) == now.hour:
-            match conf['COLOR_SCHEME']:
-                case "dark":
-                    label.set_color('white')
-                case _:
-                    label.set_color('yellow')
+            if conf['COLOR_SCHEME'] == "dark":
+                label.set_color('white')
+            else:
+                label.set_color('yellow')
 
     plot.set_xticklabels(plot.get_xticklabels(), rotation=0, size=8)
 
