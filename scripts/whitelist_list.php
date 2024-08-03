@@ -7,8 +7,8 @@
   <h3>All Species Labels</h3>
   <input autocomplete="off" size="18" type="text" placeholder="Search Species..." id="whitelist_species_searchterm" name="whitelist_species_searchterm">
   <br>
-  <span>Once the desired species has been highlighted, click it and then click ADD to have it whitelisted. This species will be detected even if below the Species Occurence Frequency Threshold defined in the settings.
-  This is not a recommended way of working : it is preferable to first try first both Species Occurence models (v1 and v2.4).</span>
+  <span>Once the desired species has been highlighted, click it and then click ADD to have it whitelisted. This species will be detected even if below the Species Occurrence Frequency Threshold defined in the settings.
+  This is not a recommended way of working : it is preferable to first try first both Species Occurrence models (v1 and v2.4).</span>
   <select name="species[]" id="species" multiple size="25">
   <?php
     error_reporting(E_ALL);
