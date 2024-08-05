@@ -46,9 +46,10 @@ def show_values_on_bars(ax, label):
         value = '{:n}'.format(p.get_width())
         bbox = {'facecolor': 'lightgrey', 'edgecolor': 'none', 'pad': 1.0}
         if conf['COLOR_SCHEME'] == "dark":
-            color='black'
+            color = 'black'
         else:
-            color='darkgreen'
+            color = 'darkgreen'
+
         ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color=color)
 
 
@@ -81,9 +82,11 @@ def create_plot(df_plt_today, now, is_top=None):
     # Set up plot axes and titles
     height = max(readings / 3, 0) + 1.06
     if conf['COLOR_SCHEME'] == "dark":
-        f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='darkgrey')
+        facecolor = 'darkgrey'
     else:
-        f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor='none')
+        facecolor = 'none'
+
+    f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor=facecolor)
 
     # generate y-axis order for all figures based on frequency
     freq_order = df_plt_selection_today['Com_Name'].value_counts().index
