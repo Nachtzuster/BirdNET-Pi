@@ -46,9 +46,10 @@ def show_values_on_bars(ax, label):
         value = '{:n}'.format(p.get_width())
         bbox = {'facecolor': 'lightgrey', 'edgecolor': 'none', 'pad': 1.0}
         if conf['COLOR_SCHEME'] == "dark":
-            ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='black')
+            color='black'
         else:
-            ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color='darkgreen')
+            color='darkgreen'
+        ax.text(x, y, value, bbox=bbox, ha='center', va='center', size=9, color=color)
 
 
 def wrap_width(txt):
