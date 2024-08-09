@@ -25,6 +25,7 @@ echo "Re-creating necessary directories"
 sudo -u ${USER} ln -fs $(dirname $my_dir)/exclude_species_list.txt $my_dir
 sudo -u ${USER} ln -fs $(dirname $my_dir)/include_species_list.txt $my_dir
 sudo -u ${USER} ln -fs $(dirname $my_dir)/whitelist_species_list.txt $my_dir
+sudo -u ${USER} ln -fs $(dirname $my_dir)/confirmed_species_list.txt $my_dir
 sudo -u ${USER} ln -fs $(dirname $my_dir)/homepage/* ${EXTRACTED}
 sudo -u ${USER} ln -fs $(dirname $my_dir)/model/labels.txt ${my_dir}
 sudo -u ${USER} ln -fs $my_dir ${EXTRACTED}
