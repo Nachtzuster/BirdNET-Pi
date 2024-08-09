@@ -142,6 +142,20 @@ FULL_DISK=purge
 
 MAX_FILES_SPECIES=0
 
+#----------------------  Site to upload observations to  -----------------------#
+## Individual observations can be manually uploaded to an external site after verification
+## Only verified observations should be uploaded to avoid cluttering those sites
+## Both the information and sound (in mp3 or wav) will be uploaded
+## Keeping this parameter blank will hide the button (default behavior).
+## Currently supports "waarneming.nl": The Netherlands, "waarnemingen.be" or "observations.be": Belgium, "observation.org": The rest of the world
+
+UPLOADSITE_SITE=""
+
+## Username and password of the site selected
+
+UPLOADSITE_USER=""
+UPLOADSITE_PASS=""
+
 ################################################################################
 #--------------------------------  Defaults  ----------------------------------#
 ################################################################################

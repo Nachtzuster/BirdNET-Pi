@@ -98,6 +98,16 @@ if ! grep -E '^MAX_FILES_SPECIES=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo "MAX_FILES_SPECIES=\"0\"" >> /etc/birdnet/birdnet.conf
 fi
 
+if ! grep -E '^UPLOADSITE_SITE=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo "UPLOADSITE_SITE=\"\"" >> /etc/birdnet/birdnet.conf
+fi
+if ! grep -E '^UPLOADSITE_USER=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo "UPLOADSITE_USER=\"\"" >> /etc/birdnet/birdnet.conf
+fi
+if ! grep -E '^UPLOADSITE_PASS=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo "UPLOADSITE_PASS=\"\"" >> /etc/birdnet/birdnet.conf
+fi
+
 [ -d $RECS_DIR/StreamData ] || sudo_with_user mkdir -p $RECS_DIR/StreamData
 [ -L ${EXTRACTED}/spectrogram.png ] || sudo_with_user ln -sf ${RECS_DIR}/StreamData/spectrogram.png ${EXTRACTED}/spectrogram.png
 

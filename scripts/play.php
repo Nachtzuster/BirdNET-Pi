@@ -7,6 +7,7 @@ $_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 error_reporting(E_ERROR);
 ini_set('display_errors',1);
 require_once 'scripts/common.php';
+require_once 'scripts/uploadsite_functions.php';
 $home = get_home();
 $config = get_config();
 $user = get_user();
@@ -88,6 +89,27 @@ if(isset($_GET['changefile']) && isset($_GET['newname'])) {
     echo "Error : " . implode(", ", $output) . "<br>";
   }
   die();
+}
+
+# All functions are in uploadsite_functions.php
+if(isset($_GET['uploadfile']) && isset($_GET['uploadsite'])) {
+    ensure_authenticated('You must be authentificated before uploading observations');
+    $filename = urldecode($_GET['uploadfile']);
+    $website = urldecode($_GET['uploadsite']);
+    $uploadnotes = urldecode($_GET['uploadnotes']);
+    # Fetch token
+    $OBSTOKEN = getOBSToken($website);
+    if (!empty($OBSTOKEN)) {
+      $OBS_RES = postOBS($website,$OBSTOKEN,$filename,$uploadnotes);
+      if ( $OBS_RES == "OK" ) {
+        echo "OK";
+      } else {
+        echo "Error : cannot fetch observation data";
+      }
+    } else {
+      echo "Error : cannot fetch token";
+    }	
+    die();
 }
 
 $shifted_path = $home."/BirdSongs/Extracted/By_Date/shifted/";
@@ -276,6 +298,32 @@ function toggleShiftFreq(filename, shiftAction, elem) {
   }
   xhttp.send();
   elem.setAttribute("src","images/spinner.gif");
+}
+
+function uploadfile(filename, type, site) {
+  var encodedText = "";
+  if (confirm("Are you sure you want to upload this observation to \"" + site + "\"?")) {
+    if (confirm("Do you want to add a note to the upload?")) {
+      var userInput = prompt("Enter additional notes:");
+      if (userInput !== null) {
+        encodedText = encodeURIComponent(userInput);
+      }
+    }
+    const xhttp2 = new XMLHttpRequest();
+    xhttp2.onload = function() {
+      if (this.responseText === "OK") {
+        alert("Successfully uploaded");
+        elem.setAttribute("src", "images/upload_ok.svg");
+        elem.setAttribute("onclick", elem.getAttribute("onclick").replace("upload", "update"));
+        location.reload();
+      } else {
+        alert(this.responseText);
+      }
+    };
+    xhttp2.open("GET", "play.php?uploadfile=" + filename + "&uploadsite=" + site + "&uploadnotes=" + encodedText, true);
+    xhttp2.send();
+    elem.setAttribute("src", "images/spinner.gif");
+  }
 }
 
 function changeDetection(filename,copylink=false) {
@@ -528,8 +576,38 @@ if(isset($_GET['species'])){ ?>
    </form>
 </div>
 <?php
-  // add disk_check_exclude.txt lines into an array for grepping
-  $fp = @fopen($home."/BirdNET-Pi/scripts/disk_check_exclude.txt", 'r'); 
+// add uploaded_observations_list.txt lines into an array for grepping
+$fp = @fopen($home . "/BirdNET-Pi/scripts/uploaded_observations_list.txt", 'r');
+if ($fp) {
+  while (($line = fgets($fp)) !== false) {
+    $parts = explode(';', trim($line));
+    if (count($parts) === 3) {
+      list($uploaduuid, $uploadsite, $uploadfile) = $parts;
+      $upload_mapping[$uploadfile] = ['uuid' => $uploaduuid, 'website' => $uploadsite];
+    }
+  }
+  fclose($fp);
+} else {
+  $upload_mapping = [];
+}
+
+$uploadsite = $config["UPLOADSITE_SITE"];
+if (!empty($uploadsite)) {
+  $filenamebase = $results['File_Name'];
+  if (isset($upload_mapping[$filenamebase])) {
+    $uploadicon = "images/upload_ok.svg";
+    $upload = $upload_mapping[$filenamebase];
+    $uploadtitle = "https://" . $upload['website'] . "/observation/" . $upload['uuid'];
+    $uploadurl = "window.open('https://" . $upload['website'] . "/observation/" . $upload['uuid'] . "',\"_blank\");";
+  } else {
+    $uploadicon = "images/upload.svg";
+    $uploadtitle = "Please click here to upload file to " . $uploadsite;
+    $uploadtype = "upload";
+    $uploadurl = "uploadfile(\"" . $filenamebase . "\",\"" . $uploadtype . "\",\"" . $uploadsite . "\")";
+  }
+}
+// add disk_check_exclude.txt lines into an array for grepping
+$fp = @fopen($home."/BirdNET-Pi/scripts/disk_check_exclude.txt", 'r'); 
 if ($fp) {
   $disk_check_exclude_arr = explode("\n", fread($fp, filesize($home."/BirdNET-Pi/scripts/disk_check_exclude.txt")));
 } else {
@@ -596,7 +674,7 @@ echo "<table>
     } else {
       $imageelem = "<a href=\"$filename\"><img src=\"$filename_png\"></a>";
     }
-
+	  
     if($config["FULL_DISK"] == "purge") {
       if(!in_array($filename_formatted, $disk_check_exclude_arr)) {
         $imageicon = "images/unlock.svg";
@@ -621,7 +699,7 @@ echo "<table>
 
       echo "<tr>
   <td class=\"relative\"> 
-
+<img style='cursor:pointer;left:15px' onclick=".$uploadurl." class=\"copyimage\" width=25 title=\"".$uploadtitle."\" src=\"".$uploadicon."\"> 
 <img style='cursor:pointer;right:120px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Delete Detection'> 
 <img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
@@ -670,6 +748,37 @@ echo "<table>
         $confidence = round((float)round($results['Confidence'],2) * 100 ) . '%';
         $filename_formatted = $date."/".$comname."/".$results['File_Name'];
 
+        // add uploaded_observations_list.txt lines into an array for grepping
+        $fp = @fopen($home."/BirdNET-Pi/scripts/uploaded_observations_list.txt", 'r');
+        if ($fp) {
+          while (($line = fgets($fp)) !== false) {
+              $parts = explode(';', trim($line));
+              if (count($parts) === 3) {
+                  list($uploaduuid, $uploadsite, $uploadfile) = $parts;
+                  $upload_mapping[$uploadfile] = ['uuid' => $uploaduuid, 'website' => $uploadsite];
+              }
+          }
+          fclose($fp);
+	} else {
+          $upload_mapping = [];
+        }
+
+	$uploadsite = $config["UPLOADSITE_SITE"];
+	if (!empty($uploadsite)) {
+	  $filenamebase = $results['File_Name'];
+	  if(isset($upload_mapping[$filenamebase])) {
+  	    $uploadicon = "images/upload_ok.svg";
+	    $upload = $upload_mapping[$filenamebase];
+            $uploadtitle = "https://" . $upload['website'] . "/observation/" . $upload['uuid'];
+            $uploadurl = "window.open('https://".$upload['website']."/observation/".$upload['uuid']."',\"_blank\");";
+	  } else {
+	    $uploadicon = "images/upload.svg";
+	    $uploadtitle = "Please click here to upload file to " . $uploadsite;
+            $uploadtype = "upload";
+	    $uploadurl = "uploadfile(\"".$filenamebase."\",\"".$uploadtype."\",\"".$uploadsite."\")";
+          }
+	}
+
         // add disk_check_exclude.txt lines into an array for grepping
         $fp = @fopen($home."/BirdNET-Pi/scripts/disk_check_exclude.txt", 'r');
         if ($fp) {
@@ -693,7 +802,7 @@ echo "<table>
         $shiftImageIcon = "images/unshift.svg";
         $shiftTitle = "This file has been shifted down in frequency."; 
         $shiftAction = "unshift";
-  $filename = $filename_shifted;
+  	$filename = $filename_shifted;
       } else {
         $shiftImageIcon = "images/shift.svg";
         $shiftTitle = "This file is not shifted in frequency.";
@@ -703,6 +812,7 @@ echo "<table>
           echo "<tr>
       <td class=\"relative\"> 
 
+<img style='cursor:pointer;left:15px' onclick=".$uploadurl." class=\"copyimage\" width=35 title=\"".$uploadtitle."\" src=\"".$uploadicon."\"> 
 <img style='cursor:pointer;right:120px' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\", true)' class=\"copyimage\" width=25 title='Delete Detection'> 
 <img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 

@@ -55,6 +55,9 @@ if(isset($_GET["latitude"])){
   $site_name = str_replace('"', "", $site_name);
   $site_name = str_replace('\'', "", $site_name);
   $birdweather_id = $_GET["birdweather_id"];
+  $uploadsite_site = $_GET["uploadsite_site"];
+  $uploadsite_user = $_GET["uploadsite_user"];
+  $uploadsite_pass = $_GET["uploadsite_pass"];
   $apprise_input = $_GET['apprise_input'];
   $apprise_notification_title = $_GET['apprise_notification_title'];
   $apprise_notification_body = $_GET['apprise_notification_body'];
@@ -152,6 +155,9 @@ if(isset($_GET["latitude"])){
   $contents = preg_replace("/LATITUDE=.*/", "LATITUDE=$latitude", $contents);
   $contents = preg_replace("/LONGITUDE=.*/", "LONGITUDE=$longitude", $contents);
   $contents = preg_replace("/BIRDWEATHER_ID=.*/", "BIRDWEATHER_ID=$birdweather_id", $contents);
+  $contents = preg_replace("/UPLOADSITE_SITE=.*/", "UPLOADSITE_SITE=$uploadsite_site", $contents);
+  $contents = preg_replace("/UPLOADSITE_USER=.*/", "UPLOADSITE_USER=$uploadsite_user", $contents);
+  $contents = preg_replace("/UPLOADSITE_PASS=.*/", "UPLOADSITE_PASS=$uploadsite_pass", $contents);
   $contents = preg_replace("/APPRISE_NOTIFICATION_TITLE=.*/", "APPRISE_NOTIFICATION_TITLE=\"$apprise_notification_title\"", $contents);
   $contents = preg_replace("/APPRISE_NOTIFICATION_BODY=.*/", "APPRISE_NOTIFICATION_BODY=\"$apprise_notification_body\"", $contents);
   $contents = preg_replace("/APPRISE_NOTIFY_EACH_DETECTION=.*/", "APPRISE_NOTIFY_EACH_DETECTION=$apprise_notify_each_detection", $contents);
@@ -285,6 +291,8 @@ if(isset($_GET['sendtest']) && $_GET['sendtest'] == "true") {
 // have to get the config again after we change the variables, so the UI reflects the changes too
 $config = get_config($force_reload=true);
 ?>
+<!-- Include jQuery library -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   </style>
@@ -295,6 +303,30 @@ $config = get_config($force_reload=true);
 
 
 <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var uploadsite_site = document.querySelector('select[name="uploadsite_site"]');
+    var uploadsite_user = document.querySelector('input[name="uploadsite_user"]');
+    var uploadsite_pass = document.querySelector('input[name="uploadsite_pass"]');
+
+    function toggleUploadFields() {
+      if (uploadsite_site.value !== '') {
+        uploadsite_user.style.display = 'block';
+        uploadsite_pass.style.display = 'block';
+        uploadsite_user_label.style.display = 'block';
+        uploadsite_pass_label.style.display = 'block';
+        uploadsite_sync.style.display = 'block';
+      } else {
+        uploadsite_user.style.display = 'none';
+        uploadsite_pass.style.display = 'none';
+        uploadsite_user_label.style.display = 'none';
+        uploadsite_sync.style.display = 'none';
+      }
+    }
+
+    uploadsite_site.addEventListener('change', toggleUploadFields);
+    toggleUploadFields();  // Call the function at page load
+  });
+
   document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('modelsel').addEventListener('change', function() {
     if(this.value == "BirdNET_GLOBAL_6K_V2.4_Model_FP16"){ 
@@ -491,6 +523,35 @@ function runProcess() {
         <br><br>
         <dt>NOTE - by using your BirdWeather ID - you are consenting to sharing your soundscapes and detections with BirdWeather</dt></p>
       </td></tr></table><br>
+
+      <table class="settingstable"><tr><td>
+      <h2>Confirmed observations upload</h2>
+      <label for="uploadsite_site">Upload website : </label>
+      <select name="uploadsite_site" class="testbtn">
+      <?php
+      $scheme = array("", "observation.org", "waarneming.nl", "waarnemingen.be", "observations.be");
+      foreach($scheme as $uploadsite_site){
+          $isSelected = "";
+          if($config['UPLOADSITE_SITE'] == $uploadsite_site){
+            $isSelected = 'selected="selected"';
+          }
+          echo "<option value='{$uploadsite_site}' $isSelected>$uploadsite_site</option>";
+      }
+      ?></select>
+      <br><p>This feature will make appear a new button on individual detections that will allow upload detection+sound to the specified website.
+      <br>This is different than Birdweather, which systematically uploads of all observations.
+      <br>This feature however should only be used on ponctual basis with manually verified observations.</p>
+      <br>
+      <label for="uploadsite_user" id="uploadsite_user_label" style="display:none;">Username: </label>
+      <input name="uploadsite_user" type="text" id="uploadsite_user" value="<?php print($config['UPLOADSITE_USER']);?>" style="display:none;" />
+      <label for="uploadsite_pass" id="uploadsite_pass_label" style="display:none;">Password: </label>
+      <input name="uploadsite_pass" type="text" id="uploadsite_pass" value="<?php print($config['UPLOADSITE_PASS']);?>" style="display:none;" />
+      <form action="scripts/uploadsite_functions.php" method="POST">
+        <input name="action" type="hidden" value="getOBSUploaded" />
+        <button type="submit" id="uploadsite_sync" style="display:none;">Sync observations already uploaded to local database</button>
+      </form>
+      </td></tr></table><br>
+
       <table class="settingstable" style="width:100%"><tr><td>
       <h2>Notifications</h2>
       <p><a target="_blank" href="https://github.com/caronc/apprise/wiki">Apprise Notifications</a> can be setup and enabled for 90+ notification services. Each service should be on its own line.</p>
@@ -669,6 +730,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       </td></tr></table><br>
         
       <script>
+
         function handleChange(checkbox) {
           // this disables the input of manual date and time if the user wants to use the internet time
           var date=document.getElementById("date");
