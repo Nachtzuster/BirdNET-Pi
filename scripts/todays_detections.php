@@ -14,6 +14,7 @@ require_once 'scripts/common.php';
 $home = get_home();
 $config = get_config();
 $site_name = get_sitename();
+set_timezone();
 
 if(isset($kiosk) && $kiosk == true) {
     echo "<div style='margin-top:20px' class=\"centered\"><h1><a><img class=\"topimage\" src=\"images/bnp.png\"></a></h1></div>
