@@ -683,7 +683,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <input type="hidden" name="status" value="success">
       <input type="hidden" name="submit" value="settings">
 <div class="float">
-     <button type="submit" id="basicformsubmit" onclick="if(document.getElementById('basicform').checkValidity()){this.innerHTML = 'Updating... please wait.';this.classList.add('disabled')}" name="view" value="Settings">
+      <button type="submit" id="basicformsubmit" onclick="if(document.getElementById('basicform').checkValidity()){this.innerHTML = 'Updating... please wait.';this.classList.add('disabled')}" name="view" value="Settings">
 <?php
 if(isset($_GET['status'])){
   echo '<script>alert("Settings successfully updated");</script>';
