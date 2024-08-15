@@ -60,7 +60,6 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
             .replace("$cutoff", cutoff) \
             .replace("$sens", sens) \
             .replace("$flickrimage", image_url if "{" in body else "") \
-            .replace("$wikiurl", wikiurl) \
             .replace("$overlap", overlap) \
             .replace("$reason", reason)
         return ret
@@ -105,7 +104,6 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
 
         listenurl = websiteurl+"?filename="+path
         friendlyurl = "[Listen here]("+listenurl+")"
-        wikiurl = "https://wikipedia.org/wiki/" + sciName.replace(' ', '_')
         image_url = ""
 
         if len(settings_dict.get('FLICKR_API_KEY')) > 0 and "$flickrimage" in body:

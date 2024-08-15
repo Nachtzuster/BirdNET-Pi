@@ -1,7 +1,7 @@
 # this should only contain functions and assignments, ie source install.sh should not have side effects.
 
 get_tf_whl () {
-  BASE_URL=https://github.com/Emmo213/BirdNET-Pi/releases/download/v0.1/
+  BASE_URL=https://github.com/Nachtzuster/BirdNET-Pi/releases/download/v0.1/
 
   ARCH=$(uname -m)
   PY_VERSION=$(python3 -c "import sys; print(f'{sys.version_info[0]}{sys.version_info[1]}')")

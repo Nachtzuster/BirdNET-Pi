@@ -20,9 +20,9 @@ set_timezone();
 <div class="banner">
   <div class="logo">
 <?php if(isset($_GET['logo'])) {
-echo "<a href=\"https://github.com/Emmo213/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:60;height:60;\" src=\"images/bird.png\"></a>";
+echo "<a href=\"https://github.com/Nachtzuster/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:60;height:60;\" src=\"images/bird.png\"></a>";
 } else {
-echo "<a href=\"https://github.com/Emmo213/BirdNET-Pi.git\" target=\"_blank\"><img src=\"images/bird.png\"></a>";
+echo "<a href=\"https://github.com/Nachtzuster/BirdNET-Pi.git\" target=\"_blank\"><img src=\"images/bird.png\"></a>";
 }?>
   </div>
 

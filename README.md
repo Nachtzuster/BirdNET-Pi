@@ -14,9 +14,7 @@ Icon made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from 
 </p>
 
 ## About this fork:
-This is a fork from [Nachtzuster](https://github.com/Nachtzuster/BirdNET-Pi), who has been building from the original BirdNET-Pi. So far I've opened pull requests for all of my changes to Nachtzuster's repo also, but incase they don't get approved I'm putting them here. 
-
-Nachtzuster has been building on [mcguirepr89's](https://github.com/mcguirepr89/BirdNET-Pi) most excellent work to further update and improve BirdNET-Pi. Maybe someone will find it useful.
+I've been building on [mcguirepr89's](https://github.com/mcguirepr89/BirdNET-Pi) most excellent work to further update and improve BirdNET-Pi. Maybe someone will find it useful.
 
 Changes include:
 
@@ -113,7 +111,7 @@ Please note that installing BirdNET-Pi on top of other servers is not supported.
 
 The system can be installed with:
 ```
-curl -s https://raw.githubusercontent.com/Emmo213/BirdNET-Pi/main/newinstaller.sh | bash
+curl -s https://raw.githubusercontent.com/Nachtzuster/BirdNET-Pi/main/newinstaller.sh | bash
 ```
 The installer takes care of any and all necessary updates, so you can run that as the very first command upon the first boot, if you'd like.
 
@@ -151,7 +149,7 @@ Please note that upgrading your underlying OS to Bookworm is not going to work. 
 Run these commands to migrate to this repo:
 ```
 git remote remove origin
-git remote add origin https://github.com/Emmo213/BirdNET-Pi.git
+git remote add origin https://github.com/Nachtzuster/BirdNET-Pi.git
 ./scripts/update_birdnet.sh
 ```
 ## Troubleshooting and Ideas
