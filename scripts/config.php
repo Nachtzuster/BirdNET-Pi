@@ -276,6 +276,7 @@ function sendTestNotification(e) {
     xmlHttp.open("GET", "scripts/config.php?sendtest=true&apprise_notification_title="+apprise_notification_title+"&apprise_notification_body="+apprise_notification_body+"&apprise_config="+apprise_config, true); // true for asynchronous 
     xmlHttp.send(null);
 }
+
 </script>
       <table class="settingstable"><tr><td>
       <h2>Model</h2>
