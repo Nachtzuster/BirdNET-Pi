@@ -208,6 +208,11 @@ AUTH=$(grep basicauth /etc/caddy/Caddyfile)
 [ -n "${CADDY_PWD}" ] && [ -z "${AUTH}" ] && sudo /usr/local/bin/update_caddyfile.sh > /dev/null 2>&1
 set -x
 
+sqlite3 $HOME/BirdNET-Pi/scripts/birds.db << EOF
+CREATE INDEX IF NOT EXISTS "detections_Sci_Name" ON "detections" ("Sci_Name");
+EOF
+
+
 # update snippets above
 
 systemctl daemon-reload
