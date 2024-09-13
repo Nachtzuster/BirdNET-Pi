@@ -109,12 +109,9 @@ function get_sci_name($com_name) {
   }
   $sciname = null;
   foreach ($_labels as $label) {
-    $label = rtrim($label);
-    if (strpos($label, $com_name) !== false) {
-      if (substr($label, -strlen($com_name)) === $com_name) {
-        $sciname = trim(explode("_", $label)[0]);
-        break;
-      }
+    if (trim(explode("_", $label)[1]) === $com_name) {
+      $sciname = trim(explode("_", $label)[0]);
+      break;
     }
   }
   return $sciname;
