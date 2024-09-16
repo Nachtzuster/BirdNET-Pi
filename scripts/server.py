@@ -330,10 +330,14 @@ def run_analysis(file):
     for time_slot, entries in raw_detections.items():
         log.info('%s-%s', time_slot, entries[0])
         for entry in entries:
-            if entry[1] >= conf.getfloat('CONFIDENCE') and ((entry[0] in INCLUDE_LIST or len(INCLUDE_LIST) == 0)
-                                                            and (entry[0] not in EXCLUDE_LIST or len(EXCLUDE_LIST) == 0)
-                                                            and (entry[0] in PREDICTED_SPECIES_LIST
-                                                                 or len(PREDICTED_SPECIES_LIST) == 0)):
-                d = Detection(time_slot.split(';')[0], time_slot.split(';')[1], entry[0], entry[1])
-                confident_detections.append(d)
+            if entry[1] >= conf.getfloat('CONFIDENCE'):
+                if entry[0] not in INCLUDE_LIST and len(INCLUDE_LIST) != 0:
+                    log.info("Excluded : INCLUDE_LIST is active but this species id not in it: %s", entry[0])
+                elif entry[0] in EXCLUDE_LIST and len(EXCLUDE_LIST) != 0:
+                    log.info("Excluded : species in EXCLUDE_LIST: %s", entry[0])
+                elif entry[0] not in PREDICTED_SPECIES_LIST and len(PREDICTED_SPECIES_LIST) != 0:
+                    log.info("Excluded : species not in PREDICTED_SPECIES_LIST: %s", entry[0])
+                else:
+                    d = Detection(time_slot.split(';')[0], time_slot.split(';')[1], entry[0], entry[1])
+                    confident_detections.append(d)
     return confident_detections
