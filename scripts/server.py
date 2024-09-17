@@ -332,11 +332,11 @@ def run_analysis(file):
         for entry in entries:
             if entry[1] >= conf.getfloat('CONFIDENCE'):
                 if entry[0] not in INCLUDE_LIST and len(INCLUDE_LIST) != 0:
-                    log.info("Excluded : INCLUDE_LIST is active but this species is not in it: %s", entry[0])
+                    log.warning("Excluded as INCLUDE_LIST is active but this species is not in it: %s", entry[0])
                 elif entry[0] in EXCLUDE_LIST and len(EXCLUDE_LIST) != 0:
-                    log.info("Excluded : species in EXCLUDE_LIST: %s", entry[0])
+                    log.warning("Excluded as species in EXCLUDE_LIST: %s", entry[0])
                 elif entry[0] not in PREDICTED_SPECIES_LIST and len(PREDICTED_SPECIES_LIST) != 0:
-                    log.info("Excluded : species not in PREDICTED_SPECIES_LIST: %s", entry[0])
+                    log.warning("Excluded as below Species Occurrence Frequency Threshold: %s", entry[0])
                 else:
                     d = Detection(time_slot.split(';')[0], time_slot.split(';')[1], entry[0], entry[1])
                     confident_detections.append(d)
