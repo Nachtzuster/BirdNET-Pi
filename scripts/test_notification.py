@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     # Parse arguments
     parser = argparse.ArgumentParser(
-        description='This script is not designed to be used outside of the BirdNET-Pi application. Used to send a test message through the Apprise notification system.'
+        description='Not to be used outside of the BirdNET-Pi application. Used to send a test message through the Apprise notification system.'
     )
 
     parser.add_argument('--confidence', required=True)
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--body', required=False)
 
     args = parser.parse_args()
-    #print(args);
+    # print(args);
 
     # create fake detection
     detections = []
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # create fake file
     file = ParseFileName(args.date)
 
-    #send test notification
+    # send test notification
     title = base64.b64decode(args.title).decode("utf-8")
     body = base64.b64decode(args.body).decode("utf-8")
     apprise(file, detections, title=title, body=body)
