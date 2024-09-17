@@ -7,7 +7,7 @@ pandas
 seaborn
 streamlit==1.31.0
 plotly
-apprise==1.8.0
+apprise==1.8.1
 paho-mqtt<2.0.0
 pytest==7.1.2
 scikit-learn
