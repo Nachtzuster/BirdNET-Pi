@@ -1,7 +1,6 @@
 import logging
 import os
 import os.path
-import pathlib
 import re
 import signal
 import sys
@@ -13,7 +12,7 @@ import inotify.adapters
 from inotify.constants import IN_CLOSE_WRITE
 
 from server import load_global_model, run_analysis
-from utils.helpers import Detection, get_settings, ParseFileName, get_wav_files, ANALYZING_NOW
+from utils.helpers import get_settings, ParseFileName, get_wav_files, ANALYZING_NOW
 from utils.reporting import extract_detection, summary, write_to_file, write_to_db, apprise, bird_weather, heartbeat, \
     update_json_file
 
@@ -61,13 +60,12 @@ def main():
 
         (_, type_names, path, file_name) = event
 
-        file_path = os.path.join(path, file_name)
-
         if re.search('.wav$', file_name) is None:
             continue
 
         log.debug("PATH=[%s] FILENAME=[%s] EVENT_TYPES=%s", path, file_name, type_names)
 
+        file_path = os.path.join(path, file_name)
         if file_path in backlog:
             # if we're very lucky, the first event could be for the file in the backlog that finished
             # while running get_wav_files()
