@@ -59,10 +59,8 @@ def main():
             continue
 
         (_, type_names, path, file_name) = event
-
         if re.search('.wav$', file_name) is None:
             continue
-
         log.debug("PATH=[%s] FILENAME=[%s] EVENT_TYPES=%s", path, file_name, type_names)
 
         file_path = os.path.join(path, file_name)
