@@ -36,7 +36,7 @@ if(isset($_GET['sort']) && $_GET['sort'] == "occurrences") {
 
 
 if(isset($_GET['species'])){
-  $selection = $_GET['species'];
+  $selection = htmlspecialchars_decode($_GET['species'], ENT_QUOTES);
   $statement3 = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = \"$selection\"");
   ensure_db_ok($statement3);
   $result3 = $statement3->execute();

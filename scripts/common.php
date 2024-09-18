@@ -95,7 +95,7 @@ function get_com_en_name($sci_name) {
   }
   $engname = null;
   foreach ($_labels_flickr as $label) {
-    if (strpos($label, $sci_name) !== false) {
+    if (trim(explode("_", $label)[0]) === $sci_name) {
       $engname = trim(explode("_", $label)[1]);
       break;
     }
@@ -109,7 +109,7 @@ function get_sci_name($com_name) {
   }
   $sciname = null;
   foreach ($_labels as $label) {
-    if (strpos($label, $com_name) !== false) {
+    if (trim(explode("_", $label)[1]) === $com_name) {
       $sciname = trim(explode("_", $label)[0]);
       break;
     }
