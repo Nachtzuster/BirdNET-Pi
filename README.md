@@ -218,4 +218,4 @@ Current database languages include the list below:
 
 
 ## :thinking:
-Are you a lucky ducky with an extra Raspberry Pi 4B lying around? [Here's an idea!](https://foldingathome.org/alternative-downloads)
+Are you a lucky ducky with a spare Raspberry Pi? [Try Folding@home!](https://foldingathome.org/)
