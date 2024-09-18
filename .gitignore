@@ -36,7 +36,7 @@ Birders_Guide_Installer_Configuration.txt
 birdnet/
 templates/*.service
 scripts/*.txt
-scripts/*.db
+scripts/birds.db
 analyzing_now.txt
 apprise.txt
 BirdDB.txt
