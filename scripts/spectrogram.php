@@ -139,7 +139,7 @@ window.onload = function(){
   ?>
     // every $refresh seconds, this loop will run and refresh the spectrogram image
   window.setInterval(function(){
-    document.getElementById("spectrogramimage").src = "/spectrogram.png?nocache="+Date.now();
+    document.getElementById("spectrogramimage").src = "spectrogram.png?nocache="+Date.now();
   }, <?php echo $refresh; ?>*1000);
   } else {
     document.getElementById("spectrogramimage").remove();
@@ -274,7 +274,7 @@ function toggleFreqshift(state) {
   // Create the XMLHttpRequest object.
   const xhr = new XMLHttpRequest();
   // Initialize the request
-  xhr.open("GET", './views.php?activate_freqshift_in_livestream=' + state + '&view=Advanced&submit=advanced');
+  xhr.open("GET", 'views.php?activate_freqshift_in_livestream=' + state + '&view=Advanced&submit=advanced');
   // Send the request
   xhr.send();
   // Fired once the request completes successfully
@@ -289,7 +289,7 @@ function toggleFreqshift(state) {
         setTimeout(function () {
           console.log("Restarting connection with livestream");
           audio_player.pause();
-          audio_player.setAttribute('src', '/stream');
+          audio_player.setAttribute('src', 'stream');
           audio_player.load();
           audio_player.play();
 
@@ -405,7 +405,7 @@ h1 {
 }
 </style>
 
-<img id="spectrogramimage" style="width:100%;height:100%;display:none" src="/spectrogram.png?nocache=<?php echo $time;?>">
+<img id="spectrogramimage" style="width:100%;height:100%;display:none" src="spectrogram.png?nocache=<?php echo $time;?>">
 
 <div class="centered">
 	<?php
@@ -471,7 +471,7 @@ h1 {
   </div>
 </div>
 
-<audio style="display:none" controls="" crossorigin="anonymous" id='player' preload="none"><source id="playersrc" src="/stream"></audio>
+<audio style="display:none" controls="" crossorigin="anonymous" id='player' preload="none"><source id="playersrc" src="stream"></audio>
 <h1 id="loading-h1">Loading...</h1>
 <canvas></canvas>
 
@@ -495,7 +495,7 @@ if (typeof (rtsp_stream_select) !== 'undefined' && rtsp_stream_select !== null) 
             // Create the XMLHttpRequest object.
             const xhr = new XMLHttpRequest();
             // Initialize the request
-            xhr.open("GET", './views.php?rtsp_stream_to_livestream=' + this.value + '&view=Advanced&submit=advanced');
+            xhr.open("GET", 'views.php?rtsp_stream_to_livestream=' + this.value + '&view=Advanced&submit=advanced');
             // Send the request
             xhr.send();
             // Fired once the request completes successfully
@@ -508,7 +508,7 @@ if (typeof (rtsp_stream_select) !== 'undefined' && rtsp_stream_select !== null) 
                         //Wait 5 seconds before restarting the stream
                         setTimeout(function () {
                                 audio_player.pause();
-                                audio_player.setAttribute('src', '/stream');
+                                audio_player.setAttribute('src', 'stream');
                                 audio_player.load();
                                 audio_player.play();
 

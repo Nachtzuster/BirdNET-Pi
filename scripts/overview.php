@@ -68,10 +68,10 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
     $comname = preg_replace('/ /', '_', $mostrecent['Com_Name']);
     $sciname = preg_replace('/ /', '_', $mostrecent['Sci_Name']);
     $comname = preg_replace('/\'/', '', $comname);
-    $filename = "/By_Date/".$mostrecent['Date']."/".$comname."/".$mostrecent['File_Name'];
+    $filename = "By_Date/".$mostrecent['Date']."/".$comname."/".$mostrecent['File_Name'];
 
     // check to make sure the image actually exists, sometimes it takes a minute to be created\
-    if(file_exists($home."/BirdSongs/Extracted".$filename.".png")){
+    if(file_exists($home."/BirdSongs/Extracted/".$filename.".png")){
       if($_GET['previous_detection_identifier'] == $filename) { die(); }
       if($_GET['only_name'] == "true") { echo $comname.",".$filename;die(); }
 
@@ -272,7 +272,7 @@ if($dividedrefresh < 1) {
 }
 $time = time();
 if (file_exists('./Charts/'.$chart)) {
-  echo "<img id='chart' src=\"/Charts/$chart?nocache=$time\">";
+  echo "<img id='chart' src=\"Charts/$chart?nocache=$time\">";
 } 
 ?>
 </div>
@@ -286,7 +286,7 @@ if (file_exists('./Charts/'.$chart)) {
 <?php
 $refresh = $config['RECORDING_LENGTH'];
 $time = time();
-echo "<img id=\"spectrogramimage\" src=\"/spectrogram.png?nocache=$time\">";
+echo "<img id=\"spectrogramimage\" src=\"spectrogram.png?nocache=$time\">";
 
 ?>
 
@@ -328,7 +328,7 @@ function refreshTopTen() {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
   if(this.responseText.length > 0 && !this.responseText.includes("Database is busy") && !this.responseText.includes("No Detections") || previous_detection_identifier == undefined) {
-    document.getElementById("chart").src = "/Charts/"+this.responseText+"?nocache="+Date.now();
+    document.getElementById("chart").src = "Charts/"+this.responseText+"?nocache="+Date.now();
   }
   }
   xhttp.open("GET", "overview.php?fetch_chart_string=true", true);
@@ -378,7 +378,7 @@ function refreshCustomImage(){
 }
 function startAutoRefresh() {
     i_fn1 = window.setInterval(function(){
-                    document.getElementById("spectrogramimage").src = "/spectrogram.png?nocache="+Date.now();
+                    document.getElementById("spectrogramimage").src = "spectrogram.png?nocache="+Date.now();
                     }, <?php echo $refresh; ?>*1000);
     i_fn2 = window.setInterval(refreshDetection, <?php echo intval($dividedrefresh); ?>*1000);
     if (customImage) i_fn3 = window.setInterval(refreshCustomImage, 1000);

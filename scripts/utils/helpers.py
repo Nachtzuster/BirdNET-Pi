@@ -88,7 +88,7 @@ class ParseFileName:
 
 
 def get_open_files_in_dir(dir_name):
-    result = subprocess.run(['lsof', '-Fn', '+D', f'{dir_name}'], check=False, capture_output=True)
+    result = subprocess.run(['lsof', '-w', '-Fn', '+D', f'{dir_name}'], check=False, capture_output=True)
     ret = result.stdout.decode('utf-8')
     err = result.stderr.decode('utf-8')
     if err:

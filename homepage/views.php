@@ -120,13 +120,13 @@ if(isset($_GET['view'])){
     include('scripts/service_controls.php');
   }
   if($_GET['view'] == "Spectrogram"){include('spectrogram.php');}
-  if($_GET['view'] == "View Log"){echo "<body style=\"scroll:no;overflow-x:hidden;\"><iframe style=\"width:calc( 100% + 1em);\" src=\"/log\"></iframe></body>";}
+  if($_GET['view'] == "View Log"){echo "<body style=\"scroll:no;overflow-x:hidden;\"><iframe style=\"width:calc( 100% + 1em);\" src=\"log\"></iframe></body>";}
   if($_GET['view'] == "Overview"){include('overview.php');}
   if($_GET['view'] == "Todays Detections"){include('todays_detections.php');}
   if($_GET['view'] == "Kiosk"){$kiosk = true;include('todays_detections.php');}
   if($_GET['view'] == "Species Stats"){include('stats.php');}
   if($_GET['view'] == "Weekly Report"){include('weekly_report.php');}
-  if($_GET['view'] == "Streamlit"){echo "<iframe src=\"/stats\"></iframe>";}
+  if($_GET['view'] == "Streamlit"){echo "<iframe src=\"stats\"></iframe>";}
   if($_GET['view'] == "Daily Charts"){include('history.php');}
   if($_GET['view'] == "Tools"){
     ensure_authenticated();
@@ -240,7 +240,7 @@ if(isset($_GET['view'])){
   }
   if($_GET['view'] == "Webterm"){
     ensure_authenticated('You cannot access the web terminal');
-    echo "<iframe src='/terminal'></iframe>";
+    echo "<iframe src='terminal'></iframe>";
   }
 } elseif(isset($_GET['submit'])) {
   ensure_authenticated();
