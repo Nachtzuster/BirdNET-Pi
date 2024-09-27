@@ -211,6 +211,7 @@ http:// ${BIRDNETPI_URL} {
 EOF
   fi
 
+  systemctl disable apache2
   systemctl enable caddy
   usermod -aG $USER caddy
   usermod -aG video caddy
