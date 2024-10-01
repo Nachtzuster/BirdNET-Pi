@@ -95,12 +95,26 @@ function get_com_en_name($sci_name) {
   }
   $engname = null;
   foreach ($_labels_flickr as $label) {
-    if (strpos($label, $sci_name) !== false) {
+    if (trim(explode("_", $label)[0]) === $sci_name) {
       $engname = trim(explode("_", $label)[1]);
       break;
     }
   }
   return $engname;
+}
+
+function get_sci_name($com_name) {
+  if (!isset($_labels)) {
+    $_labels = file(get_home() . "/BirdNET-Pi/model/labels.txt");
+  }
+  $sciname = null;
+  foreach ($_labels as $label) {
+    if (trim(explode("_", $label)[1]) === $com_name) {
+      $sciname = trim(explode("_", $label)[0]);
+      break;
+    }
+  }
+  return $sciname;
 }
 
 define('DB', './scripts/flickr.db');
@@ -161,6 +175,7 @@ class Flickr {
     $image = $this->get_image_from_db($sci_name);
     if ($image !== false && in_array($image['id'], $this->blacklisted_ids)) {
       $image = false;
+      $this->delete_image_from_db($sci_name);
     }
     if ($image !== false) {
       $now = new DateTime();
@@ -176,7 +191,15 @@ class Flickr {
       $this->get_from_flickr($sci_name);
       $image = $this->get_image_from_db($sci_name);
     }
+    $photos_url = str_replace('/people/', '/photos/', $image['author_url'].'/'.$image['id']);
+    $image['photos_url'] = $photos_url;
     return $image;
+  }
+
+  private function delete_image_from_db($sci_name) {
+    $statement0 = $this->db->prepare('DELETE FROM images WHERE sci_name == :sci_name');
+    $statement0->bindValue(':sci_name', $sci_name);
+    $statement0->execute();
   }
 
   private function get_image_from_db($sci_name) {
@@ -212,6 +235,8 @@ class Flickr {
         break;
       }
     }
+
+    if ($photo === null) return;
 
     $license_url = "https://api.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=" . $this->flickr_api_key . "&photo_id=" . $photo["id"] . "&format=json&nojsoncallback=1";
     $license_response = file_get_contents($license_url);
@@ -267,7 +292,6 @@ function get_info_url($sciname){
   if ($config['INFO_SITE'] === 'EBIRD'){
     require 'scripts/ebird.php';
     $ebird = $ebirds[$sciname];
-    debug_log($ebird);
     $language = $config['DATABASE_LANG'];
     $url = "https://ebird.org/species/$ebird?siteLanguage=$language";
     $url_title = "eBirds";

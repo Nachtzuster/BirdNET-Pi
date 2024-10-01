@@ -130,6 +130,13 @@ if(isset($_GET['submit'])) {
     }
   }
 
+if (isset($_GET["max_files_species"])) {
+    $max_files_species = $_GET["max_files_species"];
+    if (strcmp($max_files_species, $config['MAX_FILES_SPECIES']) !== 0) {
+        $contents = preg_replace("/MAX_FILES_SPECIES=.*/", "MAX_FILES_SPECIES=$max_files_species", $contents);
+    }
+}
+	
   if(isset($_GET["privacy_threshold"])) {
     $privacy_threshold = $_GET["privacy_threshold"];
     if(strcmp($privacy_threshold,$config['PRIVACY_THRESHOLD']) !== 0) {
@@ -274,30 +281,39 @@ $newconfig = get_config();
       </td></tr></table><br>
       
       <table class="settingstable"><tr><td>
-      <h2>Full Disk Behaviour</h2>
+      <h2>Disk Management</h2>
       <label for="purge">
       <input name="full_disk" type="radio" id="purge" value="purge" <?php if (strcmp($newconfig['FULL_DISK'], "purge") == 0) { echo "checked"; }?>>Purge</label>
       <label for="keep">
       <input name="full_disk" type="radio" id="keep" value="keep" <?php if (strcmp($newconfig['FULL_DISK'], "keep") == 0) { echo "checked"; }?>>Keep</label>
       <p>When the disk becomes full, you can choose to 'purge' old files to make room for new ones or 'keep' your data and stop all services instead.<br>Note: you can exclude specific files from 'purge' on the Recordings page.</p>
+      <br>
+      <label for="max_files_species">Amount of files to keep for each species :</label>
+      <input name="max_files_species" type="number" style="width:6em;" min="0" step="1" value="<?php print($newconfig['MAX_FILES_SPECIES']);?>"/>
+      </td></tr><tr><td>
+      If different than 0 (keep all), defines the maximum number of files to be kept for each species, with priority give to files with highest confidence. 
+      This value does not take into account the last 7 days (protected by default).
+      </td></tr><tr><td>
+      Note only the spectrogram and audio files are deleted, the obsevation data remains in the database.
+      The files protected through the "lock" icon are also not affected.
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
 
       <h2>Audio Settings</h2>
       <label for="rec_card">Audio Card: </label>
       <input name="rec_card" type="text" size="12" value="<?php print($newconfig['REC_CARD']);?>" required/><br>
-      <p>Set Audio Card to 'default' to use PulseAudio (always recommended), or an ALSA recognized sound card device from the output of `arecord -L`. Choose the `dsnoop` device if it is available</p>
+      Set Audio Card to 'default' to use PulseAudio (always recommended), or an ALSA recognized sound card device from the output of `arecord -L`. Choose the `dsnoop` device if it is available.<br><br>
       <label for="channels">Audio Channels: </label>
       <input name="channels" type="number" style="width:3em;" min="1" max="32" step="1" value="<?php print($newconfig['CHANNELS']);?>" required/><br>
-      <p>Set Channels to the number of channels supported by your sound card. 32 max.</p>
+      Set Channels to the number of channels supported by your sound card. 32 max.<br><br>
       <label for="recording_length">Recording Length: </label>
       <input name="recording_length" oninput="document.getElementsByName('extraction_length')[0].setAttribute('max', this.value);" type="number" style="width:3em;" min="3" max="60" step="1" value="<?php print($newconfig['RECORDING_LENGTH']);?>" required/><br>
-      <p>Set Recording Length in seconds between 6 and 60. Multiples of 3 are recommended, as BirdNET analyzes in 3-second chunks.</p> 
+      Set Recording Length in seconds between 6 and 60. Multiples of 3 are recommended, as BirdNET analyzes in 3-second chunks.<br><br> 
       <label for="extraction_length">Extraction Length: </label>
       <input name="extraction_length" oninput="this.setAttribute('max', document.getElementsByName('recording_length')[0].value);" type="number" style="width:3em;" min="3" value="<?php print($newconfig['EXTRACTION_LENGTH']);?>" /><br>
-      <p>Set Extraction Length to something less than your Recording Length. Min=3 Max=Recording Length</p>
+      Set Extraction Length to something less than your Recording Length. Min=3 Max=Recording Length<br><br>
       <label for="audiofmt">Extractions Audio Format</label>
-      <select name="audiofmt">
+      <select name="audiofmt" class="testbtn">
       <option selected="<?php print($newconfig['AUDIOFMT']);?>"><?php print($newconfig['AUDIOFMT']);?></option>
 <?php
   $formats = array("8svx", "aif", "aifc", "aiff", "aiffc", "al", "amb", "amr-nb", "amr-wb", "anb", "au", "avr", "awb", "caf", "cdda", "cdr", "cvs", "cvsd", "cvu", "dat", "dvms", "f32", "f4", "f64", "f8", "fap", "flac", "fssd", "gsm", "gsrt", "hcom", "htk", "ima", "ircam", "la", "lpc", "lpc10", "lu", "mat", "mat4", "mat5", "maud", "mp2", "mp3", "nist", "ogg", "paf", "prc", "pvf", "raw", "s1", "s16", "s2", "s24", "s3", "s32", "s4", "s8", "sb", "sd2", "sds", "sf", "sl", "sln", "smp", "snd", "sndfile", "sndr", "sndt", "sou", "sox", "sph", "sw", "txw", "u1", "u16", "u2", "u24", "u3", "u32", "u4", "u8", "ub", "ul", "uw", "vms", "voc", "vorbis", "vox", "w64", "wav", "wavpcm", "wv", "wve", "xa", "xi");
@@ -460,7 +476,7 @@ foreach($formats as $format){
         <p style="margin-left: 40px">
 
       <label for="freqshift_tool">Shifting tool: </label>
-      <select name="freqshift_tool">
+      <select name="freqshift_tool" class="testbtn">
             <option selected="<?php print($newconfig['FREQSHIFT_TOOL']);?>"><?php print($newconfig['FREQSHIFT_TOOL']);?></option>
       <?php
         $formats = array("sox","ffmpeg");
@@ -511,7 +527,7 @@ foreach($formats as $format){
             </tr>
             <tr>
                 <td>Birdnet Recording:
-                    <select id="LogLevel_BirdnetRecordingService" name="LogLevel_BirdnetRecordingService">
+                    <select class="testbtn" id="LogLevel_BirdnetRecordingService" name="LogLevel_BirdnetRecordingService">
                         <option value="error" <?php echo $newconfig['LogLevel_BirdnetRecordingService'] == "error" || !array_key_exists('LogLevel_BirdnetRecordingService', $newconfig) ? "selected=''" : "" ?>>
                             Errors Only
                         </option>
@@ -529,7 +545,7 @@ foreach($formats as $format){
             </tr>
             <tr>
                 <td>Live Audio Stream:
-                    <select id="LogLevel_LiveAudioStreamService" name="LogLevel_LiveAudioStreamService">
+                    <select class="testbtn" id="LogLevel_LiveAudioStreamService" name="LogLevel_LiveAudioStreamService">
                         <option value="error" <?php echo $newconfig['LogLevel_LiveAudioStreamService'] == "error" || !array_key_exists('LogLevel_LiveAudioStreamService', $newconfig) ? "selected=''" : "" ?>>
                             Errors Only
                         </option>
@@ -547,7 +563,7 @@ foreach($formats as $format){
             </tr>
             <tr>
                 <td>Spectrogram Service:
-                    <select id="LogLevel_SpectrogramViewerService" name="LogLevel_SpectrogramViewerService">
+                    <select class="testbtn" id="LogLevel_SpectrogramViewerService" name="LogLevel_SpectrogramViewerService">
                         <option value="error" <?php echo $newconfig['LogLevel_SpectrogramViewerService'] == "error" || !array_key_exists('LogLevel_SpectrogramViewerService', $newconfig) ? "selected=''" : "" ?>>
                             Errors Only
                         </option>

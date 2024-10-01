@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 1. Service status
-services=("caddy" "birdnet_analysis" "birdnet_log" "birdnet_recording" "birdnet_server" "birdnet_stats" "chart_viewer" "extraction" "web_terminal" "spectrogram_viewer" "livestream")
+services=("caddy" "birdnet_analysis" "birdnet_log" "birdnet_recording" "birdnet_stats" "chart_viewer" "extraction" "web_terminal" "spectrogram_viewer" "livestream")
 
 for service in "${services[@]}"; do
     echo "========== $service status =========="

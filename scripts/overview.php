@@ -68,10 +68,10 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
     $comname = preg_replace('/ /', '_', $mostrecent['Com_Name']);
     $sciname = preg_replace('/ /', '_', $mostrecent['Sci_Name']);
     $comname = preg_replace('/\'/', '', $comname);
-    $filename = "/By_Date/".$mostrecent['Date']."/".$comname."/".$mostrecent['File_Name'];
+    $filename = "By_Date/".$mostrecent['Date']."/".$comname."/".$mostrecent['File_Name'];
 
     // check to make sure the image actually exists, sometimes it takes a minute to be created\
-    if(file_exists($home."/BirdSongs/Extracted".$filename.".png")){
+    if(file_exists($home."/BirdSongs/Extracted/".$filename.".png")){
       if($_GET['previous_detection_identifier'] == $filename) { die(); }
       if($_GET['only_name'] == "true") { echo $comname.",".$filename;die(); }
 
@@ -94,8 +94,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
           $image = $_SESSION['images'][$key];
         } else {
           $flickr_cache = $flickr->get_image($mostrecent['Sci_Name']);
-          $modaltext = $flickr_cache["author_url"] . "/" . $flickr_cache["id"];
-          array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $modaltext, $flickr_cache["author_url"], $flickr_cache["license_url"]));
+          array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $flickr_cache["photos_url"], $flickr_cache["author_url"], $flickr_cache["license_url"]));
           $image = $_SESSION['images'][count($_SESSION['images']) - 1];
         }
       }
@@ -128,8 +127,13 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
               <?php } ?>
               <form action="" method="GET">
                   <input type="hidden" name="view" value="Species Stats">
-                  <button type="submit" name="species" value="<?php echo $mostrecent['Com_Name'];?>"><?php echo $mostrecent['Com_Name'];?></button><img style="width: unset !important;display: inline;height: 1em;cursor:pointer" title="View species stats" onclick="generateMiniGraph(this, '<?php echo $comname; ?>')" width=25 src="images/chart.svg"><br>
-                  <a href="https://wikipedia.org/wiki/<?php echo $sciname;?>" target="_blank"><i><?php echo $mostrecent['Sci_Name'];?></i></a>
+                  <button type="submit" name="species" value="<?php echo $mostrecent['Com_Name'];?>"><?php echo $mostrecent['Com_Name'];?></button>
+                  <br>
+                  <i><?php echo $mostrecent['Sci_Name'];?></i>
+                  <a href="<?php $info_url = get_info_url($mostrecent['Sci_Name']); $url = $info_url['URL']; echo $url ?>" target="_blank">
+                  <img style="width: unset !important; display: inline; height: 1em; cursor: pointer;" title="Info" src="images/info.png" width="25"></a>
+                  <a href="https://wikipedia.org/wiki/<?php echo $sciname;?>" target="_blank"><img style="width: unset !important; display: inline; height: 1em; cursor: pointer;" title="Wikipedia" src="images/wiki.png" width="25"></a>
+                  <img style="width: unset !important;display: inline;height: 1em;cursor:pointer" title="View species stats" onclick="generateMiniGraph(this, '<?php echo $comname; ?>')" width=25 src="images/chart.svg">
                   <br>Confidence: <?php echo $percent = round((float)round($mostrecent['Confidence'],2) * 100 ) . '%';?><br></div><br>
                   <video style="margin-top:10px" onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster="<?php echo $filename.".png";?>" preload="none" title="<?php echo $filename;?>"><source src="<?php echo $filename;?>"></video></td>
               </form>
@@ -268,7 +272,7 @@ if($dividedrefresh < 1) {
 }
 $time = time();
 if (file_exists('./Charts/'.$chart)) {
-  echo "<img id='chart' src=\"/Charts/$chart?nocache=$time\">";
+  echo "<img id='chart' src=\"Charts/$chart?nocache=$time\">";
 } 
 ?>
 </div>
@@ -282,7 +286,7 @@ if (file_exists('./Charts/'.$chart)) {
 <?php
 $refresh = $config['RECORDING_LENGTH'];
 $time = time();
-echo "<img id=\"spectrogramimage\" src=\"/spectrogram.png?nocache=$time\">";
+echo "<img id=\"spectrogramimage\" src=\"spectrogram.png?nocache=$time\">";
 
 ?>
 
@@ -324,7 +328,7 @@ function refreshTopTen() {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
   if(this.responseText.length > 0 && !this.responseText.includes("Database is busy") && !this.responseText.includes("No Detections") || previous_detection_identifier == undefined) {
-    document.getElementById("chart").src = "/Charts/"+this.responseText+"?nocache="+Date.now();
+    document.getElementById("chart").src = "Charts/"+this.responseText+"?nocache="+Date.now();
   }
   }
   xhttp.open("GET", "overview.php?fetch_chart_string=true", true);
@@ -374,7 +378,7 @@ function refreshCustomImage(){
 }
 function startAutoRefresh() {
     i_fn1 = window.setInterval(function(){
-                    document.getElementById("spectrogramimage").src = "/spectrogram.png?nocache="+Date.now();
+                    document.getElementById("spectrogramimage").src = "spectrogram.png?nocache="+Date.now();
                     }, <?php echo $refresh; ?>*1000);
     i_fn2 = window.setInterval(refreshDetection, <?php echo intval($dividedrefresh); ?>*1000);
     if (customImage) i_fn3 = window.setInterval(refreshCustomImage, 1000);
@@ -427,17 +431,6 @@ function generateMiniGraph(elem, comname) {
       }
       var chartWindow = document.createElement('div');
       chartWindow.className = "chartdiv"
-      chartWindow.style.position = 'fixed';
-      chartWindow.style.top = '0%';
-      chartWindow.style.left = '50%';
-      chartWindow.style.width = window.innerWidth < 700 ? '40%' : '20%';
-      chartWindow.style.height = window.innerWidth < 700 ? '25%' : '16%';
-      chartWindow.style.backgroundColor = '#fff';
-      chartWindow.style.zIndex = '9999';
-      chartWindow.style.overflow = 'auto';
-      chartWindow.style.borderRadius = '5px';
-      chartWindow.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-
       document.body.appendChild(chartWindow);
 
 

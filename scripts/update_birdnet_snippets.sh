@@ -94,6 +94,10 @@ if ! grep -E '^COLOR_SCHEME=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo "COLOR_SCHEME=\"light\"" >> /etc/birdnet/birdnet.conf
 fi
 
+if ! grep -E '^MAX_FILES_SPECIES=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo "MAX_FILES_SPECIES=\"0\"" >> /etc/birdnet/birdnet.conf
+fi
+
 [ -d $RECS_DIR/StreamData ] || sudo_with_user mkdir -p $RECS_DIR/StreamData
 [ -L ${EXTRACTED}/spectrogram.png ] || sudo_with_user ln -sf ${RECS_DIR}/StreamData/spectrogram.png ${EXTRACTED}/spectrogram.png
 
@@ -176,8 +180,16 @@ fi
 if [ -L /usr/local/bin/analyze.py ];then
   rm -f /usr/local/bin/analyze.py
 fi
+
 if [ -L /usr/local/bin/birdnet_analysis.sh ];then
   rm -f /usr/local/bin/birdnet_analysis.sh
+fi
+
+# Clean state and update cron if all scripts are not installed
+if [ "$(grep -o "#birdnet" /etc/crontab | wc -l)" -lt 5 ]; then
+  sudo sed -i '/birdnet/,+1d' /etc/crontab
+  sed "s/\$USER/$USER/g" "$HOME"/BirdNET-Pi/templates/cleanup.cron >> /etc/crontab
+  sed "s/\$USER/$USER/g" "$HOME"/BirdNET-Pi/templates/weekly_report.cron >> /etc/crontab
 fi
 
 # update snippets above

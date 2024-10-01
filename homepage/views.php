@@ -120,13 +120,13 @@ if(isset($_GET['view'])){
     include('scripts/service_controls.php');
   }
   if($_GET['view'] == "Spectrogram"){include('spectrogram.php');}
-  if($_GET['view'] == "View Log"){echo "<body style=\"scroll:no;overflow-x:hidden;\"><iframe style=\"width:calc( 100% + 1em);\" src=\"/log\"></iframe></body>";}
+  if($_GET['view'] == "View Log"){echo "<body style=\"scroll:no;overflow-x:hidden;\"><iframe style=\"width:calc( 100% + 1em);\" src=\"log\"></iframe></body>";}
   if($_GET['view'] == "Overview"){include('overview.php');}
   if($_GET['view'] == "Todays Detections"){include('todays_detections.php');}
   if($_GET['view'] == "Kiosk"){$kiosk = true;include('todays_detections.php');}
   if($_GET['view'] == "Species Stats"){include('stats.php');}
   if($_GET['view'] == "Weekly Report"){include('weekly_report.php');}
-  if($_GET['view'] == "Streamlit"){echo "<iframe src=\"/stats\"></iframe>";}
+  if($_GET['view'] == "Streamlit"){echo "<iframe src=\"stats\"></iframe>";}
   if($_GET['view'] == "Daily Charts"){include('history.php');}
   if($_GET['view'] == "Tools"){
     ensure_authenticated();
@@ -142,6 +142,7 @@ if(isset($_GET['view'])){
       <button type=\"submit\" name=\"view\" value=\"Webterm\" form=\"views\">Web Terminal</button>
       <button type=\"submit\" name=\"view\" value=\"Included\" form=\"views\">Custom Species List</button>
       <button type=\"submit\" name=\"view\" value=\"Excluded\" form=\"views\">Excluded Species List</button>
+      <button type=\"submit\" name=\"view\" value=\"Whitelisted\" form=\"views\">Whitelist Species List</button>
       </form>
       </div>";
   }
@@ -204,6 +205,33 @@ if(isset($_GET['view'])){
     }
     include('./scripts/exclude_list.php');
   }
+  if($_GET['view'] == "Whitelisted"){
+    ensure_authenticated();
+    if(isset($_GET['species']) && isset($_GET['add'])){
+      $file = './scripts/whitelist_species_list.txt';
+      $str = file_get_contents("$file");
+      $str = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $str);
+      file_put_contents("$file", "$str");
+      foreach ($_GET['species'] as $selectedOption)
+        file_put_contents("./scripts/whitelist_species_list.txt", htmlspecialchars_decode($selectedOption, ENT_QUOTES)."\n", FILE_APPEND);
+    } elseif (isset($_GET['species']) && isset($_GET['del'])){
+      $file = './scripts/whitelist_species_list.txt';
+      $str = file_get_contents("$file");
+      $str = preg_replace('/^\h*\v+/m', '', $str);
+      file_put_contents("$file", "$str");
+      foreach($_GET['species'] as $selectedOption) {
+        $content = file_get_contents("./scripts/whitelist_species_list.txt");
+        $newcontent = str_replace($selectedOption, "", "$content");
+        $newcontent = str_replace(htmlspecialchars_decode($selectedOption, ENT_QUOTES), "", "$content");
+        file_put_contents("./scripts/whitelist_species_list.txt", "$newcontent");
+      }
+      $file = './scripts/whitelist_species_list.txt';
+      $str = file_get_contents("$file");
+      $str = preg_replace('/^\h*\v+/m', '', $str);
+      file_put_contents("$file", "$str");
+    }
+    include('./scripts/whitelist_list.php');
+  }
   if($_GET['view'] == "File"){
     echo "<iframe src='scripts/filemanager/filemanager.php'></iframe>";
   }
@@ -212,7 +240,7 @@ if(isset($_GET['view'])){
   }
   if($_GET['view'] == "Webterm"){
     ensure_authenticated('You cannot access the web terminal');
-    echo "<iframe src='/terminal'></iframe>";
+    echo "<iframe src='terminal'></iframe>";
   }
 } elseif(isset($_GET['submit'])) {
   ensure_authenticated();

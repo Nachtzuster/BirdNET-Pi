@@ -147,7 +147,6 @@ if(isset($_GET["latitude"])){
     }
   }
 
-
   $contents = file_get_contents("/etc/birdnet/birdnet.conf");
   $contents = preg_replace("/SITE_NAME=.*/", "SITE_NAME=\"$site_name\"", $contents);
   $contents = preg_replace("/LATITUDE=.*/", "LATITUDE=$latitude", $contents);
@@ -176,6 +175,10 @@ if(isset($_GET["latitude"])){
     function() {
       window.parent.document.location.reload();
     }, 1000);</script>";
+
+    shell_exec("sudo systemctl restart chart_viewer.service");
+    // the sleep allows for the service to restart and image to be generated
+    sleep(5);
   }
 
   $fh = fopen("/etc/birdnet/birdnet.conf", "w");
@@ -324,7 +327,7 @@ function sendTestNotification(e) {
       <h2>Model</h2>
 
       <label for="model">Select a Model: </label>
-      <select id="modelsel" name="model">
+      <select id="modelsel" name="model" class="testbtn">
       <?php
       $models = array("BirdNET_GLOBAL_6K_V2.4_Model_FP16", "BirdNET_6K_GLOBAL_MODEL");
       foreach($models as $modelName){
@@ -341,9 +344,9 @@ function sendTestNotification(e) {
       <span <?php if($config['MODEL'] == "BirdNET_6K_GLOBAL_MODEL") { ?>style="display: none"<?php } ?> id="soft">
       <input type="checkbox" name="data_model_version" <?php if($config['DATA_MODEL_VERSION'] == 2) { echo "checked"; };?> >
       <label for="data_model_version">Species range model V2.4 - V2</label>  [ <a target="_blank" href="https://github.com/kahst/BirdNET-Analyzer/discussions/234">Info here</a> ]<br>
-      <label for="sf_thresh">Species Occurence Frequency Threshold [0.0005, 0.99]: </label>
+      <label for="sf_thresh">Species Occurrence Frequency Threshold [0.0005, 0.99]: </label>
       <input name="sf_thresh" type="number" style="width:5em;" max="0.99" min="0.0005" step="any" value="<?php print($config['SF_THRESH']);?>"/> <span onclick="document.getElementById('sfhelp').style.display='unset'" style="text-decoration:underline;cursor:pointer">[more info]</span><br>
-      <p id="sfhelp" style='display:none'>This value is used by the model to constrain the list of possible species that it will try to detect, given the minimum occurence frequency. A 0.03 threshold means that for a species to be included in this list, it needs to, on average, be seen on at least 3% of historically submitted eBird checklists for your given lat/lon/current week of year. So, the lower the threshold, the rarer the species it will include.<br><img style='width:75%;padding-top:5px;padding-bottom:5px' alt="BirdNET-Pi new model detection flowchart" title="BirdNET-Pi new model detection flowchart" src="https://i.imgur.com/8YEAuSA.jpeg">
+      <p id="sfhelp" style='display:none'>This value is used by the model to constrain the list of possible species that it will try to detect, given the minimum occurrence frequency. A 0.03 threshold means that for a species to be included in this list, it needs to, on average, be seen on at least 3% of historically submitted eBird checklists for your given lat/lon/current week of year. So, the lower the threshold, the rarer the species it will include.<br><img style='width:75%;padding-top:5px;padding-bottom:5px' alt="BirdNET-Pi new model detection flowchart" title="BirdNET-Pi new model detection flowchart" src="https://i.imgur.com/8YEAuSA.jpeg">
         <br>If you'd like to tinker with this threshold value and see which species make it onto the list, <?php if($config['MODEL'] == "BirdNET_6K_GLOBAL_MODEL"){ ?>please click "Update Settings" at the very bottom of this page to install the appropriate label file, then come back here and you'll be able to use the Species List Tester.<?php } else { ?>you can use this tool: <button type="button" class="testbtn" id="openModal">Species List Tester</button><?php } ?></p>
       </span>
 
@@ -496,7 +499,7 @@ function runProcess() {
 tgram://{bot_token}/{chat_id}
 twitter://{ConsumerKey}/{ConsumerSecret}/{AccessToken}/{AccessSecret}
 https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
-..." style="vertical-align: top" name="apprise_input" rows="5" type="text" ><?php print($apprise_config);?></textarea>
+..." style="vertical-align: top" class="testbtn" name="apprise_input" rows="5" type="text" ><?php print($apprise_config);?></textarea>
       <dl>
       <dt>$sciname</dt>
       <dd>Scientific Name</dd>
@@ -563,13 +566,13 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <label for="flickr_api_key">Flickr API Key: </label>
       <input name="flickr_api_key" type="text" size="32" value="<?php print($config['FLICKR_API_KEY']);?>"/><br>
       <label for="flickr_filter_email">Only search photos from this Flickr user: </label>
-      <input name="flickr_filter_email" type="email" placeholder="myflickraccount@gmail.com" value="<?php print($config['FLICKR_FILTER_EMAIL']);?>"/><br>
+      <input name="flickr_filter_email" type="email" size="24" placeholder="myflickraccount@gmail.com" value="<?php print($config['FLICKR_FILTER_EMAIL']);?>"/><br>
       <p>Set your Flickr API key to enable the display of bird images next to detections. <a target="_blank" href="https://www.flickr.com/services/api/misc.api_keys.html">Get your free key here.</a></p>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
       <h2>Localization</h2>
       <label for="language">Database Language: </label>
-      <select name="language">
+      <select name="language" class="testbtn">
       <?php
         $langs = array(
           'not-selected' => 'Not Selected',
@@ -623,7 +626,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <table class="settingstable"><tr><td>
       <h2>Additional Info </h2>
       <label for="info_site">Site to pull additional species info from: </label>
-      <select name="info_site">
+      <select name="info_site" class="testbtn">
       <?php
         $info_site = array(
           'ALLABOUTBIRDS' => 'allaboutbirds.org',
@@ -649,8 +652,9 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
 
       <table class="settingstable"><tr><td>
       <h2>Color scheme </h2>
+      Note: when changing themes the daily chart may need a page refresh before updating.<br><br>
       <label for="color_scheme">Color scheme for the site : </label>
-      <select name="color_scheme">
+      <select name="color_scheme" class="testbtn">
       <?php
       $scheme = array("light", "dark");
       foreach($scheme as $color_scheme){
@@ -700,7 +704,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <input onclick="this.showPicker()" type="time" id="time" name="time" value="<?php echo $date->format('H:i'); ?>" <?php echo $disabledvalue; ?>><br>
       <br>
       <label for="timezone">Select a Timezone: </label>
-      <select name="timezone">
+      <select name="timezone" class="testbtn">
       <option disabled selected>
         Select a timezone
       </option>

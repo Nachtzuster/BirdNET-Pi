@@ -48,8 +48,8 @@ if(isset($_GET['stream'])){
 if(isset($_GET['filename'])) {
   $filename = $_GET['filename'];
 echo "
-<iframe src=\"/views.php?view=Recordings&filename=$filename\"></iframe>";
+<iframe src=\"views.php?view=Recordings&filename=$filename\"></iframe>";
 } else {
   echo "
-<iframe src=\"/views.php\"></iframe>";
+<iframe src=\"views.php\"></iframe>";
 }

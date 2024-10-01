@@ -39,7 +39,7 @@
 - BirdWeather Support
 - Bug Fix for systemd-networkd-wait-online.service
 - Bug Fix for `install_noip2.sh` for NoIP DUC Support
-- New `disk_check.sh` utitlity/crontab entry to `stop_core_services.sh`
+- New `disk_check.sh` utility/crontab entry to `stop_core_services.sh`
   when disk space is greater than 95%
 
 # main v0.9 -- pre-installed image

@@ -58,8 +58,16 @@
             <div id="tempblock" style="display:none;">
                 <span class="lang_044"></span>
                 <select class="template" id="template">
-                    <option value="green" selected="selected">green</option>
-                </select>
+                    <?php 
+                    require_once '../BirdNET-Pi/scripts/common.php';
+                    $config = get_config();
+                    $color_scheme = $config['COLOR_SCHEME'];
+                    if ($color_scheme == 'dark') {
+                        echo '<option value="dark" selected="selected">Dark</option>';
+                    } else {
+                        echo '<option value="green" selected="selected">Green</option>';
+                    }
+                    ?>
                 </select>
             </div>
             <div id="langblock" style="display:none;">

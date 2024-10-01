@@ -364,7 +364,7 @@ if daily is False:
                     recording = st.selectbox('Available recordings', recordings.sort_index(ascending=False))
                     date_specie = df2.loc[df2['File_Name'] == recording, ['Date', 'Com_Name']]
                     date_dir = date_specie['Date'].values[0]
-                    specie_dir = date_specie['Com_Name'].values[0].replace(" ", "_")
+                    specie_dir = date_specie['Com_Name'].values[0].replace(" ", "_").replace("'", "")
                     st.image(userDir + '/BirdSongs/Extracted/By_Date/' + date_dir + '/' + specie_dir + '/' + recording + '.png')
                     st.audio(userDir + '/BirdSongs/Extracted/By_Date/' + date_dir + '/' + specie_dir + '/' + recording)
                 except Exception:
