@@ -56,8 +56,8 @@ if(isset($_GET["latitude"])){
   $site_name = str_replace('\'', "", $site_name);
   $birdweather_id = $_GET["birdweather_id"];
   $apprise_input = $_GET['apprise_input'];
-  $apprise_notification_title = $_GET['apprise_notification_title'];
-  $apprise_notification_body = $_GET['apprise_notification_body'];
+  $apprise_notification_title = base64_decode($_GET['apprise_notification_title']);
+  $apprise_notification_body = base64_decode($_GET['apprise_notification_body']);
   $minimum_time_limit = $_GET['minimum_time_limit'];
   $flickr_api_key = $_GET['flickr_api_key'];
   $flickr_filter_email = $_GET["flickr_filter_email"];
@@ -536,9 +536,9 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       </dl>
       <p>Use the variables defined above to customize your notification title and body.</p>
       <label for="apprise_notification_title">Notification Title: </label>
-      <input name="apprise_notification_title" style="width: 100%" type="text" value="<?php print($config['APPRISE_NOTIFICATION_TITLE']);?>" /><br>
+      <input name="apprise_notification_title" id="apprise_notification_title" style="width: 100%" type="text" value="<?php print($config['APPRISE_NOTIFICATION_TITLE']);?>" /><br>
       <label for="apprise_notification_body">Notification Body: </label>
-      <input name="apprise_notification_body" style="width: 100%" type="text" value='<?php print($config['APPRISE_NOTIFICATION_BODY']);?>' /><br>
+      <input name="apprise_notification_body" id="apprise_notification_body" style="width: 100%" type="text" value='<?php print($config['APPRISE_NOTIFICATION_BODY']);?>' /><br>
       <input type="checkbox" name="apprise_notify_new_species" <?php if($config['APPRISE_NOTIFY_NEW_SPECIES'] == 1 && filesize($home."/BirdNET-Pi/apprise.txt") != 0) { echo "checked"; };?> >
       <label for="apprise_notify_new_species">Notify each new infrequent species detection (<5 visits per week)</label><br>
       <input type="checkbox" name="apprise_notify_new_species_each_day" <?php if($config['APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY'] == 1 && filesize($home."/BirdNET-Pi/apprise.txt") != 0) { echo "checked"; };?> >
@@ -729,7 +729,19 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <input type="hidden" name="status" value="success">
       <input type="hidden" name="submit" value="settings">
 <div class="float">
-      <button type="submit" id="basicformsubmit" onclick="if(document.getElementById('basicform').checkValidity()){this.innerHTML = 'Updating... please wait.';this.classList.add('disabled')}" name="view" value="Settings">
+      <button type="submit" id="basicformsubmit" onclick="formSubmit()" name="view" value="Settings">
+
+<script type="text/javascript">
+    function formSubmit() {
+        if(document.getElementById('basicform').checkValidity()) {
+            document.getElementById('apprise_notification_title').value = btoa(document.getElementById('apprise_notification_title').value);
+            document.getElementById('apprise_notification_body').value = btoa(document.getElementById('apprise_notification_body').value);
+            document.getElementById('basicformsubmit').innerHTML = 'Updating... please wait.';
+            document.getElementById('basicformsubmit').classList.add('disabled');
+        }
+    }
+</script>
+
 <?php
 if(isset($_GET['status'])){
   echo '<script>alert("Settings successfully updated");</script>';
