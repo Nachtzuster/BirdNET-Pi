@@ -356,7 +356,6 @@ function loadDetectionIfNewExists(previous_detection_identifier=undefined) {
 
       // only going to load left chart & 5 most recents if there's a new detection
       loadLeftChart();
-      loadCenterChart();
       loadFiveMostRecentDetections();
       refreshTopTen();
     }
@@ -369,6 +368,7 @@ function loadLeftChart() {
   xhttp.onload = function() {
     if(this.responseText.length > 0 && !this.responseText.includes("Database is busy")) {
       document.getElementsByClassName("left-column")[0].innerHTML = this.responseText;
+      loadCenterChart();
     }
   }
   xhttp.open("GET", "overview.php?ajax_left_chart=true", true);
