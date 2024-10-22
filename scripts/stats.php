@@ -22,6 +22,16 @@ if(isset($_GET['sort']) && $_GET['sort'] == "occurrences") {
   $statement2 = $db->prepare('SELECT Date, Time, File_Name, Com_Name, COUNT(*), MAX(Confidence) FROM detections GROUP BY Com_Name ORDER BY COUNT(*) DESC');
   ensure_db_ok($statement2);
   $result2 = $statement2->execute();
+
+} else if(isset($_GET['sort']) && $_GET['sort'] == "confidence") {
+  $statement = $db->prepare('SELECT Date, Time, File_Name, Com_Name, COUNT(*), MAX(Confidence) FROM detections GROUP BY Com_Name ORDER BY MAX(Confidence) DESC');
+  ensure_db_ok($statement);
+  $result = $statement->execute();
+
+  $statement2 = $db->prepare('SELECT Date, Time, File_Name, Com_Name, COUNT(*), MAX(Confidence) FROM detections GROUP BY Com_Name ORDER BY MAX(Confidence) DESC');
+  ensure_db_ok($statement2);
+  $result2 = $statement2->execute();
+
 } else {
 
   $statement = $db->prepare('SELECT Date, Time, File_Name, Com_Name, COUNT(*), MAX(Confidence) FROM detections GROUP BY Com_Name ORDER BY Com_Name ASC');
@@ -32,8 +42,6 @@ if(isset($_GET['sort']) && $_GET['sort'] == "occurrences") {
   ensure_db_ok($statement2);
   $result2 = $statement2->execute();
 }
-
-
 
 if(isset($_GET['species'])){
   $selection = htmlspecialchars_decode($_GET['species'], ENT_QUOTES);
@@ -71,6 +79,9 @@ if (get_included_files()[0] === __FILE__) {
       <button <?php if(isset($_GET['sort']) && $_GET['sort'] == "occurrences"){ echo "class='sortbutton active'";} else { echo "class='sortbutton'"; }?> type="submit" name="sort" value="occurrences">
          <img src="images/sort_occ.svg" title="Sort by occurrences" alt="Sort by occurrences">
       </button>
+      <button <?php if(isset($_GET['sort']) && $_GET['sort'] == "confidence"){ echo "class='sortbutton active'";} else { echo "class='sortbutton'"; }?> type="submit" name="sort" value="confidence">
+         <img src="images/sort_conf.svg" title="Sort by confidence" alt="Sort by confidence">
+      </button>
    </form>
 </div>
 <br>
@@ -80,12 +91,17 @@ if (get_included_files()[0] === __FILE__) {
 <table>
   <?php
   $birds = array();
+  $confidence = array();
+
   while($results=$result2->fetchArray(SQLITE3_ASSOC))
   {
     $comname = preg_replace('/ /', '_', $results['Com_Name']);
     $comname = preg_replace('/\'/', '', $comname);
     $filename = "/By_Date/".$results['Date']."/".$comname."/".$results['File_Name'];
     $birds[] = $results['Com_Name'];
+    if ($_GET['sort'] == "confidence") {
+        $confidence[] = ' (' . round($results['MAX(Confidence)'] * 100) . '%)';
+    }
   }
 
   if(count($birds) > 45) {
@@ -93,6 +109,7 @@ if (get_included_files()[0] === __FILE__) {
   } else {
     $num_cols = 1;
   }
+
   $num_rows = ceil(count($birds) / $num_cols);
 
   for ($row = 0; $row < $num_rows; $row++) {
@@ -104,7 +121,7 @@ if (get_included_files()[0] === __FILE__) {
       if ($index < count($birds)) {
         ?>
         <td>
-            <button type="submit" name="species" value="<?php echo $birds[$index];?>"><?php echo $birds[$index];?></button>
+            <button type="submit" name="species" value="<?php echo $birds[$index];?>"><?php echo $birds[$index].$confidence[$index];?></button>
         </td>
         <?php
       } else {
@@ -118,12 +135,14 @@ if (get_included_files()[0] === __FILE__) {
 </table>
 </form>
 </div>
+
 <dialog style="margin-top: 5px;max-height: 95vh;
   overflow-y: auto;overscroll-behavior:contain" id="attribution-dialog">
   <h1 id="modalHeading"></h1>
   <p id="modalText"></p>
   <button onclick="hideDialog()">Close</button>
 </dialog>
+
 <script src="static/dialog-polyfill.js"></script>
 <script>
 var dialog = document.querySelector('dialog');
@@ -143,6 +162,7 @@ function setModalText(iter, title, text, authorlink) {
   showDialog();
 }
 </script>  
+
 <div class="column center">
 <?php if(!isset($_GET['species'])){
 ?><p class="centered">Choose a species to load images from Flickr.</p>
