@@ -19,13 +19,6 @@ if ! sudo -n true; then
     exit
 fi
 
-# the php code expects the user with uid 1000 on this system
-PRIMARY=$(awk -F: '/1000/{print $1}' /etc/passwd)
-if [ $USER != $PRIMARY ]; then
-  echo "Current user \"$USER\" does not match the user with uid 1000 on this system \"$PRIMARY\". Aborting"
-  exit
-fi
-
 # Simple new installer
 HOME=$HOME
 USER=$USER
