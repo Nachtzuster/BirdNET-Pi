@@ -52,7 +52,7 @@ def main():
             break
 
         if event is None:
-            if empty_count > (conf.getint('RECORDING_LENGTH') * 2):
+            if empty_count > (conf.getint('RECORDING_LENGTH') * 2 + 30):
                 log.error('no more notifications: restarting...')
                 break
             empty_count += 1
