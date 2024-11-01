@@ -32,17 +32,25 @@ if [ ! -z $RTSP_STREAM ];then
     # Loop over the streams
     for i in "${RTSP_STREAMS_EXPLODED_ARRAY[@]}"
     do
+      if [[ "$i" == "rtsp://"* ]]; then
+        TIMEOUT_PARAM="-stimeout 10000000"
+      elif [[ "$i" =~ ^[a-z]+:// ]]; then
+        TIMEOUT_PARAM="-rw_timeout 10000000"
+      else
+        TIMEOUT_PARAM=""
+      fi
+
       # Map id used to map input to output (first stream being 0), this is 0 based in ffmpeg so decrement our counter (which is more human readable) by 1
       MAP_ID=$((RTSP_STREAMS_STARTED_COUNT-1))
       # Build up the parameters to process the RSTP stream, including mapping for the output
-      FFMPEG_PARAMS+="-vn -thread_queue_size 512 -i ${i} -map ${MAP_ID}:a:0 -t ${RECORDING_LENGTH} -acodec pcm_s16le -ac 2 -ar 48000 file:${RECS_DIR}/StreamData/$(date "+%F")-birdnet-RTSP_${RTSP_STREAMS_STARTED_COUNT}-$(date "+%H:%M:%S").wav "
+      FFMPEG_PARAMS+="-vn -thread_queue_size 512 $TIMEOUT_PARAM -i ${i} -map ${MAP_ID}:a:0 -t ${RECORDING_LENGTH} -acodec pcm_s16le -ac 2 -ar 48000 file:${RECS_DIR}/StreamData/$(date "+%F")-birdnet-RTSP_${RTSP_STREAMS_STARTED_COUNT}-$(date "+%H:%M:%S").wav "
       # Increment counter
       ((RTSP_STREAMS_STARTED_COUNT += 1))
     done
 
   # Make sure were passing something valid to ffmpeg, ffmpeg will run interactive and control our loop by waiting ${RECORDING_LENGTH} between loops because it will stop once that much has been recorded
   if [ -n "$FFMPEG_PARAMS" ];then
-    ffmpeg -hide_banner -loglevel $LOGGING_LEVEL -nostdin -rw_timeout 10000000 $FFMPEG_PARAMS
+    ffmpeg -hide_banner -loglevel $LOGGING_LEVEL -nostdin $FFMPEG_PARAMS
   fi
 
   done
