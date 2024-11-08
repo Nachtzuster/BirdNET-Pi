@@ -172,11 +172,6 @@ if ! [ -L /etc/avahi/services/http.service ];then
   systemctl restart avahi-daemon.service
 fi
 
-if grep -q ",gotty," "$HOME/BirdNET-Pi/templates/phpsysinfo.ini" &>/dev/null; then
-  gottyservice="gotty-$(uname -m)"
-  sed -i "s/,gotty,/,${gottyservice},/g" "$HOME/BirdNET-Pi/templates/phpsysinfo.ini"
-fi
-
 if [ -L /usr/local/bin/analyze.py ];then
   rm -f /usr/local/bin/analyze.py
 fi

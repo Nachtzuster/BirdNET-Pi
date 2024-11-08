@@ -459,6 +459,7 @@ document.addEventListener("visibilitychange", function() {
     clearInterval(i_fn2);
     if (customImage) clearInterval(i_fn3);
   } else {
+    loadDetectionIfNewExists();
     startAutoRefresh();
   }
 });

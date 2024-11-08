@@ -434,7 +434,7 @@ function installKeyAndSwipeEventHandler() {
       let diffTime = 0;
     
       function checkDirection() {
-        if (Math.abs(diffX) > Math.abs(diffY) && diffTime < 500) {
+        if (Math.abs(diffX) > Math.abs(diffY) && diffTime < 350) {
           if (diffX > 20) getTheDate(+1);
           if (diffX < -20) getTheDate(-1);
         }
