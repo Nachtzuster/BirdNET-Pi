@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Backup and restore BirdNET data
 
-my_dir=$HOME/BirdNET-Pi/scripts
 source /etc/birdnet/birdnet.conf
+my_dir=/home/$BIRDNET_USER/BirdNET-Pi/scripts
 
 if [ "$EUID" == 0 ]
   then echo "Please run as a non-root user."
@@ -132,6 +132,12 @@ restore() {
   log "Restore done"
 }
 
+function cleanup()
+{
+  "$my_dir/restart_services.sh" &>/dev/null
+  exit
+}
+
 required=("/home/$BIRDNET_USER/BirdNET-Pi/birdnet.conf"
 "/home/$BIRDNET_USER/BirdNET-Pi/scripts/birds.db"
 "/home/$BIRDNET_USER/BirdNET-Pi/BirdDB.txt"
@@ -153,6 +159,7 @@ if [ $ACTION == "size" ]; then
   exit
 fi
 
+trap cleanup SIGINT SIGTERM SIGABRT
 log "Stopping services"
 "$my_dir/stop_core_services.sh"
 
