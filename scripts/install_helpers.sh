@@ -15,6 +15,9 @@ get_tf_whl () {
     aarch64-312)
       WHL=tflite_runtime-2.17.1-cp312-cp312-linux_aarch64.whl
       ;;
+    aarch64-313)
+      WHL=tflite_runtime-2.17.1-cp313-cp313-linux_aarch64.whl
+      ;;
     x86_64-39)
       WHL=tflite_runtime-2.11.0-cp39-cp39-linux_x86_64.whl
       ;;
@@ -23,6 +26,9 @@ get_tf_whl () {
       ;;
     x86_64-312)
       WHL=tflite_runtime-2.17.1-cp312-cp312-linux_x86_64.whl
+      ;;
+    x86_64-313)
+      WHL=tflite_runtime-2.17.1-cp313-cp313-linux_x86_64.whl
       ;;
     *)
       echo "No tflite version found for ${ARCH}-${PY_VERSION}"
