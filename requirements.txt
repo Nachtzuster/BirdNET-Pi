@@ -5,7 +5,7 @@ tzlocal
 numpy
 pandas
 seaborn
-streamlit==1.31.0
+streamlit==1.40.0
 plotly
 apprise==1.9.0
 paho-mqtt<2.0.0
