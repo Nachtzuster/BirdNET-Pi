@@ -27,7 +27,7 @@ source /etc/birdnet/birdnet.conf
 install_birdnet() {
   cd ~/BirdNET-Pi || exit 1
   echo "Establishing a python virtual environment"
-  python3 -m venv birdnet
+  python3.13 -m venv birdnet
   source ./birdnet/bin/activate
   pip3 install wheel
   get_tf_whl
