@@ -571,7 +571,7 @@ button:hover {
     margin-right:auto;
   }
   .overview img {
-    width: 100%
+    max-width: 100%
   }
   .banner {
     height: auto;
