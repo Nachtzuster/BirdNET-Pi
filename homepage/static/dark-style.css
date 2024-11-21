@@ -601,7 +601,7 @@ button:hover {
     opacity: 0.7;
   }
   .overview img {
-    width: 100%
+    max-width: 100%
   }
   .banner {
     height: auto;
