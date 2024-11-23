@@ -37,9 +37,6 @@ fi
 
 MEG=1048576
 
-PHP_SERVICE=$(systemctl list-unit-files -t service --output json --no-pager php*-fpm.service | jq --raw-output '.[0].unit_file')
-[ -z "$PHP_SERVICE" ] || [ "$PHP_SERVICE" == 'null' ] && echo "Could not determine the php service name, this is most likely a bug." && exit 1
-
 log() {
   [ -z "$QUIET" ] && echo "$1"
 }
