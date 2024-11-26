@@ -610,11 +610,11 @@ startAutoRefresh();
 }
 </style>
 <script>
-function generateMiniGraph(elem, comname) {
+function generateMiniGraph(elem, comname, days = 30) {
 
   // Make an AJAX call to fetch the number of detections for the bird species
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/todays_detections.php?comname=' + comname);
+  xhr.open('GET', '/todays_detections.php?comname=' + comname + '&days=' + days);
   xhr.onload = function() {
     if (xhr.status === 200) {
       var detections = JSON.parse(xhr.responseText);
@@ -667,7 +667,7 @@ function generateMiniGraph(elem, comname) {
           },
           title: {
             display: true,
-            text: 'Detections Over 30d'
+            text: 'Detections Over ' + days + 'd'
           },
           legend: {
             display: false
