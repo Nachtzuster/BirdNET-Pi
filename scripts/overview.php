@@ -435,7 +435,7 @@ function display_species($species_list, $title, $show_last_seen=false) {
                             </form></div>
                         </td>
                         <td style="white-space: nowrap;"><?php
-                                echo '<span class="text left">Max Confidence: </span>' . round($todaytable['Confidence'] * 100 ) . '%' . $occurrence_text;
+                                echo '<span class="text left">Max confidence: </span>' . round($todaytable['Confidence'] * 100 ) . '%' . $occurrence_text;
                                 echo "<br><span class='text left'>First detection: </span>{$todaytable['Time']}";
                                 echo $last_seen_text;
                         ?></td>
