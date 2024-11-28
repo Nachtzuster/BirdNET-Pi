@@ -318,7 +318,7 @@ $statement = $db->prepare("
 SELECT d_today.Com_Name, d_today.Sci_Name, d_today.Date, d_today.Time, d_today.Confidence, d_today.File_Name, 
        MAX(d_today.Confidence) as MaxConfidence,
        (SELECT MAX(Date) FROM detections d_prev WHERE d_prev.Com_Name = d_today.Com_Name AND d_prev.Date < DATE('now', 'localtime')) as LastSeenDate,
-       (SELECT COUNT(*) FROM detections d_occ WHERE d_occ.Com_Name = d_today.Com_Name AND d_occ.Date = DATE('now', 'localtime') AND d_occ.Time >= d_today.Time) as OccurrenceCount
+       (SELECT COUNT(*) FROM detections d_occ WHERE d_occ.Com_Name = d_today.Com_Name AND d_occ.Date = DATE('now', 'localtime')) as OccurrenceCount
 FROM detections d_today
 WHERE d_today.Date = DATE('now', 'localtime')
 GROUP BY d_today.Com_Name
