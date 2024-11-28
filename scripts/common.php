@@ -66,7 +66,7 @@ function get_service_mount_name() {
 
 function is_authenticated() {
   $ret = false;
-  if (isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
+  if (isset($_SERVER['PHP_AUTH_USER'])) {
     $config = get_config();
     $ret = ($_SERVER['PHP_AUTH_PW'] == $config['CADDY_PWD'] && $_SERVER['PHP_AUTH_USER'] == 'birdnet');
   }
