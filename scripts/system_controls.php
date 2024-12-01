@@ -34,7 +34,7 @@ $max_upload_size = floor(disk_free_space("$home/BirdNET-Pi/") / 1.001);
 var seconds = 0;
 function update() {
   if(confirm('Are you sure you want to update?')) {
-    setInterval(function(){ seconds += 1; document.getElementById('updatebtn').innerHTML = "Updating: <pre id='timer' class='bash'>"+new Date(seconds * 1000).toISOString().substring(14, 19)+"</span>"; }, 1000);
+    setInterval(function(){ seconds += 1; document.getElementById('updatebtn').innerHTML = "Updating: <pre id='timer' class='bash'>"+new Date(seconds * 1000).toISOString().substring(14, 19)+"</pre>"; }, 1000);
     return true;
   } else {
     return false;
