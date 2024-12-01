@@ -402,6 +402,7 @@ install_services() {
   set_hostname
   update_etc_hosts
   set_login
+  install_tmp_mount
 
   install_depends
   install_scripts

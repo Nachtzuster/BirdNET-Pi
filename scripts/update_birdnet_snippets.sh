@@ -130,6 +130,7 @@ if ! which inotifywait &>/dev/null;then
   apt-get -y install inotify-tools
 fi
 
+install_tmp_mount
 remove_unit_file birdnet_server.service /usr/local/bin/server.py
 remove_unit_file extraction.service /usr/local/bin/extract_new_birdsounds.sh
 
