@@ -18,6 +18,7 @@ I've been building on [mcguirepr89's](https://github.com/mcguirepr89/BirdNET-Pi)
 
 Changes include:
 
+ - Backup & Restore
  - Web ui is much more responsive
  - Daily charts now include all species, not just top/bottom 10
  - Bump apprise version, so more notification type are possible
@@ -136,12 +137,12 @@ Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki)
 
 ## Updating 
 
-Use the web interface and go to "Tools" > "System Controls" > "Update." If you encounter any issues with that, or suspect that the update did not work for some reason, please save its output and post it in an issue where we can help.
+Use the web interface and go to "Tools" > "System Controls" > "Update". If you encounter any issues with that, or suspect that the update did not work for some reason, please save its output and post it in an issue where we can help.
 
 ## Backup and Restore
+Use the web interface and go to "Tools" > "System Controls" > "Backup" or "Restore". Backup/Restore is primary meant for migrating your data for one system to another. Since the time required to create or restore a backup depends on the size of the data set and the speed of the storage, this could take quite a while.
 
-This script is primary meant for migrating your data for one system to another. Since the time required to create or restore a backup depends on the size of the data set and the speed of the storage, this could take quite a while.
-These examples assume the backup medium is mounted on `/mnt`
+Alternatively, the backup script can be used directly. These examples assume the backup medium is mounted on `/mnt`
 
 To backup:
 ```commandline
