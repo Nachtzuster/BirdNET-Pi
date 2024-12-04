@@ -14,6 +14,7 @@ from matplotlib import rcParams
 from matplotlib.colors import LogNorm
 
 from utils.helpers import DB_PATH, get_settings
+from utils.interactive_plot import create_plotly_heatmap
 
 
 def get_data(now=None):
@@ -214,6 +215,10 @@ def main(daemon, sleep_m):
             data, time = get_data(now)
         if not data.empty:
             create_plot(data, time)
+            try:
+                create_plotly_heatmap(data, time)
+            except Exception as e:
+                print(f"Failed to create interactive heatmap: {e}")
         else:
             print('empty dataset')
         if daemon:
