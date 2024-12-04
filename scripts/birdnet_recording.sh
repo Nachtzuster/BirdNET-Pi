@@ -18,6 +18,7 @@ fi
 if [ ! -z $RTSP_STREAM ];then
   # Explode the RSPT steam setting into an array so we can count the number we have
   RTSP_STREAMS_EXPLODED_ARRAY=(${RTSP_STREAM//,/ })
+  FFMPEG_VERSION=$(ffmpeg -version | head -n 1 | cut -d ' ' -f 3 | cut -d '.' -f 1)
 
   while true;do
 # Original loop
@@ -33,7 +34,8 @@ if [ ! -z $RTSP_STREAM ];then
     for i in "${RTSP_STREAMS_EXPLODED_ARRAY[@]}"
     do
       if [[ "$i" == "rtsp://"* ]]; then
-        TIMEOUT_PARAM="-stimeout 10000000"
+        [ $FFMPEG_VERSION -lt 5 ] && PARAM=-stimeout || PARAM=-timeout
+        TIMEOUT_PARAM="$PARAM 10000000"
       elif [[ "$i" =~ ^[a-z]+:// ]]; then
         TIMEOUT_PARAM="-rw_timeout 10000000"
       else
