@@ -38,13 +38,13 @@ def show_values_on_bars(ax, label):
     conf = get_settings()
 
     for i, p in enumerate(ax.patches):
-        x = p.get_x() + p.get_width() * 0.9
+        x = p.get_x() + p.get_width() * 0.7 + 100
         y = p.get_y() + p.get_height() / 2
         # Species confidence
         # value = '{:.0%}'.format(label.iloc[i])
         # Species Count Total
-        value = '{:n}'.format(p.get_width())
-        bbox = {'facecolor': 'lightgrey', 'edgecolor': 'none', 'pad': 1.0}
+        value = '{:n}'.format(p.get_width()) + ' (' + '{:.0%}'.format(label.iloc[i]) + ')'
+        bbox = {'facecolor': 'lightgrey', 'edgecolor': 'none', 'pad': 1.0, 'alpha': 0.9}
         if conf['COLOR_SCHEME'] == "dark":
             color = 'black'
         else:
@@ -169,9 +169,10 @@ def create_plot(df_plt_today, now, is_top=None):
     plot.set(xlabel="Hour of Day")
     # Set combined plot layout and titles
     y = 1 - 8 / (height * 100)
-    plt.suptitle(f"{plot_type} {readings} Last Updated: {now.strftime('%Y-%m-%d %H:%M')}", y=y)
+    plt.suptitle(f"Hourly overview for {now.strftime('%Y-%m-%d')}\n{plot_type} {readings} species, "
+                 f"{df_plt_today.shape[0]} detections today, updated {now.strftime('%H:%M')}", y=y)
     f.tight_layout()
-    top = 1 - 40 / (height * 100)
+    top = 1 - 50 / (height * 100)
     f.subplots_adjust(left=0.125, right=0.9, top=top, wspace=0)
 
     # Save combined plot
