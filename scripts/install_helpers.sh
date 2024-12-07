@@ -70,3 +70,33 @@ install_tmp_mount() {
     echo "tmp.mount is $STATE, skipping"
   fi
 }
+
+install_birdweather_past_publication() {
+  cat << EOF > $HOME/BirdNET-Pi/templates/birdweather_past_publication@.service
+[Unit]
+Description=BirdWeather Publication for %i interface
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=${USER}
+ExecStartPre= /bin/sh -c 'n=0; until curl --silent --head --fail https://app.birdweather.com || [ \$n -ge 30 ]; do n=\$((n+1)); sleep 5; done;'
+ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/birdweather_past_publication.py
+EOF
+  cat << EOF > $HOME/BirdNET-Pi/templates/50-birdweather-past-publication
+#!/bin/bash
+UNIT_NAME="birdweather_past_publication@\$IFACE.service"
+# Check if the service is active and then start it
+if systemctl is-active --quiet "\$UNIT_NAME"; then
+    echo "\$UNIT_NAME is already running."
+else
+    echo "Starting \$UNIT_NAME..."
+    systemctl start "\$UNIT_NAME"
+fi
+EOF
+  chmod +x $HOME/BirdNET-Pi/templates/50-birdweather-past-publication
+  chown root:root $HOME/BirdNET-Pi/templates/50-birdweather-past-publication
+  ln -sf $HOME/BirdNET-Pi/templates/50-birdweather-past-publication /etc/networkd-dispatcher/routable.d
+  ln -sf $HOME/BirdNET-Pi/templates/birdweather_past_publication@.service /usr/lib/systemd/system
+  systemctl enable systemd-networkd
+}
