@@ -26,6 +26,9 @@ chmod g+r $HOME
 # remove world-writable perms
 chmod -R o-w ~/BirdNET-Pi/templates/*
 
+# update database schema
+$my_dir/update_db.sh
+
 APT_UPDATED=0
 PIP_UPDATED=0
 
@@ -146,6 +149,29 @@ if grep -q 'birdnet_server.service' "$HOME/BirdNET-Pi/templates/birdnet_analysis
     sed -i "s|ExecStart=.*|ExecStart=$HOME/BirdNET-Pi/birdnet/bin/python3 /usr/local/bin/birdnet_analysis.py|" "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
     systemctl daemon-reload && restart_services.sh
 fi
+
+
+# Ensure networkd-dispatcher is installed
+if ! dpkg -s networkd-dispatcher >/dev/null 2>&1; then
+    echo "networkd-dispatcher is not installed. Installing it now..."
+    sudo apt update -qq
+    sudo apt install -qqy networkd-dispatcher
+fi
+
+# Add BirdWeather past publication service if not already installed
+export PYTHON_VIRTUAL_ENV="$HOME/BirdNET-Pi/birdnet/bin/python3"
+BIRDWEATHER_PAST_DISPATCHER_SCRIPT="$HOME/BirdNET-Pi/templates/50-birdweather-past-publication"
+BIRDWEATHER_PAST_SERVICE_FILE="/usr/lib/systemd/system/birdweather_past_publication@.service"
+if [ ! -f "$BIRDWEATHER_PAST_DISPATCHER_SCRIPT" ] || [ ! -f "$BIRDWEATHER_PAST_SERVICE_FILE" ]; then
+  echo "Installing BirdWeather past publication service..."
+  install_birdweather_past_publication
+fi
+# Set ownership to root for the birdweather publication networkd-dispatcher script
+if [ -f "$BIRDWEATHER_PAST_DISPATCHER_SCRIPT" ]; then
+  sudo chown root:root "$BIRDWEATHER_PAST_DISPATCHER_SCRIPT"
+  sudo chmod 755 "$BIRDWEATHER_PAST_DISPATCHER_SCRIPT"
+fi
+
 
 TMP_MOUNT=$(systemd-escape -p --suffix=mount "$RECS_DIR/StreamData")
 if ! [ -f "$HOME/BirdNET-Pi/templates/$TMP_MOUNT" ]; then
