@@ -136,6 +136,10 @@ COLOR_SCHEME="light"
 
 FULL_DISK=purge
 
+## PURGE_THRESHOLD can be set to configure at what disk full percentage the
+## purge operations are triggered.
+PURGE_THRESHOLD=95
+
 ## Maximum amount of files to keep for a given specie (0 = keep all)
 ## Files from the last 7 days, and files protected from purge, are not taken into
 ## account in this number
