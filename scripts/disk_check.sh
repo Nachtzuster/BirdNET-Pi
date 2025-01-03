@@ -3,8 +3,9 @@ set -x
 
 source /etc/birdnet/birdnet.conf
 used="$(df -h ${EXTRACTED} | tail -n1 | awk '{print $5}')"
+purge_threshold="${PURGE_THRESHOLD:-95}"
 
-if [ "${used//%}" -ge 95 ]; then
+if [ "${used//%}" -ge "$purge_threshold" ]; then
 
   case $FULL_DISK in
     purge) echo "Removing oldest data"
@@ -34,7 +35,7 @@ if [ "${used//%}" -ge 95 ]; then
   esac
 fi
 sleep 1
-if [ "${used//%}" -ge 95 ]; then
+if [ "${used//%}" -ge "$purge_threshold" ]; then
   case $FULL_DISK in
     purge) echo "Removing more data"
        rm -rfv ${PROCESSED}/*;;
