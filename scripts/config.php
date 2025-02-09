@@ -72,8 +72,8 @@ if(isset($_GET["latitude"])){
   } else {
     $data_model_version = 1;
   }
-  $only_notify_species_names = $_GET['only_notify_species_names'];
-  $only_notify_species_names_2 = $_GET['only_notify_species_names_2'];
+  $only_notify_species_names = htmlspecialchars_decode($_GET['only_notify_species_names'], ENT_QUOTES);
+  $only_notify_species_names_2 = htmlspecialchars_decode($_GET['only_notify_species_names_2'], ENT_QUOTES);
 
   if(isset($_GET['apprise_notify_each_detection'])) {
     $apprise_notify_each_detection = 1;
