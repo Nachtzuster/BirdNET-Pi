@@ -200,7 +200,33 @@ For more information : https://github.com/alexbelgium/hassio-addons/blob/master/
 ## Docker
 
 BirdNET-Pi can also be run as as a docker container.
-For more information : [https://github.com/alexbelgium/hassio-addons/blob/master/birdnet-pi/README.md](https://github.com/mcguirepr89/BirdNET-Pi/issues/211#issuecomment-2650095952)
+Docker compose : 
+```
+services:
+  birdnet-pi:
+    container_name: birdnet-pi
+    image: ghcr.io/alexbelgium/birdnet-pi-amd64 #ghcr.io/alexbelgium/birdnet-pi-aarch64
+    restart: unless-stopped
+    ports:
+      - "8004:8081"
+    environment:
+      - TZ=Europe/Vienna
+      - BIRDSONGS_FOLDER=/config/BirdSongs
+      - LIVESTREAM_BOOT_ENABLED=false
+      - MQTT_DISABLED=true
+      - SSL=false
+      - CERTFILE=fullchain.pem
+      - KEYFILE=privkey.pem
+    volumes:
+      - ./config:/config
+      - ./media:/media
+      - ./share:/share
+      - ./ssl:/ssl
+      - /dev/shm:/dev/shm  # Shared memory
+      - ./nginx/:/etc/nginx/servers
+    tmpfs:
+      - /tmp
+```
 
 ## Cool Links
 
