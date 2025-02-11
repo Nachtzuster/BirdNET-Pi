@@ -197,6 +197,37 @@ I hope that if you find BirdNET-Pi has been worth your time, you will share your
 BirdNET-Pi can also be run as a [Homeassistant](https://www.home-assistant.io/) addon through docker.
 For more information : https://github.com/alexbelgium/hassio-addons/blob/master/birdnet-pi/README.md
 
+## Docker
+
+BirdNET-Pi can also be run as as a docker container.
+Docker compose : 
+```
+services:
+  birdnet-pi:
+    container_name: birdnet-pi
+    image: ghcr.io/alexbelgium/birdnet-pi-amd64 #ghcr.io/alexbelgium/birdnet-pi-aarch64
+    restart: unless-stopped
+    ports:
+      - "8004:8081"
+    environment:
+      - TZ=Europe/Vienna
+      - BIRDSONGS_FOLDER=/config/BirdSongs
+      - LIVESTREAM_BOOT_ENABLED=false
+      - MQTT_DISABLED=true
+      - SSL=false
+      - CERTFILE=fullchain.pem
+      - KEYFILE=privkey.pem
+    volumes:
+      - ./config:/config
+      - ./media:/media
+      - ./share:/share
+      - ./ssl:/ssl
+      - /dev/shm:/dev/shm  # Shared memory
+      - ./nginx/:/etc/nginx/servers
+    tmpfs:
+      - /tmp
+```
+
 ## Cool Links
 
 - [Marie Lelouche's <i>Out of Spaces</i>](https://www.lestanneries.fr/exposition/marie-lelouche-out-of-spaces/) using BirdNET-Pi in post-sculpture VR! [Press Kit](https://github.com/mcguirepr89/BirdNET-Pi-assets/blob/main/dp_out_of_spaces_marie_lelouche_digital_05_01_22.pdf)
