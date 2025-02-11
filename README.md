@@ -197,6 +197,11 @@ I hope that if you find BirdNET-Pi has been worth your time, you will share your
 BirdNET-Pi can also be run as a [Homeassistant](https://www.home-assistant.io/) addon through docker.
 For more information : https://github.com/alexbelgium/hassio-addons/blob/master/birdnet-pi/README.md
 
+## Docker
+
+BirdNET-Pi can also be run as as a docker container.
+For more information : [https://github.com/alexbelgium/hassio-addons/blob/master/birdnet-pi/README.md](https://github.com/mcguirepr89/BirdNET-Pi/issues/211#issuecomment-2650095952)
+
 ## Cool Links
 
 - [Marie Lelouche's <i>Out of Spaces</i>](https://www.lestanneries.fr/exposition/marie-lelouche-out-of-spaces/) using BirdNET-Pi in post-sculpture VR! [Press Kit](https://github.com/mcguirepr89/BirdNET-Pi-assets/blob/main/dp_out_of_spaces_marie_lelouche_digital_05_01_22.pdf)
