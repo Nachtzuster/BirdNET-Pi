@@ -268,7 +268,7 @@ if daily is False:
 
             detections2 = pd.crosstab(df3, df3.index.hour)
 
-            d = pd.DataFrame(np.zeros((23, 1))).squeeze()
+            d = pd.DataFrame(np.zeros((24, 1))).squeeze()
             detections = hourly.loc[specie]
             detections = (d + detections).fillna(0)
             fig.add_trace(go.Barpolar(r=detections, theta=theta, marker_color='seagreen'), row=1, col=2)
