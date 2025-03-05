@@ -133,9 +133,9 @@ version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import seaborn; print(seaborn
 echo "$version" | grep -q "0.12" && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install seaborn==0.13.2
 
 tf_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import tflite_runtime; print(tflite_runtime.__version__)")
-if [ "$tf_version" != "2.11.0" ]; then
+if [ "$tf_version" != "2.17.1" ]; then
   get_tf_whl
-  sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install $HOME/BirdNET-Pi/$WHL numpy==1.23.5
+  sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install $HOME/BirdNET-Pi/$WHL numpy==1.26.4
 fi
 
 ensure_python_package inotify inotify
