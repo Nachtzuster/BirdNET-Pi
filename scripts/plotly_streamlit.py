@@ -382,8 +382,8 @@ if daily is False:
         fig = make_subplots(rows=1, cols=1)
 
         df4 = df2['Com_Name'][df2['Com_Name'] == specie].resample('15min').count()
-        df4.index = [df4.index.date, df4.index.time]
-        day_hour_freq = df4.unstack().fillna(0)
+        df4.index = pd.MultiIndex.from_arrays([df4.index.date, df4.index.time], names=['date', 'time'])
+        day_hour_freq = df4.unstack(level='time').fillna(0)
 
         saved_time_labels = [hms_to_str(h) for h in day_hour_freq.columns.tolist()]
         fig_dec_y = [hms_to_dec(h) for h in day_hour_freq.columns.tolist()]
