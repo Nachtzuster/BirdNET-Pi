@@ -377,7 +377,7 @@ if daily is False:
                               species[1:],
                               index=0)
 
-        df_counts = int(hourly[hourly.index == specie]['All'])
+        df_counts = int(hourly.loc[hourly.index == specie, 'All'].iloc[0])
 
         fig = make_subplots(rows=1, cols=1)
 
