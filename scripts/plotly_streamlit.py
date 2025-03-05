@@ -54,7 +54,8 @@ st.markdown("""
 
 @st.cache_resource()
 def get_connection(path: str):
-    return sqlite3.connect(path, check_same_thread=False)
+    uri = f"file:{path}?mode=ro&cache=shared"
+    return sqlite3.connect(uri, uri=True, check_same_thread=False)
 
 
 def get_data(_conn: Connection):
