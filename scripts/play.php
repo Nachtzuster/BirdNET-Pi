@@ -189,6 +189,7 @@ if (get_included_files()[0] === __FILE__) {
 }
 
 ?>
+<script src="static/custom-audio-player.js"></script>
 <script>
 
 function deleteDetection(filename,copylink=false) {
@@ -242,32 +243,32 @@ function toggleShiftFreq(filename, shiftAction, elem) {
         elem.setAttribute("src","images/unshift.svg");
         elem.setAttribute("title", "This file has been shifted down in frequency.");
         elem.setAttribute("onclick", elem.getAttribute("onclick").replace("shift","unshift"));
-        console.log("shifted freqs of " + filename);
-          video=elem.parentNode.getElementsByTagName("video");
-          if (video.length > 0) {
-            video[0].setAttribute("title", video[0].getAttribute("title").replace("/By_Date/","/By_Date/shifted/"));
-            source = video[0].getElementsByTagName("source")[0];
-            source.setAttribute("src", source.getAttribute("src").replace("/By_Date/","/By_Date/shifted/"));
-            video[0].load();
-          } else {
-            atag=elem.parentNode.getElementsByTagName("a")[0];
-            atag.setAttribute("href", atag.getAttribute("href").replace("/By_Date/","/By_Date/shifted/"));
+	console.log("shifted freqs of " + filename);
+
+        const audioDiv = elem.parentNode.querySelector(".custom-audio-player");
+        if (audioDiv) {
+          audioDiv.setAttribute("data-audio-src", audioDiv.getAttribute("data-audio-src").replace("/By_Date/", "/By_Date/shifted/"));
+        } else {
+          const atag = elem.parentNode.querySelector("a");
+          if (atag) {
+            atag.setAttribute("href", atag.getAttribute("href").replace("/By_Date/", "/By_Date/shifted/"));
           }
+        }
       } else {
         elem.setAttribute("src","images/shift.svg");
-        elem.setAttribute("title", "This file is not shifted in frequency.");
+	elem.setAttribute("title", "This file is not shifted in frequency.");
         elem.setAttribute("onclick", elem.getAttribute("onclick").replace("unshift","shift"));
-        console.log("unshifted freqs of " + filename);
-          video=elem.parentNode.getElementsByTagName("video");
-          if (video.length > 0) {
-            video[0].setAttribute("title", video[0].getAttribute("title").replace("/By_Date/shifted/","/By_Date/"));
-            source = video[0].getElementsByTagName("source")[0];
-            source.setAttribute("src", source.getAttribute("src").replace("/By_Date/shifted/","/By_Date/"));
-            video[0].load();
-          } else {
-            atag=elem.parentNode.getElementsByTagName("a")[0];
-            atag.setAttribute("href", atag.getAttribute("href").replace("/By_Date/shifted/","/By_Date/"));
+	console.log("unshifted freqs of " + filename);
+
+        const audioDiv = elem.parentNode.querySelector(".custom-audio-player");
+        if (audioDiv) {
+          audioDiv.setAttribute("data-audio-src", audioDiv.getAttribute("data-audio-src").replace("/By_Date/shifted/", "/By_Date/"));
+        } else {
+          const atag = elem.parentNode.querySelector("a");
+          if (atag) {
+            atag.setAttribute("href", atag.getAttribute("href").replace("/By_Date/shifted/", "/By_Date/"));
           }
+        }
       }
     }
   }
@@ -625,7 +626,7 @@ echo "<table>
     $iter++;
 
     if($num_rows < 100){
-      $imageelem = "<video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename_png\" preload=\"none\" title=\"$filename\"><source src=\"$filename\"></video>";
+      $imageelem = "<div class='custom-audio-player' data-audio-src=\"$filename\" data-image-src=\"$filename_png\"></div>";
     } else {
       $imageelem = "<a href=\"$filename\"><img src=\"$filename_png\"></a>";
     }
@@ -740,15 +741,14 @@ echo "<table>
 <img style='cursor:pointer;right:85px' src='images/bird.svg' onclick='changeDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Change Detection'> 
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
 <img style='cursor:pointer' onclick='toggleShiftFreq(\"".$filename_formatted."\",\"".$shiftAction."\", this)' class=\"copyimage\" width=25 title=\"".$shiftTitle."\" src=\"".$shiftImageIcon."\">$date $time<br>$values<br>
-
-<video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename_png\" preload=\"none\" title=\"$filename\"><source src=\"$filename\"></video></td>
-            </tr>";
+<div class='custom-audio-player' data-audio-src='$filename' data-image-src='$filename_png'></div>
+</td></tr>";
         } else {
           echo "<tr>
       <td class=\"relative\">$date $time<br>$values
 <img style='cursor:pointer' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\", true)' class=\"copyimage\" width=25 title='Delete Detection'><br>
-            <video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename_png\" preload=\"none\" title=\"$filename\"><source src=\"$filename\"></video></td>
-            </tr>";
+<div class='custom-audio-player' data-audio-src='$filename' data-image-src='$filename_png'></div>
+</td></tr>";
         }
 
       }echo "</table>";}
