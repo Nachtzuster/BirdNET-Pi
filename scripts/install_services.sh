@@ -20,7 +20,7 @@ install_depends() {
   apt install -qqy caddy sqlite3 php-sqlite3 php-fpm php-curl php-xml php-zip php icecast2 \
     pulseaudio avahi-utils sox libsox-fmt-mp3 alsa-utils ffmpeg \
     wget curl unzip bc \
-    python3-pip python3-venv lsof net-tools inotify-tools
+    python3-pip python3-venv lsof net-tools inotify-tools networkd-dispatcher
 }
 
 set_hostname() {
@@ -387,6 +387,13 @@ install_weekly_cron() {
 
 chown_things() {
   chown -R $USER:$USER $HOME/Bird*
+
+  # Set ownership to root for the birdweather publication networkd-dispatcher script
+  BIRDWEATHER_PAST_DISPATCHER_SCRIPT="$HOME/BirdNET-Pi/templates/50-birdweather-past-publication"
+  if [ -f "$BIRDWEATHER_PAST_DISPATCHER_SCRIPT" ]; then
+    sudo chown root:root "$BIRDWEATHER_PAST_DISPATCHER_SCRIPT"
+    sudo chmod 755 "$BIRDWEATHER_PAST_DISPATCHER_SCRIPT"
+  fi
 }
 
 increase_caddy_timeout() {
@@ -409,6 +416,7 @@ install_services() {
   install_Caddyfile
   install_avahi_aliases
   install_birdnet_analysis
+  install_birdweather_past_publication
   install_birdnet_stats_service
   install_recording_service
   install_custom_recording_service # But does not enable
