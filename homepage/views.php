@@ -385,19 +385,21 @@ function myFunction() {
   }
 }
 function setLiveStreamVolume(vol) {
-  var audioelement =  window.parent.document.getElementsByTagName("audio")[0];
-  if (typeof(audioelement) != 'undefined' && audioelement != null)
-  {
-    audioelement.volume = vol
-  }
+  var audioElements = document.querySelectorAll(".custom-audio-player audio");
+  audioElements.forEach(audioEl => {
+    if (audioEl) {
+      audioEl.volume = vol;
+    }
+  });
 }
 window.onbeforeunload = function(event) {
   // if the user is playing a video and then navigates away mid-play, the live stream audio should be unmuted again
-  var audioelement =  window.parent.document.getElementsByTagName("audio")[0];
-  if (typeof(audioelement) != 'undefined' && audioelement != null)
-  {
-    audioelement.volume = 1
-  }
+  var audioElements = document.querySelectorAll(".custom-audio-player audio");
+  audioElements.forEach(audioEl => {
+    if (audioEl) {
+      audioEl.volume = 1;
+    }
+  });
 }
 
 function getTheDate(increment) {
