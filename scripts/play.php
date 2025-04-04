@@ -702,7 +702,6 @@ echo "<table>
           $disk_check_exclude_arr = [];
         }
 
-        if($config["FULL_DISK"] == "purge") {
           if(!in_array($filename_formatted, $disk_check_exclude_arr)) {
             $imageicon = "images/unlock.svg";
             $title = "This file will be deleted when disk space needs to be freed (>95% usage).";
@@ -733,12 +732,6 @@ echo "<table>
 <img style='cursor:pointer' onclick='toggleShiftFreq(\"".$filename_formatted."\",\"".$shiftAction."\", this)' class=\"copyimage\" width=25 title=\"".$shiftTitle."\" src=\"".$shiftImageIcon."\">$date $time<br>$values<br>
 
 <video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename_png\" preload=\"none\" title=\"$filename\"><source src=\"$filename\"></video></td>
-            </tr>";
-        } else {
-          echo "<tr>
-      <td class=\"relative\">$date $time<br>$values
-<img style='cursor:pointer' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\", true)' class=\"copyimage\" width=25 title='Delete Detection'><br>
-            <video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename_png\" preload=\"none\" title=\"$filename\"><source src=\"$filename\"></video></td>
             </tr>";
         }
 
