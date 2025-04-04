@@ -739,9 +739,3 @@ echo "<table>
 if (get_included_files()[0] === __FILE__) {
   echo '</html>';
 }
-
-      }echo "</table>";}
-      echo "</div>";
-if (get_included_files()[0] === __FILE__) {
-  echo '</html>';
-}
