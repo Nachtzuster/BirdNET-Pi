@@ -630,7 +630,6 @@ echo "<table>
       $imageelem = "<a href=\"$filename\"><img src=\"$filename_png\"></a>";
     }
 
-    if($config["FULL_DISK"] == "purge") {
       if(!in_array($filename_formatted, $disk_check_exclude_arr)) {
         $imageicon = "images/unlock.svg";
         $title = "This file will be deleted when disk space needs to be freed (>95% usage).";
@@ -663,14 +662,6 @@ echo "<table>
         ".$imageelem."
         </td>
         </tr>";
-    } else {
-      echo "<tr>
-  <td class=\"relative\">$date $time<br>$values
-<img style='cursor:pointer' src='images/delete.svg' onclick='deleteDetection(\"".$filename_formatted."\")' class=\"copyimage\" width=25 title='Delete Detection'><br>
-        ".$imageelem."
-        </td>
-        </tr>";
-    }
 
   }if($iter == 0){ echo "<tr><td><b>No recordings were found.</b><br><br><span style='font-size:medium'>They may have been deleted to make space for new recordings. You can prevent this from happening in the future by clicking the <img src='images/unlock.svg' style='width:20px'> icon in the top right of a recording.<br>You can also modify this behavior globally under \"Full Disk Behavior\" <a href='views.php?view=Advanced'>here.</a></span></td></tr>";}echo "</table>";}
 
