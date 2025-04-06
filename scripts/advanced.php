@@ -5,8 +5,17 @@ error_reporting(E_ERROR);
 require_once "scripts/common.php";
 $home = get_home();
 $config = get_config();
+$user = get_user();
 
 ensure_authenticated();
+
+if (isset($_GET['run_species_count'])) {
+   echo "<script>";
+   $output = shell_exec("sudo -u $user ".$home."/BirdNET-Pi/scripts/disk_species_count.sh 2>&1");
+   $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
+   echo "alert(`$escaped_output`);";
+   echo "</script>";
+ }
 
 if(isset($_GET['submit'])) {
   $contents = file_get_contents('/etc/birdnet/birdnet.conf');
@@ -307,7 +316,7 @@ $newconfig = get_config();
       <label for="purge_threshold">Purge Threshold (Disk Used %):</label>
       <input name="purge_threshold" type="number" style="width:6em;" min="20" max="99" step="1" value="<?php print($newconfig['PURGE_THRESHOLD']);?>"/>
       <p>Defines how full the disk should be before the purge operations occur.<br>Note: This variable is still active if Keep is set. This means that the servies will be stopped at the purge threshold.</p><br>
-      <label for="max_files_species">Amount of files to keep for each species :</label>
+      <label for="max_files_species">Minimum amount of files to keep for each species :</label>
       <input name="max_files_species" type="number" style="width:6em;" min="0" step="1" value="<?php print($newconfig['MAX_FILES_SPECIES']);?>"/>
       </td></tr><tr><td>
       If different than 0 (keep all), defines the maximum number of files to be kept for each species, with priority give to files with highest confidence. 
@@ -315,6 +324,8 @@ $newconfig = get_config();
       </td></tr><tr><td>
       Note only the spectrogram and audio files are deleted, the obsevation data remains in the database.
       The files protected through the "lock" icon are also not affected.
+      <br>
+      <button type="submit" name="run_species_count" value="1"><i>[Click here for disk usage summary]</i></button>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
 
