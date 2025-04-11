@@ -136,8 +136,8 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
                   <a href="https://wikipedia.org/wiki/<?php echo $sciname;?>" target="_blank"><img style="width: unset !important; display: inline; height: 1em; cursor: pointer;" title="Wikipedia" src="images/wiki.png" width="25"></a>
                   <img style="width: unset !important;display: inline;height: 1em;cursor:pointer" title="View species stats" onclick="generateMiniGraph(this, '<?php echo $comnamegraph; ?>')" width=25 src="images/chart.svg">
                   <br>Confidence: <?php echo $percent = round((float)round($mostrecent['Confidence'],2) * 100 ) . '%';?><br></div><br>
-                  <video style="margin-top:10px" onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster="<?php echo $filename.".png";?>" preload="none" title="<?php echo $filename;?>"><source src="<?php echo $filename;?>"></video></td>
-              </form>
+                  <div class='custom-audio-player' data-audio-src="<?php echo $filename; ?>" data-image-src="<?php echo $filename.".png";?>"></div>
+                  </td></form>
           </tr>
         </table> <?php break;
       }
@@ -496,6 +496,9 @@ function loadDetectionIfNewExists(previous_detection_identifier=undefined) {
       loadLeftChart();
       loadFiveMostRecentDetections();
       refreshTopTen();
+
+      // Now that new HTML is inserted, re-run player init:
+      initCustomAudioPlayers();
     }
   }
   xhttp.open("GET", "overview.php?ajax_detections=true&previous_detection_identifier="+previous_detection_identifier, true);
@@ -534,15 +537,24 @@ function refreshTopTen() {
 }
 function refreshDetection() {
   if (!document.hidden) {
-    var videoelement = document.getElementsByTagName("video")[0];
-    if(typeof videoelement !== "undefined") {
-      // don't refresh the detection if the user is playing the previous one's audio, wait until they're finished
-      if(!!(videoelement.currentTime > 0 && !videoelement.paused && !videoelement.ended && videoelement.readyState > 2) == false) {
-        loadDetectionIfNewExists(videoelement.title);
-      }
-    } else{
-      // image or audio didn't load for some reason, force a refresh in 5 seconds
+    const audioPlayers = document.querySelectorAll(".custom-audio-player");
+    // If no custom-audio-player elements are found, refresh
+    if (audioPlayers.length === 0) {
       loadDetectionIfNewExists();
+      return;
+    }
+    // Check if any custom audio player is currently playing
+    let isPlaying = false;
+    audioPlayers.forEach((player) => {
+      const audioEl = player.querySelector("audio");
+      if (audioEl && audioEl.currentTime > 0 && !audioEl.paused && !audioEl.ended && audioEl.readyState > 2) {
+        isPlaying = true;
+      }
+    });
+    // If none are playing, refresh detections
+    if (!isPlaying) {
+      const currentIdentifier = audioPlayers[0]?.dataset.audioSrc || undefined;
+      loadDetectionIfNewExists(currentIdentifier);
     }
   }
 }
@@ -613,6 +625,7 @@ startAutoRefresh();
   transition: opacity 0.2s ease-in-out;
 }
 </style>
+<script src="static/custom-audio-player.js"></script>
 <script>
 function generateMiniGraph(elem, comname, days = 30) {
 
