@@ -12,6 +12,7 @@ $config = get_config();
 set_timezone();
 $myDate = date('Y-m-d');
 $chart = "Combo-$myDate.png";
+$interactivechart = "interactive_daily_plot.html";
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
@@ -313,6 +314,7 @@ if (get_included_files()[0] === __FILE__) {
 <div class="right-column">
 <div class="center-column">
 </div>
+<div class="chart" style="visibility: hidden;">
 <?php
 $statement = $db->prepare("
 SELECT d_today.Com_Name, d_today.Sci_Name, d_today.Date, d_today.Time, d_today.Confidence, d_today.File_Name, 
@@ -450,7 +452,6 @@ function display_species($species_list, $title, $show_last_seen=false) {
 display_species($new_species, 'New Species');
 display_species($rare_species, 'Rare Species', true);
 ?>
-<div class="chart">
 <?php
 $refresh = $config['RECORDING_LENGTH'];
 $dividedrefresh = $refresh/4;
@@ -458,10 +459,24 @@ if($dividedrefresh < 1) {
   $dividedrefresh = 1;
 }
 $time = time();
-if (file_exists('./Charts/'.$chart)) {
-  echo "<img id='chart' src=\"Charts/$chart?nocache=$time\">";
-} 
+$interactivechart_path = './Charts/' . $interactivechart;
+$chart_path = './Charts/' . $chart;
+if (file_exists($interactivechart_path)) {
+    $html_content = file_get_contents($interactivechart_path);
+    echo $html_content;
+} elseif (file_exists($chart_path)) {
+    echo "<img id='chart' src='Charts/$chart?nocache=$time'>";
+}
 ?>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const chartContainer = document.querySelector('.chart');
+        if (window.innerWidth <= 800) {
+            chartContainer.innerHTML = '<img id="chart" src="Charts/<?php echo $chart; ?>?nocache=<?php echo $time; ?>">';
+        }
+        chartContainer.style.visibility = 'visible';
+    });
+</script>
 </div>
 
 <div id="most_recent_detection"></div>
