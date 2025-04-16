@@ -407,7 +407,7 @@ function initCustomAudioPlayers() {
       position: "absolute",
       left: "0",
       bottom: "0",
-      z-index: "1",
+      zIndex: 1,
       width: "100%",
       height: "15%",
       display: "none",
