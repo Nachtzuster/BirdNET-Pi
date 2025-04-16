@@ -214,19 +214,21 @@ function initCustomAudioPlayers() {
       });
 
       // Dark vertical progression bar
-      indicator = document.createElement("div");
-      applyStyles(indicator, {
-        position: "absolute",
-        top: "0",
-        bottom: "0",
-        // Start at left margin
-        left: CONFIG.LEFT_MARGIN_PERCENT + "%",
-        width: "2px",
-        background: "rgba(0,0,0,0.8)",
-        pointerEvents: "none",
-        borderRadius: "2px",
+      img.addEventListener("load", () => {
+        indicator = document.createElement("div");
+        applyStyles(indicator, {
+          position: "absolute",
+          top: "0",
+          bottom: "0",
+          // Start at left margin
+          left: CONFIG.LEFT_MARGIN_PERCENT + "%",
+          width: "2px",
+          background: "rgba(0,0,0,0.8)",
+          pointerEvents: "none",
+          borderRadius: "2px",
+        });
+        wrapper.appendChild(indicator);
       });
-      wrapper.appendChild(indicator);
     }
 
     // Loading spinner
@@ -405,6 +407,7 @@ function initCustomAudioPlayers() {
       position: "absolute",
       left: "0",
       bottom: "0",
+      zIndex: 1,
       width: "100%",
       height: "15%",
       display: "none",
