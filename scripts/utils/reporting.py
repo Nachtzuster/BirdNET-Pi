@@ -5,21 +5,16 @@ import logging
 import os
 import sqlite3
 import subprocess
+import tempfile
 from time import sleep
 
 import requests
+from PIL import Image, ImageDraw, ImageFont
 
-from .helpers import get_settings, ParseFileName, Detection, DB_PATH
+from .helpers import get_settings, ParseFileName, Detection, get_font, DB_PATH
 from .notifications import sendAppriseNotifications
 
 log = logging.getLogger(__name__)
-
-
-def get_safe_title(title):
-    result = subprocess.run(['iconv', '-f', 'utf8', '-t', 'ascii//TRANSLIT'],
-                            check=True, input=title.encode('utf-8'), capture_output=True)
-    ret = result.stdout.decode('utf-8')
-    return ret
 
 
 def extract(in_file, out_file, start, stop):
@@ -50,15 +45,28 @@ def extract_safe(in_file, out_file, start, stop):
 
 
 def spectrogram(in_file, title, comment, raw=False):
+    _, tmp_file = tempfile.mkstemp(suffix='.png')
     args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', '24k', 'spectrogram',
-            '-t', f'{get_safe_title(title)}', '-c', f'{comment}', '-o', f'{in_file}.png']
+            '-t', '', '-c', '', '-o', tmp_file]
     args += ['-r'] if raw else []
     result = subprocess.run(args, check=True, capture_output=True)
     ret = result.stdout.decode('utf-8')
     err = result.stderr.decode('utf-8')
     if err:
         raise RuntimeError(f'{ret}:\n {err}')
-    return ret
+    img = Image.open(tmp_file)
+    os.remove(tmp_file)
+    height = img.size[1]
+    width = img.size[0]
+    draw = ImageDraw.Draw(img)
+    title_font = ImageFont.truetype(get_font()['path'], 13)
+    _, _, w, _ = draw.textbbox((0, 0), title, font=title_font)
+    draw.text(((width-w)/2, 6), title, fill="white", font=title_font)
+
+    comment_font = ImageFont.truetype(get_font()['path'], 11)
+    _, _, _, h = draw.textbbox((0, 0), comment, font=comment_font)
+    draw.text((1, height - (h + 1)), comment, fill="white", font=comment_font)
+    img.save(f'{in_file}.png')
 
 
 def extract_detection(file: ParseFileName, detection: Detection):
