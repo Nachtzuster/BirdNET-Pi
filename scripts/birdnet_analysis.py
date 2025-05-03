@@ -11,7 +11,7 @@ from subprocess import CalledProcessError
 import inotify.adapters
 from inotify.constants import IN_CLOSE_WRITE
 
-from server import load_global_model, run_analysis
+from server import load_global_model, run_analysis, run_bats_analysis
 from utils.helpers import get_settings, ParseFileName, get_wav_files, ANALYZING_NOW
 from utils.reporting import extract_detection, summary, write_to_file, write_to_db, apprise, bird_weather, heartbeat, \
     update_json_file
@@ -19,7 +19,7 @@ from utils.reporting import extract_detection, summary, write_to_file, write_to_
 shutdown = False
 
 log = logging.getLogger(__name__)
-
+conf = get_settings()
 
 def sig_handler(sig_num, curr_stack_frame):
     global shutdown
@@ -28,8 +28,12 @@ def sig_handler(sig_num, curr_stack_frame):
 
 
 def main():
-    load_global_model()
-    conf = get_settings()
+    if conf.getint('BATS_ANALYSIS') == 1:
+        model_type = "bats"
+    else:
+        model_type = "birds"
+        load_global_model()
+    log.info("Starting in '%s' analysis mode", model_type)
     i = inotify.adapters.Inotify()
     i.add_watch(os.path.join(conf['RECS_DIR'], 'StreamData'), mask=IN_CLOSE_WRITE)
 
@@ -41,7 +45,7 @@ def main():
 
     log.info('backlog is %d', len(backlog))
     for file_name in backlog:
-        process_file(file_name, report_queue)
+        process_file(file_name, report_queue, model_type)
         if shutdown:
             break
     log.info('backlog done')
@@ -70,7 +74,7 @@ def main():
             backlog = []
             continue
 
-        process_file(file_path, report_queue)
+        process_file(file_path, report_queue, model_type)
         empty_count = 0
 
     # we're all done
@@ -79,7 +83,7 @@ def main():
     report_queue.join()
 
 
-def process_file(file_name, report_queue):
+def process_file(file_name, report_queue, model_type):
     try:
         if os.path.getsize(file_name) == 0:
             os.remove(file_name)
@@ -88,7 +92,10 @@ def process_file(file_name, report_queue):
         with open(ANALYZING_NOW, 'w') as analyzing:
             analyzing.write(file_name)
         file = ParseFileName(file_name)
-        detections = run_analysis(file)
+        if model_type == "bats":
+            detections = run_bats_analysis(file)
+        else:
+            detections = run_analysis(file)
         # we join() to make sure te reporting queue does not get behind
         if not report_queue.empty():
             log.warning('reporting queue not yet empty')

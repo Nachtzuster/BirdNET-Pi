@@ -113,6 +113,86 @@ if ! grep -E '^RARE_SPECIES_THRESHOLD=' /etc/birdnet/birdnet.conf &>/dev/null;th
   echo "RARE_SPECIES_THRESHOLD=\"30\"" >> /etc/birdnet/birdnet.conf
 fi
 
+if ! grep -E '^BATS_ANALYSIS=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo '# BATS_ANALYSIS defines if the model analyses birds or bats. Set to 1 to use BattyBirdNET-Analyzer model' >> /etc/birdnet/birdnet.conf
+  echo "BATS_ANALYSIS=0" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^BATS_SAMPLING_RATE=' /etc/birdnet/birdnet.conf &>/dev/null; then
+  echo '# BATS_SAMPLING_RATE : if using the bats model, please define your SAMPLING RATE' >> /etc/birdnet/birdnet.conf
+  echo "BATS_SAMPLING_RATE=256000" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^BATS_CLASSIFIER=' /etc/birdnet/birdnet.conf &>/dev/null; then
+  echo '# BATS_CLASSIFIER : type of model to use' >> /etc/birdnet/birdnet.conf
+  echo "BATS_CLASSIFIER=Bavaria" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^TIMER=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo '# Set this value to 0 to have a continuous monitoring, and 1 to enable automated services control according to time' >> /etc/birdnet/birdnet.conf
+  echo "TIMER=0" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^TIMER_SWITCH=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo '# If you set TIMER_SWITCH to 1, your system will use your main analyzer during the start-stop defined (birds, except if BATS_ANALYSIS is set to 1), and the alternate analyzer during the night' >> /etc/birdnet/birdnet.conf
+  echo "TIMER_SWITCH=0" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^TIMER_START=' /etc/birdnet/birdnet.conf &>/dev/null; then
+  echo '# TIMER_START : can be "Sunrise", "Sunset", or a specific time such as "06:00"' >> /etc/birdnet/birdnet.conf
+  echo "TIMER_START=Sunrise" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^TIMER_STOP=' /etc/birdnet/birdnet.conf &>/dev/null; then
+  echo '# TIMER_STOP : can be "Sunset", "Sunrise", or a specific time such as "18:00"' >> /etc/birdnet/birdnet.conf
+  echo "TIMER_STOP=Sunset" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^DENOISING=' /etc/birdnet/birdnet.conf &>/dev/null; then
+  echo '# DENOISING : if set to 1, will perform denoising on the files. Mostly useful for bats' >> /etc/birdnet/birdnet.conf
+  echo "DENOISING=0" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^DENOISING_PROFILE=' /etc/birdnet/birdnet.conf &>/dev/null; then
+  echo '# DENOISING_PROFILE : define the model, relative to the path of your BirdNET-Pi installation. Mostly useful for bats.' >> /etc/birdnet/birdnet.conf
+  echo "DENOISING_PROFILE=BattyBirdNET-Analyzer/checkpoints/bats/mic-noise/audiomoth_v12.prof" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^DENOISING_FACTOR=' /etc/birdnet/birdnet.conf &>/dev/null; then
+  echo '# DENOISING_FACTOR : factor for denoising' >> /etc/birdnet/birdnet.conf
+  echo "DENOISING_FACTOR=0.22" >> /etc/birdnet/birdnet.conf
+fi
+
+if [ ! -L "$HOME/BirdNET-Pi/templates/birdnet_timer.service" ]; then
+  ln -sf "$HOME/BirdNET-Pi"/scripts/birdnet_timer.py /usr/local/bin/
+  chown "$USER:$USER" "$HOME/BirdNET-Pi"/scripts/birdnet_timer.py
+  echo "Installing birdnet_timer.service"
+  cat << EOF > $HOME/BirdNET-Pi/templates/birdnet_timer.service
+[Unit]
+Description=BirdNET Timer Service (Specific recording periods, and switch bat/bird mode automatically)
+[Service]
+Restart=always
+Type=simple
+RestartSec=2
+User=${USER}
+ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/birdnet_timer.py
+[Install]
+WantedBy=multi-user.target
+EOF
+  ln -sf $HOME/BirdNET-Pi/templates/birdnet_timer.service /usr/lib/systemd/system
+  systemctl enable birdnet_timer.service
+  systemctl daemon-reload && restart_services.sh
+fi
+
+if [ ! -d "$HOME"/BirdNET-Pi/BattyBirdNET-Analyzer/server.py ]; then
+  if [ -d "$HOME"/BirdNET-Pi/BattyBirdNET-Analyzer ]; then
+    rm -r "$HOME"/BirdNET-Pi/BattyBirdNET-Analyzer
+  fi
+  branch_classifier=main
+  git clone -b $branch_classifier --depth=1 https://github.com/rdz-oss/BattyBirdNET-Analyzer.git ${HOME}/BirdNET-Pi/BattyBirdNET-Analyzer
+  chown -R pi:pi ${HOME}/BirdNET-Pi/BattyBirdNET-Analyzer
+fi
+
 [ -d $RECS_DIR/StreamData ] || sudo_with_user mkdir -p $RECS_DIR/StreamData
 [ -L ${EXTRACTED}/spectrogram.png ] || sudo_with_user ln -sf ${RECS_DIR}/StreamData/spectrogram.png ${EXTRACTED}/spectrogram.png
 
@@ -121,18 +201,20 @@ if ! which inotifywait &>/dev/null;then
   apt-get -y install inotify-tools
 fi
 
-apprise_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import apprise; print(apprise.__version__)")
+apprise_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import apprise; print(apprise.__version__)" 2>/dev/null || echo "0")
 [[ $apprise_version != "1.9.0" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install apprise==1.9.0
-version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import streamlit; print(streamlit.__version__)")
+version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import streamlit; print(streamlit.__version__)" 2>/dev/null || echo "0")
 [[ $version != "1.44.0" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install streamlit==1.44.0
-version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import seaborn; print(seaborn.__version__)")
+version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import seaborn; print(seaborn.__version__)" 2>/dev/null || echo "0")
 [[ $version != "0.13.2" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install seaborn==0.13.2
-version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import suntime; print(suntime.__version__)")
+version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import suntime; print(suntime.__version__)" 2>/dev/null || echo "0")
 [[ $version != "1.3.2" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install suntime==1.3.2
+version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import bottle; print(bottle.__version__)" 2>/dev/null || echo "0")
+[[ $version != "0.12.25" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install bottle==0.12.25
 
 PY_VERSION=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import sys; print(f'{sys.version_info[0]}{sys.version_info[1]}')")
 tf_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import tflite_runtime; print(tflite_runtime.__version__)")
-if [ "$PY_VERSION" == 39 ] && [ "$tf_version" != "2.11.0" ] || [ "$PY_VERSION" != 39 ] && [ "$tf_version" != "2.17.1" ]; then
+if [ "$tf_version" != "2.11.0" ]; then
   get_tf_whl
   # include our numpy dependants so pip can figure out which numpy version to install
   sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install $HOME/BirdNET-Pi/$WHL pandas librosa matplotlib

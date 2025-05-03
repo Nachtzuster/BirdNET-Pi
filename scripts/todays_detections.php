@@ -17,7 +17,8 @@ $site_name = get_sitename();
 set_timezone();
 
 if(isset($kiosk) && $kiosk == true) {
-    echo "<div style='margin-top:20px' class=\"centered\"><h1><a><img class=\"topimage\" src=\"images/bnp.png\"></a></h1></div>
+    $logo = ($config['BATS_ANALYSIS'] == 1) ? "bnp_bats.png" : "bnp.png";
+    echo "<div style='margin-top:20px' class=\"centered\"><h1><a><img class=\"topimage\" src=\"images/$logo\"></a></h1></div>
 </div><div class=\"centered\"><h3>$site_name</h3></div><hr>";
 } else {
   $kiosk = false;
