@@ -45,7 +45,8 @@ def extract_safe(in_file, out_file, start, stop):
 
 
 def spectrogram(in_file, title, comment, raw=False):
-    _, tmp_file = tempfile.mkstemp(suffix='.png')
+    fd, tmp_file = tempfile.mkstemp(suffix='.png')
+    os.close(fd)
     args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', '24k', 'spectrogram',
             '-t', '', '-c', '', '-o', tmp_file]
     args += ['-r'] if raw else []
@@ -55,7 +56,6 @@ def spectrogram(in_file, title, comment, raw=False):
     if err:
         raise RuntimeError(f'{ret}:\n {err}')
     img = Image.open(tmp_file)
-    os.remove(tmp_file)
     height = img.size[1]
     width = img.size[0]
     draw = ImageDraw.Draw(img)
@@ -67,6 +67,7 @@ def spectrogram(in_file, title, comment, raw=False):
     _, _, _, h = draw.textbbox((0, 0), comment, font=comment_font)
     draw.text((1, height - (h + 1)), comment, fill="white", font=comment_font)
     img.save(f'{in_file}.png')
+    os.remove(tmp_file)
 
 
 def extract_detection(file: ParseFileName, detection: Detection):
