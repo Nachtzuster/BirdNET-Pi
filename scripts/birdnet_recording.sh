@@ -19,13 +19,9 @@ if [ ! -z $RTSP_STREAM ];then
   # Explode the RSPT steam setting into an array so we can count the number we have
   RTSP_STREAMS_EXPLODED_ARRAY=(${RTSP_STREAM//,/ })
   FFMPEG_VERSION=$(ffmpeg -version | head -n 1 | cut -d ' ' -f 3 | cut -d '.' -f 1)
-
+  # the expected file size
+  MAXSIZE=$(( 100 + 96000 * 2 * RECORDING_LENGTH ))
   while true;do
-# Original loop
-#    for i in ${RTSP_STREAM//,/ };do
-#      ffmpeg -nostdin -i  ${i} -t ${RECORDING_LENGTH} -vn -acodec pcm_s16le -ac 2 -ar 48000 file:${RECS_DIR}/StreamData/$(date "+%F")-birdnet-$(date "+%H:%M:%S").wav
-#    done
-
     # Initially start the count off at 1 - our very first stream
     RTSP_STREAMS_STARTED_COUNT=1
     FFMPEG_PARAMS=""
@@ -45,7 +41,7 @@ if [ ! -z $RTSP_STREAM ];then
       # Map id used to map input to output (first stream being 0), this is 0 based in ffmpeg so decrement our counter (which is more human readable) by 1
       MAP_ID=$((RTSP_STREAMS_STARTED_COUNT-1))
       # Build up the parameters to process the RSTP stream, including mapping for the output
-      FFMPEG_PARAMS+="-vn -thread_queue_size 512 $TIMEOUT_PARAM -i ${i} -map ${MAP_ID}:a:0 -t ${RECORDING_LENGTH} -acodec pcm_s16le -ac 2 -ar 48000 file:${RECS_DIR}/StreamData/$(date "+%F")-birdnet-RTSP_${RTSP_STREAMS_STARTED_COUNT}-$(date "+%H:%M:%S").wav "
+      FFMPEG_PARAMS+="-vn -thread_queue_size 512 $TIMEOUT_PARAM -i ${i} -map ${MAP_ID}:a:0 -t ${RECORDING_LENGTH} -fs ${MAXSIZE} -acodec pcm_s16le -ac 2 -ar 48000 file:${RECS_DIR}/StreamData/$(date "+%F")-birdnet-RTSP_${RTSP_STREAMS_STARTED_COUNT}-$(date "+%H:%M:%S").wav "
       # Increment counter
       ((RTSP_STREAMS_STARTED_COUNT += 1))
     done
