@@ -1691,7 +1691,7 @@ Crotophaga ani_Glatkokljuni ani
 Crotophaga major_Veliki ani
 Crotophaga sulcirostris_Kanalokljuni ani
 Crypsirina temia_Širokorepa šumska svraka
-Cryptillas victorini_Victorin's Warbler
+Cryptillas victorini_Viktorinova grmuša
 Cryptoleucopteryx plumbea_Olovnosivi jastreb
 Cryptopezus nattereri_Mravlja pita tačkastih grudi
 Cryptopipo holochlora_Zeleni manakin
@@ -2612,7 +2612,7 @@ Guttera pucherani_Istočna ćubasta biserka
 Gygis alba_Bela čigra
 Gymnasio nudipes_Portorikanski američki ćuk
 Gymnobucco bonapartei_Gray-throated Barbet
-Gymnobucco calvus_Naked-faced Barbet
+Gymnobucco calvus_Gololiki barbet
 Gymnocichla nudiceps_Bare-crowned Antbird
 Gymnomystax mexicanus_Vugoliki kos
 Gymnomyza brunneirostris_Džinovski medojed sa ostrva Viti Levu
@@ -2673,7 +2673,7 @@ Haliastur sphenurus_Zviždeća lunja
 Hapalocrex flaviventer_Maskirani barski petlić
 Hapalopsittaca amazonina_Rđastoliki papagaj
 Hapalopsittaca fuertesi_Indigo papagaj
-Hapaloptila castanea_White-faced Nunbird
+Hapaloptila castanea_Beloliki nona puf
 Haplophaedia aureliae_Zelenkasti gaćasti kolibri
 Haplospiza unicolor_Jednobojna zeba
 Harpactes ardens_Filipinski trogon
@@ -2871,7 +2871,7 @@ Hylorchilus sumichrasti_Sumichrast's Wren
 Hymenops perspicillatus_Naočarasta tiranka
 Hypargos niveoguttatus_Crvena kapljičasta astrilda
 Hypergerus atriceps_Oriole Warbler
-Hypnelus ruficollis_Russet-throated Puffbird
+Hypnelus ruficollis_Riđogrli puf
 Hypocnemis cantator_Guianan Warbling-Antbird
 Hypocnemis flavescens_Imeri Warbling-Antbird
 Hypocnemis hypoxantha_Žutoobrvasta mravarka
@@ -3346,9 +3346,11 @@ Macropygia phasianella_Smeđi kukavičji golub
 Macropygia ruficeps_Mali kukavičji golub
 Macropygia tenuirostris_Filipinski kukavičji golub
 Macropygia unchall_Prugasti kukavičji golub
-Macrosphenus concolor_Gray Longbill
-Macrosphenus flavicans_Yellow Longbill
-Macrosphenus kempi_Kemp's Longbill
+Macrosphenus concolor_Siva dugokljuna grmuša
+Macrosphenus flavicans_Žutotrba dugokljuna grmuša
+Macrosphenus kempi_Kempova dugokljuna grmuša
+Macrosphenus kretschmeri_Krečmerova dugokljuna grmuša
+Macrosphenus pulitzeri_Pulicerova dugokljuna grmuša
 Magumma parva_Anianiau
 Malacocincla abbotti_Abbott's Babbler
 Malacocincla sepiaria_Horsfildova brbljuša
@@ -3357,13 +3359,13 @@ Malacopteron affine_Brbljuša sa čađavom kapicom
 Malacopteron cinereum_Scaly-crowned Babbler
 Malacopteron magnirostre_Moustached Babbler
 Malacopteron magnum_Rufous-crowned Babbler
-Malacoptila fulvogularis_Puf sa crnim prugama
-Malacoptila fusca_White-chested Puffbird
+Malacoptila fulvogularis_Crnoprugi puf
+Malacoptila fusca_Belogrudi puf
 Malacoptila mystacalis_Maskirani puf
-Malacoptila panamensis_Puf belih obraza
-Malacoptila rufa_Rufous-necked Puffbird
-Malacoptila semicincta_Semicollared Puffbird
-Malacoptila striata_Crescent-chested Puffbird
+Malacoptila panamensis_Beloliki puf
+Malacoptila rufa_Riđovrati puf
+Malacoptila semicincta_Poluogrličasti puf
+Malacoptila striata_Polumesečasti puf
 Malacorhynchus membranaceus_Zebrasta plovka kašikara
 Malcorus pectoralis_Rufous-eared Warbler
 Malia grata_Malija
@@ -3568,7 +3570,7 @@ Microcerculus ustulatus_Flutist Wren
 Microeca fascinans_Džeki vinter
 Microeca flavigaster_Zlatna lažna muharica
 Microhierax fringillarius_Crnoboki patuljasti soko
-Micromonacha lanceolata_Lanceolated Monklet
+Micromonacha lanceolata_Lancetasta nonula
 Micronisus gabar_Jastreb gabar
 Micropsitta finschii_Finšov mikropsita papagaj
 Micropternus brachyurus_Kratkorepi crveni detlić
@@ -3894,15 +3896,15 @@ Nephelomyias pulcher_Jarka muharka
 Nesillas lantzii_Polupustinjska nesilas grmuša
 Nesillas typica_Malagaška nesilas grmuša
 Nesoenas mayeri_Ružičasti golub
-Nesoptilotis flavicollis_Yellow-throated Honeyeater
-Nesoptilotis leucotis_White-eared Honeyeater
+Nesoptilotis flavicollis_Žutogrli medojed
+Nesoptilotis leucotis_Belouhi medojed
 Nesospingus speculiferus_Portorikanska tangara
 Nestor meridionalis_Novozelandski kaka papagaj
 Netta rufina_Prevez
 Nettapus coromandelianus_Indomalajska patuljasta guska
 Newtonia amphichroa_Dark Newtonia
 Newtonia archboldi_Archbold's Newtonia
-Newtonia brunneicauda_Common Newtonia
+Newtonia brunneicauda_Obična grmušolika vanga
 Nicator chloris_Zapadni nikator
 Nicator gularis_Istočni nikator
 Nicator vireo_Žutogrli nikator
@@ -3926,16 +3928,16 @@ Nisaetus cirrhatus_Raznobojni jastrebasti orao/ćubasti jastrebasti orao
 Nisaetus nanus_Volesov jastrebasti orao
 Nisaetus nipalensis_Planinski jastrebasti orao
 Noise_Noise
-Nonnula brunnea_Brown Nunlet
-Nonnula frontalis_Gray-cheeked Nunlet
-Nonnula rubecula_Nonula puf rđastih grudi
-Nonnula ruficapilla_Rufous-capped Nunlet
+Nonnula brunnea_Smeđa nonula
+Nonnula frontalis_Sivolika nonula
+Nonnula rubecula_Riđogruda nonula
+Nonnula ruficapilla_Riđokapa nonula
 Northiella haematogaster_Crvenotrbi papagaj psefotus
 Notharchus hyperrhynchus_White-necked Puffbird
-Notharchus macrorhynchos_Guianan Puffbird
-Notharchus ordii_Brown-banded Puffbird
+Notharchus macrorhynchos_Gvajanski puf
+Notharchus ordii_Smeđotraki puf
 Notharchus pectoralis_Crnogrudi puf
-Notharchus swainsoni_Buff-bellied Puffbird
+Notharchus swainsoni_Žutotrbi puf
 Notharchus tectus_Crno-beli puf
 Nothocercus bonapartei_Planinski tinamu
 Nothocercus julius_Žutogrudi tinamu
@@ -3978,11 +3980,11 @@ Nyctiprogne leucopyga_Trakorepi leganj
 Nyctyornis amictus_Crvenobrada pčelarica
 Nyctyornis athertoni_Plavobrada pčelarica
 Nymphicus hollandicus_Nimfa papagaj (divlji)
-Nystalus chacuru_White-eared Puffbird
-Nystalus maculatus_Spot-backed Puffbird
-Nystalus obamai_Western Striolated-Puffbird
-Nystalus radiatus_Barred Puffbird
-Nystalus striolatus_Eastern Striolated-Puffbird
+Nystalus chacuru_Belouhi puf
+Nystalus maculatus_Žuti pirgavi puf
+Nystalus obamai_Zapadni prugasti puf
+Nystalus radiatus_Riđi pirgavi puf
+Nystalus striolatus_Istočni prugasti puf
 Ochetorhynchus andaecola_Kamenjarski puzić sa tla
 Ochetorhynchus melanurus_Kamenjarska čilija
 Ochetorhynchus phoenicurus_Prugastorepi puzić sa tla
@@ -5604,7 +5606,7 @@ Spermophaga haematina_Crvenogruda kleštokljuna zeba
 Sphecotheres vieilloti_Australazijska smokvarica
 Spheniscus demersus_Magarasti pingvin
 Spheniscus magellanicus_Magelanov pingvin
-Sphenoeacus afer_Cape Grassbird
+Sphenoeacus afer_Kapska grmušarka
 Sphenopsis frontalis_Oleaginous Hemispingus
 Sphenopsis melanotis_Crnouhi hemispingus
 Sphyrapicus nuchalis_Red-naped Sapsucker
@@ -5691,7 +5693,7 @@ Stachyris nigricollis_Crnogrla brbljuša
 Stachyris poliocephala_Sivoglava brbljuša
 Stachyris strialata_Spot-necked Babbler
 Stachyris thoracica_White-bibbed Babbler
-Stactolaema leucotis_White-eared Barbet
+Stactolaema leucotis_Belouhi barbet
 Stactolaema olivacea_Green Barbet
 Stagonopleura bella_Plamenorepa amadina
 Staphida torqueola_Indokineska juhina
