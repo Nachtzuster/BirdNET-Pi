@@ -113,9 +113,9 @@ Aethopyga gouldiae_Guldova sunčica
 Aethopyga ignicauda_Vatrorepa sunčica
 Aethopyga nipalensis_Green-tailed Sunbird
 Aethopyga saturata_Crnogrla sunčica
-Aethopyga siparaja_Crimson Sunbird
-Aethopyga temminckii_Temminck's Sunbird
-Aethopyga vigorsii_Vigors's Sunbird
+Aethopyga siparaja_Grimizna sunčica
+Aethopyga temminckii_Teminkova sunčica
+Aethopyga vigorsii_Vigorsova sunčica
 Agapornis canus_Sivoglavi agapornis
 Agapornis fischeri_Fišerov agapornis
 Agapornis personatus_Personata agapornis (crnoglavi)
@@ -194,7 +194,7 @@ Amaurospiza moesta_Crno-plavi zrnojed
 Amazilia luciae_Honduraski smaragdni kolibri
 Amazilia rutila_Cimetasti amazilija kolibri
 Amazilia tzacatl_Riđorepi amazilija kolibri
-Amazilia yucatanensis_Buff-bellied Hummingbird
+Amazilia yucatanensis_Riđotrbi amazilija kolibri
 Amazilis amazilia_Obični amazilija kolibri
 Amazona aestiva_Plavočeli amazonac
 Amazona agilis_Crnokljuni amazonac
@@ -243,7 +243,7 @@ Ampelion rubrocristatus_Kotinga sa crvenom ćubom
 Ampelion rufaxilla_Kotinga sa kestenjastom ćubom
 Ampelornis griseiceps_Gray-headed Antbird
 Amphispiza bilineata_Crnogrli strnad
-Amphispizopsis quinquestriata_Five-striped Sparrow
+Amphispizopsis quinquestriata_Petoprugi strnad
 Anabacerthia amaurotis_Beloobrvasta krošnjarka
 Anabacerthia lichtensteini_Ochre-breasted Foliage-gleaner
 Anabacerthia ruficaudata_Riđorepa krošnjarka
@@ -294,7 +294,7 @@ Anhima cornuta_Rogata kreštalica
 Anhinga anhinga_Američka zmijovrata
 Anhinga melanogaster_Azijska zmijovrata
 Anhinga novaehollandiae_Australazijska zmijovrata
-Anisognathus igniventris_Scarlet-bellied Mountain Tanager
+Anisognathus igniventris_Skerletnotrba planinska tangara
 Anisognathus lacrymosus_Lacrimose Mountain Tanager
 Anisognathus somptuosus_Plavokrila planinska tangara
 Anodorhynchus hyacinthinus_Velika plava ara
@@ -401,7 +401,7 @@ Apaloderma narina_Narina trogon
 Apaloderma vittatum_Bar-tailed Trogon
 Aphanotriccus audax_Crnokljuna muharka
 Aphanotriccus capitalis_Muharka zagasitih grudi
-Aphelocephala leucopsis_Southern Whiteface
+Aphelocephala leucopsis_Južna kratkokljunka
 Aphelocoma californica_Kalifornijska žbunjarska kreja
 Aphelocoma coerulescens_Floridska žbunjarska kreja
 Aphelocoma ultramarina_Vulkanska kreja
@@ -504,19 +504,19 @@ Arremon brunneinucha_Chestnut-capped Brushfinch
 Arremon castaneiceps_Olive Finch
 Arremon costaricensis_Kostarikanski aremon strnad
 Arremon crassirostris_Sooty-faced Finch
-Arremon flavirostris_Saffron-billed Sparrow
+Arremon flavirostris_Šafranasti aremon strnad
 Arremon franciscanus_Sao Francisco Sparrow
 Arremon perijanus_Perija Brushfinch
 Arremon schlegeli_Zlatokrili aremon strnad
 Arremon semitorquatus_Half-collared Sparrow
 Arremon taciturnus_Pectoral Sparrow
 Arremon torquatus_Beloobrvasti aremon strnad
-Arremon virenticeps_Green-striped Brushfinch
+Arremon virenticeps_Zelenoobrvasti aremon strnad
 Arremonops chloronotus_Zelenoleđi strnad
 Arremonops conirostris_Crnoprugi strnad
 Arremonops rufivirgatus_Maslinasti strnad
 Arremonops tocuyensis_Tokujo strnad
-Arses telescopthalmus_Frilled Monarch
+Arses telescopthalmus_Ćubasta monarh muharica
 Artamus cinereus_Crnolika šumska lasta
 Artamus cyanopterus_Tamna šumska lasta
 Artamus fuscus_Pepeljasta šumska lasta
@@ -612,16 +612,16 @@ Aulacorhynchus coeruleicinctis_Blue-banded Toucanet
 Aulacorhynchus derbianus_Chestnut-tipped Toucanet
 Aulacorhynchus haematopygus_Crimson-rumped Toucanet
 Aulacorhynchus prasinus_Severni smaragdni tukanet
-Aulacorhynchus sulcatus_Groove-billed Toucanet
+Aulacorhynchus sulcatus_Plavoliki zeleni tukanet
 Auriparus flaviceps_Verdin senica
 Automolus exsertus_Chiriqui Foliage-gleaner
-Automolus infuscatus_Olive-backed Foliage-gleaner
-Automolus leucophthalmus_White-eyed Foliage-gleaner
-Automolus melanopezus_Brown-rumped Foliage-gleaner
-Automolus ochrolaemus_Ochre-throated Foliage-gleaner
-Automolus paraensis_Para Foliage-gleaner
-Automolus rufipileatus_Chestnut-crowned Foliage-gleaner
-Automolus subulatus_Eastern Woodhaunter
+Automolus infuscatus_Maslinastoleđa krošnjarka
+Automolus leucophthalmus_Belooka krošnjarka
+Automolus melanopezus_Smeđoleđa krošnjarka
+Automolus ochrolaemus_Okerogrla krošnjarka
+Automolus paraensis_Istočna maslinastoleđa krošnjarka
+Automolus rufipileatus_Kestenjastokruna krošnjarka
+Automolus subulatus_Istočna krošnjarka
 Aviceda jerdoni_Džerdonova baza
 Aviceda leuphotes_Crna baza
 Aviceda subcristata_Pacifička baza
