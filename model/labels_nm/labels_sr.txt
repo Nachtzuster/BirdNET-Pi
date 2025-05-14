@@ -6170,9 +6170,9 @@ Trochalopteron erythrocephalum_Kestenjastokruni drozd smejač
 Trochalopteron henrici_Prince Henry's Laughingthrush
 Trochalopteron imbricatum_Butanski drozd smejač
 Trochalopteron lineatum_Prugasti drozd smejač
-Trochalopteron melanostigma_Silver-eared Laughingthrush
+Trochalopteron melanostigma_Srebrouhi drozd smejač
 Trochalopteron milnei_Crvenorepi drozd smejač
-Trochalopteron morrisonianum_White-whiskered Laughingthrush
+Trochalopteron morrisonianum_Belobrki drozd smejač
 Trochalopteron peninsulae_Malajski drozd smejač
 Trochalopteron squamatum_Plavokrili drozd smejač
 Trochalopteron subunicolor_Scaly Laughingthrush
@@ -6295,7 +6295,7 @@ Turtur afer_Plavopegi šumski golubić
 Turtur brehmeri_Plavoglavi šumski golubić
 Turtur chalcospilos_Zelenopegi šumski golubić
 Turtur tympanistria_Šumski golubić timpanista
-Tylas eduardi_Tylas Vanga
+Tylas eduardi_Vugolika vanga
 Tympanuchus cupido_Velika prerijska koka
 Tympanuchus pallidicinctus_Mala prerijska koka
 Tympanuchus phasianellus_Oštrorepi tetreb
@@ -6341,7 +6341,7 @@ Uromyias agraphia_Južna obrvasta seničarka
 Uropsalis lyra_Lirorepi leganj
 Uropsalis segmentata_Lastorepi leganj
 Uropsila leucogastra_Belotrbi carić
-Urosphena pallidipes_Pale-footed Bush Warbler
+Urosphena pallidipes_Svetlonoga kratkorepa grmuša
 Urosphena squameiceps_Azijska kratkorepa grmuša
 Urosphena subulata_Timorska kratkorepa grmuša
 Urosphena whiteheadi_Borneanska kratkorepa grmuša
@@ -6384,7 +6384,7 @@ Vireo crassirostris_Debelokljuni zelenić
 Vireo flavifrons_Žutogrli zelenić
 Vireo flavoviridis_Žućkastozeleni zelenić
 Vireo gilvus_Zelenić pevač
-Vireo gracilirostris_Noronha Vireo
+Vireo gracilirostris_Zelenić sa ostrva Fernando de Noronja
 Vireo griseus_Belooki zelenić
 Vireo gundlachii_Kubanski zelenić
 Vireo huttoni_Hrastov zelenić
@@ -6407,13 +6407,13 @@ Vireolanius leucotis_Vireosvračak škriljaste glave
 Vireolanius melitophrys_Vireosvračak smeđih bokova
 Vireolanius pulchellus_Zeleni vireosvračak
 Volatinia jacarina_Jakarina strnadica
-Wetmorethraupis sterrhopteron_Orange-throated Tanager
+Wetmorethraupis sterrhopteron_Narandžastogrla tangara
 Willisornis poecilinotus_Mravarka ljuskastih leđa
 Willisornis vidua_Mravarka sa reke Šingu
 Xanthocephalus xanthocephalus_Crna žutoglavka
 Xanthomixis zosterops_Naočarasta tetraka
-Xanthopsar flavus_Saffron-cowled Blackbird
-Xanthotis macleayanus_Macleay's Honeyeater
+Xanthopsar flavus_Urugvajska žutoglavka
+Xanthotis macleayanus_Meklijev medojed
 Xema sabini_Lastorepi galeb
 Xenerpestes singularis_Južna grmušasta pećarka
 Xenodacnis parina_Senicoliki daknis
