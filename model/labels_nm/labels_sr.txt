@@ -6036,7 +6036,7 @@ Threnetes leucurus_Trenetes kolibri svetlog repa
 Threnetes ruckeri_Trenetes kolibri sa trakastim repom
 Threskiornis melanocephalus_Azijski sveti ibis
 Threskiornis molucca_Australijski ibis
-Thripadectes flammulatus_Flammulated Treehunter
+Thripadectes flammulatus_Plamena krošnjarka
 Thripadectes holostictus_Striped Treehunter
 Thripadectes ignobilis_Uniform Treehunter
 Thripadectes melanorhynchus_Black-billed Treehunter
@@ -6093,7 +6093,7 @@ Todus multicolor_Kubanski todi
 Todus subulatus_Širokokljuni todi
 Todus todus_Jamajkanski todi
 Tolmomyias assimilis_Muharka sa žutim ivicama krila
-Tolmomyias flaviventris_Ochre-lored Flatbill
+Tolmomyias flaviventris_Istočna maslinasta pljosnokljuna muharka
 Tolmomyias poliocephalus_Sivokruna muharka
 Tolmomyias sulphurescens_Sumporasta pljosnokljuna muharka
 Tolmomyias traylori_Orange-eyed Flatbill
@@ -6164,7 +6164,7 @@ Tringa totanus_Crvenonogi sprudnik
 Trochalopteron affine_Crnoliki drozd smejač
 Trochalopteron chrysopterum_Asamski drozd smejač
 Trochalopteron elliotii_Eliotov drozd smejač
-Trochalopteron erythrocephalum_Chestnut-crowned Laughingthrush
+Trochalopteron erythrocephalum_Kestenjastokruni drozd smejač
 Trochalopteron henrici_Prince Henry's Laughingthrush
 Trochalopteron imbricatum_Butanski drozd smejač
 Trochalopteron lineatum_Prugasti drozd smejač
@@ -6422,7 +6422,7 @@ Xenopirostris polleni_Polenova vanga
 Xenops minutus_Obični ksenops
 Xenops rutilans_Prugasti ksenops
 Xenops tenuirostris_Ravnokljuni ksenops
-Xenopsaris albinucha_White-naped Xenopsaris
+Xenopsaris albinucha_Crnoglava muharičasta kotinga
 Xenospiza baileyi_Strnad sa Sijera Madre
 Xenotriccus callizonus_Belted Flycatcher
 Xenotriccus mexicanus_Pileated Flycatcher
@@ -6446,8 +6446,8 @@ Xiphorhynchus susurrans_Kakao puzavica
 Xiphorhynchus triangularis_Puzavica maslinastih leđa
 Xolmis irupero_Bela monhita
 Yuhina brunneiceps_Tajvanska juhina
-Yuhina flavicollis_Whiskered Yuhina
-Yuhina gularis_Stripe-throated Yuhina
+Yuhina flavicollis_Brkata juhina
+Yuhina gularis_Prugastogrla juhina
 Yuhina nigrimenta_Crnobrada juhina
 Yuhina occipitalis_Rufous-vented Yuhina
 Yungipicus canicapillus_Veliki oštrokrili detlić
@@ -6483,7 +6483,7 @@ Zimmerius cinereicapilla_Red-billed Tyrannulet
 Zimmerius gracilipes_Slender-footed Tyrannulet
 Zimmerius parvus_Mistletoe Tyrannulet
 Zimmerius vilissimus_Guatemalan Tyrannulet
-Zimmerius villarejoi_Mishana Tyrannulet
+Zimmerius villarejoi_Tirančica iz oblasti Mišana u Peruu
 Zimmerius viridiflavus_Peruvian Tyrannulet
 Zonotrichia albicollis_Belogrli strnad
 Zonotrichia atricapilla_Zlatokruni strnad
@@ -6508,15 +6508,15 @@ Zosterops eurycricotus_Belooka sa Kilimandžara
 Zosterops everetti_Everetova belooka
 Zosterops flavifrons_Žutočela belooka
 Zosterops flavilateralis_Kenijska belooka
-Zosterops japonicus_Warbling White-eye
+Zosterops japonicus_Japanska belooka
 Zosterops lateralis_Srebrooka
 Zosterops luteus_Australijska žuta belooka
 Zosterops maderaspatanus_Madagaskarska belooka
 Zosterops mauritianus_Siva belooka sa Mauricijusa
 Zosterops metcalfii_Žutogrla belooka
-Zosterops meyeni_Lowland White-eye
+Zosterops meyeni_Ravničarska filipinska belooka
 Zosterops pallidus_Belooka sa reke Oranje
 Zosterops palpebrosus_Indijska belooka
-Zosterops senegalensis_Northern Yellow White-eye
+Zosterops senegalensis_Senegalska žuta belooka
 Zosterops simplex_Obična belooka
 Zosterops virens_Kapska belooka
