@@ -244,11 +244,11 @@ Ampelion rufaxilla_Kotinga sa kestenjastom ćubom
 Ampelornis griseiceps_Gray-headed Antbird
 Amphispiza bilineata_Crnogrli strnad
 Amphispizopsis quinquestriata_Five-striped Sparrow
-Anabacerthia amaurotis_White-browed Foliage-gleaner
+Anabacerthia amaurotis_Beloobrvasta krošnjarka
 Anabacerthia lichtensteini_Ochre-breasted Foliage-gleaner
-Anabacerthia ruficaudata_Rufous-tailed Foliage-gleaner
+Anabacerthia ruficaudata_Riđorepa krošnjarka
 Anabacerthia striaticollis_Montane Foliage-gleaner
-Anabacerthia variegaticeps_Scaly-throated Foliage-gleaner
+Anabacerthia variegaticeps_Ljuskasta krošnjarka
 Anabazenops dorsalis_Tamnolika krošnjarka
 Anabazenops fuscus_Belovrata krošnjarka
 Anairetes alpinus_Garava seničarka
@@ -326,7 +326,7 @@ Anthochaera paradoxa_Resasti medojed sa žutim resama
 Anthochaera phrygia_Kraljevski resasti medojed
 Anthornis melanura_Medojed zvonar
 Anthoscopus minutus_Južna senica vuga
-Anthoscopus musculus_Mouse-colored Penduline-Tit
+Anthoscopus musculus_Bleda senica vuga
 Anthracoceros albirostris_Belokljuni kljunorožac
 Anthracoceros coronatus_Malabarski crno-beli kljunorožac
 Anthracoceros malayanus_Crni kljunorožac
@@ -644,7 +644,7 @@ Bambusicola fytchii_Planinska bambusova jarebica
 Bambusicola sonorivox_Tajvanska bambusova jarebica
 Bambusicola thoracicus_Kineska bambusova jarebica
 Bangsia aureocincta_Gold-ringed Tanager
-Bangsia edwardsi_Moss-backed Tanager
+Bangsia edwardsi_Zelenoleđa tangara
 Bangsia melanochlamys_Black-and-gold Tanager
 Barnardius zonarius_Kragnasti papagaj
 Bartramia longicauda_Crnokrili sprudnik
@@ -659,9 +659,9 @@ Basileuterus melanotis_Kostarikanska cvrkutarka
 Basileuterus rufifrons_Rufous-capped Warbler
 Basileuterus trifasciatus_Tropojasna cvrkutarka
 Basileuterus tristriatus_Troprugasta cvrkutarka
-Basilinna leucotis_White-eared Hummingbird
+Basilinna leucotis_Belouhi kolibri
 Batara cinerea_Džinovski mravlji svračak
-Bathmocercus rufus_Black-faced Rufous-Warbler
+Bathmocercus rufus_Crnolika riđa grmuša
 Batis capensis_Kapski batis
 Batis erlangeri_Zapadni crnoglavi batis
 Batis mixta_Kratkorepi batis
@@ -846,7 +846,7 @@ Calcarius pictus_Smitova strnadica ostrugašica
 Calendulauda africanoides_Fawn-colored Lark
 Calendulauda albescens_Ševa iz Karua
 Calendulauda alopex_Foxy Lark
-Calendulauda poecilosterna_Pink-breasted Lark
+Calendulauda poecilosterna_Ružogrla ševa
 Calendulauda sabota_Sabota ševa
 Calicalicus madagascariensis_Crvenorepa vanga
 Calidris acuminata_Sibirska crnogruda sprutka
@@ -1118,11 +1118,11 @@ Certhia himalayana_Himalajski puzić
 Certhia hodgsoni_Hodžsonov puzić
 Certhia manipurensis_Hjumov puzić
 Certhiasomus stictolaemus_Puzavica sa pegom na grlu
-Certhiaxis cinnamomeus_Yellow-chinned Spinetail
-Certhiaxis mustelinus_Red-and-white Spinetail
+Certhiaxis cinnamomeus_Žutobrada strunorepka
+Certhiaxis mustelinus_Crveno-bela strunorepka
 Certhilauda chuana_Bocvanska ševa
 Certhilauda semitorquata_Istočna dugokljuna ševa
-Certhilauda subcoronata_Karoo Long-billed Lark
+Certhilauda subcoronata_Dugokljuna ševa iz Karua
 Certhionyx variegatus_Crno-beli medojed
 Ceryle rudis_Vodomar šarac
 Cettia brunnifrons_Svilorepi cvrčić sivih bokova
