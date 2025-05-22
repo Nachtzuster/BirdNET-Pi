@@ -8,6 +8,10 @@ import time
 import librosa
 import numpy as np
 
+import json
+import subprocess
+import requests
+
 from utils.helpers import get_settings, Detection
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -347,3 +351,134 @@ def run_analysis(file):
                     )
                     confident_detections.append(d)
     return confident_detections
+
+
+def manage_batsanalyzer_server(host="127.0.0.1", port=7667, classifier=None):
+    log = logging.getLogger(__name__)
+    url = f"http://{host}:{port}/healthcheck"
+    try:
+        if requests.get(url, timeout=5).status_code == 200:
+            return
+        raise RuntimeError("bad status")
+    except Exception as e:
+        log.warning("Analyzer down (%s); restarting…", e)
+        try:
+            pids = subprocess.check_output(["lsof", "-ti", f":{port}"], text=True).split()
+            for pid in pids:
+                subprocess.run(["kill", "-9", pid], check=False)
+                log.info("Killed PID %s on port %s", pid, port)
+        except subprocess.CalledProcessError:
+            pass
+        pybin = os.path.expanduser("~/BirdNET-Pi/birdnet/bin/python3")
+        svr   = os.path.expanduser("~/BirdNET-Pi/BattyBirdNET-Analyzer/server.py")
+        cmd   = [pybin, svr] + (["--area", classifier] if classifier else [])
+        subprocess.Popen(cmd, cwd=os.path.dirname(svr))
+        time.sleep(5)
+
+
+def denoise_file(file_path, noise_profile_path, noise_reduction_factor):
+    """
+    Apply noise reduction to the given audio file using SoX.
+    It overwrites the original file safely if successful.
+    """
+    out_file = file_path + ".out.wav"
+
+    subprocess.run([
+        "sox", file_path, out_file,
+        "noisered", noise_profile_path, str(noise_reduction_factor)
+    ], check=True)
+
+    if not os.path.exists(out_file):
+        raise RuntimeError(f"Denoised file {out_file} was not created.")
+
+    os.replace(out_file, file_path)
+
+
+def run_bats_analysis(file, host="127.0.0.1", port=7667):
+    """
+    1. ensure analyzer server
+    2. POST file for analysis
+    3. Convert & filter to Detection objects
+    4. NEW: clamp & shift detections so extract_safe() never gets inverted trim
+    """
+    log  = logging.getLogger(__name__)
+    conf = get_settings()
+    manage_batsanalyzer_server(host, port, conf.get("BATS_CLASSIFIER"))
+
+    include = loadCustomSpeciesList("~/BirdNET-Pi/include_species_list.txt")
+    exclude = loadCustomSpeciesList("~/BirdNET-Pi/exclude_species_list.txt")
+
+    meta = dict(
+        lat=conf.getfloat("LATITUDE"),
+        lon=conf.getfloat("LONGITUDE"),
+        week=file.week,
+        overlap=conf.getfloat("OVERLAP"),
+        sensitivity=conf.getfloat("SENSITIVITY"),
+        pmode="max",
+    )
+    # Apply noise reduction if enabled
+    try:
+        if conf.getboolean('DENOISING', fallback=False):
+            noise_profile = os.path.expanduser(conf['DENOISING_PROFILE'])
+            noise_factor = conf.getfloat('DENOISING_FACTOR', fallback=0.1)
+            denoise_file(file.file_name, noise_profile, noise_factor)
+    except Exception as e:
+        log.error("Denoising failed for %s: %s", file.file_name, e)
+        return []
+    
+    # Perform analysis
+    try:
+        with open(file.file_name, "rb") as wav:
+            resp = requests.post(
+                f"http://{host}:{port}/analyze",
+                files={
+                    "audio": (os.path.basename(file.file_name), wav),
+                    "meta":  (None, json.dumps(meta)),
+                },
+                timeout=120,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+    except Exception as e:
+        log.error("Remote analysis failed for %s: %s", file.file_name, e)
+        return []
+
+    min_conf   = conf.getfloat("CONFIDENCE")
+    detections = []
+
+    for segment, entries in data.get("results", {}).items():
+        try:
+            start, stop = map(float, segment.split("-", 1))
+        except ValueError:
+            log.error("Bad segment %r", segment)
+            continue
+        if stop < start:
+            start, stop = stop, start
+
+        for species, score_str in entries:
+            score = float(score_str)
+            if score < min_conf or \
+               (include and species not in include) or \
+               (exclude and species in exclude) or \
+               (PREDICTED_SPECIES_LIST and species not in PREDICTED_SPECIES_LIST):
+                continue
+            detections.append(Detection(file.file_date, start, stop, species, score))
+
+    # ── 5. make every Detection safe for extract_safe()  ───────────────
+    ex_len = 288000 / conf.getint('BATS_SAMPLING_RATE', fallback=256000)
+    spacer = max(0.0, (ex_len - 3) / 2)
+    rec_len = conf.getint('RECORDING_LENGTH', fallback=int(spacer + 3))
+
+    for d in detections:
+        d.start = max(0.0, min(d.start, rec_len))
+        d.stop  = max(0.0, min(d.stop,  rec_len))
+
+        overflow = (d.stop + spacer) - rec_len
+        if overflow > 0:
+            d.start -= overflow
+            d.stop  -= overflow
+
+        if d.stop < d.start:
+            d.start, d.stop = d.stop, d.start
+
+    return detections

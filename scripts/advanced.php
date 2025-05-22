@@ -221,6 +221,80 @@ if (isset($_GET["max_files_species"])) {
       $contents = preg_replace("/RARE_SPECIES_THRESHOLD=.*/", "RARE_SPECIES_THRESHOLD=30", $contents);
   }
 
+  if(isset($_GET["timer"])) {
+    $contents = preg_replace("/TIMER=.*/", "TIMER=1", $contents);
+  } else {
+    $contents = preg_replace("/TIMER=.*/", "TIMER=0", $contents);
+  }
+
+  if(isset($_GET["timer_switch"])) {
+    $contents = preg_replace("/TIMER_SWITCH=.*/", "TIMER_SWITCH=1", $contents);
+  } else {
+    $contents = preg_replace("/TIMER_SWITCH=.*/", "TIMER_SWITCH=0", $contents);
+  }
+
+  if(isset($_GET["timer_start_mode"])) {
+    $start_mode = $_GET["timer_start_mode"];
+    if ($start_mode == "time" && isset($_GET["timer_start_time"])) {
+      $timer_start = $_GET["timer_start_time"];
+    } else {
+      $timer_start = $start_mode;
+    }
+    $contents = preg_replace("/TIMER_START=.*/", "TIMER_START=$timer_start", $contents);
+  }
+
+  if(isset($_GET["timer_stop_mode"])) {
+    $stop_mode = $_GET["timer_stop_mode"];
+    if ($stop_mode == "time" && isset($_GET["timer_stop_time"])) {
+      $timer_stop = $_GET["timer_stop_time"];
+    } else {
+      $timer_stop = $stop_mode;
+    }
+    $contents = preg_replace("/TIMER_STOP=.*/", "TIMER_STOP=$timer_stop", $contents);
+  }
+
+  if (isset($_GET["bats_analysis"])) {
+    $contents = preg_replace("/BATS_ANALYSIS=.*/", "BATS_ANALYSIS=1", $contents);
+  } else {
+    $contents = preg_replace("/BATS_ANALYSIS=.*/", "BATS_ANALYSIS=0", $contents);
+  }
+
+  if (isset($_GET["bats_sampling_rate"])) {
+    $bats_sampling_rate = $_GET["bats_sampling_rate"];
+    if (strcmp($bats_sampling_rate, $config['BATS_SAMPLING_RATE']) !== 0) {
+      $contents = preg_replace("/BATS_SAMPLING_RATE=.*/", "BATS_SAMPLING_RATE=$bats_sampling_rate", $contents);
+    }
+  }
+
+  if (isset($_GET["bats_classifier"])) {
+    $bats_classifier = $_GET["bats_classifier"];
+    if (strcmp($bats_classifier, $config['BATS_CLASSIFIER']) !== 0) {
+      $contents = preg_replace("/BATS_CLASSIFIER=.*/", "BATS_CLASSIFIER=\"$bats_classifier\"", $contents);
+    }
+  }
+
+  if (isset($_GET["denoising"])) {
+    $contents = preg_replace("/DENOISING=.*/", "DENOISING=1", $contents);
+  } else {
+    $contents = preg_replace("/DENOISING=.*/", "DENOISING=0", $contents);
+  }
+
+  if (isset($_GET["denoising_factor"])) {
+    $denoising_factor = $_GET["denoising_factor"];
+    if (strcmp($denoising_factor, $config['DENOISING_FACTOR']) !== 0) {
+      $contents = preg_replace("/DENOISING_FACTOR=.*/", "DENOISING_FACTOR=$denoising_factor", $contents);
+    }
+  }
+
+  if (isset($_GET["denoising_profile"])) {
+    $denoising_profile = $_GET["denoising_profile"];
+    $current_profile = basename($config['DENOISING_PROFILE']);
+    if (strcmp($denoising_profile, $current_profile) !== 0) {
+      $full_profile_path = "BattyBirdNET-Analyzer/checkpoints/bats/mic-noise/" . $denoising_profile;
+      $contents = preg_replace("/DENOISING_PROFILE=.*/", "DENOISING_PROFILE=\"$full_profile_path\"", $contents);
+    }
+  }
+
   if(isset($_GET["custom_image"])) {
     $custom_image = $_GET["custom_image"];
     if(strcmp($custom_image,$config['CUSTOM_IMAGE']) !== 0) {
@@ -468,6 +542,62 @@ foreach($formats as $format){
       <input type="number" name="rare_species_threshold" min="1" value="<?php echo isset($newconfig['RARE_SPECIES_THRESHOLD']) ? $newconfig['RARE_SPECIES_THRESHOLD'] : 30; ?>"><br>
       <p>This setting defines after how many days since last detection a species is considered rare. Default is 30 days.</p>
       </td></tr></table><br>
+
+      <table class="settingstable"><tr><td>
+      <h2>Timer</h2>
+      <label for="timer">Enable Timer: </label>
+      <input type="checkbox" name="timer" <?php if($newconfig['TIMER'] == 1) { echo "checked"; } ?> >
+      <p>If checked, the system will use the primary analyzer (birds or bats) between the start and stop times defined below.</p><br>
+      <label for="timer_switch">Timer Switch: </label>
+      <input type="checkbox" name="timer_switch" <?php if($newconfig['TIMER_SWITCH'] == 1) { echo "checked"; } ?> >
+      <p>If checked, the system will switch to the alternate analyzer during off-hours. If unchecked, the services will stop during off-hours.</p><br>
+      <h3>Timer Start</h3>
+      <label><input type="radio" name="timer_start_mode" value="Sunrise" <?php if($newconfig['TIMER_START'] == 'Sunrise') { echo "checked"; } ?>> Sunrise</label><br>
+      <label><input type="radio" name="timer_start_mode" value="Sunset" <?php if($newconfig['TIMER_START'] == 'Sunset') { echo "checked"; } ?>> Sunset</label><br>
+      <label><input type="radio" name="timer_start_mode" value="time" <?php if(!in_array($newconfig['TIMER_START'], array('Sunrise', 'Sunset'))) { echo "checked"; } ?>> Time </label>
+      <input type="time" name="timer_start_time" value="<?php echo (!in_array($newconfig['TIMER_START'], array('Sunrise', 'Sunset')) ? $newconfig['TIMER_START'] : '06:00'); ?>"><br>
+      <br><br>
+      <h3>Timer Stop</h3>
+      <label><input type="radio" name="timer_stop_mode" value="Sunset" <?php if($newconfig['TIMER_STOP'] == 'Sunset') { echo "checked"; } ?>> Sunset</label><br>
+      <label><input type="radio" name="timer_stop_mode" value="Sunrise" <?php if($newconfig['TIMER_STOP'] == 'Sunrise') { echo "checked"; } ?>> Sunrise</label><br>
+      <label><input type="radio" name="timer_stop_mode" value="time" <?php if(!in_array($newconfig['TIMER_STOP'], array('Sunset', 'Sunrise'))) { echo "checked"; } ?>> Time </label>
+      <input type="time" name="timer_stop_time" value="<?php echo (!in_array($newconfig['TIMER_STOP'], array('Sunset', 'Sunrise')) ? $newconfig['TIMER_STOP'] : '18:00'); ?>"><br>
+      <br><br>
+      </td></tr></table><br>
+
+      <table class="settingstable"><tr><td>
+      <h2>BattyBirdNET Settings</h2>
+      <p>Enable Bat Detection Analysis:</p>
+      <label for="bats_analysis">Use BattyBirdNET Analyzer: </label>
+      <input type="checkbox" name="bats_analysis" <?php if(isset($newconfig['BATS_ANALYSIS']) && $newconfig['BATS_ANALYSIS'] == 1) { echo "checked"; } ?> ><br><br>
+      <label for="bats_sampling_rate">Sampling Rate (Hz):</label><br>
+      <input name="bats_sampling_rate" type="number" style="width:6em;" min="100000" max="512000" step="1000" value="<?php echo isset($newconfig['BATS_SAMPLING_RATE']) ? $newconfig['BATS_SAMPLING_RATE'] : '256000'; ?>" required><br><br>
+      <label for="bats_classifier">Bat Classifier:</label><br>
+      <select name="bats_classifier" class="testbtn">
+          <option selected><?php echo isset($newconfig['BATS_CLASSIFIER']) ? $newconfig['BATS_CLASSIFIER'] : ''; ?></option>
+          <?php
+          $formats = array("Bavaria", "South-Wales", "USA", "USA-EAST", "USA-WEST", "UK", "BIRDS", "CUSTOM_BAT", "CUSTOM_BIRD");
+          foreach($formats as $format){
+              echo "<option value='$format'>$format</option>";
+          }
+          ?>
+      </select><br><br>
+      <p>Noise Reduction Settings:</p>
+      <label for="denoising">Apply Noise Reduction (Takes out most of microphone-related noise in recordings with detections):</label><br>
+      <input type="checkbox" name="denoising" <?php if(isset($newconfig['DENOISING']) && $newconfig['DENOISING'] == 1) { echo "checked"; } ?> ><br><br>
+      <label for="denoising_factor">Noise Reduction Factor (Between 0 and 1, e.g., 0.5):</label><br>
+      <input name="denoising_factor" type="number" step="0.01" min="0" max="1" style="width:6em;" value="<?php echo isset($newconfig['DENOISING_FACTOR']) ? $newconfig['DENOISING_FACTOR'] : '0.1'; ?>"><br>
+      <p>Larger values increase risk of information loss.</p><br>
+      <label for="denoising_profile">Microphone Noise Profile:</label><br>
+      <select name="denoising_profile" class="testbtn">
+	  <option selected><?php echo isset($newconfig['DENOISING_PROFILE']) ? basename($newconfig['DENOISING_PROFILE']) : ''; ?></option>
+          <?php
+          $formats = array("audiomoth_v12.prof", "waem2.prof", "waem2pro.prof", "banzerhaus.prof");
+          foreach($formats as $format){
+              echo "<option value='$format'>$format</option>";
+          }
+          ?>
+      </select><br></td></tr></table><br>
 
       <table class="settingstable"><tr><td>
       <h2>Custom Image</h2>

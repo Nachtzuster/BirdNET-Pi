@@ -146,6 +146,38 @@ PURGE_THRESHOLD=95
 
 MAX_FILES_SPECIES=0
 
+#--------------------------  BattyBirdNET Integration  -------------------------#
+## BATS_ANALYSIS defines if the model analyses bats. Set to 1 to use BattyBirdNET-Analyzer model
+BATS_ANALYSIS=0
+
+## BATS_SAMPLING_RATE : if using the bats model, please define your SAMPLING RATE
+## BATS_SAMPLING_RATE=256000
+
+# BATS_CLASSIFIER : type of model to use
+## BATS_CLASSIFIER=Bavaria
+
+## Set this value to 0 to have a continuous monitoring, and 1 to enable automated services control according to time
+TIMER=0
+
+## If you set TIMER_SWITCH to 1, your system will use your main analyzer during the start-stop defined (birds, except if BATS_ANALYSIS is set to 1), and the alternate analyzer during the night
+## TIMER_SWITCH=0
+
+## TIMER_START : can be "Sunrise", "Sunset", or a specific time such as "06:00"
+## TIMER_START=Sunrise
+
+## TIMER_STOP : can be "Sunset", "Sunrise", or a specific time such as "18:00"
+## TIMER_STOP=Sunset
+
+## DENOISING : if set to 1, will perform denoising on the files. Mostly useful for bats
+## DENOISING=0
+
+## DENOISING_PROFILE : define the model, relative to the path of your BirdNET-Pi installation. Mostly useful for bats.
+## DENOISING_PROFILE=BattyBirdNET-Analyzer/checkpoints/bats/mic-noise/audiomoth_v12.prof
+
+## DENOISING_FACTOR : factor for denoising
+## DENOISING_FACTOR=0.22
+
+
 ################################################################################
 #--------------------------------  Defaults  ----------------------------------#
 ################################################################################

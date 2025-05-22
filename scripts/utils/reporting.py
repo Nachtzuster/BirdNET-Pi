@@ -33,11 +33,16 @@ def extract_safe(in_file, out_file, start, stop):
     # context. If EXTRACTION_LENGTH is 10, for instance, 3 seconds are removed
     # from that value and divided by 2, so that the 3 seconds of the call are
     # within 3.5 seconds of audio context before and after.
-    try:
-        ex_len = conf.getint('EXTRACTION_LENGTH')
-    except ValueError:
-        ex_len = 6
-    spacer = (ex_len - 3) / 2
+    if conf.getint('BATS_ANALYSIS', fallback=0) == 1:
+        ex_len = 288000 / conf.getint('BATS_SAMPLING_RATE', fallback=256000)
+        spacer = (ex_len / 3)
+    else:
+        try:
+            ex_len = conf.getint('EXTRACTION_LENGTH')
+        except (ValueError, KeyError):
+            ex_len = 6
+        spacer = 3
+        spacer = (ex_len - spacer) / 2
     safe_start = max(0, start - spacer)
     safe_stop = min(conf.getint('RECORDING_LENGTH'), stop + spacer)
 
@@ -49,6 +54,15 @@ def spectrogram(in_file, title, comment, raw=False):
     os.close(fd)
     args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', '24k', 'spectrogram',
             '-t', '', '-c', '', '-o', tmp_file]
+    conf = get_settings()
+    if conf.getint('BATS_ANALYSIS', fallback=0) == 1:
+        rate = conf.getint('BATS_SAMPLING_RATE', fallback=256000)
+    else:
+        rate = 24000
+    fd, tmp_file = tempfile.mkstemp(suffix='.png')
+    os.close(fd)
+    args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', f'{rate}', 'spectrogram',
+            '-t', f'{get_safe_title(title)}', '-c', f'{comment}', '-o', tmp_file]
     args += ['-r'] if raw else []
     result = subprocess.run(args, check=True, capture_output=True)
     ret = result.stdout.decode('utf-8')
@@ -72,7 +86,11 @@ def spectrogram(in_file, title, comment, raw=False):
 
 def extract_detection(file: ParseFileName, detection: Detection):
     conf = get_settings()
-    new_file_name = f'{detection.common_name_safe}-{detection.confidence_pct}-{detection.date}-birdnet-{file.RTSP_id}{detection.time}.{conf["AUDIOFMT"]}'
+    if conf.getint('BATS_ANALYSIS', fallback=0) == 1:
+        file_format = "wav"
+    else:
+        file_format = conf["AUDIOFMT"]
+    new_file_name = f'{detection.common_name_safe}-{detection.confidence_pct}-{detection.date}-birdnet-{file.RTSP_id}{detection.time}.{file_format}'
     new_dir = os.path.join(conf['EXTRACTED'], 'By_Date', f'{detection.date}', f'{detection.common_name_safe}')
     new_file = os.path.join(new_dir, new_file_name)
     if os.path.isfile(new_file):
