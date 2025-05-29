@@ -1559,8 +1559,8 @@ Coracina lineata_Barred Cuckooshrike
 Coracina longicauda_Hooded Cuckooshrike
 Coracina macei_Veliki kukavičji svračak
 Coracina novaehollandiae_Crnoliki kukavičji svračak
-Coracina papuensis_White-bellied Cuckooshrike
-Coracina pectoralis_White-breasted Cuckooshrike
+Coracina papuensis_Belotrbi kukavičji svračak
+Coracina pectoralis_Belogrudi kukavičji svračak
 Coracina striata_Kukavičji svračak prugastog trbuha
 Coracopsis nigra_Mali vaza papagaj
 Coracopsis vasa_Veliki vaza papagaj
