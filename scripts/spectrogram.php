@@ -131,7 +131,7 @@ window.onload = function(){
     document.body.querySelector('canvas').remove();
     document.getElementById('player').remove();
     document.body.querySelector('h1').remove();
-    document.getElementsByClassName("centered")[0].remove()
+    document.getElementsByClassName("centered")[0].remove();
 
     <?php 
   $refresh = $config['RECORDING_LENGTH'];
@@ -177,8 +177,8 @@ function fitTextOnCanvas(text,fontface,yPosition){
 }
 
 function applyText(text,x,y,opacity) {
-  console.log("conf: "+opacity)
-  console.log(text+" "+parseInt(x)+" "+y)
+  console.log("conf: "+opacity);
+  console.log(text+" "+parseInt(x)+" "+y);
   if(opacity < 0.2) {
     opacity = 0.2;
   }
@@ -186,7 +186,7 @@ function applyText(text,x,y,opacity) {
     CTX.fillStyle = "rgba(255, 255, 255, "+opacity+")";
   CTX.font = '15px Roboto Flex';
   //fitTextOnCanvas(text,"Roboto Flex",document.body.querySelector('canvas').scrollHeight * 0.35)
-  CTX.fillText(text,parseInt(x),y)
+  CTX.fillText(text,parseInt(x),y);
   CTX.fillStyle = 'hsl(280, 100%, 10%)';
 }
 
@@ -244,7 +244,7 @@ function toggleCompression(state) {
   //biquadFilter.type = "highpass";
  // biquadFilter.frequency.setValueAtTime(13000, ACTX.currentTime);
   if(state == true) {
-    SOURCE.disconnect(gainNode)
+    SOURCE.disconnect(gainNode);
     gainNode.disconnect(ANALYSER);
     gainNode.disconnect(ACTX.destination);
     SOURCE.connect(compressor);
@@ -266,9 +266,9 @@ function toggleCompression(state) {
 
 function toggleFreqshift(state) {
   if (state == true) {
-    console.log("freqshift activated")
+    console.log("freqshift activated");
   } else {
-    console.log("freqshift deactivated")
+    console.log("freqshift deactivated");
   }
 
   freqShiftReconnectDelay = <?php echo $FREQSHIFT_RECONNECT_DELAY; ?>;
@@ -300,10 +300,10 @@ function toggleFreqshift(state) {
           livestream_freqshift_spinner.style.display = "none"; 
         },
         freqShiftReconnectDelay
-        )
+        );
       }
     }
-  }
+  };
 }
 
 function initialize() {
@@ -321,7 +321,7 @@ function initialize() {
   try{
     process();
   } catch(e) {
-    console.log(e)
+    console.log(e);
     window.top.location.reload();
   }
 
@@ -358,7 +358,7 @@ function initialize() {
 
     function loop(time) {
       if (requestTime) {
-          fpsval = Math.round(1000/((performance.now() - requestTime)))
+          fpsval = Math.round(1000/((performance.now() - requestTime)));
           if(fpsval > 0){
               fps.push( fpsval);
           }
