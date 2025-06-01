@@ -193,6 +193,7 @@ function applyText(text,x,y,opacity) {
 var add=0;
 var newest_file;
 function loadDetectionIfNewExists() {
+  console.log("Polling ...");
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
     // if there's a new detection that needs to be updated to the page
@@ -221,10 +222,13 @@ function loadDetectionIfNewExists() {
       }
     }
   };
+  console.log("Requesting");
   xhttp.open("GET", "spectrogram.php?ajax_csv=true&newest_file="+newest_file, true);
   xhttp.send();
+  console.log("Done polling");
 }
 
+console.log("Setting up polling");
 window.setInterval(function(){
    loadDetectionIfNewExists();
 }, 1000);
