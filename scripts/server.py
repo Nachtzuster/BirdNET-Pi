@@ -18,8 +18,27 @@ try:
 except BaseException:
     from tensorflow import lite as tflite
 
-log = logging.getLogger(__name__)
 
+class PositionAndWeek():
+    def __init__(self, lat, long):
+        self.lat = lat
+        self.long = long
+        self.weeknum = datetime.datetime.now().isocalendar().week
+
+
+    def isPositionOrWeekChanged(self, lat, long):
+        currentWeek = datetime.datetime.now().isocalendar().week
+        if (lat != self.lat) or (long != self.long) or (self.weeknum != currentWeek):
+            self.lat = lat
+            self.long = long
+            self.weeknum = currentWeek
+            return True
+        else:
+            return False
+
+
+log = logging.getLogger(__name__)
+paw = PositionAndWeek(0, 0)
 
 userDir = os.path.expanduser('~')
 INTERPRETER, M_INTERPRETER, INCLUDE_LIST, EXCLUDE_LIST = (None, None, None, None)
@@ -248,7 +267,7 @@ def analyzeAudioData(chunks, lat, lon, week, sens, overlap,):
     log.info('ANALYZING AUDIO...')
 
     if model == "BirdNET_GLOBAL_6K_V2.4_Model_FP16":
-        if len(PREDICTED_SPECIES_LIST) == 0 or len(INCLUDE_LIST) != 0:
+        if paw.isPositionOrWeekChanged(lat, lon) or len(INCLUDE_LIST) != 0:
             predictSpeciesList(lat, lon, week)
 
     mdata = get_metadata(lat, lon, week)
