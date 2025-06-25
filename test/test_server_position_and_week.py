@@ -6,23 +6,19 @@ from server import PositionAndWeek
 # Run these tests from the `scripts` folder: $ python3 -m unittest discover ../test
 
 class TestPositionAndWeek(unittest.TestCase):
-    def test_nothing_changed(self):
-        paw = PositionAndWeek(1, 2)
+    def test_calling_first_time(self):
+        paw = PositionAndWeek()
+        self.assertTrue(paw.isPositionOrWeekChanged(1, 2))
+
+    def test_calling_two_times_same_position(self):
+        paw = PositionAndWeek()
+        self.assertTrue(paw.isPositionOrWeekChanged(1, 2))
         self.assertFalse(paw.isPositionOrWeekChanged(1, 2))
 
-    def test_updated_latitude(self):
-        paw = PositionAndWeek(1, 2)
+    def test_calling_two_times_updated_position(self):
+        paw = PositionAndWeek()
+        self.assertTrue(paw.isPositionOrWeekChanged(1, 2))
         self.assertTrue(paw.isPositionOrWeekChanged(0, 2))
-
-    def test_updated_longitude(self):
-        paw = PositionAndWeek(1, 2)
-        self.assertTrue(paw.isPositionOrWeekChanged(1, 0))
-
-    def test_check_second_call_after_update(self):
-        paw = PositionAndWeek(1, 2)
-        paw.isPositionOrWeekChanged(0, 2)
-        self.assertFalse(paw.isPositionOrWeekChanged(0, 2))
-
 
     @patch('server.datetime')
     def test_week_change(self, mock_datetime_module):
@@ -38,7 +34,8 @@ class TestPositionAndWeek(unittest.TestCase):
         ]
         mock_datetime_module.datetime = mock_datetime
 
-        paw = PositionAndWeek(1, 2)
+        paw = PositionAndWeek()
+        dummy = paw.isPositionOrWeekChanged(1, 2) # First call is always true
         changed = paw.isPositionOrWeekChanged(1, 2)
 
         self.assertTrue(changed)
@@ -58,8 +55,9 @@ class TestPositionAndWeek(unittest.TestCase):
         ]
         mock_datetime_module.datetime = mock_datetime
 
-        obj = PositionAndWeek(1, 2)
-        changed = obj.isPositionOrWeekChanged(1, 2)
+        paw = PositionAndWeek()
+        dummy = paw.isPositionOrWeekChanged(1, 2) # First call is always true
+        changed = paw.isPositionOrWeekChanged(1, 2)
 
         self.assertFalse(changed)
         

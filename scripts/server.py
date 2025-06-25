@@ -20,10 +20,10 @@ except BaseException:
 
 
 class PositionAndWeek():
-    def __init__(self, lat, long):
-        self.lat = lat
-        self.long = long
-        self.weeknum = datetime.datetime.now().isocalendar().week
+    def __init__(self):
+        self.lat = None
+        self.long = None
+        self.weeknum = None
 
 
     def isPositionOrWeekChanged(self, lat, long):
@@ -38,7 +38,7 @@ class PositionAndWeek():
 
 
 log = logging.getLogger(__name__)
-paw = PositionAndWeek(0, 0)
+paw = PositionAndWeek()
 
 userDir = os.path.expanduser('~')
 INTERPRETER, M_INTERPRETER, INCLUDE_LIST, EXCLUDE_LIST = (None, None, None, None)
