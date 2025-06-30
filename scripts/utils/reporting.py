@@ -11,14 +11,14 @@ from time import sleep
 import requests
 from PIL import Image, ImageDraw, ImageFont
 
-from .helpers import get_settings, ParseFileName, Detection, get_font, DB_PATH
+from .helpers import get_settings, ParseFileName, Detection, get_font, DB_PATH, bats_extraction_params
 from .notifications import sendAppriseNotifications
 
 log = logging.getLogger(__name__)
 
 
 def extract(in_file, out_file, start, stop):
-    result = subprocess.run(['sox', '-V1', f'{in_file}', f'{out_file}', 'trim', f'={start}', f'={stop}'],
+    result = subprocess.run(['sox', '-V1', f'{in_file}', f'{out_file}', 'trim', f'={start:.3f}', f'={stop:.3f}'],
                             check=True, capture_output=True)
     ret = result.stdout.decode('utf-8')
     err = result.stderr.decode('utf-8')
@@ -37,17 +37,26 @@ def extract_safe(in_file, out_file, start, stop):
         ex_len = conf.getint('EXTRACTION_LENGTH')
     except ValueError:
         ex_len = 6
-    spacer = (ex_len - 3) / 2
+    if conf.getint('BATS_ANALYSIS', fallback=0) == 1:
+        chunk_len, rec_len = bats_extraction_params(conf)
+    else:
+        chunk_len = 3
+        rec_len = conf.getint('RECORDING_LENGTH')
+    spacer = (ex_len - chunk_len) / 2
     safe_start = max(0, start - spacer)
-    safe_stop = min(conf.getint('RECORDING_LENGTH'), stop + spacer)
-
+    safe_stop = min(rec_len, stop + spacer)
     extract(in_file, out_file, safe_start, safe_stop)
 
 
 def spectrogram(in_file, title, comment, raw=False):
+    conf = get_settings()
+    if conf.getint('BATS_ANALYSIS', fallback=0) == 1:
+        rate = conf.getint('BATS_SAMPLING_RATE', fallback=256000)
+    else:
+        rate = 24000
     fd, tmp_file = tempfile.mkstemp(suffix='.png')
     os.close(fd)
-    args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', '24k', 'spectrogram',
+    args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', f'{rate}', 'spectrogram',
             '-t', '', '-c', '', '-o', tmp_file]
     args += ['-r'] if raw else []
     result = subprocess.run(args, check=True, capture_output=True)
@@ -72,7 +81,11 @@ def spectrogram(in_file, title, comment, raw=False):
 
 def extract_detection(file: ParseFileName, detection: Detection):
     conf = get_settings()
-    new_file_name = f'{detection.common_name_safe}-{detection.confidence_pct}-{detection.date}-birdnet-{file.RTSP_id}{detection.time}.{conf["AUDIOFMT"]}'
+    if conf.getint('BATS_ANALYSIS', fallback=0) == 1:
+        file_format = "wav"
+    else:
+        file_format = conf["AUDIOFMT"]
+    new_file_name = f'{detection.common_name_safe}-{detection.confidence_pct}-{detection.date}-birdnet-{file.RTSP_id}{detection.time}.{file_format}'
     new_dir = os.path.join(conf['EXTRACTED'], 'By_Date', f'{detection.date}', f'{detection.common_name_safe}')
     new_file = os.path.join(new_dir, new_file_name)
     if os.path.isfile(new_file):
