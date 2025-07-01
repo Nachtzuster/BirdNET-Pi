@@ -5,6 +5,8 @@ import re
 import subprocess
 from configparser import ConfigParser
 from itertools import chain
+import logging
+import sys
 
 from tzlocal import get_localzone
 
@@ -58,14 +60,13 @@ def get_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False):
 
 
 class Detection:
-    def __init__(self, file_date, start_time, stop_time, species, confidence):
-        self.start = float(start_time)
-        self.stop = float(stop_time)
-        self.datetime = file_date + datetime.timedelta(seconds=self.start)
-        self.date = self.datetime.strftime("%Y-%m-%d")
-        self.time = self.datetime.strftime("%H:%M:%S")
-        self.iso8601 = self.datetime.astimezone(get_localzone()).isoformat()
-        self.week = self.datetime.isocalendar()[1]
+    def __init__(self, start_datetime, stop_datetime, species, confidence):
+        self.start_datetime = start_datetime
+        self.stop_datetime = stop_datetime
+        self.date = self.start_datetime.strftime("%Y-%m-%d")
+        self.time = self.start_datetime.strftime("%H:%M:%S")
+        self.iso8601 = self.start_datetime.astimezone(get_localzone()).isoformat()
+        self.week = self.start_datetime.isocalendar()[1]
         self.confidence = round(float(confidence), 4)
         self.confidence_pct = round(self.confidence * 100)
         self.species = species
@@ -118,3 +119,12 @@ def get_wav_files():
     open_recs = get_open_files_in_dir(rec_dir)
     files = [file for file in files if file not in open_recs]
     return files
+
+
+def setup_logging():
+    logger = logging.getLogger()
+    formatter = logging.Formatter("[%(name)s][%(levelname)s] %(message)s")
+    handler = logging.StreamHandler(stream=sys.stdout)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
