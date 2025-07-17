@@ -89,6 +89,13 @@ function service_status($name) {
     <button type="submit" name="submit" value="sudo systemctl disable --now spectrogram_viewer.service">Disable</button>
     <button type="submit" name="submit" value="sudo systemctl enable --now spectrogram_viewer.service">Enable</button>
   </div>
+    <h3>Timer Service <?php echo service_status("birdnet_timer.service");?></h3>
+  <div role="group" class="btn-group-center">
+    <button type="submit" name="submit" value="sudo systemctl stop birdnet_timer.service">Stop</button>
+    <button type="submit" name="submit" value="sudo systemctl restart birdnet_timer.service">Restart</button>
+    <button type="submit" name="submit" value="sudo systemctl disable --now birdnet_timer.service">Disable</button>
+    <button type="submit" name="submit" value="sudo systemctl enable --now birdnet_timer.service">Enable</button>
+  </div>
     <h3>Ram drive (!experimental!) <?php echo service_status(get_service_mount_name());?></h3>
   <div role="group" class="btn-group-center">
     <button type="submit" name="submit" <?php do_service_mount("disable");?> onclick="return confirm('This will reboot, are you sure?')">Disable</button>

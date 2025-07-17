@@ -30,12 +30,13 @@ echo "<a href=\"https://github.com/Nachtzuster/BirdNET-Pi.git\" target=\"_blank\
 
   <div class="stream">
 <?php
+$logo = ($config['BATS_ANALYSIS'] == 1) ? "bnp_bats.png" : "bnp.png";
 if(isset($_GET['stream'])){
   ensure_authenticated('You cannot listen to the live audio stream');
       echo "
   <audio controls autoplay><source src=\"/stream\"></audio>
   </div>
-  <h1><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
+  <h1><a href=\"/\"><img class=\"topimage\" src=\"images/$logo\"></a></h1>
   </div><div class=\"centered\"><h3>$site_name</h3></div>";
 } else {
     echo "
@@ -43,7 +44,7 @@ if(isset($_GET['stream'])){
     <button type=\"submit\" name=\"stream\" value=\"play\">Live Audio</button>
   </form>
   </div>
-  <h1><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
+  <h1><a href=\"/\"><img class=\"topimage\" src=\"images/$logo\"></a></h1>
 </div><div class=\"centered\"><h3>$site_name</h3></div>";
 }
 if(isset($_GET['filename'])) {

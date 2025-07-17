@@ -3,6 +3,7 @@ import glob
 import os
 import re
 import subprocess
+import math
 from configparser import ConfigParser
 from itertools import chain
 
@@ -13,6 +14,25 @@ _settings = None
 DB_PATH = os.path.expanduser('~/BirdNET-Pi/scripts/birds.db')
 ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
 FONT_DIR = os.path.expanduser('~/BirdNET-Pi/homepage/static')
+
+
+def bats_extraction_params(conf) -> tuple[float, float]:
+    """
+    Return (chunk_len, rec_len) so that BirdNET always receives the same number of samples* (144 k), independent of the recorder SR.
+    - chunk_len: analysis chunk length in seconds
+    - rec_len: total recording length in seconds, as multiple of chunk_len
+    """
+    sr = conf.getint("BATS_SAMPLING_RATE", fallback=256000)
+    BIRDNET_SAMPLE_BUDGET = 3 * 48000
+    chunk_len = BIRDNET_SAMPLE_BUDGET / sr
+    base_len = conf.getfloat("RECORDING_LENGTH")
+    n = 1
+    while True:
+        rec_len = chunk_len * n
+        if rec_len > base_len and rec_len > chunk_len:
+            break
+        n += 1
+    return chunk_len, rec_len
 
 
 def get_font():

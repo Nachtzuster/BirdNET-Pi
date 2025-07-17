@@ -13,6 +13,7 @@ services=(chart_viewer.service
   birdnet_recording.service
   birdnet_analysis.service
   birdnet_log.service
+  birdnet_timer.service
   birdnet_stats.service)
 
 for i in  "${services[@]}";do
