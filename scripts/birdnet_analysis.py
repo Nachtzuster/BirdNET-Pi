@@ -3,7 +3,6 @@ import os
 import os.path
 import re
 import signal
-import sys
 import threading
 from queue import Queue
 from subprocess import CalledProcessError
@@ -12,13 +11,13 @@ import inotify.adapters
 from inotify.constants import IN_CLOSE_WRITE
 
 from server import load_global_model, run_analysis
-from utils.helpers import get_settings, ParseFileName, get_wav_files, ANALYZING_NOW
-from utils.reporting import extract_detection, summary, write_to_file, write_to_db, apprise, bird_weather, heartbeat, \
-    update_json_file
+from utils.helpers import get_settings, ParseFileName, get_wav_files, ANALYZING_NOW, setup_logging
+from utils.reporting import extract_detection, summary, write_to_file, write_to_db, apprise, \
+    post_current_detections_to_birdweather, heartbeat, update_json_file
 
 shutdown = False
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(os.path.splitext(os.path.basename(os.path.realpath(__file__)))[0])
 
 
 def sig_handler(sig_num, curr_stack_frame):
@@ -115,7 +114,7 @@ def handle_reporting_queue(queue):
                 write_to_file(file, detection)
                 write_to_db(file, detection)
             apprise(file, detections)
-            bird_weather(file, detections)
+            post_current_detections_to_birdweather(file, detections)
             heartbeat()
             os.remove(file.file_name)
         except BaseException as e:
@@ -127,17 +126,6 @@ def handle_reporting_queue(queue):
     # mark the 'None' signal as processed
     queue.task_done()
     log.info('handle_reporting_queue done')
-
-
-def setup_logging():
-    logger = logging.getLogger()
-    formatter = logging.Formatter("[%(name)s][%(levelname)s] %(message)s")
-    handler = logging.StreamHandler(stream=sys.stdout)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-    global log
-    log = logging.getLogger('birdnet_analysis')
 
 
 if __name__ == '__main__':

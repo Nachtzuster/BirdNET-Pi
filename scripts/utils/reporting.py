@@ -1,5 +1,4 @@
 import glob
-import gzip
 import json
 import logging
 import os
@@ -8,11 +7,13 @@ import subprocess
 import tempfile
 from time import sleep
 
+from tzlocal import get_localzone
 import requests
 from PIL import Image, ImageDraw, ImageFont
 
 from .helpers import get_settings, ParseFileName, Detection, get_font, DB_PATH
 from .notifications import sendAppriseNotifications
+from .birdweather import post_soundscape_to_birdweather, post_detection_to_birdweather
 
 log = logging.getLogger(__name__)
 
@@ -79,7 +80,12 @@ def extract_detection(file: ParseFileName, detection: Detection):
         log.warning('Extraction exists. Moving on: %s', new_file)
     else:
         os.makedirs(new_dir, exist_ok=True)
-        extract_safe(file.file_name, new_file, detection.start, detection.stop)
+        extract_safe(
+            file.file_name,
+            new_file,
+            (detection.start_datetime - file.file_date).seconds,
+            (detection.stop_datetime - file.file_date).seconds,
+        )
         spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''))
     return new_file
 
@@ -139,7 +145,7 @@ def write_to_json_file(file: ParseFileName, detections: [Detection]):
     json_file = f'{file.file_name}.json'
     log.debug(f'WRITING RESULTS TO {json_file}')
     dets = {'file_name': os.path.basename(json_file), 'timestamp': file.iso8601, 'delay': conf['RECORDING_LENGTH'],
-            'detections': [{"start": det.start, "common_name": det.common_name, "confidence": det.confidence} for det in
+            'detections': [{"start": (det.start_datetime - file.file_date).seconds, "common_name": det.common_name, "confidence": det.confidence} for det in
                            detections]}
     with open(json_file, 'w') as rfile:
         rfile.write(json.dumps(dets))
@@ -164,48 +170,32 @@ def apprise(file: ParseFileName, detections: [Detection]):
             species_apprised_this_run.append(detection.species)
 
 
-def bird_weather(file: ParseFileName, detections: [Detection]):
+def post_current_detections_to_birdweather(file: ParseFileName, detections: [Detection]):
+    """Post to BirdWeather detections that were just performed.
+
+    This function relies on the .wav audio file temporarily stored in "StreamData" to post a
+    soundscape to BirdWeather.
+    """
     conf = get_settings()
     if conf['BIRDWEATHER_ID'] == "":
         return
     if detections:
-        # POST soundscape to server
-        soundscape_url = (f'https://app.birdweather.com/api/v1/stations/'
-                          f'{conf["BIRDWEATHER_ID"]}/soundscapes?timestamp={file.iso8601}')
-
-        with open(file.file_name, 'rb') as f:
-            wav_data = f.read()
-        gzip_wav_data = gzip.compress(wav_data)
-        try:
-            response = requests.post(url=soundscape_url, data=gzip_wav_data, timeout=30,
-                                     headers={'Content-Type': 'application/octet-stream', 'Content-Encoding': 'gzip'})
-            log.info("Soundscape POST Response Status - %d", response.status_code)
-            sdata = response.json()
-        except BaseException as e:
-            log.error("Cannot POST soundscape: %s", e)
+        soundscape_id = post_soundscape_to_birdweather(
+            conf["BIRDWEATHER_ID"], file.file_date.astimezone(get_localzone()), file.file_name
+        )
+        if soundscape_id is None:
             return
-        if not sdata.get('success'):
-            log.error(sdata.get('message'))
-            return
-        soundscape_id = sdata['soundscape']['id']
-
         for detection in detections:
-            # POST detection to server
-            detection_url = f'https://app.birdweather.com/api/v1/stations/{conf["BIRDWEATHER_ID"]}/detections'
 
-            data = {'timestamp': detection.iso8601, 'lat': conf['LATITUDE'], 'lon': conf['LONGITUDE'],
-                    'soundscapeId': soundscape_id,
-                    'soundscapeStartTime': detection.start, 'soundscapeEndTime': detection.stop,
-                    'commonName': detection.common_name, 'scientificName': detection.scientific_name,
-                    'algorithm': '2p4' if conf['MODEL'] == 'BirdNET_GLOBAL_6K_V2.4_Model_FP16' else 'alpha',
-                    'confidence': detection.confidence}
-
-            log.debug(data)
-            try:
-                response = requests.post(detection_url, json=data, timeout=20)
-                log.info("Detection POST Response Status - %d", response.status_code)
-            except BaseException as e:
-                log.error("Cannot POST detection: %s", e)
+            post_detection_to_birdweather(
+                detection,
+                soundscape_id,
+                file.file_date,
+                conf["BIRDWEATHER_ID"],
+                conf['LATITUDE'],
+                conf['LONGITUDE'],
+                conf['MODEL'],
+            )
 
 
 def heartbeat():

@@ -339,9 +339,8 @@ def run_analysis(file):
                     log.warning("Excluded as below Species Occurrence Frequency Threshold: %s", entry[0])
                 else:
                     d = Detection(
-                        file.file_date,
-                        time_slot.split(';')[0],
-                        time_slot.split(';')[1],
+                        file.file_date + datetime.timedelta(seconds=float(time_slot.split(';')[0])),
+                        file.file_date + datetime.timedelta(seconds=float(time_slot.split(';')[1])),
                         entry[0],
                         entry[1],
                     )
