@@ -135,7 +135,7 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
                 today = datetime.now().strftime("%Y-%m-%d")
                 cur.execute(f"SELECT DISTINCT(Com_Name), COUNT(Com_Name) FROM detections WHERE Date = DATE('{today}') GROUP BY Com_Name")
                 known_species = cur.fetchall()
-                detections = [d[1] for d in known_species if d[0] == comName.replace("'", "")]
+                detections = [d[1] for d in known_species if d[0].replace("'", "") == comName.replace("'", "")]
                 numberDetections = 0
                 if len(detections):
                     numberDetections = detections[0]
@@ -158,7 +158,7 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
                 today = datetime.now().strftime("%Y-%m-%d")
                 cur.execute(f"SELECT DISTINCT(Com_Name), COUNT(Com_Name) FROM detections WHERE Date >= DATE('{today}', '-7 day') GROUP BY Com_Name")
                 known_species = cur.fetchall()
-                detections = [d[1] for d in known_species if d[0] == comName.replace("'", "")]
+                detections = [d[1] for d in known_species if d[0].replace("'", "") == comName.replace("'", "")]
                 numberDetections = 0
                 if len(detections):
                     numberDetections = detections[0]
