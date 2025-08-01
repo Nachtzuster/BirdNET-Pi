@@ -44,7 +44,7 @@ def extract_safe(in_file, out_file, start, stop):
     extract(in_file, out_file, safe_start, safe_stop)
 
 
-def spectrogram(in_file, title, comment, raw=False):
+def spectrogram(in_file, title, comment, raw=False) -> str:
     fd, tmp_file = tempfile.mkstemp(suffix='.png')
     os.close(fd)
     args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', '24k', 'spectrogram',
@@ -66,8 +66,26 @@ def spectrogram(in_file, title, comment, raw=False):
     comment_font = ImageFont.truetype(get_font()['path'], 11)
     _, _, _, h = draw.textbbox((0, 0), comment, font=comment_font)
     draw.text((1, height - (h + 1)), comment, fill="white", font=comment_font)
-    img.save(f'{in_file}.png')
+    out_file = f'{in_file}.png'
+    img.save(out_file)
     os.remove(tmp_file)
+    return out_file
+
+
+def attach_metadata(file_name: str, spectrogram_file: str, detection: Detection):
+    conf = get_settings()
+    if conf["AUDIOFMT"] != 'mp3':
+        # only ID3 tags for mp3 are implemented
+        return
+    import eyed3
+    from eyed3.id3.frames import ImageFrame
+    audiofile = eyed3.load(file_name)
+    if (audiofile.tag == None):
+        audiofile.initTag()
+    audiofile.tag.title = f"{detection.common_name_safe} ({detection.scientific_name}) ({detection.confidence_pct}%)"
+    audiofile.tag.comments.set(f"{detection.confidence_pct}% confidence by {conf['MODEL']}")
+    audiofile.tag.images.set(ImageFrame.FRONT_COVER, open(spectrogram_file, 'rb').read(), 'image/png')
+    audiofile.tag.save()
 
 
 def extract_detection(file: ParseFileName, detection: Detection):
@@ -80,7 +98,8 @@ def extract_detection(file: ParseFileName, detection: Detection):
     else:
         os.makedirs(new_dir, exist_ok=True)
         extract_safe(file.file_name, new_file, detection.start, detection.stop)
-        spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''))
+        spectrogram_file = spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''))
+        attach_metadata(new_file, spectrogram_file, detection)
     return new_file
 
 
