@@ -61,6 +61,7 @@ if(isset($_GET["latitude"])){
   $minimum_time_limit = $_GET['minimum_time_limit'];
   $flickr_api_key = $_GET['flickr_api_key'];
   $flickr_filter_email = $_GET["flickr_filter_email"];
+  $image_provider = $_GET["image_provider"];
   $language = $_GET["language"];
   $info_site = $_GET["info_site"];
   $color_scheme = $_GET["color_scheme"];
@@ -147,8 +148,9 @@ if(isset($_GET["latitude"])){
     $contents = preg_replace("/DATABASE_LANG=.*/", "DATABASE_LANG=$language", $contents);
   }
   $contents = preg_replace("/INFO_SITE=.*/", "INFO_SITE=$info_site", $contents);
-  $contents = preg_replace("/COLOR_SCHEME=.*/", "COLOR_SCHEME=$color_scheme", $contents);  
+  $contents = preg_replace("/COLOR_SCHEME=.*/", "COLOR_SCHEME=$color_scheme", $contents);
   $contents = preg_replace("/FLICKR_FILTER_EMAIL=.*/", "FLICKR_FILTER_EMAIL=$flickr_filter_email", $contents);
+  $contents = preg_replace("/IMAGE_PROVIDER=.*/", "IMAGE_PROVIDER=$image_provider", $contents);
   $contents = preg_replace("/APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=.*/", "APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=$minimum_time_limit", $contents);
   $contents = preg_replace("/MODEL=.*/", "MODEL=$model", $contents);
   $contents = preg_replace("/SF_THRESH=.*/", "SF_THRESH=$sf_thresh", $contents);
@@ -551,6 +553,14 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
 
       <button type="button" class="testbtn" onclick="sendTestNotification(this)">Send Test Notification</button><br>
       <span id="testsuccessmsg"></span>
+      </td></tr></table><br>
+      <table class="settingstable"><tr><td>
+      <h2>Bird Photo Source</h2>
+      <label for="image_provider">Image Provider: </label>
+      <select name="image_provider" class="testbtn">
+        <option value="WIKIPEDIA" <?php if(!isset($config['IMAGE_PROVIDER']) || $config['IMAGE_PROVIDER'] == 'WIKIPEDIA') { echo 'selected'; } ?>>Wikipedia</option>
+        <option value="FLICKR" <?php if(isset($config['IMAGE_PROVIDER']) && $config['IMAGE_PROVIDER'] == 'FLICKR') { echo 'selected'; } ?>>Flickr</option>
+      </select>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
       <h2>Bird Photos from Flickr</h2>

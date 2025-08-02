@@ -109,8 +109,12 @@ APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=0
 APPRISE_ONLY_NOTIFY_SPECIES_NAMES=""
 APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2=""
 
-#----------------------  Flickr Images API Configuration -----------------------#
-## If FLICKR_API_KEY is set, the web interface will try and display bird images 
+#----------------------  Image Provider Configuration ------------------------#
+## WIKIPEDIA or FLICKR (Flickr requires API key)
+
+IMAGE_PROVIDER="WIKIPEDIA"
+
+## If FLICKR is selected as provider and FLICKR_API_KEY is set, the web interface will try and display bird images 
 ## for each detection. If FLICKR_FILTER_EMAIL is set, the images will only be 
 ## displayed from a particular Flickr user (e.g. yourself).
 

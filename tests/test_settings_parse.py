@@ -16,6 +16,7 @@ APPRISE_NOTIFY_EACH_DETECTION=0
 APPRISE_NOTIFY_NEW_SPECIES=1
 FLICKR_API_KEY=
 FLICKR_FILTER_EMAIL=
+IMAGE_PROVIDER=WIKIPEDIA
 RECS_DIR=/home/pi/BirdSongs
 REC_CARD=default
 PROCESSED=/home/pi/BirdSongs/Processed
@@ -42,3 +43,4 @@ IDFILE=/home/pi/BirdNET-Pi/IdentifiedSoFar.txt"""
     assert (settings["APPRISE_NOTIFICATION_TITLE"] == "Bird!")
     assert (settings["FULL_DISK"] == "purge")
     assert (settings["OVERLAP"] == "0.0")  # Yes, it's a string at this point.
+    assert (settings["IMAGE_PROVIDER"] == "WIKIPEDIA")

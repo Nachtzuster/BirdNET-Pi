@@ -4,11 +4,13 @@
 $_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING);
 $_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
 
-ini_set('user_agent', 'PHP_Flickr/1.0');
+ini_set('user_agent', 'PHP_ImageProvider/1.0');
 error_reporting(E_ERROR);
 ini_set('display_errors', 0);
 require_once 'scripts/common.php';
 $home = get_home();
+$config = get_config();
+$image_provider_name = strtolower($config["IMAGE_PROVIDER"] ?? 'wikipedia');
 
 $result = fetch_species_array($_GET['sort']);
 
@@ -124,14 +126,17 @@ function setModalText(iter, title, text, authorlink) {
 </script>  
 <div class="column center">
 <?php if(!isset($_GET['species'])){
-?><p class="centered">Choose a species to load images from Flickr.</p>
+?><p class="centered">Choose a species to load images from <?php echo ucfirst($image_provider_name); ?>.</p>
 <?php
 };?>
 <?php if(isset($_GET['species'])){
   $species = $_GET['species'];
   $iter=0;
+<<<<<<< HEAD
   $config = get_config();
   $result3 = fetch_best_detection(htmlspecialchars_decode($_GET['species'], ENT_QUOTES));
+=======
+>>>>>>> 9a4d0c72 (Fix notification tests by creating config and updating expectations)
 while($results=$result3->fetchArray(SQLITE3_ASSOC)){
   $count = $results['COUNT(*)'];
   $maxconf = round((float)round($results['MAX(Confidence)'],2) * 100 ) . '%';
@@ -160,14 +165,14 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
   <video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename.png\" title=\"$filename\"><source src=\"$filename\"></video></td>
   </tr>
     </table>
-  <p>Loading Images from Flickr</p>", '6096');
+  <p>Loading Images from ".ucfirst($image_provider_name)."</p>", '6096');
   
   echo "<script>document.getElementsByTagName(\"h3\")[0].scrollIntoView();</script>";
   
   ob_flush();
   flush();
 
-  if (! empty($config["FLICKR_API_KEY"])) {
+  if ($image_provider_name === 'flickr' && ! empty($config["FLICKR_API_KEY"])) {
     $flickrjson = json_decode(file_get_contents("https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=".$config["FLICKR_API_KEY"]."&text=\"".str_replace(' ', '%20', $engname)."\"&license=2%2C3%2C4%2C5%2C6%2C9&sort=relevance&per_page=15&format=json&nojsoncallback=1"), true)["photos"]["photo"];
 
     foreach ($flickrjson as $val) {
@@ -176,7 +181,13 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
       $modaltext = "https://flickr.com/photos/".$val["owner"]."/".$val["id"];
       $authorlink = "https://flickr.com/people/".$val["owner"];
       $imageurl = 'https://farm' .$val["farm"]. '.static.flickr.com/' .$val["server"]. '/' .$val["id"]. '_'  .$val["secret"].  '.jpg';
-      echo "<span style='cursor:pointer;' onclick='setModalText(".$iter.",\"".$val["title"]."\",\"".$modaltext."\", \"".$authorlink."\")'><img style='vertical-align:top' src=\"$imageurl\"></span>";
+      echo "<span style='cursor:pointer;' onclick='setModalText(".$iter.",\"".$val["title"]."\",\"".$modaltext."\", \"".$authorlink."\")'><img style='vertical-align:top' src=\"$imageurl\"></span>"; 
+    }
+  } elseif ($image_provider_name === 'wikipedia') {
+    $wiki = new Wikipedia();
+    $cache = $wiki->get_image($sciname);
+    if (!empty($cache['image_url'])) {
+      echo "<span><img style='vertical-align:top' src=\"".$cache['image_url']."\"></span>";
     }
   }
 }

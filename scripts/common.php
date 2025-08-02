@@ -357,6 +357,32 @@ class Flickr {
 
 }
 
+class Wikipedia {
+  public function get_image($sci_name) {
+    $engname = get_com_en_name($sci_name);
+    $engname = str_replace("'", '', $engname);
+    $title = str_replace(' ', '_', $engname);
+    $opts = ['http' => ['header' => "User-Agent: PHP_Wikipedia/1.0\r\n"]];
+    $context = stream_context_create($opts);
+    $api = "https://en.wikipedia.org/api/rest_v1/page/summary/" . $title;
+    $response = @file_get_contents($api, false, $context);
+    if ($response === false) {
+      return ["image_url" => "", "title" => "", "photos_url" => "", "author_url" => "", "license_url" => ""];
+    }
+    $data = json_decode($response, true);
+    $imageurl = $data['thumbnail']['source'] ?? '';
+    $pageurl = $data['content_urls']['desktop']['page'] ?? '';
+    $ret = array(
+        "image_url" => $imageurl,
+        "title" => $data['title'] ?? '',
+        "photos_url" => $pageurl,
+        "author_url" => $pageurl,
+        "license_url" => $pageurl
+    );
+    return $ret;
+  }
+}
+
 function get_info_url($sciname){
   $engname = get_com_en_name($sciname);
   $config = get_config();

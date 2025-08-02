@@ -186,7 +186,8 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
     $_SESSION['images'] = [];
   }
   $iterations = 0;
-  $flickr = null;
+  $image_provider = null;
+  $providerName = strtolower($config["IMAGE_PROVIDER"] ?? 'wikipedia');
 
   while($todaytable=$result0->fetchArray(SQLITE3_ASSOC))
   {
@@ -205,23 +206,36 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
     $url = $info_url['URL'];
     $url_title = $info_url['TITLE'];
 
-    if (!empty($config["FLICKR_API_KEY"]) && (isset($_GET['display_limit']) || isset($_GET['hard_limit']) || $_GET['kiosk'] == true) ) {
-      if ($flickr === null) {
-        $flickr = new Flickr();
-      }
-      if (isset($_SESSION["FLICKR_FILTER_EMAIL"]) && $_SESSION["FLICKR_FILTER_EMAIL"] !== $flickr->get_uid_from_db()['uid']) {
-        unset($_SESSION['images']);
-        $_SESSION["FLICKR_FILTER_EMAIL"] = $flickr->get_uid_from_db()['uid'];
-      }
-
-      // if we already searched flickr for this species before, use the previous image rather than doing an unneccesary api call
-      $key = array_search($comname, array_column($_SESSION['images'], 0));
-      if ($key !== false) {
-        $image = $_SESSION['images'][$key];
-      } else {
-        $flickr_cache = $flickr->get_image($todaytable['Sci_Name']);
-        array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $flickr_cache["photos_url"], $flickr_cache["author_url"], $flickr_cache["license_url"]));
-        $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+    $use_images = (isset($_GET['display_limit']) || isset($_GET['hard_limit']) || $_GET['kiosk'] == true);
+    if ($use_images) {
+      if ($providerName === 'flickr' && !empty($config["FLICKR_API_KEY"])) {
+        if ($image_provider === null) {
+          $image_provider = new Flickr();
+        }
+        if (isset($_SESSION["FLICKR_FILTER_EMAIL"]) && $_SESSION["FLICKR_FILTER_EMAIL"] !== $image_provider->get_uid_from_db()['uid']) {
+          unset($_SESSION['images']);
+          $_SESSION["FLICKR_FILTER_EMAIL"] = $image_provider->get_uid_from_db()['uid'];
+        }
+        $key = array_search($comname, array_column($_SESSION['images'], 0));
+        if ($key !== false) {
+          $image = $_SESSION['images'][$key];
+        } else {
+          $cache = $image_provider->get_image($todaytable['Sci_Name']);
+          array_push($_SESSION["images"], array($comname, $cache["image_url"], $cache["title"], $cache["photos_url"], $cache["author_url"], $cache["license_url"]));
+          $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+        }
+      } elseif ($providerName === 'wikipedia') {
+        if ($image_provider === null) {
+          $image_provider = new Wikipedia();
+        }
+        $key = array_search($comname, array_column($_SESSION['images'], 0));
+        if ($key !== false) {
+          $image = $_SESSION['images'][$key];
+        } else {
+          $cache = $image_provider->get_image($todaytable['Sci_Name']);
+          array_push($_SESSION["images"], array($comname, $cache["image_url"], $cache["title"], $cache["photos_url"], $cache["author_url"], $cache["license_url"]));
+          $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+        }
       }
     }
   ?>
@@ -233,7 +247,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
         
             
           <div class="centered_image_container">
-            <?php if(!empty($config["FLICKR_API_KEY"]) && strlen($image[2]) > 0) { ?>
+            <?php if($image_provider !== null && strlen($image[2]) > 0) { ?>
               <img onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" class="img1">
             <?php } ?>
 
@@ -252,7 +266,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
           <td id="recent_detection_middle_td">
           <div>
             <div>
-            <?php if(!empty($config["FLICKR_API_KEY"]) && (isset($_GET['hard_limit']) || $_GET['kiosk'] == true) && strlen($image[2]) > 0) { ?>
+            <?php if($image_provider !== null && (isset($_GET['hard_limit']) || $_GET['kiosk'] == true) && strlen($image[2]) > 0) { ?>
               <img style="float:left;height:75px;" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" id="birdimage" class="img1">
             <?php } ?>
           </div>

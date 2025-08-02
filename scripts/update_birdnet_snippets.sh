@@ -113,6 +113,11 @@ if ! grep -E '^RARE_SPECIES_THRESHOLD=' /etc/birdnet/birdnet.conf &>/dev/null;th
   echo "RARE_SPECIES_THRESHOLD=\"30\"" >> /etc/birdnet/birdnet.conf
 fi
 
+if ! grep -E '^IMAGE_PROVIDER=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo '## WIKIPEDIA or FLICKR (Flickr requires API key)' >> /etc/birdnet/birdnet.conf
+  echo "IMAGE_PROVIDER=\"WIKIPEDIA\"" >> /etc/birdnet/birdnet.conf
+fi
+
 [ -d $RECS_DIR/StreamData ] || sudo_with_user mkdir -p $RECS_DIR/StreamData
 [ -L ${EXTRACTED}/spectrogram.png ] || sudo_with_user ln -sf ${RECS_DIR}/StreamData/spectrogram.png ${EXTRACTED}/spectrogram.png
 
