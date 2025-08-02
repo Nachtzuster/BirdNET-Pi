@@ -179,15 +179,14 @@ def bird_weather(file: ParseFileName, detections: [Detection]):
         except Exception as e:
             log.error("Error during FLAC conversion: %s", e)
             return
-        gzip_flac_data = gzip.compress(flac_data)
 
         # POST soundscape to server
         soundscape_url = (f'https://app.birdweather.com/api/v1/stations/'
                           f'{conf["BIRDWEATHER_ID"]}/soundscapes?timestamp={file.iso8601}')
 
         try:
-            response = requests.post(url=soundscape_url, data=gzip_flac_data, timeout=30,
-                                     headers={'Content-Type': 'application/octet-stream', 'Content-Encoding': 'gzip'})
+            response = requests.post(url=soundscape_url, data=flac_data, timeout=30,
+                                     headers={'Content-Type': 'audio/flac'})
             log.info("Soundscape POST Response Status - %d", response.status_code)
             sdata = response.json()
         except BaseException as e:
