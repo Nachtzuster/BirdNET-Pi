@@ -425,6 +425,7 @@ install_services() {
   install_birdnet_mount
   install_cleanup_cron
   install_weekly_cron
+  install_automatic_update_cron
   increase_caddy_timeout
 
   create_necessary_dirs
