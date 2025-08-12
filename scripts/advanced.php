@@ -203,6 +203,15 @@ if (isset($_GET["max_files_species"])) {
     $contents = preg_replace("/SILENCE_UPDATE_INDICATOR=.*/", "SILENCE_UPDATE_INDICATOR=0", $contents);
   }
 
+  if(isset($_GET["automatic_update"])) {
+    $automatic_update = 1;
+    if(strcmp($automatic_update,$config['AUTOMATIC_UPDATE']) !== 0) {
+      $contents = preg_replace("/AUTOMATIC_UPDATE=.*/", "AUTOMATIC_UPDATE=$automatic_update", $contents);
+    }
+  } else {
+    $contents = preg_replace("/AUTOMATIC_UPDATE=.*/", "AUTOMATIC_UPDATE=0", $contents);
+  }
+
   if(isset($_GET["raw_spectrogram"])) {
     $raw_spectrogram = 1;
     if(strcmp($RAW_SPECTROGRAM,$config['RAW_SPECTROGRAM']) !== 0) {
@@ -459,6 +468,9 @@ foreach($formats as $format){
       <label for="silence_update_indicator">Silence Update Indicator: </label>
       <input type="checkbox" name="silence_update_indicator" <?php if($newconfig['SILENCE_UPDATE_INDICATOR'] == 1) { echo "checked"; };?> ><br>
       <p>This allows you to quiet the display of how many commits your installation is behind by relative to the Github repo. This number appears next to "Tools" when you're 50 or more commits behind.</p>
+      <label for="automatic_update">Automatic Update After Midnight: </label>
+      <input type="checkbox" name="automatic_update" <?php if($newconfig['AUTOMATIC_UPDATE'] == 1) { echo "checked"; };?> ><br>
+      <p>This configure an automatic update of the installation each day slightly after midnight. <br>To avoid conflicts with other scheduled tasks the time is set to 7 minutes after midnight, but can be changed using crontab.</p>
 
       <label for="raw_spectrogram">Minimalist Spectrograms: </label>
       <input type="checkbox" name="raw_spectrogram" <?php if($newconfig['RAW_SPECTROGRAM'] == 1) { echo "checked"; };?> ><br>
