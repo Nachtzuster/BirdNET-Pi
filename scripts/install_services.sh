@@ -386,6 +386,10 @@ install_weekly_cron() {
   sed "s/\$USER/$USER/g" $my_dir/templates/weekly_report.cron >> /etc/crontab
 }
 
+install_automatic_update_cron() {
+  sed "s/\$USER/$USER/g" $my_dir/templates/automatic_update.cron >> /etc/crontab
+}
+
 chown_things() {
   chown -R $USER:$USER $HOME/Bird*
 }
