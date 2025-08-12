@@ -1,0 +1,2 @@
+#birdnet
+7 0 * * * $USER /usr/local/bin/automatic_update.sh >/dev/null 2>&1
