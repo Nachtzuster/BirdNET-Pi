@@ -263,14 +263,25 @@ class ImageProvider {
     try {
       if ($this->db === null) {
         $db = new SQLite3(DB, SQLITE3_OPEN_READWRITE);
+        $this->db = $db;
       }
     } catch (Exception $ex) {
-      $db = new SQLite3(DB);
-      $db->exec($tbl_def);
-      $db->exec('CREATE TABLE source (ID INTEGER PRIMARY KEY, email VARCHAR(63), uid VARCHAR(63), date_created DATE)');
-      $this->db_reset = true;
+      $this->create_tables();
+//      $db = new SQLite3(DB);
+//      $db->exec($tbl_def);
+//      $db->exec('CREATE TABLE source (ID INTEGER PRIMARY KEY, email VARCHAR(63), uid VARCHAR(63), date_created DATE)');
+//      $this->db_reset = true;
     }
-    $db->busyTimeout(1000);
+    $this->busyTimeout(1000);
+//    $this->db = $db;
+  }
+
+  protected function create_tables() {
+    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url TEXT NOT NULL, title TEXT NOT NULL, id TEXT NOT NULL UNIQUE, author_url TEXT NOT NULL, license_url TEXT NOT NULL, date_created DATE)";
+    $db = new SQLite3(DB);
+    $db->exec($tbl_def);
+    $db->exec('CREATE TABLE source (ID INTEGER PRIMARY KEY, email VARCHAR(63), uid VARCHAR(63), date_created DATE)');
+    $this->db_reset = true;
     $this->db = $db;
   }
 
@@ -327,7 +338,7 @@ class Flickr extends ImageProvider {
     if ($source['email'] !== $this->flickr_email) {
       // reset the DB
       $this->db->exec("DROP TABLE images;");
-      $this->build_db();
+      $this->create_tables();
       $this->db_reset = true;
       if (!empty($this->flickr_email)) {
         $source = $this->get_uid_from_db();
