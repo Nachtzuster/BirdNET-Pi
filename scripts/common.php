@@ -190,7 +190,7 @@ function fetch_all_detections($sci_name, $sort_by, $date=null) {
 
 define('DB', './scripts/flickr.db');
 
-class PhotoProvider {
+class ImageProvider {
 
   private $db = null;
   private $db_reset = false;
@@ -258,7 +258,7 @@ class PhotoProvider {
     return $this->db_reset;
   }
 
-  private function build_db() {
+  protected function build_db() {
     $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url VARCHAR(63) NOT NULL, title VARCHAR(31) NOT NULL, id VARCHAR(31) NOT NULL UNIQUE, author_url VARCHAR(63) NOT NULL, license_url VARCHAR(63) NOT NULL, date_created DATE)";
     try {
       if ($this->db === null) {
@@ -274,13 +274,13 @@ class PhotoProvider {
     $this->db = $db;
   }
 
-  private function delete_image_from_db($sci_name) {
+  protected function delete_image_from_db($sci_name) {
     $statement0 = $this->db->prepare('DELETE FROM images WHERE sci_name == :sci_name');
     $statement0->bindValue(':sci_name', $sci_name);
     $statement0->execute();
   }
 
-  private function get_image_from_db($sci_name) {
+  protected function get_image_from_db($sci_name) {
     $statement0 = $this->db->prepare('SELECT sci_name, com_en_name, image_url, title, id, author_url, license_url, date_created FROM images WHERE sci_name == :sci_name');
     $statement0->bindValue(':sci_name', $sci_name);
     $result = $statement0->execute();
@@ -288,7 +288,7 @@ class PhotoProvider {
     return $row;
   }
 
-  private function set_image_in_db($sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url) {
+  protected function set_image_in_db($sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url) {
     $statement0 = $this->db->prepare("INSERT OR REPLACE INTO images VALUES (:sci_name, :com_en_name, :image_url, :title, :id, :author_url, :license_url, DATE(\"now\"))");
     $statement0->bindValue(':sci_name', $sci_name);
     $statement0->bindValue(':com_en_name', $com_en_name);
@@ -301,7 +301,7 @@ class PhotoProvider {
   }
 }
 
-class Flickr extends PhotoProvider {
+class Flickr extends ImageProvider {
 
   private $flickr_api_key = null;
   private $args = "&license=2%2C3%2C4%2C5%2C6%2C9&orientation=square,portrait";
@@ -478,7 +478,7 @@ class Flickr extends PhotoProvider {
   }
 }
 
-class Wikipedia extends PhotoProvider {
+class Wikipedia extends ImageProvider {
 
   private function get_from_source($sci_name) {
     $title = str_replace(' ', '_', $sci_name);
