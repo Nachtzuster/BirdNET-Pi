@@ -530,7 +530,7 @@ class Wikipedia extends ImageProvider {
     debug_log('now writing ...');
 
     //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
-    $this->set_image_in_db($sci_name, $engname, $image_url, $title, "", $author_url, $license_url);
+    $this->set_image_in_db($sci_name, $engname, $image_url, $title, $sci_name, $author_url, $license_url);
   }
 
   public function get_image($sci_name) {
