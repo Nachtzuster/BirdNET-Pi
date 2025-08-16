@@ -190,81 +190,88 @@ function fetch_all_detections($sci_name, $sort_by, $date=null) {
 
 define('DB', './scripts/flickr.db');
 
-class Flickr {
+class PhotoProvider {
 
-  private $flickr_api_key = null;
-  private $args = "&license=2%2C3%2C4%2C5%2C6%2C9&orientation=square,portrait";
-  private $blacklisted_ids = [];
   private $db = null;
-  private $licenses_urls = [];
-  private $labels_flickr = null;
-  private $flickr_email = null;
-  private $comnameprefix = "%20bird";
+  private $db_reset = false;
 
   public function __construct() {
-    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url VARCHAR(63) NOT NULL, title VARCHAR(31) NOT NULL, id VARCHAR(31) NOT NULL UNIQUE, author_url VARCHAR(63) NOT NULL, license_url VARCHAR(63) NOT NULL, date_created DATE)";
-    try {
-      $db = new SQLite3(DB, SQLITE3_OPEN_READWRITE);
-    } catch (Exception $ex) {
-      $db = new SQLite3(DB);
-      $db->exec($tbl_def);
-      $db->exec('CREATE TABLE source (ID INTEGER PRIMARY KEY, email VARCHAR(63), uid VARCHAR(63), date_created DATE)');
-    }
-    $db->busyTimeout(1000);
-    $this->db = $db;
-
-    $blacklisted = get_home() . "/BirdNET-Pi/scripts/blacklisted_images.txt";
-    if (file_exists($blacklisted)) {
-      $blacklisted_file = file($blacklisted);
-      if ($blacklisted_file) {
-        $this->blacklisted_ids = array_map('trim', $blacklisted_file);
-      }
-    }
-    $this->flickr_api_key = get_config()["FLICKR_API_KEY"];
-    $this->flickr_email = get_config()["FLICKR_FILTER_EMAIL"];
-    $source = $this->get_uid_from_db();
-    if ($source['email'] !== $this->flickr_email) {
-      // reset the DB
-      $this->db->exec("DROP TABLE images; " . $tbl_def);
-      if (!empty($this->flickr_email)) {
-        $source = $this->get_uid_from_db();
-        if ($source['email'] !== $this->flickr_email) {
-          $this->get_uid_from_flickr();
-          $source = $this->get_uid_from_db();
-        }
-      } else {
-        $this->set_uid_in_db("");
-      }
-    }
-    if (!empty($this->flickr_email)) {
-      $this->args = "&user_id=" . $source['uid'];
-      $this->comnameprefix = "";
-    }
+    $this->build_db();
+//
+//    $blacklisted = get_home() . "/BirdNET-Pi/scripts/blacklisted_images.txt";
+//    if (file_exists($blacklisted)) {
+//      $blacklisted_file = file($blacklisted);
+//      if ($blacklisted_file) {
+//        $this->blacklisted_ids = array_map('trim', $blacklisted_file);
+//      }
+//    }
+//    $this->flickr_api_key = get_config()["FLICKR_API_KEY"];
+//    $this->flickr_email = get_config()["FLICKR_FILTER_EMAIL"];
+//    $source = $this->get_uid_from_db();
+//    if ($source['email'] !== $this->flickr_email) {
+//      // reset the DB
+//      $this->db->exec("DROP TABLE images;");
+//      $this->build_db();
+//      $this->db_reset = true;
+//      if (!empty($this->flickr_email)) {
+//        $source = $this->get_uid_from_db();
+//        if ($source['email'] !== $this->flickr_email) {
+//          $this->get_uid_from_flickr();
+//          $source = $this->get_uid_from_db();
+//        }
+//      } else {
+//        $this->set_uid_in_db("");
+//      }
+//    }
+//    if (!empty($this->flickr_email)) {
+//      $this->args = "&user_id=" . $source['uid'];
+//      $this->comnameprefix = "";
+//    }
   }
 
   public function get_image($sci_name) {
     $image = $this->get_image_from_db($sci_name);
-    if ($image !== false && in_array($image['id'], $this->blacklisted_ids)) {
-      $image = false;
-      $this->delete_image_from_db($sci_name);
-    }
+//    if ($image !== false && in_array($image['id'], $this->blacklisted_ids)) {
+//      $image = false;
+//      $this->delete_image_from_db($sci_name);
+//    }
     if ($image !== false) {
       $now = new DateTime();
       $datetime = DateTime::createFromFormat("Y-m-d", $image['date_created']);
       $interval = $now->diff($datetime);
-      // use the last digit of the id as a semi random number, so not all entries expire at the same time
-      $expire_days = 15 + intval($image['id'][-1]);
+      $expire_days = rand(15, 25);
       if ($interval->days > $expire_days) {
         $image = false;
       }
     }
     if ($image === false) {
-      $this->get_from_flickr($sci_name);
+      $this->get_from_source($sci_name);
       $image = $this->get_image_from_db($sci_name);
     }
-    $photos_url = str_replace('/people/', '/photos/', $image['author_url'].'/'.$image['id']);
-    $image['photos_url'] = $photos_url;
+//    // external link to photo
+//    $photos_url = str_replace('/people/', '/photos/', $image['author_url'].'/'.$image['id']);
+//    $image['photos_url'] = $photos_url;
     return $image;
+  }
+
+  public function is_reset(){
+    return $this->db_reset;
+  }
+
+  private function build_db() {
+    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url VARCHAR(63) NOT NULL, title VARCHAR(31) NOT NULL, id VARCHAR(31) NOT NULL UNIQUE, author_url VARCHAR(63) NOT NULL, license_url VARCHAR(63) NOT NULL, date_created DATE)";
+    try {
+      if ($this->db === null) {
+        $db = new SQLite3(DB, SQLITE3_OPEN_READWRITE);
+      }
+    } catch (Exception $ex) {
+      $db = new SQLite3(DB);
+      $db->exec($tbl_def);
+      $db->exec('CREATE TABLE source (ID INTEGER PRIMARY KEY, email VARCHAR(63), uid VARCHAR(63), date_created DATE)');
+      $this->db_reset = true;
+    }
+    $db->busyTimeout(1000);
+    $this->db = $db;
   }
 
   private function delete_image_from_db($sci_name) {
@@ -292,8 +299,122 @@ class Flickr {
     $statement0->bindValue(':license_url', $license_url);
     $statement0->execute();
   }
+}
 
-  private function get_from_flickr($sci_name) {
+class Flickr extends PhotoProvider {
+
+  private $flickr_api_key = null;
+  private $args = "&license=2%2C3%2C4%2C5%2C6%2C9&orientation=square,portrait";
+  private $blacklisted_ids = [];
+//  private $db = null;
+  private $licenses_urls = [];
+  private $flickr_email = null;
+  private $comnameprefix = "%20bird";
+
+  public function __construct() {
+    $this->build_db();
+
+    $blacklisted = get_home() . "/BirdNET-Pi/scripts/blacklisted_images.txt";
+    if (file_exists($blacklisted)) {
+      $blacklisted_file = file($blacklisted);
+      if ($blacklisted_file) {
+        $this->blacklisted_ids = array_map('trim', $blacklisted_file);
+      }
+    }
+    $this->flickr_api_key = get_config()["FLICKR_API_KEY"];
+    $this->flickr_email = get_config()["FLICKR_FILTER_EMAIL"];
+    $source = $this->get_uid_from_db();
+    if ($source['email'] !== $this->flickr_email) {
+      // reset the DB
+      $this->db->exec("DROP TABLE images;");
+      $this->build_db();
+      $this->db_reset = true;
+      if (!empty($this->flickr_email)) {
+        $source = $this->get_uid_from_db();
+        if ($source['email'] !== $this->flickr_email) {
+          $this->get_uid_from_flickr();
+          $source = $this->get_uid_from_db();
+        }
+      } else {
+        $this->set_uid_in_db("");
+      }
+    }
+    if (!empty($this->flickr_email)) {
+      $this->args = "&user_id=" . $source['uid'];
+      $this->comnameprefix = "";
+    }
+  }
+
+  public function get_image($sci_name) {
+    $image = parent::get_image_from_db($sci_name);
+    if ($image !== false && in_array($image['id'], $this->blacklisted_ids)) {
+      $image = false;
+      $this->delete_image_from_db($sci_name);
+    }
+//    // make expired func
+//    if ($image !== false) {
+//      $now = new DateTime();
+//      $datetime = DateTime::createFromFormat("Y-m-d", $image['date_created']);
+//      $interval = $now->diff($datetime);
+//      // use the last digit of the id as a semi random number, so not all entries expire at the same time
+//      $expire_days = 15 + intval($image['id'][-1]);
+//      if ($interval->days > $expire_days) {
+//        $image = false;
+//      }
+//    }
+    if ($image === false) {
+      $this->get_from_source($sci_name);
+      $image = $this->get_image_from_db($sci_name);
+    }
+    // external link to photo
+    $photos_url = str_replace('/people/', '/photos/', $image['author_url'] . '/' . $image['id']);
+    $image['photos_url'] = $photos_url;
+    return $image;
+  }
+
+//  private function build_db() {
+//    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url VARCHAR(63) NOT NULL, title VARCHAR(31) NOT NULL, id VARCHAR(31) NOT NULL UNIQUE, author_url VARCHAR(63) NOT NULL, license_url VARCHAR(63) NOT NULL, date_created DATE)";
+//    try {
+//      if ($this->db === null) {
+//        $db = new SQLite3(DB, SQLITE3_OPEN_READWRITE);
+//      }
+//    } catch (Exception $ex) {
+//      $db = new SQLite3(DB);
+//      $db->exec($tbl_def);
+//      $db->exec('CREATE TABLE source (ID INTEGER PRIMARY KEY, email VARCHAR(63), uid VARCHAR(63), date_created DATE)');
+//      $this->db_reset = true;
+//    }
+//    $db->busyTimeout(1000);
+//    $this->db = $db;
+//  }
+//
+//  private function delete_image_from_db($sci_name) {
+//    $statement0 = $this->db->prepare('DELETE FROM images WHERE sci_name == :sci_name');
+//    $statement0->bindValue(':sci_name', $sci_name);
+//    $statement0->execute();
+//  }
+//
+//  private function get_image_from_db($sci_name) {
+//    $statement0 = $this->db->prepare('SELECT sci_name, com_en_name, image_url, title, id, author_url, license_url, date_created FROM images WHERE sci_name == :sci_name');
+//    $statement0->bindValue(':sci_name', $sci_name);
+//    $result = $statement0->execute();
+//    $row = $result->fetchArray(SQLITE3_ASSOC);
+//    return $row;
+//  }
+//
+//  private function set_image_in_db($sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url) {
+//    $statement0 = $this->db->prepare("INSERT OR REPLACE INTO images VALUES (:sci_name, :com_en_name, :image_url, :title, :id, :author_url, :license_url, DATE(\"now\"))");
+//    $statement0->bindValue(':sci_name', $sci_name);
+//    $statement0->bindValue(':com_en_name', $com_en_name);
+//    $statement0->bindValue(':image_url', $image_url);
+//    $statement0->bindValue(':title', $title);
+//    $statement0->bindValue(':id', $id);
+//    $statement0->bindValue(':author_url', $author_url);
+//    $statement0->bindValue(':license_url', $license_url);
+//    $statement0->execute();
+//  }
+
+  private function get_from_source($sci_name) {
     $engname = get_com_en_name($sci_name);
 
     $flickrjson = json_decode(file_get_contents("https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=" . $this->flickr_api_key . "&text=" . str_replace(" ", "%20", $engname) . $this->comnameprefix . "&sort=relevance" . $this->args . "&per_page=5&media=photos&format=json&nojsoncallback=1"), true)["photos"]["photo"];
@@ -307,7 +428,8 @@ class Flickr {
       }
     }
 
-    if ($photo === null) return;
+    if ($photo === null)
+      return;
 
     $license_url = "https://api.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=" . $this->flickr_api_key . "&photo_id=" . $photo["id"] . "&format=json&nojsoncallback=1";
     $license_response = file_get_contents($license_url);
@@ -354,7 +476,35 @@ class Flickr {
     $uid = json_decode(file_get_contents("https://www.flickr.com/services/rest/?method=flickr.people.findByEmail&api_key=" . $this->flickr_api_key . "&find_email=" . $this->flickr_email . "&format=json&nojsoncallback=1"), true)["user"]["nsid"];
     $this->set_uid_in_db($uid);
   }
+}
 
+class Wikipedia extends PhotoProvider {
+
+  private function get_from_source($sci_name) {
+    $title = str_replace(' ', '_', $sci_name);
+    $data = json_decode(file_get_contents("https://en.wikipedia.org/api/rest_v1/page/summary/$title", true));
+    if ($data == false or !isset($data['originalimage']))
+      return;
+
+    $image_name = substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1);
+    $metadata = json_decode(file_get_contents("https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name&prop=imageinfo&iiprop=extmetadata&format=json", true));
+    if ($metadata == false or !isset($metadata['pages']))
+      return;
+
+    foreach ($metadata['pages'] as $page) {
+      $details = $page['imageinfo']['0']['extmetadata'];
+      $authorlink = $details['Artist']['value'];
+      $license_url = $details['LicenseUrl']['value'];
+    }
+
+    $engname = get_com_en_name($sciname);
+    $imageurl = $data['originalimage']['source'];
+    $title = $data['description'];
+    $id = null;
+
+    //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
+    $this->set_image_in_db($sci_name, $engname, $imageurl, $photo["title"], $photo["id"], $authorlink, $license_url);
+  }
 }
 
 function get_info_url($sciname){
