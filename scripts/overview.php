@@ -61,7 +61,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
     $_SESSION['images'] = [];
   }
   $iterations = 0;
-  $flickr = null;
+  $image_provider = null;
 
   // hopefully one of the 5 most recent detections has an image that is valid, we'll use that one as the most recent detection until the newer ones get their images created
   while($mostrecent = $result4->fetchArray(SQLITE3_ASSOC)) {
@@ -79,23 +79,26 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
       $iterations++;
 
       if (!empty($config["FLICKR_API_KEY"])) {
-        if ($flickr === null) {
-          $flickr = new Flickr();
+        if ($image_provider === null) {
+          $image_provider = new Flickr();
         }
-        if ($_SESSION["FLICKR_FILTER_EMAIL"] !== $flickr->get_uid_from_db()['uid']) {
-          if (isset($_SESSION["FLICKR_FILTER_EMAIL"])) {
-            $_SESSION['images'] = [];
-          }
-          $_SESSION["FLICKR_FILTER_EMAIL"] = $flickr->get_uid_from_db()['uid'];
+        if ($image_provider->is_reset()) {
+          unset($_SESSION['images']);
         }
+//        if ($_SESSION["FLICKR_FILTER_EMAIL"] !== $image_provider->get_uid_from_db()['uid']) {
+//          if (isset($_SESSION["FLICKR_FILTER_EMAIL"])) {
+//            $_SESSION['images'] = [];
+//          }
+//          $_SESSION["FLICKR_FILTER_EMAIL"] = $image_provider->get_uid_from_db()['uid'];
+//        }
 
         // if we already searched flickr for this species before, use the previous image rather than doing an unneccesary api call
         $key = array_search($comname, array_column($_SESSION['images'], 0));
         if ($key !== false) {
           $image = $_SESSION['images'][$key];
         } else {
-          $flickr_cache = $flickr->get_image($mostrecent['Sci_Name']);
-          array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $flickr_cache["photos_url"], $flickr_cache["author_url"], $flickr_cache["license_url"]));
+          $cached_image = $image_provider->get_image($mostrecent['Sci_Name']);
+          array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
           $image = $_SESSION['images'][count($_SESSION['images']) - 1];
         }
       }
@@ -348,10 +351,10 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
 if (!isset($_SESSION['images'])) {
     $_SESSION['images'] = [];
 }
-$flickr = null;
+$image_provider = null;
 
 function display_species($species_list, $title, $show_last_seen=false) {
-    global $config, $_SESSION, $flickr;
+    global $config, $_SESSION, $image_provider;
     $species_count = count($species_list);
     if ($species_count > 0): ?>
         <div class="<?php echo strtolower(str_replace(' ', '_', $title)); ?>">
@@ -379,12 +382,12 @@ function display_species($species_list, $title, $show_last_seen=false) {
                         $image_url = ""; // Default empty image URL
 
                         if (!empty($config["FLICKR_API_KEY"])) {
-                            if ($flickr === null) {
-                                $flickr = new Flickr();
+                            if ($image_provider === null) {
+                                $image_provider = new Flickr();
                             }
-                            if (isset($_SESSION["FLICKR_FILTER_EMAIL"]) && $_SESSION["FLICKR_FILTER_EMAIL"] !== $flickr->get_uid_from_db()['uid']) {
+                            if (isset($_SESSION["FLICKR_FILTER_EMAIL"]) && $_SESSION["FLICKR_FILTER_EMAIL"] !== $image_provider->get_uid_from_db()['uid']) {
                                 unset($_SESSION['images']);
-                                $_SESSION["FLICKR_FILTER_EMAIL"] = $flickr->get_uid_from_db()['uid'];
+                                $_SESSION["FLICKR_FILTER_EMAIL"] = $image_provider->get_uid_from_db()['uid'];
                             }
 
                             // Check if the Flickr image has been cached in the session
@@ -393,7 +396,7 @@ function display_species($species_list, $title, $show_last_seen=false) {
                                 $image = $_SESSION['images'][$key];
                             } else {
                                 // Retrieve the image from Flickr API and cache it
-                                $flickr_cache = $flickr->get_image($todaytable['Sci_Name']);
+                                $flickr_cache = $image_provider->get_image($todaytable['Sci_Name']);
                                 array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $flickr_cache["photos_url"], $flickr_cache["author_url"], $flickr_cache["license_url"]));
                                 $image = $_SESSION['images'][count($_SESSION['images']) - 1];
                             }

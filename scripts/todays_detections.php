@@ -186,7 +186,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
     $_SESSION['images'] = [];
   }
   $iterations = 0;
-  $flickr = null;
+  $image_provider = null;
 
   while($todaytable=$result0->fetchArray(SQLITE3_ASSOC))
   {
@@ -206,21 +206,24 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
     $url_title = $info_url['TITLE'];
 
     if (!empty($config["FLICKR_API_KEY"]) && (isset($_GET['display_limit']) || isset($_GET['hard_limit']) || $_GET['kiosk'] == true) ) {
-      if ($flickr === null) {
-        $flickr = new Flickr();
+      if ($image_provider === null) {
+        $image_provider = new Flickr();
       }
-      if (isset($_SESSION["FLICKR_FILTER_EMAIL"]) && $_SESSION["FLICKR_FILTER_EMAIL"] !== $flickr->get_uid_from_db()['uid']) {
+      if ($image_provider->is_reset()) {
         unset($_SESSION['images']);
-        $_SESSION["FLICKR_FILTER_EMAIL"] = $flickr->get_uid_from_db()['uid'];
       }
+//      if (isset($_SESSION["FLICKR_FILTER_EMAIL"]) && $_SESSION["FLICKR_FILTER_EMAIL"] !== $image_provider->get_uid_from_db()['uid']) {
+//        unset($_SESSION['images']);
+//        $_SESSION["FLICKR_FILTER_EMAIL"] = $image_provider->get_uid_from_db()['uid'];
+//      }
 
       // if we already searched flickr for this species before, use the previous image rather than doing an unneccesary api call
       $key = array_search($comname, array_column($_SESSION['images'], 0));
       if ($key !== false) {
         $image = $_SESSION['images'][$key];
       } else {
-        $flickr_cache = $flickr->get_image($todaytable['Sci_Name']);
-        array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $flickr_cache["photos_url"], $flickr_cache["author_url"], $flickr_cache["license_url"]));
+        $cached_image = $image_provider->get_image($todaytable['Sci_Name']);
+        array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
         $image = $_SESSION['images'][count($_SESSION['images']) - 1];
       }
     }
