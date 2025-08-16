@@ -534,6 +534,7 @@ class Wikipedia extends ImageProvider {
 //    https://en.wikipedia.org/wiki/File:Common_Blackbird.jpg
 //    $photos_url = "https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name";
     $image['photos_url'] = $photos_url;
+    $image['author_url'] = "Dummy_author_url";
 
     debug_log("From DB");
     debug_log($image['sci_name']);
