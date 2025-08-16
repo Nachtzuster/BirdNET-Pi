@@ -385,10 +385,13 @@ function display_species($species_list, $title, $show_last_seen=false) {
                             if ($image_provider === null) {
                                 $image_provider = new Flickr();
                             }
-                            if (isset($_SESSION["FLICKR_FILTER_EMAIL"]) && $_SESSION["FLICKR_FILTER_EMAIL"] !== $image_provider->get_uid_from_db()['uid']) {
-                                unset($_SESSION['images']);
-                                $_SESSION["FLICKR_FILTER_EMAIL"] = $image_provider->get_uid_from_db()['uid'];
+                            if ($image_provider->is_reset()) {
+                              unset($_SESSION['images']);
                             }
+//                            if (isset($_SESSION["FLICKR_FILTER_EMAIL"]) && $_SESSION["FLICKR_FILTER_EMAIL"] !== $image_provider->get_uid_from_db()['uid']) {
+//                                unset($_SESSION['images']);
+//                                $_SESSION["FLICKR_FILTER_EMAIL"] = $image_provider->get_uid_from_db()['uid'];
+//                            }
 
                             // Check if the Flickr image has been cached in the session
                             $key = array_search($comname, array_column($_SESSION['images'], 0));
@@ -396,8 +399,8 @@ function display_species($species_list, $title, $show_last_seen=false) {
                                 $image = $_SESSION['images'][$key];
                             } else {
                                 // Retrieve the image from Flickr API and cache it
-                                $flickr_cache = $image_provider->get_image($todaytable['Sci_Name']);
-                                array_push($_SESSION["images"], array($comname, $flickr_cache["image_url"], $flickr_cache["title"], $flickr_cache["photos_url"], $flickr_cache["author_url"], $flickr_cache["license_url"]));
+                                $cached_image = $image_provider->get_image($todaytable['Sci_Name']);
+                                array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
                                 $image = $_SESSION['images'][count($_SESSION['images']) - 1];
                             }
                             $image_url = $image[1] ?? ""; // Get the image URL if available
