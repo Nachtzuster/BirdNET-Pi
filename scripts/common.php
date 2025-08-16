@@ -192,8 +192,8 @@ define('DB', './scripts/flickr.db');
 
 class ImageProvider {
 
-  private $db = null;
-  private $db_reset = false;
+  protected $db = null;
+  protected $db_reset = false;
 
   public function __construct() {
     $this->build_db();
