@@ -480,14 +480,14 @@ class Flickr extends ImageProvider {
 
 class Wikipedia extends ImageProvider {
 
-  private function get_from_source($sci_name) {
+  protected function get_from_source($sci_name) {
     $title = str_replace(' ', '_', $sci_name);
-    $data = json_decode(file_get_contents("https://en.wikipedia.org/api/rest_v1/page/summary/$title", true));
+    $data = json_decode(file_get_contents("https://en.wikipedia.org/api/rest_v1/page/summary/$title"), true);
     if ($data == false or !isset($data['originalimage']))
       return;
 
     $image_name = substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1);
-    $metadata = json_decode(file_get_contents("https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name&prop=imageinfo&iiprop=extmetadata&format=json", true));
+    $metadata = json_decode(file_get_contents("https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name&prop=imageinfo&iiprop=extmetadata&format=json"), true);
     if ($metadata == false or !isset($metadata['pages']))
       return;
 
