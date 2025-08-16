@@ -506,8 +506,12 @@ class Wikipedia extends ImageProvider {
       $details = $page['imageinfo']['0']['extmetadata'];
       $author = $details['Artist']['value'];
       $matches = [];
-      preg_match('/href="(\S*)"/', $author, $matches);
-      $author_url = $matches[1];
+      if (preg_match('/href="(http\S*)"/', $author, $matches)) {
+        $author_url = $matches[1];
+      } else {
+        $author_url = "https://en.wikipedia.org/wiki/File:$image_name";
+      }
+
       $license_url = $details['LicenseUrl']['value'];
     }
 
