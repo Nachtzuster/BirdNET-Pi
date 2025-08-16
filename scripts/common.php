@@ -259,7 +259,7 @@ class ImageProvider {
   }
 
   protected function build_db() {
-    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url VARCHAR(63) NOT NULL, title VARCHAR(31) NOT NULL, id VARCHAR(31) NOT NULL UNIQUE, author_url VARCHAR(63) NOT NULL, license_url VARCHAR(63) NOT NULL, date_created DATE)";
+    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url TEXT NOT NULL, title TEXT NOT NULL, id TEXT NOT NULL UNIQUE, author_url TEXT NOT NULL, license_url TEXT NOT NULL, date_created DATE)";
     try {
       if ($this->db === null) {
         $db = new SQLite3(DB, SQLITE3_OPEN_READWRITE);
@@ -488,10 +488,10 @@ class Wikipedia extends ImageProvider {
 
     $image_name = substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1);
     $metadata = json_decode(file_get_contents("https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name&prop=imageinfo&iiprop=extmetadata&format=json"), true);
-    if ($metadata == false or !isset($metadata['pages']))
+    if ($metadata == false or !isset($metadata['query']['pages']))
       return;
 
-    foreach ($metadata['pages'] as $page) {
+    foreach ($metadata['query']['pages'] as $page) {
       $details = $page['imageinfo']['0']['extmetadata'];
       $authorlink = $details['Artist']['value'];
       $license_url = $details['LicenseUrl']['value'];
@@ -500,10 +500,10 @@ class Wikipedia extends ImageProvider {
     $engname = get_com_en_name($sciname);
     $imageurl = $data['originalimage']['source'];
     $title = $data['description'];
-    $id = null;
+//    $id = null;
 
     //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
-    $this->set_image_in_db($sci_name, $engname, $imageurl, $photo["title"], $photo["id"], $authorlink, $license_url);
+    $this->set_image_in_db($sci_name, $engname, $imageurl, $title, "", $authorlink, $license_url);
   }
 }
 
