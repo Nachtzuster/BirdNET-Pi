@@ -497,10 +497,19 @@ class Wikipedia extends ImageProvider {
       $license_url = $details['LicenseUrl']['value'];
     }
 
-    $engname = get_com_en_name($sciname);
+    $engname = get_com_en_name($sci_name);
     $imageurl = $data['originalimage']['source'];
     $title = $data['description'];
 //    $id = null;
+
+    debug_log('now ...');
+    debug_log($engname);
+    //debug_log($data);
+    debug_log($imageurl);
+    debug_log($title);
+    debug_log($authorlink);
+    debug_log($license_url);
+    debug_log('now writing ...');
 
     //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
     $this->set_image_in_db($sci_name, $engname, $imageurl, $title, "", $authorlink, $license_url);
