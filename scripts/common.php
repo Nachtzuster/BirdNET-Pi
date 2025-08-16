@@ -272,7 +272,7 @@ class ImageProvider {
 //      $db->exec('CREATE TABLE source (ID INTEGER PRIMARY KEY, email VARCHAR(63), uid VARCHAR(63), date_created DATE)');
 //      $this->db_reset = true;
     }
-    $this->busyTimeout(1000);
+    $this->db->busyTimeout(1000);
 //    $this->db = $db;
   }
 
