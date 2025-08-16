@@ -504,26 +504,46 @@ class Wikipedia extends ImageProvider {
 
     foreach ($metadata['query']['pages'] as $page) {
       $details = $page['imageinfo']['0']['extmetadata'];
-      $authorlink = $details['Artist']['value'];
+      $author_url = $details['Artist']['value'];
       $license_url = $details['LicenseUrl']['value'];
     }
 
     $engname = get_com_en_name($sci_name);
-    $imageurl = $data['originalimage']['source'];
+    $image_url = $data['originalimage']['source'];
     $title = $data['description'];
 //    $id = null;
 
     debug_log('now ...');
     debug_log($engname);
     //debug_log($data);
-    debug_log($imageurl);
+    debug_log($image_url);
     debug_log($title);
-    debug_log($authorlink);
+    debug_log($author_url);
     debug_log($license_url);
     debug_log('now writing ...');
 
     //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
-    $this->set_image_in_db($sci_name, $engname, $imageurl, $title, "", $authorlink, $license_url);
+    $this->set_image_in_db($sci_name, $engname, $image_url, $title, "", $author_url, $license_url);
+  }
+
+  public function get_image($sci_name) {
+    $image = parent::get_image($sci_name);
+    $image_name = substr($image['image_url'], strrpos($image['image_url'], '/') + 1);
+    // external link to photo
+    $photos_url= "https://en.wikipedia.org/wiki/File:$image_name";
+//    https://en.wikipedia.org/wiki/File:Common_Blackbird.jpg
+//    $photos_url = "https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name";
+    $image['photos_url'] = $photos_url;
+
+    debug_log("From DB");
+    debug_log($image['sci_name']);
+    debug_log($image['com_en_name']);
+    debug_log($image['image_url']);
+    debug_log($image['title']);
+    debug_log($image['author_url']);
+    debug_log($image['license_url']);
+
+    return $image;
   }
 }
 
