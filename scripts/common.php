@@ -518,16 +518,6 @@ class Wikipedia extends ImageProvider {
     $engname = get_com_en_name($sci_name);
     $image_url = $data['originalimage']['source'];
     $title = $data['description'];
-//    $id = null;
-
-    debug_log('now ...');
-    debug_log($engname);
-    //debug_log($data);
-    debug_log($image_url);
-    debug_log($title);
-    debug_log($author_url);
-    debug_log($license_url);
-    debug_log('now writing ...');
 
     //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
     $this->set_image_in_db($sci_name, $engname, $image_url, $title, $sci_name, $author_url, $license_url);
@@ -537,20 +527,8 @@ class Wikipedia extends ImageProvider {
     $image = parent::get_image($sci_name);
     $image_name = substr($image['image_url'], strrpos($image['image_url'], '/') + 1);
     // external link to photo
-    $photos_url= "https://en.wikipedia.org/wiki/File:$image_name";
-//    https://en.wikipedia.org/wiki/File:Common_Blackbird.jpg
-//    $photos_url = "https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name";
+    $photos_url = "https://en.wikipedia.org/wiki/File:$image_name";
     $image['photos_url'] = $photos_url;
-//    $image['author_url'] = "Dummy_author_url";
-
-    debug_log("From DB");
-    debug_log($image['sci_name']);
-    debug_log($image['com_en_name']);
-    debug_log($image['image_url']);
-    debug_log($image['title']);
-    debug_log($image['author_url']);
-    debug_log($image['license_url']);
-
     return $image;
   }
 }
