@@ -196,7 +196,7 @@ class ImageProvider {
   protected $db_reset = false;
 
   public function __construct() {
-    $this->build_db();
+    $this->set_db();
 //
 //    $blacklisted = get_home() . "/BirdNET-Pi/scripts/blacklisted_images.txt";
 //    if (file_exists($blacklisted)) {
@@ -258,7 +258,7 @@ class ImageProvider {
     return $this->db_reset;
   }
 
-  protected function build_db() {
+  protected function set_db() {
 //    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url TEXT NOT NULL, title TEXT NOT NULL, id TEXT NOT NULL UNIQUE, author_url TEXT NOT NULL, license_url TEXT NOT NULL, date_created DATE)";
     try {
       if ($this->db === null) {
@@ -323,7 +323,7 @@ class Flickr extends ImageProvider {
   private $comnameprefix = "%20bird";
 
   public function __construct() {
-    $this->build_db();
+    $this->set_db();
 
     $blacklisted = get_home() . "/BirdNET-Pi/scripts/blacklisted_images.txt";
     if (file_exists($blacklisted)) {
