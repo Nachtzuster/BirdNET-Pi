@@ -259,7 +259,7 @@ class ImageProvider {
   }
 
   protected function build_db() {
-    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url TEXT NOT NULL, title TEXT NOT NULL, id TEXT NOT NULL UNIQUE, author_url TEXT NOT NULL, license_url TEXT NOT NULL, date_created DATE)";
+//    $tbl_def = "CREATE TABLE images (sci_name VARCHAR(63) NOT NULL PRIMARY KEY, com_en_name VARCHAR(63) NOT NULL, image_url TEXT NOT NULL, title TEXT NOT NULL, id TEXT NOT NULL UNIQUE, author_url TEXT NOT NULL, license_url TEXT NOT NULL, date_created DATE)";
     try {
       if ($this->db === null) {
         $db = new SQLite3(DB, SQLITE3_OPEN_READWRITE);
@@ -339,7 +339,7 @@ class Flickr extends ImageProvider {
       // reset the DB
       $this->db->exec("DROP TABLE images;");
       $this->create_tables();
-      $this->db_reset = true;
+//      $this->db_reset = true;
       if (!empty($this->flickr_email)) {
         $source = $this->get_uid_from_db();
         if ($source['email'] !== $this->flickr_email) {
@@ -504,7 +504,10 @@ class Wikipedia extends ImageProvider {
 
     foreach ($metadata['query']['pages'] as $page) {
       $details = $page['imageinfo']['0']['extmetadata'];
-      $author_url = $details['Artist']['value'];
+      $author = $details['Artist']['value'];
+      $matches = [];
+      preg_match('/href="(\S*)"/', $author, $matches);
+      $author_url = $matches[1];
       $license_url = $details['LicenseUrl']['value'];
     }
 
@@ -534,7 +537,7 @@ class Wikipedia extends ImageProvider {
 //    https://en.wikipedia.org/wiki/File:Common_Blackbird.jpg
 //    $photos_url = "https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name";
     $image['photos_url'] = $photos_url;
-    $image['author_url'] = "Dummy_author_url";
+//    $image['author_url'] = "Dummy_author_url";
 
     debug_log("From DB");
     debug_log($image['sci_name']);
