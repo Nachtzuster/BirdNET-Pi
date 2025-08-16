@@ -217,7 +217,7 @@ class ImageProvider {
     return $image;
   }
 
-  public function is_reset(){
+  public function is_reset() {
     return $this->db_reset;
   }
 
