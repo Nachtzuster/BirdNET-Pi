@@ -431,7 +431,7 @@ class Wikipedia extends ImageProvider {
 
     $engname = get_com_en_name($sci_name);
     $image_url = $data['originalimage']['source'];
-    $title = $data['description'];
+    $title = $data['title'];
 
     //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
     $this->set_image_in_db($sci_name, $engname, $image_url, $title, $sci_name, $author_url, $license_url);
