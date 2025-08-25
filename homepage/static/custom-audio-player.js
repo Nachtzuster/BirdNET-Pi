@@ -573,8 +573,8 @@ Channels: ${channels}`
       return container;
     };
 
-    const gainOptions = ["Off", "6", "12", "18", "24"];
-    const gainValues = { Off: 1, "6": 2, "12": 4, "18": 8, "24": 16 };
+    const gainOptions = ["Off", "6", "12", "18", "24", "30"];
+    const gainValues = { Off: 1, "6": 2, "12": 4, "18": 8, "24": 16, "30": 32 };
     let activeGain = gainOptions.includes(savedGain) ? savedGain : "Off";
     const gainContainer = createOptionSection("Gain (dB):");
     const gainButtons = gainOptions.map((opt) =>
