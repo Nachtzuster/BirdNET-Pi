@@ -586,7 +586,7 @@ Channels: ${channels}`
       })
     );
 
-    const highpassOptions = ["Off", "250", "500", "1000"];
+    const highpassOptions = ["Off", "250", "500", "1000", "1500"];
     let activeHighpassOption = highpassOptions.includes(savedHighpass) ? savedHighpass : "Off";
     const highpassContainer = createOptionSection("HighPass (Hz):");
     const highpassButtons = highpassOptions.map((opt) =>
