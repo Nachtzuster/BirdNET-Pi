@@ -152,73 +152,33 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
   die();
 }
 
-function get_chart_data($db, $force_regen = false) {
-  if ($force_regen || !isset($_SESSION['chart_data'])) {
-    $statement = $db->prepare('SELECT COUNT(*) FROM detections');
-    ensure_db_ok($statement);
-    $result = $statement->execute();
-    $totalcount = $result->fetchArray(SQLITE3_ASSOC);
-
-    $statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == DATE(\'now\', \'localtime\')');
-    ensure_db_ok($statement2);
-    $result2 = $statement2->execute();
-    $todaycount = $result2->fetchArray(SQLITE3_ASSOC);
-
-    $statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == Date(\'now\', \'localtime\') AND TIME >= TIME(\'now\', \'localtime\', \'-1 hour\')');
-    ensure_db_ok($statement3);
-    $result3 = $statement3->execute();
-    $hourcount = $result3->fetchArray(SQLITE3_ASSOC);
-
-    $statement5 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections WHERE Date == Date(\'now\',\'localtime\')');
-    ensure_db_ok($statement5);
-    $result5 = $statement5->execute();
-    $speciestally = $result5->fetchArray(SQLITE3_ASSOC);
-
-    $statement6 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections');
-    ensure_db_ok($statement6);
-    $result6 = $statement6->execute();
-    $totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
-
-    // Store the data in session to be reused by other charts
-    $_SESSION['chart_data'] = [
-      'totalcount' => $totalcount,
-      'todaycount' => $todaycount,
-      'hourcount' => $hourcount,
-      'speciestally' => $speciestally,
-      'totalspeciestally' => $totalspeciestally
-    ];
-  }
-
-  return $_SESSION['chart_data'];
-}
-
 if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
 
-  // Force the data to regenerate and store it in session
-  $chart_data = get_chart_data($db, true);
+  $chart_data = get_summary();
+  $_SESSION['chart_data'] = $chart_data;
 ?>
 <table>
   <tr>
     <th>Total</th>
-    <td><?php echo $chart_data['totalcount']['COUNT(*)'];?></td>
+    <td><?php echo $chart_data['totalcount'];?></td>
   </tr>
   <tr>
     <th>Today</th>
-    <td><form action="" method="GET"><button type="submit" name="view" value="Todays Detections"><?php echo $chart_data['todaycount']['COUNT(*)'];?></button></td>
+    <td><form action="" method="GET"><button type="submit" name="view" value="Todays Detections"><?php echo $chart_data['todaycount'];?></button></td>
     </form>
   </tr>
   <tr>
     <th>Last Hour</th>
-    <td><?php echo $chart_data['hourcount']['COUNT(*)'];?></td>
+    <td><?php echo $chart_data['hourcount'];?></td>
   </tr>
   <tr>
     <th>Species Detected Today</th>
-    <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td>
+    <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally'];?></button></td>
     </form>
   </tr>
   <tr>
     <th>Total Number of Species</th>
-    <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td>
+    <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally'];?></button></td>
     </form>
   </tr>
 </table>
@@ -229,7 +189,7 @@ if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
 if(isset($_GET['ajax_center_chart']) && $_GET['ajax_center_chart'] == "true") {
 
   // Retrieve the cached data from session without regenerating
-  $chart_data = get_chart_data($db);
+  $chart_data = $_SESSION['chart_data'];
 ?>
   <table><tr>
   <th>Total</th>
@@ -239,11 +199,11 @@ if(isset($_GET['ajax_center_chart']) && $_GET['ajax_center_chart'] == "true") {
   <th>Species Today</th>
       </tr>
       <tr>
-      <td><?php echo $chart_data['totalcount']['COUNT(*)'];?></td>
-      <td><form action="" method="GET"><input type="hidden" name="view" value="Todays Detections"><?php echo $chart_data['todaycount']['COUNT(*)'];?></td></form>
-      <td><?php echo $chart_data['hourcount']['COUNT(*)'];?></td>
-      <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td></form>
-      <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally']['COUNT(DISTINCT(Sci_Name))'];?></button></td></form>
+      <td><?php echo $chart_data['totalcount'];?></td>
+      <td><form action="" method="GET"><input type="hidden" name="view" value="Todays Detections"><?php echo $chart_data['todaycount'];?></td></form>
+      <td><?php echo $chart_data['hourcount'];?></td>
+      <td><form action="" method="GET"><button type="submit" name="view" value="Species Stats"><?php echo $chart_data['totalspeciestally'];?></button></td></form>
+      <td><form action="" method="GET"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $chart_data['speciestally'];?></button></td></form>
   </tr>
   </table>
 
