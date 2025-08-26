@@ -189,6 +189,42 @@ function fetch_all_detections($sci_name, $sort_by, $date=null) {
   return $result;
 }
 
+function get_summary() {
+  $db = get_db();
+  $statement = $db->prepare('SELECT COUNT(*) FROM detections');
+  ensure_db_ok($statement);
+  $result = $statement->execute();
+  $totalcount = $result->fetchArray(SQLITE3_ASSOC);
+
+  $statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == DATE(\'now\', \'localtime\')');
+  ensure_db_ok($statement2);
+  $result2 = $statement2->execute();
+  $todaycount = $result2->fetchArray(SQLITE3_ASSOC);
+
+  $statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == Date(\'now\', \'localtime\') AND TIME >= TIME(\'now\', \'localtime\', \'-1 hour\')');
+  ensure_db_ok($statement3);
+  $result3 = $statement3->execute();
+  $hourcount = $result3->fetchArray(SQLITE3_ASSOC);
+
+  $statement5 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections WHERE Date == Date(\'now\',\'localtime\')');
+  ensure_db_ok($statement5);
+  $result5 = $statement5->execute();
+  $todayspeciestally = $result5->fetchArray(SQLITE3_ASSOC);
+
+  $statement6 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections');
+  ensure_db_ok($statement6);
+  $result6 = $statement6->execute();
+  $totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
+
+  $ret = [
+    'totalcount' => $totalcount['COUNT(*)'],
+    'todaycount' => $todaycount['COUNT(*)'],
+    'hourcount' => $hourcount['COUNT(*)'],
+    'speciestally' => $todayspeciestally['COUNT(DISTINCT(Sci_Name))'],
+    'totalspeciestally' => $totalspeciestally['COUNT(DISTINCT(Sci_Name))']
+  ];
+  return $ret;
+}
 
 class ImageProvider {
 
