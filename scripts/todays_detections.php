@@ -25,35 +25,12 @@ if(isset($kiosk) && $kiosk == true) {
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
 
-$statement1 = $db->prepare('SELECT COUNT(*) FROM detections');
-ensure_db_ok($statement1);
-$result1 = $statement1->execute();
-$totalcount = $result1->fetchArray(SQLITE3_ASSOC);
-
-$statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == DATE(\'now\', \'localtime\')');
-ensure_db_ok($statement2);
-$result2 = $statement2->execute();
-$todaycount = $result2->fetchArray(SQLITE3_ASSOC);
-
-$statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == Date(\'now\', \'localtime\') AND TIME >= TIME(\'now\', \'localtime\', \'-1 hour\')');
-ensure_db_ok($statement3);
-$result3 = $statement3->execute();
-$hourcount = $result3->fetchArray(SQLITE3_ASSOC);
-
-$statement4 = $db->prepare('SELECT Com_Name, Sci_Name, Time, Confidence FROM detections LIMIT 1');
-ensure_db_ok($statement4);
-$result4 = $statement4->execute();
-$mostrecent = $result4->fetchArray(SQLITE3_ASSOC);
-
-$statement5 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections WHERE Date == Date(\'now\', \'localtime\')');
-ensure_db_ok($statement5);
-$result5 = $statement5->execute();
-$todayspeciestally = $result5->fetchArray(SQLITE3_ASSOC);
-
-$statement6 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections');
-ensure_db_ok($statement6);
-$result6 = $statement6->execute();
-$totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
+$summary = get_summary();
+$totalcount = $summary['totalcount'];
+$todaycount = $summary['todaycount'];
+$hourcount = $summary['hourcount'];
+$todayspeciestally = $summary['speciestally'];
+$totalspeciestally = $summary['totalspeciestally'];
 
 if(isset($_GET['comname'])) {
  $birdName = htmlspecialchars_decode($_GET['comname'], ENT_QUOTES);
@@ -311,16 +288,16 @@ if(isset($_GET['today_stats'])) {
   <th>Species Today</th>
       </tr>
       <tr>
-      <td><?php echo $totalcount['COUNT(*)'];?></td>
+      <td><?php echo $totalcount;?></td>
       <form action="" method="GET">
-      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todaycount['COUNT(*)'];?></button><?php } else { echo $todaycount['COUNT(*)']; }?></td>
+      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todaycount;?></button><?php } else { echo $todaycount; }?></td>
       </form>
-      <td><?php echo $hourcount['COUNT(*)'];?></td>
+      <td><?php echo $hourcount;?></td>
       <form action="" method="GET">
-      <td><?php if($kiosk == false){?><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button><?php }else { echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))']; }?></td>
+      <td><?php if($kiosk == false){?><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally;?></button><?php }else { echo $totalspeciestally; }?></td>
       </form>
       <form action="" method="GET">
-      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todayspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button><?php } else { echo $todayspeciestally['COUNT(DISTINCT(Sci_Name))']; }?></td>
+      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todayspeciestally;?></button><?php } else { echo $todayspeciestally; }?></td>
       </form>
       </tr>
     </table>
@@ -427,11 +404,11 @@ if (get_included_files()[0] === __FILE__) {
   <th>Species Today</th>
       </tr>
       <tr>
-      <td><?php echo $totalcount['COUNT(*)'];?></td>
-      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todaycount['COUNT(*)'];?></button><?php } else { echo $todaycount['COUNT(*)']; }?></td>
-      <td><?php echo $hourcount['COUNT(*)'];?></td>
-      <td><?php if($kiosk == false){?><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button><?php }else { echo $totalspeciestally['COUNT(DISTINCT(Sci_Name))']; }?></td>
-      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todayspeciestally['COUNT(DISTINCT(Sci_Name))'];?></button><?php } else { echo $todayspeciestally['COUNT(DISTINCT(Sci_Name))']; }?></td>
+      <td><?php echo $totalcount;?></td>
+      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todaycount;?></button><?php } else { echo $todaycount; }?></td>
+      <td><?php echo $hourcount;?></td>
+      <td><?php if($kiosk == false){?><button type="submit" name="view" value="Species Stats"><?php echo $totalspeciestally;?></button><?php }else { echo $totalspeciestally; }?></td>
+      <td><input type="hidden" name="view" value="Recordings"><?php if($kiosk == false){?><button type="submit" name="date" value="<?php echo date('Y-m-d');?>"><?php echo $todayspeciestally;?></button><?php } else { echo $todayspeciestally; }?></td>
       </tr>
     </table></form></div>
 
@@ -488,7 +465,7 @@ document.getElementById("searchterm").onkeydown = (function(e) {
 
 function switchViews(element) {
   if(searchterm == ""){
-    document.getElementById("detections_table").innerHTML = "<h3>Loading <?php echo $todaycount['COUNT(*)']; ?> detections...</h3>";
+    document.getElementById("detections_table").innerHTML = "<h3>Loading <?php echo $todaycount; ?> detections...</h3>";
   } else {
     document.getElementById("detections_table").innerHTML = "<h3>Loading...</h3>";
   }
