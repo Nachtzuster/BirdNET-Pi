@@ -1,4 +1,3 @@
-
 """Interactive daily heatmap for BirdNET-Pi"""
 from __future__ import annotations
 
