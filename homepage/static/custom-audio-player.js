@@ -586,7 +586,7 @@ Channels: ${channels}`
       })
     );
 
-    const highpassOptions = ["Off", "250", "500", "1000", "1500"];
+    const highpassOptions = ["Off", "250", "500", "1k", "1.5k"];
     let activeHighpassOption = highpassOptions.includes(savedHighpass) ? savedHighpass : "Off";
     const highpassContainer = createOptionSection("HighPass (Hz):");
     const highpassButtons = highpassOptions.map((opt) =>
@@ -727,3 +727,4 @@ Channels: ${channels}`
 
 // Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", initCustomAudioPlayers);
+
