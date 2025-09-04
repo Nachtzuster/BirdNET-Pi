@@ -47,6 +47,11 @@ function initCustomAudioPlayers() {
     } catch {}
   };
 
+  // Helper for readable/friendly display of numbers
+  const compactFormatter = new Intl.NumberFormat(undefined, {
+      notation: 'compact'
+    });
+
   // Retrieve saved user preferences
   const savedGain = safeGet("customAudioPlayerGain", "Off");
   const savedHighpass = safeGet("customAudioPlayerFilterHigh", "Off");
@@ -586,12 +591,12 @@ Channels: ${channels}`
       })
     );
 
-    const highpassOptions = ["Off", "250", "500", "1000"];
+    const highpassOptions = ["Off", "250", "500", "1000", "1500"];
     let activeHighpassOption = highpassOptions.includes(savedHighpass) ? savedHighpass : "Off";
     const highpassContainer = createOptionSection("HighPass (Hz):");
     const highpassButtons = highpassOptions.map((opt) =>
       createButton(highpassContainer, {
-        text: opt,
+        text: compactFormatter.format(opt),
         data: { filter: opt },
         styles: optionBtnStyle,
         onClick: () => setActiveHighpass(opt),
