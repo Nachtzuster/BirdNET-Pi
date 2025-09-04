@@ -48,9 +48,16 @@ function initCustomAudioPlayers() {
   };
 
   // Helper for readable/friendly display of numbers
-  const compactFormatter = new Intl.NumberFormat(undefined, {
-      notation: 'compact'
-    });
+  const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact' });
+
+  const formatCompactOrEcho = (value) => {
+    const n = (typeof value === 'number') ? value : Number(value);
+    if (!Number.isFinite(n)) {
+      return String(value);
+    }
+    const out = compactFormatter.format(n);
+    return out;
+  };
 
   // Retrieve saved user preferences
   const savedGain = safeGet("customAudioPlayerGain", "Off");
@@ -596,7 +603,7 @@ Channels: ${channels}`
     const highpassContainer = createOptionSection("HighPass (Hz):");
     const highpassButtons = highpassOptions.map((opt) =>
       createButton(highpassContainer, {
-        text: compactFormatter.format(opt),
+        text: formatCompactOrEcho(opt),
         data: { filter: opt },
         styles: optionBtnStyle,
         onClick: () => setActiveHighpass(opt),
