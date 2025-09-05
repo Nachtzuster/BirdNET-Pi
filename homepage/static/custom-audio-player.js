@@ -615,7 +615,7 @@ Channels: ${channels}`
     const lowpassContainer = createOptionSection("LowPass (Hz):");
     const lowpassButtons = lowpassOptions.map((opt) =>
       createButton(lowpassContainer, {
-        text: opt,
+        text: formatCompactOrEcho(opt),
         data: { filter: opt },
         styles: optionBtnStyle,
         onClick: () => setActiveLowpass(opt),
