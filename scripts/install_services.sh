@@ -119,9 +119,7 @@ install_recording_service() {
 [Unit]
 Description=BirdNET Recording
 [Service]
-RuntimeDirectory=${USER}
-RuntimeDirectoryMode=0750
-Environment=XDG_RUNTIME_DIR=/run/user/${USER}
+Environment=XDG_RUNTIME_DIR=/run/user/$(id -u $USER)
 Restart=always
 Type=simple
 RestartSec=3
@@ -140,9 +138,7 @@ install_custom_recording_service() {
 [Unit]
 Description=BirdNET Custom Recording
 [Service]
-RuntimeDirectory=${USER}
-RuntimeDirectoryMode=0750
-Environment=XDG_RUNTIME_DIR=/run/user/${USER}
+Environment=XDG_RUNTIME_DIR=/run/user/$(id -u $USER)
 Restart=always
 Type=simple
 RestartSec=3
@@ -369,9 +365,7 @@ Description=BirdNET-Pi Live Stream
 After=network-online.target
 Requires=network-online.target
 [Service]
-RuntimeDirectory=${USER}
-RuntimeDirectoryMode=0750
-Environment=XDG_RUNTIME_DIR=/run/user/${USER}
+Environment=XDG_RUNTIME_DIR=/run/user/$(id -u $USER)
 Restart=always
 Type=simple
 RestartSec=3
