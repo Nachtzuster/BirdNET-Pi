@@ -15,11 +15,6 @@ $chart = "Combo-$myDate.png";
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
 
-$statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == DATE(\'now\', \'localtime\')');
-ensure_db_ok($statement2);
-$result2 = $statement2->execute();
-$todaycount = $result2->fetchArray(SQLITE3_ASSOC);
-
 if(isset($_GET['custom_image'])){
   if(isset($config["CUSTOM_IMAGE"])) {
   ?>
@@ -143,6 +138,10 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
       }
   }
   if($iterations == 0) {
+    $statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == DATE(\'now\', \'localtime\')');
+    ensure_db_ok($statement2);
+    $result2 = $statement2->execute();
+    $todaycount = $result2->fetchArray(SQLITE3_ASSOC);
     if($todaycount['COUNT(*)'] > 0) {
       echo "<h3>Your system is currently processing a backlog of audio. This can take several hours before normal functionality of your BirdNET-Pi resumes.</h3>";
     } else {
