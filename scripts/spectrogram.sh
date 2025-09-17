@@ -25,7 +25,13 @@ while read; do
 
     if [ -n "${analyzing_now}" ] && [ -f "${analyzing_now}" ]; then
       spectrogram_png=${EXTRACTED}/spectrogram.png
-      sox -V1 "${analyzing_now}" -n remix 1 rate 24k spectrogram -c "${analyzing_now//$HOME\//}" -o "${spectrogram_png}"
+        # Check if RAW_SPECTROGRAM is 1
+        if [ "$RAW_SPECTROGRAM" == "1" ]; then
+          # If it is, add "-r" as an argument to the SOX command
+          sox -V1 "${analyzing_now}" -n remix 1 rate 24k spectrogram -c "${analyzing_now//$HOME\//}" -o "${spectrogram_png}" -r
+        else
+          sox -V1 "${analyzing_now}" -n remix 1 rate 24k spectrogram -c "${analyzing_now//$HOME\//}" -o "${spectrogram_png}"
+        fi
     fi
     next=$(( now + looptime ))
   fi

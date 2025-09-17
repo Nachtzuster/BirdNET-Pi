@@ -45,12 +45,13 @@ def extract_safe(in_file, out_file, start, stop):
     extract(in_file, out_file, safe_start, safe_stop)
 
 
-def spectrogram(in_file, title, comment, raw=False):
+def spectrogram(in_file, title, comment, raw=0):
     fd, tmp_file = tempfile.mkstemp(suffix='.png')
     os.close(fd)
     args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', '24k', 'spectrogram',
             '-t', '', '-c', '', '-o', tmp_file]
-    args += ['-r'] if raw else []
+    args += ['-r'] if int(raw) else []
+
     result = subprocess.run(args, check=True, capture_output=True)
     ret = result.stdout.decode('utf-8')
     err = result.stderr.decode('utf-8')
@@ -81,7 +82,7 @@ def extract_detection(file: ParseFileName, detection: Detection):
     else:
         os.makedirs(new_dir, exist_ok=True)
         extract_safe(file.file_name, new_file, detection.start, detection.stop)
-        spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''))
+        spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''), conf['RAW_SPECTROGRAM'])
     return new_file
 
 
