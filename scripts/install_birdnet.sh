@@ -31,7 +31,8 @@ install_birdnet() {
   source ./birdnet/bin/activate
   pip3 install wheel
   get_tf_whl
-  pip3 install -U -r ./requirements_custom.txt
+  PIP_REQUIRE_HASHES=""
+  pip3 install -U --no-cache-dir --retries 5 --timeout 60 -r ./requirements_custom.txt
 }
 
 [ -d ${RECS_DIR} ] || mkdir -p ${RECS_DIR} &> /dev/null
