@@ -210,6 +210,10 @@ if grep -q 'php7.4-' /etc/caddy/Caddyfile &>/dev/null; then
   sed -i 's/php7.4-/php-/' /etc/caddy/Caddyfile
 fi
 
+if grep -q '^HIDE_MOUNTS.*\/run\/user' $HOME/BirdNET-Pi/templates/phpsysinfo.ini; then
+  sed -i 's#/run/user/[0-9]\+#/run/user/[0-9]+#' $HOME/BirdNET-Pi/templates/phpsysinfo.ini
+fi
+
 if ! [ -L /etc/avahi/services/http.service ];then
   # symbolic link does not work here, so just copy
   cp -f $HOME/BirdNET-Pi/templates/http.service /etc/avahi/services/
