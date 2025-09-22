@@ -167,7 +167,7 @@ if ! grep 'daemon' $HOME/BirdNET-Pi/templates/chart_viewer.service &>/dev/null;t
   systemctl daemon-reload && restart_services.sh
 fi
 
-if grep -q 'birdnet_server.service' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"&>/dev/null; then
+if grep -q 'birdnet_server.service' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service" &>/dev/null; then
     sed -i '/After=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
     sed -i '/Requires=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
     sed -i '/RuntimeMaxSec=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
@@ -211,7 +211,7 @@ if grep -q 'php7.4-' /etc/caddy/Caddyfile &>/dev/null; then
 fi
 
 if grep -q '^HIDE_MOUNTS.*\/run\/user' $HOME/BirdNET-Pi/templates/phpsysinfo.ini; then
-  sed -i 's#/run/user/[0-9]\+#/run/user/[0-9]+#' $HOME/BirdNET-Pi/templates/phpsysinfo.ini
+  sed -i 's#/run/user/[0-9]\+#/run/user/[0-9]+#g' $HOME/BirdNET-Pi/templates/phpsysinfo.ini
 fi
 
 if ! [ -L /etc/avahi/services/http.service ];then
