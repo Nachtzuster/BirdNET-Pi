@@ -109,7 +109,7 @@ if ! grep -E '^MAX_FILES_SPECIES=' /etc/birdnet/birdnet.conf &>/dev/null;then
 fi
 
 if ! grep -E '^AUTOMATIC_UPDATE=' /etc/birdnet/birdnet.conf &>/dev/null;then
-  echo "AUTOMATIC_UPDATE=\"0\"" >> /etc/birdnet/birdnet.conf
+  echo "AUTOMATIC_UPDATE=0" >> /etc/birdnet/birdnet.conf
 fi
 
 if ! grep -E '^RARE_SPECIES_THRESHOLD=' /etc/birdnet/birdnet.conf &>/dev/null;then
