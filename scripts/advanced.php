@@ -471,9 +471,9 @@ foreach($formats as $format){
       <input type="checkbox" name="silence_update_indicator" <?php if($newconfig['SILENCE_UPDATE_INDICATOR'] == 1) { echo "checked"; };?> >
       <p>This allows you to quiet the display of how many commits your installation is behind by relative to the Github repo. This number appears next to "Tools" when you're 50 or more commits behind.</p><br>
 		  
-      <label for="automatic_update">Automatic Update After Midnight: </label>
+      <label for="automatic_update">Automatic Update: </label>
       <input type="checkbox" name="automatic_update" <?php if($newconfig['AUTOMATIC_UPDATE'] == 1) { echo "checked"; };?> >
-      <p>This configures an automatic update of the installation each day slightly after midnight. <br>To avoid conflicts with other scheduled tasks the time is set to 7 minutes after midnight, but can be changed using crontab.</p><br>
+      <p>This configures an automatic update of the installation each Sunday at 3:00 AM but the timing can be changed using crontab.</p><br>
 		  
       <label for="raw_spectrogram">Minimalist Spectrograms: </label>
       <input type="checkbox" name="raw_spectrogram" <?php if($newconfig['RAW_SPECTROGRAM'] == 1) { echo "checked"; };?> >
