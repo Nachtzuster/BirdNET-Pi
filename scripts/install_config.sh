@@ -263,8 +263,8 @@ HEARTBEAT_URL=
 SILENCE_UPDATE_INDICATOR=0
 
 ## AUTOMATIC_UPDATE is for specifying that the installation is automatically
-## updated from the Github repo. The update time is by default 7 minutes after 
-## midnight but can be adjusted using crontab.
+## updated from the Github repo. The update time is by default every Sunday at 3:00 AM 
+## but can be adjusted using crontab.
 
 AUTOMATIC_UPDATE=0
 
