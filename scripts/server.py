@@ -58,8 +58,7 @@ def loadModel():
     CLASSES = []
     labelspath = userDir + '/BirdNET-Pi/model/labels.txt'
     with open(labelspath, 'r') as lfile:
-        for line in lfile.readlines():
-            CLASSES.append(line.replace('\n', ''))
+        CLASSES = [line.strip() for line in lfile.readlines()]
 
     log.info('LOADING DONE!')
 
@@ -124,25 +123,18 @@ def explore(lat, lon, week):
     return l_filter
 
 
-def predictSpeciesList(lat, lon, week):
-
+def set_predicted_species_list(lat, lon, week):
+    global PREDICTED_SPECIES_LIST
     l_filter = explore(lat, lon, week)
-    for s in l_filter:
-        if s[0] >= float(sf_thresh):
-            # if there's a custom user-made include list, we only want to use the species in that
-            if (len(INCLUDE_LIST) == 0):
-                PREDICTED_SPECIES_LIST.append(s[1])
-
+    PREDICTED_SPECIES_LIST = [s[1].split('_')[0] for s in l_filter if s[0] >= sf_thresh]
 
 def loadCustomSpeciesList(path):
-
-    slist = []
+    species_list = []
     if os.path.isfile(path):
         with open(path, 'r') as csfile:
-            for line in csfile.readlines():
-                slist.append(line.replace('\r', '').replace('\n', ''))
+            species_list = [line.strip().split('_')[0] for line in csfile.readlines()]
 
-    return slist
+    return species_list
 
 
 def splitSignal(sig, rate, overlap, seconds=3.0, minlen=1.5):
@@ -236,7 +228,7 @@ def analyzeAudioData(chunks, lat, lon, week, sens, overlap,):
     if model == "BirdNET_GLOBAL_6K_V2.4_Model_FP16":
         if week != WEEK or len(INCLUDE_LIST) != 0:
             WEEK = week
-            predictSpeciesList(lat, lon, week)
+            set_predicted_species_list(lat, lon, week)
 
     mdata = get_metadata(lat, lon, week)
 
@@ -355,21 +347,22 @@ def run_analysis(file):
     confident_detections = []
     for time_slot, entries in raw_detections.items():
         log.info('%s-%s', time_slot, entries[0])
-        for entry in entries:
-            if entry[1] >= conf.getfloat('CONFIDENCE'):
-                if entry[0] not in INCLUDE_LIST and len(INCLUDE_LIST) != 0:
-                    log.warning("Excluded as INCLUDE_LIST is active but this species is not in it: %s", entry[0])
-                elif entry[0] in EXCLUDE_LIST and len(EXCLUDE_LIST) != 0:
-                    log.warning("Excluded as species in EXCLUDE_LIST: %s", entry[0])
-                elif entry[0] not in PREDICTED_SPECIES_LIST and len(PREDICTED_SPECIES_LIST) != 0 and entry[0] not in WHITELIST_LIST:
-                    log.warning("Excluded as below Species Occurrence Frequency Threshold: %s", entry[0])
+        for species, confidence in entries:
+            if confidence >= conf.getfloat('CONFIDENCE'):
+                sci_name = species.split('_')[0]
+                if sci_name not in INCLUDE_LIST and len(INCLUDE_LIST) != 0:
+                    log.warning("Excluded as INCLUDE_LIST is active but this species is not in it: %s", species)
+                elif sci_name in EXCLUDE_LIST and len(EXCLUDE_LIST) != 0:
+                    log.warning("Excluded as species in EXCLUDE_LIST: %s", species)
+                elif sci_name not in PREDICTED_SPECIES_LIST and len(PREDICTED_SPECIES_LIST) != 0 and sci_name not in WHITELIST_LIST:
+                    log.warning("Excluded as below Species Occurrence Frequency Threshold: %s", species)
                 else:
                     d = Detection(
                         file.file_date,
                         time_slot.split(';')[0],
                         time_slot.split(';')[1],
-                        entry[0],
-                        entry[1],
+                        species,
+                        confidence,
                     )
                     confident_detections.append(d)
     return confident_detections
