@@ -3,9 +3,14 @@
 # KEEP ONLY THE NUMBER OF FILES PER SPECIES DEFINED IN THE OPTIONS
 
 source /etc/birdnet/birdnet.conf
-base_dir="$HOME/BirdSongs/Extracted/By_Date"
+base_dir="$(realpath -e "$HOME/BirdSongs/Extracted/By_Date")"
 max_files_species="${MAX_FILES_SPECIES:-1000}"
 cd "$base_dir" || true
+
+# Check if the first argument is a valid integer
+if [[ "$1" =~ ^[0-9]+$ ]]; then
+  max_files_species="$1"
+fi
 
 # If max_files_species is not higher than 1, exit
 if [[ "$max_files_species" -lt 1 ]]; then
