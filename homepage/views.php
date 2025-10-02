@@ -173,6 +173,7 @@ if(isset($_GET['view'])){
       <button type=\"submit\" name=\"view\" value=\"Included\" form=\"views\">Custom Species List</button>
       <button type=\"submit\" name=\"view\" value=\"Excluded\" form=\"views\">Excluded Species List</button>
       <button type=\"submit\" name=\"view\" value=\"Whitelisted\" form=\"views\">Whitelist Species List</button>
+      <button type=\"submit\" name=\"view\" value=\"Species Management\" form=\"views\">Species Management</button>
       </form>
       </div>";
   }
@@ -202,6 +203,10 @@ if(isset($_GET['view'])){
     }
     $species_list="whitelist";
     include('./scripts/species_list.php');
+  }
+  if($_GET['view'] == "Species Management"){
+    ensure_authenticated();
+    include('scripts/species_tools.php');
   }
   if($_GET['view'] == "File"){
     echo "<iframe src='scripts/filemanager/filemanager.php'></iframe>";
