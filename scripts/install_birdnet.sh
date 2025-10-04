@@ -31,7 +31,14 @@ install_birdnet() {
   source ./birdnet/bin/activate
   pip3 install wheel
   get_tf_whl
-  pip3 install -U -r ./requirements_custom.txt
+  LOOP_COUNT=2
+  while ! pip3 install -U -r ./requirements_custom.txt
+  do
+    LOOP_COUNT=$(( LOOP_COUNT - 1 ))
+    pip3 cache purge
+    [ $LOOP_COUNT == 0 ] && exit 1
+    sleep 5
+  done
 }
 
 [ -d ${RECS_DIR} ] || mkdir -p ${RECS_DIR} &> /dev/null
