@@ -11,6 +11,7 @@ from utils.helpers import get_settings, Detection
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['CUDA_VISIBLE_DEVICES'] = ''
+np.set_printoptions(legacy="1.25")
 
 try:
     import tflite_runtime.interpreter as tflite
