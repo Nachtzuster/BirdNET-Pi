@@ -63,7 +63,7 @@ EOF
 }
 
 install_tmp_mount() {
-  STATE=$(systemctl is-enabled tmp.mount 2>&1 | grep -E '(enabled|disabled)')
+  STATE=$(systemctl is-enabled tmp.mount 2>&1 | grep -E '(enabled|disabled|static)')
   ! [ -f /usr/share/systemd/tmp.mount ] && echo "Warning: no /usr/share/systemd/tmp.mount found"
   if [ -z $STATE ]; then
     cp -f /usr/share/systemd/tmp.mount /etc/systemd/system/tmp.mount
