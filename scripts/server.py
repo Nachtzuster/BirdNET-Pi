@@ -367,3 +367,37 @@ def run_analysis(file):
                     )
                     confident_detections.append(d)
     return confident_detections
+
+
+if __name__ == '__main__':
+    from utils.helpers import ParseFileName
+    conf = get_settings()
+    model = conf['MODEL']
+    test_files = ['../tests/testdata/2024-02-24-birdnet-16:19:37.wav']
+    results = [{
+        "BirdNET_6K_GLOBAL_MODEL": [
+            {"confidence": 0.9894, 'sci_name': 'Pica pica'},
+            {"confidence": 0.9779, 'sci_name': 'Pica pica'},
+            {"confidence": 0.9943, 'sci_name': 'Pica pica'}],
+        "BirdNET_GLOBAL_6K_V2.4_Model_FP16": [
+            {"confidence": 0.912, 'sci_name': 'Pica pica'},
+            {"confidence": 0.9316, 'sci_name': 'Pica pica'},
+            {"confidence": 0.8857, 'sci_name': 'Pica pica'}],
+        "Perch_v2": [
+            {"confidence": 0.9641, 'sci_name': 'Pica pica'},
+            {"confidence": 0.9609, 'sci_name': 'Pica pica'},
+            {"confidence": 0.9468, 'sci_name': 'Pica pica'}],
+        "BirdNET-Go_classifier_20250916": [
+            {"confidence": 0.9123, 'sci_name': 'Pica pica'},
+            {"confidence": 0.9317, 'sci_name': 'Pica pica'},
+            {"confidence": 0.8861, 'sci_name': 'Pica pica'}],
+    }]
+    load_global_model()
+    for sample, expected in zip(test_files, results):
+        file = ParseFileName(os.path.expanduser(sample))
+        detections = run_analysis(file)
+        assert (len(detections) == len(expected[model]))
+        for det, this_det in zip(detections, expected[model]):
+            assert (det.confidence == this_det['confidence'])
+            assert (det.scientific_name == this_det['sci_name'])
+    print('ok')
