@@ -40,7 +40,7 @@ def get_meta_model(model=None, version=None):
         version = conf.getint('DATA_MODEL_VERSION')
 
     if model != 'BirdNET_GLOBAL_6K_V2.4_Model_FP16':
-        return MDataModel0()
+        return None
 
     if version == 1:
         return MDataModel1(conf.getfloat('SF_THRESH'))
@@ -171,15 +171,7 @@ class BirdNetV2_4(BirdNet):
         return self._mdata_model.get_species_list(self.labels)
 
 
-class MDataModel0:
-    def set_meta_data(self, lat, lon, week):
-        pass
-
-    def get_species_list(self, labels):
-        return []
-
-
-class MDataModel(MDataModel0):
+class MDataModel:
     _model_name = None
 
     def __init__(self, sf_thresh):
