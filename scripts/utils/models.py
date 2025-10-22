@@ -28,6 +28,10 @@ def get_model(model=None):
         return BirdNetV1(conf.getfloat('SENSITIVITY'))
     elif model == 'BirdNET_GLOBAL_6K_V2.4_Model_FP16':
         return BirdNetV2_4(conf.getfloat('SENSITIVITY'))
+    elif model == 'Perch_v2':
+        return Perch()
+    elif model == 'BirdNET-Go_classifier_20250916':
+        return BirdNETGo20250916(conf.getfloat('SENSITIVITY'))
 
 
 def get_meta_model(model=None, version=None):
@@ -37,7 +41,7 @@ def get_meta_model(model=None, version=None):
     if version is None:
         version = conf.getint('DATA_MODEL_VERSION')
 
-    if model != 'BirdNET_GLOBAL_6K_V2.4_Model_FP16':
+    if model not in ['BirdNET_GLOBAL_6K_V2.4_Model_FP16', 'BirdNET-Go_classifier_20250916']:
         return None
 
     if version == 1:
@@ -161,6 +165,26 @@ class BirdNetV2_4(BirdNet):
 
     def get_species_list(self):
         return self._mdata_model.get_species_list(self.labels)
+
+
+class Perch(Basemodel):
+    chunk_duration = 5
+    sample_rate = 32000
+    model_name = 'Perch_v2'
+    _output_layer = 3
+
+    def predict(self, chunk):
+        self.interpreter.set_tensor(self._input_layer_idx, np.array(chunk, dtype='float32')[np.newaxis, :])
+
+        self.interpreter.invoke()
+        logits = self.interpreter.get_tensor(self._output_layer_idx)[0]
+
+        exp_x = np.exp(logits - np.max(logits))  # Stabilizing to prevent overflow
+        return self.label(exp_x / np.sum(exp_x))
+
+
+class BirdNETGo20250916(BirdNetV2_4):
+    model_name = 'BirdNET-Go_classifier_20250916'
 
 
 class MDataModel:
