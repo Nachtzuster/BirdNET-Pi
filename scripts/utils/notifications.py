@@ -1,4 +1,5 @@
 import apprise
+import logging
 import os
 import socket
 import sqlite3
@@ -15,9 +16,10 @@ DB_PATH = userDir + '/BirdNET-Pi/scripts/birds.db'
 apobj = None
 images = {}
 species_last_notified = {}
-
+log = logging.getLogger(__name__)
 
 def notify(body, title, attached=""):
+    log.info("Entering notify function with title %s and body %s", title, body)
     global apobj
     if apobj is None:
         asset = apprise.AppriseAsset(
@@ -32,16 +34,20 @@ def notify(body, title, attached=""):
         apobj.add(config)
 
     if attached != "":
-        apobj.notify(
+        log.info("Calling Apprise notify function with title %s and body %s", title, body)
+        result = apobj.notify(
             body=body,
             title=title,
             attach=attached,
         )
+        log.info("Finished called Apprise notify function. Got result %s with title %s and body %s", result, title, body)
     else:
-        apobj.notify(
+        log.info("Calling Apprise notify function (no attachment) with title %s and body %s", title, body)
+        result = apobj.notify(
             body=body,
             title=title,
         )
+        log.info("Finished called Apprise notify function (no attachment). Got result %s) with title %s and body %s", result, title, body)
 
 
 def sendAppriseNotifications(species, confidence, confidencepct, path,
@@ -68,6 +74,7 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
         return ret
     # print(sendAppriseNotifications)
     # print(settings_dict)
+    
     if os.path.exists(APPRISE_CONFIG) and os.path.getsize(APPRISE_CONFIG) > 0:
 
         title = html.unescape(settings_dict.get('APPRISE_NOTIFICATION_TITLE'))
