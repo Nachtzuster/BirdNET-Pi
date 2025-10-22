@@ -30,6 +30,8 @@ def get_model(model=None):
         return BirdNetV1(conf.getfloat('SENSITIVITY'))
     elif model == 'BirdNET_GLOBAL_6K_V2.4_Model_FP16':
         return BirdNetV2_4(conf.getfloat('SENSITIVITY'))
+    elif model == 'Perch_v2':
+        return Perch()
 
 
 def get_meta_model(model=None, version=None):
@@ -169,6 +171,22 @@ class BirdNetV2_4(BirdNet):
 
     def get_species_list(self):
         return self._mdata_model.get_species_list(self.labels)
+
+
+class Perch(Basemodel):
+    chunk_duration = 5
+    sample_rate = 32000
+    _output_layer = 3
+    _model_name = 'Perch_v2.tflite'
+
+    def predict(self, chunk):
+        self.interpreter.set_tensor(self._input_layer_idx, np.array(chunk, dtype='float32')[np.newaxis, :])
+
+        self.interpreter.invoke()
+        logits = self.interpreter.get_tensor(self._output_layer_idx)[0]
+
+        exp_x = np.exp(logits - np.max(logits))  # Stabilizing to prevent overflow
+        return self.label(exp_x / np.sum(exp_x))
 
 
 class MDataModel:
