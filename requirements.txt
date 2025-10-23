@@ -16,3 +16,5 @@ requests
 matplotlib
 pillow
 eyed3
+pyarrow==20.0.0
+soundfile

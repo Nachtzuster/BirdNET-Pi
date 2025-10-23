@@ -24,7 +24,7 @@ h3 {
 
 iframe {
   border: none;
-  height: 85%;
+  height: 90%;
   width: 100%;
   position: fixed;
 }
@@ -618,6 +618,9 @@ button:hover {
   }
   .left {
     display:none;
+  }
+  iframe {
+    height: 83%;
   }
 }
 

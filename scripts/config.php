@@ -17,6 +17,12 @@ if (file_exists($home."/BirdNET-Pi/apprise.txt")) {
   $apprise_config = "";
 }
 
+if (file_exists($home."/BirdNET-Pi/body.txt")) {
+  $apprise_notification_body = file_get_contents($home."/BirdNET-Pi/body.txt");
+} else {
+  $apprise_notification_body = "";
+}
+
 function syslog_shell_exec($cmd, $sudo_user = null) {
   if ($sudo_user) {
     $cmd = "sudo -u $sudo_user $cmd";
@@ -57,8 +63,9 @@ if(isset($_GET["latitude"])){
   $birdweather_id = $_GET["birdweather_id"];
   $apprise_input = $_GET['apprise_input'];
   $apprise_notification_title = $_GET['apprise_notification_title'];
-  $apprise_notification_body = $_GET['apprise_notification_body'];
+  $apprise_notification_body = htmlspecialchars_decode($_GET['apprise_notification_body'], ENT_QUOTES);
   $minimum_time_limit = $_GET['minimum_time_limit'];
+  $image_provider = $_GET["image_provider"];
   $flickr_api_key = $_GET['flickr_api_key'];
   $flickr_filter_email = $_GET["flickr_filter_email"];
   $language = $_GET["language"];
@@ -137,11 +144,11 @@ if(isset($_GET["latitude"])){
   $contents = preg_replace("/LONGITUDE=.*/", "LONGITUDE=$longitude", $contents);
   $contents = preg_replace("/BIRDWEATHER_ID=.*/", "BIRDWEATHER_ID=$birdweather_id", $contents);
   $contents = preg_replace("/APPRISE_NOTIFICATION_TITLE=.*/", "APPRISE_NOTIFICATION_TITLE=\"$apprise_notification_title\"", $contents);
-  $contents = preg_replace("/APPRISE_NOTIFICATION_BODY=.*/", "APPRISE_NOTIFICATION_BODY=\"$apprise_notification_body\"", $contents);
   $contents = preg_replace("/APPRISE_NOTIFY_EACH_DETECTION=.*/", "APPRISE_NOTIFY_EACH_DETECTION=$apprise_notify_each_detection", $contents);
   $contents = preg_replace("/APPRISE_NOTIFY_NEW_SPECIES=.*/", "APPRISE_NOTIFY_NEW_SPECIES=$apprise_notify_new_species", $contents);
   $contents = preg_replace("/APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY=.*/", "APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY=$apprise_notify_new_species_each_day", $contents);
   $contents = preg_replace("/APPRISE_WEEKLY_REPORT=.*/", "APPRISE_WEEKLY_REPORT=$apprise_weekly_report", $contents);
+  $contents = preg_replace("/IMAGE_PROVIDER=.*/", "IMAGE_PROVIDER=$image_provider", $contents);
   $contents = preg_replace("/FLICKR_API_KEY=.*/", "FLICKR_API_KEY=$flickr_api_key", $contents);
   if(strlen($language) == 2){
     $contents = preg_replace("/DATABASE_LANG=.*/", "DATABASE_LANG=$language", $contents);
@@ -175,6 +182,10 @@ if(isset($_GET["latitude"])){
     fwrite($appriseconfig, $apprise_input);
     $apprise_config = $apprise_input;
   }
+  if(isset($apprise_notification_body)){
+    $apprisebody = fopen($home."/BirdNET-Pi/body.txt", "w");
+    fwrite($apprisebody, $apprise_notification_body);
+  }
   if ($model != $config['MODEL'] || $language != $config['DATABASE_LANG']){
     if(strlen($language) == 2){
       syslog_shell_exec("$home/BirdNET-Pi/scripts/install_language_label.sh", $user);
@@ -188,87 +199,38 @@ if(isset($_GET["latitude"])){
 if(isset($_GET['sendtest']) && $_GET['sendtest'] == "true") {
   $db = new SQLite3($home."/BirdNET-Pi/scripts/birds.db", SQLITE3_OPEN_READONLY);
   $db->busyTimeout(1000);
-
-  $cf = explode("\n",$_GET['apprise_config']);
-  $cf = "'".implode("' '", $cf)."'";
-
-  $statement0 = $db->prepare('SELECT * FROM detections WHERE Date == DATE(\'now\', \'localtime\') ORDER BY TIME DESC LIMIT 1');
+  $statement0 = $db->prepare('SELECT * FROM detections ORDER BY Date DESC, Time DESC LIMIT 1');
   $result0 = $statement0->execute();
   while($todaytable=$result0->fetchArray(SQLITE3_ASSOC))
   {
-    $sciname = $todaytable['Sci_Name'];
-    $comname = $todaytable['Com_Name'];
-    $confidence = $todaytable['Confidence'];
-    $filename = $todaytable['File_Name'];
-    $date = $todaytable['Date'];
-    $time = $todaytable['Time'];
-    $week = $todaytable['Week'];
-    $latitude = $todaytable['Lat'];
-    $longitude = $todaytable['Lon'];
-    $cutoff = $todaytable['Cutoff'];
-    $sens = $todaytable['Sens'];
-    $overlap = $todaytable['Overlap'];
+    $detection = json_encode($todaytable);
   }
 
+  $conf = $_GET['apprise_config'];
   $title = $_GET['apprise_notification_title'];
   $body = $_GET['apprise_notification_body'];
 
-  if($config["BIRDNETPI_URL"] != "") {
-    $filename = $config["BIRDNETPI_URL"]."?filename=".$filename;
-  } else{
-    $filename = "http://".$_SERVER['SERVER_NAME']."/"."?filename=".$filename;
-  }
+  $temp_det = tmpfile();
+  $t_det_path = stream_get_meta_data($temp_det)['uri'];
+  chmod($t_det_path, 0644);
+  fwrite($temp_det, $detection);
 
-  $friendlyfilename = "[Listen here](".$filename.")";
+  $temp_conf = tmpfile();
+  $t_conf_path = stream_get_meta_data($temp_conf)['uri'];
+  chmod($t_conf_path, 0644);
+  fwrite($temp_conf, $conf);
 
-  $attach="";
-  $exampleimage = "https://live.staticflickr.com/7430/27545810581_8bfa8289a3_c.jpg";
-  if (strpos($body, '$flickrimage') !== false) {
-      $attach = "--attach ".$exampleimage;
-  }
-  if (strpos($body, '{') === false) {
-      $exampleimage = "";
-  }
+  $temp_body = tmpfile();
+  $t_body_path = stream_get_meta_data($temp_body)['uri'];
+  chmod($t_body_path, 0644);
+  fwrite($temp_body, $body);
 
-  $title = str_replace("\$sciname", $sciname, $title);
-  $title = str_replace("\$comname", $comname, $title);
-  $title = str_replace("\$confidencepct", round($confidence*100), $title);
-  $title = str_replace("\$confidence", $confidence, $title);
-  $title = str_replace("\$listenurl", $filename, $title);
-  $title = str_replace("\$friendlyurl", $friendlyfilename, $title);
-  $title = str_replace("\$date", $date, $title);
-  $title = str_replace("\$time", $time, $title);
-  $title = str_replace("\$week", $week, $title);
-  $title = str_replace("\$latitude", $latitude, $title);
-  $title = str_replace("\$longitude", $longitude, $title);
-  $title = str_replace("\$cutoff", $cutoff, $title);
-  $title = str_replace("\$sens", $sens, $title);
-  $title = str_replace("\$overlap", $overlap, $title);
-  $title = str_replace("\$flickrimage", $exampleimage, $title);
-  $title = str_replace("\$reason", 'Test message', $title);
-
-  $body = str_replace("\$sciname", $sciname, $body);
-  $body = str_replace("\$comname", $comname, $body);
-  $body = str_replace("\$confidencepct", round($confidence*100), $body);
-  $body = str_replace("\$confidence", $confidence, $body);
-  $body = str_replace("\$listenurl", $filename, $body);
-  $body = str_replace("\$friendlyurl", $friendlyfilename, $body);
-  $body = str_replace("\$date", $date, $body);
-  $body = str_replace("\$time", $time, $body);
-  $body = str_replace("\$week", $week, $body);
-  $body = str_replace("\$latitude", $latitude, $body);
-  $body = str_replace("\$longitude", $longitude, $body);
-  $body = str_replace("\$cutoff", $cutoff, $body);
-  $body = str_replace("\$sens", $sens, $body);
-  $body = str_replace("\$overlap", $overlap, $body);
-  $body = str_replace("\$flickrimage", $exampleimage, $body);
-  $body = str_replace("\$reason", 'Test message', $body);
-
-  $temp = tmpfile();
-  $tpath = stream_get_meta_data($temp)['uri'];
-  fwrite($temp, $body);
-  echo "<pre class=\"bash\">".shell_exec($home."/BirdNET-Pi/birdnet/bin/apprise -vv --plugin-path ".$home."/.apprise/plugins "." -t '".escapeshellcmd($title)."' ".$attach." ".$cf." <".$tpath)."</pre>";
-  fclose($temp);
+  $cmd = "sudo -u $user $home/BirdNET-Pi/birdnet/bin/python3 $home/BirdNET-Pi/scripts/send_test_notification.py --body $t_body_path --config $t_conf_path --title '" . escapeshellcmd($title) . "' --detection $t_det_path 2>&1";
+  $ret = shell_exec($cmd);
+  echo "<pre class=\"bash\">".$ret."</pre>";
+  fclose($temp_det);
+  fclose($temp_conf);
+  fclose($temp_body);
 
   die();
 }
@@ -300,7 +262,7 @@ function sendTestNotification(e) {
   e.classList.add("disabled");
 
   var apprise_notification_title = document.getElementsByName("apprise_notification_title")[0].value;
-  var apprise_notification_body = document.getElementsByName("apprise_notification_body")[0].value;
+  var apprise_notification_body = encodeURIComponent(document.getElementsByName("apprise_notification_body")[0].value);
   var apprise_config = encodeURIComponent(document.getElementsByName("apprise_input")[0].value);
 
   var xmlHttp = new XMLHttpRequest();
@@ -310,7 +272,7 @@ function sendTestNotification(e) {
             e.classList.remove("disabled");
         }
     }
-    xmlHttp.open("GET", "scripts/config.php?sendtest=true&apprise_notification_title="+apprise_notification_title+"&apprise_notification_body="+apprise_notification_body+"&apprise_config="+apprise_config, true); // true for asynchronous 
+    xmlHttp.open("GET", "scripts/config.php?sendtest=true"+"&apprise_notification_body="+apprise_notification_body+"&apprise_config="+apprise_config+"&apprise_notification_title="+apprise_notification_title, true); // true for asynchronous
     xmlHttp.send(null);
 }
 </script>
@@ -337,7 +299,7 @@ function sendTestNotification(e) {
       <label for="data_model_version">Species range model V2.4 - V2</label>  [ <a target="_blank" href="https://github.com/kahst/BirdNET-Analyzer/discussions/234">Info here</a> ]<br>
       <label for="sf_thresh">Species Occurrence Frequency Threshold [0.0005, 0.99]: </label>
       <input name="sf_thresh" type="number" style="width:5em;" max="0.99" min="0.0005" step="any" value="<?php print($config['SF_THRESH']);?>"/> <span onclick="document.getElementById('sfhelp').style.display='unset'" style="text-decoration:underline;cursor:pointer">[more info]</span><br>
-      <p id="sfhelp" style='display:none'>This value is used by the model to constrain the list of possible species that it will try to detect, given the minimum occurrence frequency. A 0.03 threshold means that for a species to be included in this list, it needs to, on average, be seen on at least 3% of historically submitted eBird checklists for your given lat/lon/current week of year. So, the lower the threshold, the rarer the species it will include.<br><img style='width:75%;padding-top:5px;padding-bottom:5px' alt="BirdNET-Pi new model detection flowchart" title="BirdNET-Pi new model detection flowchart" src="https://i.imgur.com/8YEAuSA.jpeg">
+      <p id="sfhelp" style='display:none'>This value is used by the model to constrain the list of possible species that it will try to detect, given the minimum occurrence frequency. A 0.03 threshold means that for a species to be included in this list, it needs to, on average, be seen on at least 3% of historically submitted eBird checklists for your given lat/lon/current week of year. So, the lower the threshold, the rarer the species it will include.<br><img style='max-width:100%;padding-top:5px;padding-bottom:5px' alt="BirdNET-Pi new model detection flowchart" title="BirdNET-Pi new model detection flowchart" src="images/BirdNET-Pi_nm_flowchart.alpha.png">
         <br>If you'd like to tinker with this threshold value and see which species make it onto the list, <?php if($config['MODEL'] == "BirdNET_6K_GLOBAL_MODEL"){ ?>please click "Update Settings" at the very bottom of this page to install the appropriate label file, then come back here and you'll be able to use the Species List Tester.<?php } else { ?>you can use this tool: <button type="button" class="testbtn" id="openModal">Species List Tester</button><?php } ?></p>
       </span>
 
@@ -520,8 +482,8 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <dd>Sigmoid Sensitivity set in "Advanced Settings"</dd>
       <dt>$overlap</dt>
       <dd>Overlap set in "Advanced Settings"</dd>
-      <dt>$flickrimage</dt>
-      <dd>A preview image of the detected species from Flickr. Set your API key below.</dd>
+      <dt>$image</dt>
+      <dd>An image of the detected species from a photo source, see below.</dd>
       <dt>$reason</dt>
       <dd>The reason a notification was sent</dd>
       </dl>
@@ -529,7 +491,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <label for="apprise_notification_title">Notification Title: </label>
       <input name="apprise_notification_title" style="width: 100%" type="text" value="<?php print($config['APPRISE_NOTIFICATION_TITLE']);?>" /><br>
       <label for="apprise_notification_body">Notification Body: </label>
-      <input name="apprise_notification_body" style="width: 100%" type="text" value='<?php print($config['APPRISE_NOTIFICATION_BODY']);?>' /><br>
+      <textarea class="testbtn" name="apprise_notification_body" rows="5" type="text" ><?php print($apprise_notification_body);?></textarea>
       <input type="checkbox" name="apprise_notify_new_species" <?php if($config['APPRISE_NOTIFY_NEW_SPECIES'] == 1 && filesize($home."/BirdNET-Pi/apprise.txt") != 0) { echo "checked"; };?> >
       <label for="apprise_notify_new_species">Notify each new infrequent species detection (<5 visits per week)</label><br>
       <input type="checkbox" name="apprise_notify_new_species_each_day" <?php if($config['APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY'] == 1 && filesize($home."/BirdNET-Pi/apprise.txt") != 0) { echo "checked"; };?> >
@@ -553,12 +515,19 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <span id="testsuccessmsg"></span>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
-      <h2>Bird Photos from Flickr</h2>
+      <h2>Bird Photo Source</h2>
+      <label for="image_provider">Image Provider: </label>
+      <select name="image_provider" class="testbtn">
+        <option value="" <?php if(empty($config['IMAGE_PROVIDER'])) { echo 'selected'; } ?>>None</option>
+        <option value="WIKIPEDIA" <?php if($config['IMAGE_PROVIDER'] == 'WIKIPEDIA') { echo 'selected'; } ?>>Wikipedia</option>
+        <option value="FLICKR" <?php if(empty($config['FLICKR_API_KEY'])) { echo 'disabled'; } else if($config['IMAGE_PROVIDER'] == 'FLICKR') { echo 'selected'; } ?>>Flickr</option>
+      </select>
+      <hr>
+      <p>Set your Flickr API key to enable the display of bird images next to detections. <a target="_blank" href="https://www.flickr.com/services/api/misc.api_keys.html">Get your key here.</a></p>
       <label for="flickr_api_key">Flickr API Key: </label>
       <input name="flickr_api_key" type="text" size="32" value="<?php print($config['FLICKR_API_KEY']);?>"/><br>
       <label for="flickr_filter_email">Only search photos from this Flickr user: </label>
       <input name="flickr_filter_email" type="email" size="24" placeholder="myflickraccount@gmail.com" value="<?php print($config['FLICKR_FILTER_EMAIL']);?>"/><br>
-      <p>Set your Flickr API key to enable the display of bird images next to detections. <a target="_blank" href="https://www.flickr.com/services/api/misc.api_keys.html">Get your free key here.</a></p>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
       <h2>Localization</h2>

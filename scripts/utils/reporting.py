@@ -1,11 +1,12 @@
 import glob
-import gzip
 import json
 import logging
 import os
 import sqlite3
 import subprocess
 import tempfile
+import io
+import soundfile
 from time import sleep
 
 import requests
@@ -44,12 +45,13 @@ def extract_safe(in_file, out_file, start, stop):
     extract(in_file, out_file, safe_start, safe_stop)
 
 
-def spectrogram(in_file, title, comment, raw=False) -> str:
+def spectrogram(in_file, title, comment, raw=0) -> str:
     fd, tmp_file = tempfile.mkstemp(suffix='.png')
     os.close(fd)
     args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', '24k', 'spectrogram',
             '-t', '', '-c', '', '-o', tmp_file]
-    args += ['-r'] if raw else []
+    args += ['-r'] if int(raw) else []
+
     result = subprocess.run(args, check=True, capture_output=True)
     ret = result.stdout.decode('utf-8')
     err = result.stderr.decode('utf-8')
@@ -98,7 +100,7 @@ def extract_detection(file: ParseFileName, detection: Detection):
     else:
         os.makedirs(new_dir, exist_ok=True)
         extract_safe(file.file_name, new_file, detection.start, detection.stop)
-        spectrogram_file = spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''))
+        spectrogram_file = spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''), conf['RAW_SPECTROGRAM'])
         attach_metadata(new_file, spectrogram_file, detection)
     return new_file
 
@@ -188,16 +190,22 @@ def bird_weather(file: ParseFileName, detections: [Detection]):
     if conf['BIRDWEATHER_ID'] == "":
         return
     if detections:
+        try:
+            data, samplerate = soundfile.read(file.file_name)
+            buf = io.BytesIO()
+            soundfile.write(buf, data, samplerate, format='FLAC')
+            flac_data = buf.getvalue()
+        except Exception as e:
+            log.error("Error during FLAC conversion: %s", e)
+            return
+
         # POST soundscape to server
         soundscape_url = (f'https://app.birdweather.com/api/v1/stations/'
                           f'{conf["BIRDWEATHER_ID"]}/soundscapes?timestamp={file.iso8601}')
 
-        with open(file.file_name, 'rb') as f:
-            wav_data = f.read()
-        gzip_wav_data = gzip.compress(wav_data)
         try:
-            response = requests.post(url=soundscape_url, data=gzip_wav_data, timeout=30,
-                                     headers={'Content-Type': 'application/octet-stream', 'Content-Encoding': 'gzip'})
+            response = requests.post(url=soundscape_url, data=flac_data, timeout=30,
+                                     headers={'Content-Type': 'audio/flac'})
             log.info("Soundscape POST Response Status - %d", response.status_code)
             sdata = response.json()
         except BaseException as e:

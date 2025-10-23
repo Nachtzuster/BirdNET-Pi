@@ -11,9 +11,10 @@ try:
 except BaseException:
     from tensorflow import lite as tflite
 
+M_INTERPRETER, M_INPUT_LAYER_INDEX, M_OUTPUT_LAYER_INDEX, CLASSES = (None, None, None, None)
+
 
 def loadMetaModel():
-
     global M_INTERPRETER
     global M_INPUT_LAYER_INDEX
     global M_OUTPUT_LAYER_INDEX
@@ -42,9 +43,6 @@ def loadMetaModel():
 
 
 def predictFilter(lat, lon, week):
-
-    global M_INTERPRETER
-
     # Does interpreter exist?
     try:
         if M_INTERPRETER is None:

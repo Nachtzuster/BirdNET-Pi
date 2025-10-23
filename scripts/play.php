@@ -532,6 +532,7 @@ if ($fp) {
 $name = htmlspecialchars_decode($_GET['species'], ENT_QUOTES);
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 40;
 
+$result2 = fetch_all_detections($name, $_GET['sort'], $_SESSION['date']);
 $results=$result2->fetchArray(SQLITE3_ASSOC);
 $com_name = $results['Com_Name'];
 $result2->reset(); // reset the pointer to the beginning of the result set

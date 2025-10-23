@@ -92,6 +92,12 @@ SRC='^APPRISE_NOTIFICATION_BODY="A \$comname \(\$sciname\)  was just detected wi
 DST='APPRISE_NOTIFICATION_BODY="A \$comname (\$sciname)  was just detected with a confidence of \$confidence (\$reason)"'
 sed -i --follow-symlinks -E "s/$SRC/$DST/" /etc/birdnet/birdnet.conf
 
+if ! [ -f $HOME/BirdNET-Pi/body.txt ];then
+  grep -E '^APPRISE_NOTIFICATION_BODY=".*"' /etc/birdnet/birdnet.conf | cut -d '"' -f 2 | sudo_with_user tee "$HOME/BirdNET-Pi/body.txt"
+  chmod g+w "$HOME/BirdNET-Pi/body.txt"
+  sed -i --follow-symlinks -E 's/^APPRISE_NOTIFICATION_BODY=/#APPRISE_NOTIFICATION_BODY=/' /etc/birdnet/birdnet.conf
+fi
+
 if ! grep -E '^INFO_SITE=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo "INFO_SITE=\"ALLABOUTBIRDS\"" >> /etc/birdnet/birdnet.conf
 fi
@@ -108,9 +114,23 @@ if ! grep -E '^MAX_FILES_SPECIES=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo "MAX_FILES_SPECIES=\"0\"" >> /etc/birdnet/birdnet.conf
 fi
 
+if ! grep -E '^AUTOMATIC_UPDATE=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo "AUTOMATIC_UPDATE=0" >> /etc/birdnet/birdnet.conf
+fi
+
 if ! grep -E '^RARE_SPECIES_THRESHOLD=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo '## RARE_SPECIES_THRESHOLD defines after how many days a species is considered as rare and highlighted on overview page' >> /etc/birdnet/birdnet.conf
   echo "RARE_SPECIES_THRESHOLD=\"30\"" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep -E '^IMAGE_PROVIDER=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  if grep -E '^FLICKR_API_KEY=\S+' /etc/birdnet/birdnet.conf &>/dev/null;then
+    PROVIDER=FLICKR
+  else
+    PROVIDER=""
+  fi
+  echo '## WIKIPEDIA or FLICKR (Flickr requires API key)' >> /etc/birdnet/birdnet.conf
+  echo "IMAGE_PROVIDER=${PROVIDER}" >> /etc/birdnet/birdnet.conf
 fi
 
 [ -d $RECS_DIR/StreamData ] || sudo_with_user mkdir -p $RECS_DIR/StreamData
@@ -129,6 +149,8 @@ version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import seaborn; print(seaborn
 [[ $version != "0.13.2" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install seaborn==0.13.2
 version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import suntime; print(suntime.__version__)")
 [[ $version != "1.3.2" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install suntime==1.3.2
+version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import pyarrow; print(pyarrow.__version__)")
+[[ $version != "20.0.0" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install pyarrow==20.0.0
 
 PY_VERSION=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import sys; print(f'{sys.version_info[0]}{sys.version_info[1]}')")
 tf_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import tflite_runtime; print(tflite_runtime.__version__)")
@@ -139,6 +161,7 @@ if [ "$PY_VERSION" == 39 ] && [ "$tf_version" != "2.11.0" ] || [ "$PY_VERSION" !
 fi
 
 ensure_python_package inotify inotify
+ensure_python_package soundfile soundfile
 
 if ! which inotifywait &>/dev/null;then
   ensure_apt_updated
@@ -154,7 +177,7 @@ if ! grep 'daemon' $HOME/BirdNET-Pi/templates/chart_viewer.service &>/dev/null;t
   systemctl daemon-reload && restart_services.sh
 fi
 
-if grep -q 'birdnet_server.service' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"&>/dev/null; then
+if grep -q 'birdnet_server.service' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service" &>/dev/null; then
     sed -i '/After=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
     sed -i '/Requires=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
     sed -i '/RuntimeMaxSec=.*/d' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
@@ -168,13 +191,28 @@ if ! [ -f "$HOME/BirdNET-Pi/templates/$TMP_MOUNT" ]; then
    chown $USER:$USER "$HOME/BirdNET-Pi/templates/$TMP_MOUNT"
 fi
 
-if grep -q -e '-P log' $HOME/BirdNET-Pi/templates/birdnet_log.service ;then
+if grep -q -e '-P log' $HOME/BirdNET-Pi/templates/birdnet_log.service ; then
   sed -i "s/-P log/--path log/" ~/BirdNET-Pi/templates/birdnet_log.service
   systemctl daemon-reload && restart_services.sh
 fi
 
-if grep -q -e '-P terminal' $HOME/BirdNET-Pi/templates/web_terminal.service ;then
+if grep -q -e '-P terminal' $HOME/BirdNET-Pi/templates/web_terminal.service ; then
   sed -i "s/-P terminal/--path terminal/" ~/BirdNET-Pi/templates/web_terminal.service
+  systemctl daemon-reload && restart_services.sh
+fi
+
+if grep -q -e 'Environment=XDG_RUNTIME_DIR=/run/user/' $HOME/BirdNET-Pi/templates/birdnet_recording.service; then
+  sed -i '/^Environment=XDG_RUNTIME_DIR=\/run\/user\/[0-9]\+/d' $HOME/BirdNET-Pi/templates/birdnet_recording.service
+  systemctl daemon-reload && restart_services.sh
+fi
+
+if grep -q -e 'Environment=XDG_RUNTIME_DIR=/run/user/' $HOME/BirdNET-Pi/templates/custom_recording.service; then
+  sed -i '/^Environment=XDG_RUNTIME_DIR=\/run\/user\/[0-9]\+/d' $HOME/BirdNET-Pi/templates/custom_recording.service
+  systemctl daemon-reload && restart_services.sh
+fi
+
+if grep -q -e 'Environment=XDG_RUNTIME_DIR=/run/user/' $HOME/BirdNET-Pi/templates/livestream.service; then
+  sed -i '/^Environment=XDG_RUNTIME_DIR=\/run\/user\/[0-9]\+/d' $HOME/BirdNET-Pi/templates/livestream.service
   systemctl daemon-reload && restart_services.sh
 fi
 
@@ -197,10 +235,11 @@ if [ -L /usr/local/bin/birdnet_analysis.sh ];then
 fi
 
 # Clean state and update cron if all scripts are not installed
-if [ "$(grep -o "#birdnet" /etc/crontab | wc -l)" -lt 5 ]; then
+if [ "$(grep -o "#birdnet" /etc/crontab | wc -l)" -lt 6 ]; then
   sudo sed -i '/birdnet/,+1d' /etc/crontab
   sed "s/\$USER/$USER/g" "$HOME"/BirdNET-Pi/templates/cleanup.cron >> /etc/crontab
   sed "s/\$USER/$USER/g" "$HOME"/BirdNET-Pi/templates/weekly_report.cron >> /etc/crontab
+  sed "s/\$USER/$USER/g" "$HOME"/BirdNET-Pi/templates/automatic_update.cron >> /etc/crontab
 fi
 
 set +x

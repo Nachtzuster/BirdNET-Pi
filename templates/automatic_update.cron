@@ -1,0 +1,2 @@
+#birdnet
+0 3 * * 0 $USER /usr/local/bin/update_birdnet.sh -a >/dev/null 2>&1
