@@ -70,7 +70,8 @@ class TestAppriseNotifications(unittest.TestCase):
             "APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY": "0",
             "APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES": "0"
         }
-        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
+        sendAppriseNotifications("Myiarchus crinitus",
+                                 "Great Crested Flycatcher",
                                  "0.91",
                                  "91",
                                  "filename",
@@ -91,7 +92,8 @@ class TestAppriseNotifications(unittest.TestCase):
         # Add daily notification.
         mock_notify.reset_mock()
         settings_dict["APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY"] = "1"
-        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
+        sendAppriseNotifications("Myiarchus crinitus",
+                                 "Great Crested Flycatcher",
                                  "0.91",
                                  "91",
                                  "filename",
@@ -115,7 +117,8 @@ class TestAppriseNotifications(unittest.TestCase):
         # Add new species notification.
         mock_notify.reset_mock()
         settings_dict["APPRISE_NOTIFY_NEW_SPECIES"] = "1"
-        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
+        sendAppriseNotifications("Myiarchus crinitus",
+                                 "Great Crested Flycatcher",
                                  "0.91",
                                  "91",
                                  "filename",
@@ -143,7 +146,8 @@ class TestAppriseNotifications(unittest.TestCase):
         # Add each species notification.
         mock_notify.reset_mock()
         settings_dict["APPRISE_NOTIFY_EACH_DETECTION"] = "1"
-        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
+        sendAppriseNotifications("Myiarchus crinitus",
+                                 "Great Crested Flycatcher",
                                  "0.91",
                                  "91",
                                  "filename",

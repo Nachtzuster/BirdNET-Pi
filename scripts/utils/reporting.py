@@ -156,7 +156,7 @@ def apprise(file: ParseFileName, detections: [Detection]):
         # Apprise of detection if not already alerted this run.
         if detection.species not in species_apprised_this_run:
             try:
-                sendAppriseNotifications(detection.species, str(detection.confidence), str(detection.confidence_pct),
+                sendAppriseNotifications(detection.scientific_name, detection.common_name, str(detection.confidence), str(detection.confidence_pct),
                                          os.path.basename(detection.file_name_extr), detection.date, detection.time, str(detection.week),
                                          conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], conf['SENSITIVITY'],
                                          conf['OVERLAP'], dict(conf), DB_PATH)

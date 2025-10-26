@@ -61,7 +61,7 @@ def get_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False):
 
 
 class Detection:
-    def __init__(self, file_date, start_time, stop_time, species, confidence):
+    def __init__(self, file_date, start_time, stop_time, scientific_name, common_name, confidence):
         self.start = float(start_time)
         self.stop = float(stop_time)
         self.datetime = file_date + datetime.timedelta(seconds=self.start)
@@ -71,9 +71,9 @@ class Detection:
         self.week = self.datetime.isocalendar()[1]
         self.confidence = round(float(confidence), 4)
         self.confidence_pct = round(self.confidence * 100)
-        self.species = species
-        self.scientific_name = species.split('_')[0]
-        self.common_name = species.split('_')[1]
+        self.species = scientific_name
+        self.scientific_name = scientific_name
+        self.common_name = common_name
         self.common_name_safe = self.common_name.replace("'", "").replace(" ", "_")
         self.file_name_extr = None
 
