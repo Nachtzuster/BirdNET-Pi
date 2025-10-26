@@ -1,8 +1,10 @@
 import datetime
 import glob
+import json
 import os
 import re
 import subprocess
+from collections import OrderedDict
 from configparser import ConfigParser
 from itertools import chain
 
@@ -11,6 +13,7 @@ from tzlocal import get_localzone
 _settings = None
 
 DB_PATH = os.path.expanduser('~/BirdNET-Pi/scripts/birds.db')
+MODEL_PATH = os.path.expanduser('~/BirdNET-Pi/model')
 ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
 FONT_DIR = os.path.expanduser('~/BirdNET-Pi/homepage/static')
 
@@ -118,3 +121,39 @@ def get_wav_files():
     open_recs = get_open_files_in_dir(rec_dir)
     files = [file for file in files if file not in open_recs]
     return files
+
+
+def get_language(language=None):
+    if language is None:
+        language = get_settings()['DATABASE_LANG']
+    file_name = os.path.join(MODEL_PATH, f'l18n/labels_{language}.json')
+    with open(file_name) as f:
+        ret = json.loads(f.read())
+    return ret
+
+
+def save_language(labels, language):
+    file_name = os.path.join(MODEL_PATH, f'l18n/labels_{language}.json')
+    with open(file_name, 'w') as f:
+        f.write(json.dumps(OrderedDict(sorted(labels.items())), indent=2, ensure_ascii=False))
+
+
+def get_model_labels(model=None):
+    if model is None:
+        model = get_settings()['MODEL']
+    file_name = os.path.join(MODEL_PATH, f'{model}_Labels.txt')
+    with open(file_name) as f:
+        labels = [line.strip() for line in f.readlines()]
+    if labels and labels[0].count('_') == 1:
+        labels = [re.sub(r'_.+$', '', label) for label in labels]
+    return labels
+
+
+def set_label_file():
+    lang = get_language()
+    labels = [f'{label}_{lang[label]}\n' for label in get_model_labels()]
+    file_name = os.path.join(MODEL_PATH, 'labels.txt')
+    if os.path.islink(file_name):
+        os.remove(file_name)
+    with open(file_name, 'w') as f:
+        f.writelines(labels)
