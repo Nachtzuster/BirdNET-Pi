@@ -33,6 +33,7 @@ if __name__ == "__main__":
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-    notifications.sendAppriseNotifications(f"{d['Sci_Name']}_{d['Com_Name']}", d['Confidence'], round(d['Confidence'] * 100), d['File_Name'],
+    notifications.sendAppriseNotifications({d['Sci_Name']}, {d['Com_Name']}, d['Confidence'],
+                                           round(d['Confidence'] * 100), d['File_Name'],
                                            d['Date'], d['Time'], d['Week'], d['Lat'], d['Lon'], d['Cutoff'],
                                            d['Sens'], d['Overlap'], dict(conf), DB_PATH)

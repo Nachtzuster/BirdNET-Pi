@@ -49,7 +49,8 @@ def test_notifications(mocker):
         "APPRISE_NOTIFY_NEW_SPECIES": "0",
         "APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY": "0"
     }
-    sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
+    sendAppriseNotifications("Myiarchus crinitus",
+                             "Great Crested Flycatcher",
                              "0.91",
                              "91",
                              "filename",
@@ -70,7 +71,8 @@ def test_notifications(mocker):
     # Add daily notification.
     notify_call.reset_mock()
     settings_dict["APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY"] = "1"
-    sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
+    sendAppriseNotifications("Myiarchus crinitus",
+                             "Great Crested Flycatcher",
                              "0.91",
                              "91",
                              "filename",
@@ -93,7 +95,8 @@ def test_notifications(mocker):
     # Add new species notification.
     notify_call.reset_mock()
     settings_dict["APPRISE_NOTIFY_NEW_SPECIES"] = "1"
-    sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
+    sendAppriseNotifications("Myiarchus crinitus",
+                             "Great Crested Flycatcher",
                              "0.91",
                              "91",
                              "filename",
@@ -120,7 +123,8 @@ def test_notifications(mocker):
     # Add each species notification.
     notify_call.reset_mock()
     settings_dict["APPRISE_NOTIFY_EACH_DETECTION"] = "1"
-    sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
+    sendAppriseNotifications("Myiarchus crinitus",
+                             "Great Crested Flycatcher",
                              "0.91",
                              "91",
                              "filename",
