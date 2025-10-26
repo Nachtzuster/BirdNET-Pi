@@ -280,8 +280,7 @@ if (isset($_GET["max_files_species"])) {
   }
 }
 
-$count_labels = count(file($home."/BirdNET-Pi/model/labels.txt"));
-$count = $count_labels;
+$count = 6000;
 ?>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>

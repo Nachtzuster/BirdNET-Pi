@@ -91,8 +91,7 @@ def analyzeAudioData(chunks, overlap, lat, lon, week):
 def filter_humans(detections):
     conf = get_settings()
     priv_thresh = conf.getfloat('PRIVACY_THRESHOLD')
-    human_cutoff = max(10, int(len(detections[0]) * priv_thresh / 100.0))
-    log.debug("DATABASE SIZE: %d", len(detections[0]))
+    human_cutoff = max(10, int(6000 * priv_thresh / 100.0))
     log.debug("HUMAN-CUTOFF AT: %d", human_cutoff)
 
     censored_detections = []
