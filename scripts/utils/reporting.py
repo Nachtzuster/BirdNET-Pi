@@ -12,7 +12,8 @@ from time import sleep
 import requests
 from PIL import Image, ImageDraw, ImageFont
 
-from .helpers import get_settings, ParseFileName, Detection, get_font, DB_PATH
+from .helpers import get_settings, get_font, DB_PATH
+from .classes import Detection, ParseFileName
 from .notifications import sendAppriseNotifications
 
 log = logging.getLogger(__name__)
