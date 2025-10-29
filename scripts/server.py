@@ -5,9 +5,9 @@ import time
 import librosa
 import numpy as np
 
-from utils.helpers import get_settings, Detection, get_language
+from utils.classes import Detection, ParseFileName
+from utils.helpers import get_settings, get_language
 from utils.models import get_model
-
 
 log = logging.getLogger(__name__)
 
@@ -194,7 +194,6 @@ def run_analysis(file):
 
 
 if __name__ == '__main__':
-    from utils.helpers import ParseFileName
     conf = get_settings()
     model = conf['MODEL']
     test_files = ['~/Documents/BirdNet/birdnet_sample_30s/2024-02-24-birdnet-16:19:37.wav']
