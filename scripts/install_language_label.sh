@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 
 source /etc/birdnet/birdnet.conf
-if [ "$MODEL" == "BirdNET_GLOBAL_6K_V2.4_Model_FP16" ]; then
-  BASEDIR=labels_nm
-else
-  BASEDIR=labels_l18n
-fi
+cd /home/$BIRDNET_USER/BirdNET-Pi/scripts
 
-label_file_name="labels_${DATABASE_LANG}.txt"
+python3 -c 'from utils.helpers import set_label_file; set_label_file()'
 
-[ -f "$HOME/BirdNET-Pi/model/${BASEDIR}/${label_file_name}" ] && ln -sf ${BASEDIR}/${label_file_name} $HOME/BirdNET-Pi/model/labels.txt
+cd -
