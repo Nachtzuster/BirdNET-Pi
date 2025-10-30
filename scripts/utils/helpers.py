@@ -102,6 +102,16 @@ def get_model_labels(model=None):
     return ret
 
 
+def set_label_file():
+    lang = get_language()
+    labels = [f'{label}_{lang[label]}\n' for label in get_model_labels()]
+    file_name = os.path.join(MODEL_PATH, 'labels.txt')
+    if os.path.islink(file_name):
+        os.remove(file_name)
+    with open(file_name, 'w') as f:
+        f.writelines(labels)
+
+
 def get_labels(model, language=None):
     postfix = '' if language is None else f'_{language}'
     file_name = os.path.join(MODEL_PATH, f'labels_{model}/labels{postfix}.txt')
