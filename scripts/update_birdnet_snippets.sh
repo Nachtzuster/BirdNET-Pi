@@ -253,10 +253,10 @@ AUTH=$(grep basicauth /etc/caddy/Caddyfile)
 [ -n "${CADDY_PWD}" ] && [ -z "${AUTH}" ] && sudo /usr/local/bin/update_caddyfile.sh > /dev/null 2>&1
 set -x
 
-if ! [ -L $HOME/BirdNET-Pi/model/labels_flickr.txt ]; then
-  sudo_with_user ln -sf labels_nm/labels_en.txt $HOME/BirdNET-Pi/model/labels_flickr.txt
+if [ -L $HOME/BirdNET-Pi/model/labels_flickr.txt ]; then
+  rm $HOME/BirdNET-Pi/model/labels_flickr.txt
 fi
-if ! [ -L $HOME/BirdNET-Pi/model/labels.txt ]; then
+if [ -L $HOME/BirdNET-Pi/model/labels.txt ]; then
   sudo_with_user install_language_label.sh
 fi
 
