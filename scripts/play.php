@@ -639,8 +639,9 @@ echo "<table>
     $statement2 = $db->prepare("SELECT * FROM detections where File_name == \"$name\" ORDER BY Date DESC, Time DESC");
     ensure_db_ok($statement2);
     $result2 = $statement2->execute();
-    $comname = str_replace("_", " ", strtok($name, '-'));
-    $sciname = get_sci_name($comname);
+    $results = $result2->fetchArray(SQLITE3_ASSOC);
+    $sciname = $results['Sci_Name'];
+    $result2->reset();
     $info_url = get_info_url($sciname);
     $url = $info_url['URL'];
     echo "<table>
