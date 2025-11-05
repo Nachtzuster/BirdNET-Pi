@@ -569,7 +569,8 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
           "sv" => "Swedish",
           "th" => "Thai",
           "tr" => "Turkish",
-          "uk" => "Ukrainian"
+          "uk" => "Ukrainian",
+          "vi" => "Vietnamese"
         );
 
         // Create options for each language
