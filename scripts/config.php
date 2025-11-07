@@ -432,17 +432,17 @@ function runProcess() {
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
       <h2>BirdWeather</h2>
-      <label for="birdweather_id">BirdWeather ID: </label>
+      <label for="birdweather_id">BirdWeather Token: </label>
       <input name="birdweather_id" type="text" value="<?php print($config['BIRDWEATHER_ID']);?>" /><br>
            <p><a href="https://app.birdweather.com" target="_blank">BirdWeather.com</a> is a weather map for bird sounds. 
         Stations around the world supply audio and video streams to BirdWeather where they are then analyzed by BirdNET 
         and compared to eBird Grid data. BirdWeather catalogues the bird audio and spectrogram visualizations so that you 
         can listen to, view, and read about birds throughout the world. <br><br> 
-        To request a BirdWeather ID, You'll first need to create an account - <a href="https://app.birdweather.com/login" target="_blank">https://app.birdweather.com/</a><br>
+        To request a BirdWeather Token, You'll first need to create an account - <a href="https://app.birdweather.com/login" target="_blank">https://app.birdweather.com/</a><br>
         Once that's done - you can go to - <a href="https://app.birdweather.com/account/stations" target="_blank">https://app.birdweather.com/account/stations</a><br>
         Make sure that the Latitude and Longitude match what is in your BirdNET-Pi configuration.
         <br><br>
-        <dt>NOTE - by using your BirdWeather ID - you are consenting to sharing your soundscapes and detections with BirdWeather</dt></p>
+        <dt>NOTE - by using your BirdWeather Token - you are consenting to sharing your soundscapes and detections with BirdWeather</dt></p>
       </td></tr></table><br>
       <table class="settingstable" style="width:100%"><tr><td>
       <h2>Notifications</h2>
