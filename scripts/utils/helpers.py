@@ -9,10 +9,11 @@ from itertools import chain
 
 _settings = None
 
-DB_PATH = os.path.expanduser('~/BirdNET-Pi/scripts/birds.db')
-MODEL_PATH = os.path.expanduser('~/BirdNET-Pi/model')
+BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+DB_PATH = os.path.join(BASE_PATH, 'scripts/birds.db')
+MODEL_PATH = os.path.join(BASE_PATH, 'model')
+FONT_DIR = os.path.join(BASE_PATH, 'homepage/static')
 ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
-FONT_DIR = os.path.expanduser('~/BirdNET-Pi/homepage/static')
 
 
 def get_font():
