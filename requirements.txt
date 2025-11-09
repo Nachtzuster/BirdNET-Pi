@@ -1,4 +1,4 @@
-tflite_runtime-2.6.0-cp39-none-linux_aarch64.whl
+tflite_runtime
 librosa
 pytz
 tzlocal
