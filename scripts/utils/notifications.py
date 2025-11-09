@@ -146,14 +146,14 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
 
 def get_todays_count_for(db_path, sci_name):
     today = datetime.now().strftime("%Y-%m-%d")
-    select_sql = f"SELECT COUNT(*) FROM detections WHERE Date = DATE('{today}') AND Sci_name = '{sci_name}'"
+    select_sql = f"SELECT COUNT(*) FROM detections WHERE Date = DATE('{today}') AND Sci_Name = '{sci_name}'"
     records = get_records(db_path, select_sql)
     return records[0][0] if records else 0
 
 
 def get_this_weeks_count_for(db_path, sci_name):
     today = datetime.now().strftime("%Y-%m-%d")
-    select_sql = f"SELECT COUNT(*) FROM detections WHERE Date >= DATE('{today}', '-7 day') AND Sci_name = '{sci_name}'"
+    select_sql = f"SELECT COUNT(*) FROM detections WHERE Date >= DATE('{today}', '-7 day') AND Sci_Name = '{sci_name}'"
     records = get_records(db_path, select_sql)
     return records[0][0] if records else 0
 
@@ -165,8 +165,8 @@ def get_records(db_path, select_sql):
         cur.execute(select_sql)
         records = cur.fetchall()
         con.close()
-    except sqlite3.Error:
-        print("Database busy")
+    except sqlite3.Error as e:
+        print(f"Database busy: {e}")
         timeim.sleep(2)
         records = []
     return records
