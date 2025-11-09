@@ -38,7 +38,7 @@ get_tf_whl () {
   if [ -n "$WHL" ]; then
     {
       curl -L -o $HOME/BirdNET-Pi/$WHL $BASE_URL$WHL
-      sed "s/tflite_runtime.*/$WHL/" $HOME/BirdNET-Pi/requirements.txt > requirements_custom.txt
+      sed "s/tensorflow.*/$WHL/" $HOME/BirdNET-Pi/requirements.txt > requirements_custom.txt
     }
   fi
 }
