@@ -4,17 +4,17 @@ from datetime import datetime
 
 from .helpers import DB_PATH
 
-def get_todays_count_for(sci_name, db_path=DB_PATH):
+def get_todays_count_for(sci_name):
     today = datetime.now().strftime("%Y-%m-%d")
     select_sql = f"SELECT COUNT(*) FROM detections WHERE Date = DATE('{today}') AND Sci_Name = '{sci_name}'"
-    records = get_records(select_sql, db_path)
+    records = get_records(select_sql)
     return records[0][0] if records else 0
 
 
-def get_this_weeks_count_for(sci_name, db_path=DB_PATH):
+def get_this_weeks_count_for(sci_name):
     today = datetime.now().strftime("%Y-%m-%d")
     select_sql = f"SELECT COUNT(*) FROM detections WHERE Date >= DATE('{today}', '-7 day') AND Sci_Name = '{sci_name}'"
-    records = get_records(select_sql, db_path)
+    records = get_records(select_sql)
     return records[0][0] if records else 0
 
 
@@ -32,9 +32,9 @@ def get_species_by(sort_by=None, date=None):
     return records
 
 
-def get_records(select_sql, db_path=DB_PATH):
+def get_records(select_sql):
     try:
-        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        con = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
         con.row_factory = sqlite3.Row
         cur = con.execute(select_sql)
         records = cur.fetchall()

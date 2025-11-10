@@ -6,9 +6,13 @@ from unittest.mock import patch
 
 from scripts.utils import notifications
 from scripts.utils.notifications import sendAppriseNotifications
+from scripts.utils import db
 
 
 class TestAppriseNotifications(unittest.TestCase):
+
+    def setUp(self):
+        db.DB_PATH = self.db_file
 
     @classmethod
     def setUpClass(cls):
@@ -59,10 +63,12 @@ class TestAppriseNotifications(unittest.TestCase):
         if os.path.exists(self.apprise_config_file):
             os.remove(self.apprise_config_file)
 
+    # @patch('db.DB_PATH', new_value)
     @patch('scripts.utils.notifications.notify')
     def test_notifications(self, mock_notify):
         self.create_test_db()
         self.create_apprise_config()
+        notifications.DB_PATH = self.db_file
         settings_dict = {
             "APPRISE_NOTIFICATION_TITLE": "New backyard bird!",
             "APPRISE_NOTIFY_EACH_DETECTION": "0",
@@ -70,20 +76,8 @@ class TestAppriseNotifications(unittest.TestCase):
             "APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY": "0",
             "APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES": "0"
         }
-        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
-                                 "0.91",
-                                 "91",
-                                 "filename",
-                                 "1666-06-06",
-                                 "06:06:06",
-                                 "06",
-                                 "-1",
-                                 "-1",
-                                 "0.7",
-                                 "1.25",
-                                 "0.0",
-                                 settings_dict,
-                                 self.db_file)
+        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher", "0.91", "91", "filename", "1666-06-06", "06:06:06", "06", "-1", "-1", "0.7",
+                                 "1.25", "0.0", settings_dict)
 
         # No active apprise notifications configured. Confirm no notifications.
         self.assertEqual(mock_notify.call_count, 0)
@@ -91,20 +85,8 @@ class TestAppriseNotifications(unittest.TestCase):
         # Add daily notification.
         mock_notify.reset_mock()
         settings_dict["APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY"] = "1"
-        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
-                                 "0.91",
-                                 "91",
-                                 "filename",
-                                 "1666-06-06",
-                                 "06:06:06",
-                                 "06",
-                                 "-1",
-                                 "-1",
-                                 "0.7",
-                                 "1.25",
-                                 "0.0",
-                                 settings_dict,
-                                 self.db_file)
+        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher", "0.91", "91", "filename", "1666-06-06", "06:06:06", "06", "-1", "-1", "0.7",
+                                 "1.25", "0.0", settings_dict)
 
         self.assertEqual(mock_notify.call_count, 1)
         self.assertEqual(
@@ -115,20 +97,8 @@ class TestAppriseNotifications(unittest.TestCase):
         # Add new species notification.
         mock_notify.reset_mock()
         settings_dict["APPRISE_NOTIFY_NEW_SPECIES"] = "1"
-        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
-                                 "0.91",
-                                 "91",
-                                 "filename",
-                                 "1666-06-06",
-                                 "06:06:06",
-                                 "06",
-                                 "-1",
-                                 "-1",
-                                 "0.7",
-                                 "1.25",
-                                 "0.0",
-                                 settings_dict,
-                                 self.db_file)
+        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher", "0.91", "91", "filename", "1666-06-06", "06:06:06", "06", "-1", "-1", "0.7",
+                                 "1.25", "0.0", settings_dict)
 
         self.assertEqual(mock_notify.call_count, 2)
         self.assertEqual(
@@ -143,20 +113,8 @@ class TestAppriseNotifications(unittest.TestCase):
         # Add each species notification.
         mock_notify.reset_mock()
         settings_dict["APPRISE_NOTIFY_EACH_DETECTION"] = "1"
-        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher",
-                                 "0.91",
-                                 "91",
-                                 "filename",
-                                 "1666-06-06",
-                                 "06:06:06",
-                                 "06",
-                                 "-1",
-                                 "-1",
-                                 "0.7",
-                                 "1.25",
-                                 "0.0",
-                                 settings_dict,
-                                 self.db_file)
+        sendAppriseNotifications("Myiarchus crinitus_Great Crested Flycatcher", "0.91", "91", "filename", "1666-06-06", "06:06:06", "06", "-1", "-1", "0.7",
+                                 "1.25", "0.0", settings_dict)
 
         self.assertEqual(mock_notify.call_count, 3)
 
