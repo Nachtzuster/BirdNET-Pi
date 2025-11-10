@@ -41,6 +41,5 @@ if __name__ == "__main__":
              'Lat': conf.getfloat('LATITUDE'), 'Lon': conf.getfloat('LONGITUDE'), 'Cutoff': conf.getfloat('CONFIDENCE'),
              'Sens': conf.getfloat('SENSITIVITY'), 'Overlap': conf.getfloat('OVERLAP')}
 
-    notifications.sendAppriseNotifications(f"{d['Sci_Name']}_{d['Com_Name']}", d['Confidence'], round(d['Confidence'] * 100), d['File_Name'],
-                                           d['Date'], d['Time'], d['Week'], d['Lat'], d['Lon'], d['Cutoff'],
-                                           d['Sens'], d['Overlap'], dict(conf), DB_PATH)
+    notifications.sendAppriseNotifications(f"{d['Sci_Name']}_{d['Com_Name']}", d['Confidence'], round(d['Confidence'] * 100), d['File_Name'], d['Date'],
+                                           d['Time'], d['Week'], d['Lat'], d['Lon'], d['Cutoff'], d['Sens'], d['Overlap'], dict(conf))

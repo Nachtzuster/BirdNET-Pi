@@ -44,9 +44,7 @@ def notify(body, title, attached=""):
         )
 
 
-def sendAppriseNotifications(species, confidence, confidencepct, path,
-                             date, time, week, latitude, longitude, cutoff,
-                             sens, overlap, settings_dict, db_path=DB_PATH):
+def sendAppriseNotifications(species, confidence, confidencepct, path, date, time, week, latitude, longitude, cutoff, sens, overlap, settings_dict):
     def render_template(template, reason=""):
         ret = template.replace("$sciname", sciName) \
             .replace("$comname", comName) \
@@ -126,7 +124,7 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
 
         APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT = 1  # Notifies the first N per day.
         if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY') == "1":
-            numberDetections = get_todays_count_for(sciName, db_path)
+            numberDetections = get_todays_count_for(sciName)
             if 0 < numberDetections <= APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT:
                 print("send the notification")
                 notify_body = render_template(body, "first time today")
@@ -135,7 +133,7 @@ def sendAppriseNotifications(species, confidence, confidencepct, path,
                 species_last_notified[comName] = int(timeim.time())
 
         if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES') == "1":
-            numberDetections = get_this_weeks_count_for(sciName, db_path)
+            numberDetections = get_this_weeks_count_for(sciName)
             if 0 < numberDetections <= 5:
                 reason = f"only seen {numberDetections} times in last 7d"
                 notify_body = render_template(body, reason)
