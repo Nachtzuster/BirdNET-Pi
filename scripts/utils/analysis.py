@@ -5,9 +5,9 @@ import time
 import librosa
 import numpy as np
 
-from scripts.utils.classes import Detection, ParseFileName
-from scripts.utils.helpers import get_settings, get_language
-from scripts.utils.models import get_model
+from .classes import Detection, ParseFileName
+from .helpers import get_settings, get_language
+from .models import get_model
 
 log = logging.getLogger(__name__)
 
