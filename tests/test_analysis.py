@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from scripts.server import run_analysis
+from scripts.utils.analysis import run_analysis
 from scripts.utils.classes import ParseFileName
 from tests.helpers import TESTDATA, Settings
 
@@ -10,7 +10,7 @@ from tests.helpers import TESTDATA, Settings
 class TestRunAnalysis(unittest.TestCase):
 
     @patch('scripts.utils.helpers._load_settings')
-    @patch('scripts.server.loadCustomSpeciesList')
+    @patch('scripts.utils.analysis.loadCustomSpeciesList')
     def test_run_analysis(self, mock_loadCustomSpeciesList, mock_load_settings):
         # Mock the settings and species list
         mock_load_settings.return_value = Settings.with_defaults()
