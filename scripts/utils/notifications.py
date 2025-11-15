@@ -6,6 +6,7 @@ import html
 import time as timeim
 
 from .db import get_todays_count_for, get_this_weeks_count_for
+from .helpers import get_settings
 
 userDir = os.path.expanduser('~')
 APPRISE_CONFIG = userDir + '/BirdNET-Pi/apprise.txt'
@@ -44,7 +45,7 @@ def notify(body, title, attached=""):
         )
 
 
-def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path, date, time, week, latitude, longitude, cutoff, sens, overlap, settings_dict):
+def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path, date, time, week, latitude, longitude, cutoff, sens, overlap):
     def render_template(template, reason=""):
         ret = template.replace("$sciname", sci_name) \
             .replace("$comname", com_name) \
@@ -64,80 +65,88 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
             .replace("$overlap", str(overlap)) \
             .replace("$reason", reason)
         return ret
-    # print(sendAppriseNotifications)
-    # print(settings_dict)
-    if os.path.exists(APPRISE_CONFIG) and os.path.getsize(APPRISE_CONFIG) > 0:
 
-        title = html.unescape(settings_dict.get('APPRISE_NOTIFICATION_TITLE'))
-        f = open(APPRISE_BODY, 'r')
-        body = f.read()
+    if not should_notify(com_name):
+        return
 
-        APPRISE_ONLY_NOTIFY_SPECIES_NAMES = settings_dict.get('APPRISE_ONLY_NOTIFY_SPECIES_NAMES')
-        if APPRISE_ONLY_NOTIFY_SPECIES_NAMES is not None and APPRISE_ONLY_NOTIFY_SPECIES_NAMES.strip() != "":
-            if any(bird.lower().replace(" ", "") in com_name.lower().replace(" ", "") for bird in APPRISE_ONLY_NOTIFY_SPECIES_NAMES.split(",")):
-                return
+    settings_dict = get_settings()
+    title = html.unescape(settings_dict.get('APPRISE_NOTIFICATION_TITLE'))
+    f = open(APPRISE_BODY, 'r')
+    body = f.read()
 
-        APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2 = settings_dict.get('APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2')
-        if APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2 is not None and APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2.strip() != "":
-            if not any(bird.lower().replace(" ", "") in com_name.lower().replace(" ", "") for bird in APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2.split(",")):
-                return
+    websiteurl = settings_dict.get('BIRDNETPI_URL')
+    if websiteurl is None or len(websiteurl) == 0:
+        websiteurl = f"http://{socket.gethostname()}.local"
 
-        APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES = settings_dict.get('APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES')
-        if APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES != "0":
-            if species_last_notified.get(com_name) is not None:
-                try:
-                    if int(timeim.time()) - species_last_notified[com_name] < int(APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES):
-                        return
-                except Exception as e:
-                    print("APPRISE NOTIFICATION EXCEPTION: "+str(e))
-                    return
+    listenurl = websiteurl+"?filename="+path
+    friendlyurl = "[Listen here]("+listenurl+")"
+    image_url = ""
 
-        # TODO: this all needs to be changed, we changed the caddy default to allow direct IP access, so birdnetpi.local shouldn't be relied on anymore
-        try:
-            websiteurl = settings_dict.get('BIRDNETPI_URL')
-            if len(websiteurl) == 0:
-                raise ValueError('Blank URL')
-        except Exception:
-            websiteurl = "http://"+socket.gethostname()+".local"
+    if "$flickrimage" in body or "$image" in body:
+        if com_name not in images:
+            try:
+                url = f"http://localhost/api/v1/image/{sci_name}"
+                resp = requests.get(url=url, timeout=10).json()
+                images[com_name] = resp['data']['image_url']
+            except Exception as e:
+                print("IMAGE API ERROR: " + str(e))
+        image_url = images.get(com_name, "")
 
-        listenurl = websiteurl+"?filename="+path
-        friendlyurl = "[Listen here]("+listenurl+")"
-        image_url = ""
+    if settings_dict.get('APPRISE_NOTIFY_EACH_DETECTION') == "1":
+        notify_body = render_template(body, "detection")
+        notify_title = render_template(title, "detection")
+        notify(notify_body, notify_title, image_url)
+        species_last_notified[com_name] = int(timeim.time())
 
-        if "$flickrimage" in body or "$image" in body:
-            if com_name not in images:
-                try:
-                    url = f"http://localhost/api/v1/image/{sci_name}"
-                    resp = requests.get(url=url, timeout=10).json()
-                    images[com_name] = resp['data']['image_url']
-                except Exception as e:
-                    print("IMAGE API ERROR: "+str(e))
-            image_url = images.get(com_name, "")
-
-        if settings_dict.get('APPRISE_NOTIFY_EACH_DETECTION') == "1":
-            notify_body = render_template(body, "detection")
-            notify_title = render_template(title, "detection")
+    APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT = 1  # Notifies the first N per day.
+    if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY') == "1":
+        numberDetections = get_todays_count_for(sci_name)
+        if 0 < numberDetections <= APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT:
+            print("send the notification")
+            notify_body = render_template(body, "first time today")
+            notify_title = render_template(title, "first time today")
             notify(notify_body, notify_title, image_url)
             species_last_notified[com_name] = int(timeim.time())
 
-        APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT = 1  # Notifies the first N per day.
-        if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY') == "1":
-            numberDetections = get_todays_count_for(sci_name)
-            if 0 < numberDetections <= APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT:
-                print("send the notification")
-                notify_body = render_template(body, "first time today")
-                notify_title = render_template(title, "first time today")
-                notify(notify_body, notify_title, image_url)
-                species_last_notified[com_name] = int(timeim.time())
+    if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES') == "1":
+        numberDetections = get_this_weeks_count_for(sci_name)
+        if 0 < numberDetections <= 5:
+            reason = f"only seen {numberDetections} times in last 7d"
+            notify_body = render_template(body, reason)
+            notify_title = render_template(title, reason)
+            notify(notify_body, notify_title, image_url)
+            species_last_notified[com_name] = int(timeim.time())
 
-        if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES') == "1":
-            numberDetections = get_this_weeks_count_for(sci_name)
-            if 0 < numberDetections <= 5:
-                reason = f"only seen {numberDetections} times in last 7d"
-                notify_body = render_template(body, reason)
-                notify_title = render_template(title, reason)
-                notify(notify_body, notify_title, image_url)
-                species_last_notified[com_name] = int(timeim.time())
+
+def should_notify(com_name):
+    settings_dict = get_settings()
+    if not (os.path.exists(APPRISE_CONFIG) and os.path.getsize(APPRISE_CONFIG) > 0):
+        return False
+
+    # check if this is an excluded species
+    APPRISE_ONLY_NOTIFY_SPECIES_NAMES = settings_dict.get('APPRISE_ONLY_NOTIFY_SPECIES_NAMES')
+    if APPRISE_ONLY_NOTIFY_SPECIES_NAMES is not None and APPRISE_ONLY_NOTIFY_SPECIES_NAMES.strip() != "":
+        if any(bird.lower().replace(" ", "") in com_name.lower().replace(" ", "") for bird in APPRISE_ONLY_NOTIFY_SPECIES_NAMES.split(",")):
+            return False
+
+    # check if this is an included species
+    APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2 = settings_dict.get('APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2')
+    if APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2 is not None and APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2.strip() != "":
+        if not any(bird.lower().replace(" ", "") in com_name.lower().replace(" ", "") for bird in APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2.split(",")):
+            return False
+
+    # is it still too soon?
+    APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES = settings_dict.get('APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES')
+    if APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES != "0":
+        if species_last_notified.get(com_name) is not None:
+            try:
+                if int(timeim.time()) - species_last_notified[com_name] < int(APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES):
+                    return False
+            except Exception as e:
+                print("APPRISE NOTIFICATION EXCEPTION: " + str(e))
+                return False
+
+    return True
 
 
 if __name__ == "__main__":

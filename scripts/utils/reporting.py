@@ -159,8 +159,7 @@ def apprise(file: ParseFileName, detections: [Detection]):
             try:
                 sendAppriseNotifications(detection.scientific_name, detection.common_name, str(detection.confidence), str(detection.confidence_pct),
                                          os.path.basename(detection.file_name_extr), detection.date, detection.time, str(detection.week),
-                                         conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], conf['SENSITIVITY'],
-                                         conf['OVERLAP'], dict(conf))
+                                         conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], conf['SENSITIVITY'], conf['OVERLAP'])
 
             except BaseException as e:
                 log.exception('Error during Apprise:', exc_info=e)
