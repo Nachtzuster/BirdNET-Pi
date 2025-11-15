@@ -1,18 +1,19 @@
-import datetime
 import glob
+import json
 import os
 import re
 import subprocess
+from collections import OrderedDict
 from configparser import ConfigParser
 from itertools import chain
 
-from tzlocal import get_localzone
-
 _settings = None
 
-DB_PATH = os.path.expanduser('~/BirdNET-Pi/scripts/birds.db')
+BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+DB_PATH = os.path.join(BASE_PATH, 'scripts/birds.db')
+MODEL_PATH = os.path.join(BASE_PATH, 'model')
+FONT_DIR = os.path.join(BASE_PATH, 'homepage/static')
 ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
-FONT_DIR = os.path.expanduser('~/BirdNET-Pi/homepage/static')
 
 
 def get_font():
@@ -57,47 +58,6 @@ def get_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False):
     return settings
 
 
-class Detection:
-    def __init__(self, file_date, start_time, stop_time, species, confidence):
-        self.start = float(start_time)
-        self.stop = float(stop_time)
-        self.datetime = file_date + datetime.timedelta(seconds=self.start)
-        self.date = self.datetime.strftime("%Y-%m-%d")
-        self.time = self.datetime.strftime("%H:%M:%S")
-        self.iso8601 = self.datetime.astimezone(get_localzone()).isoformat()
-        self.week = self.datetime.isocalendar()[1]
-        self.confidence = round(float(confidence), 4)
-        self.confidence_pct = round(self.confidence * 100)
-        self.species = species
-        self.scientific_name = species.split('_')[0]
-        self.common_name = species.split('_')[1]
-        self.common_name_safe = self.common_name.replace("'", "").replace(" ", "_")
-        self.file_name_extr = None
-
-
-class ParseFileName:
-    def __init__(self, file_name):
-        self.file_name = file_name
-        name = os.path.splitext(os.path.basename(file_name))[0]
-        date_created = re.search('^[0-9]+-[0-9]+-[0-9]+', name).group()
-        time_created = re.search('[0-9]+:[0-9]+:[0-9]+$', name).group()
-        self.file_date = datetime.datetime.strptime(f'{date_created}T{time_created}', "%Y-%m-%dT%H:%M:%S")
-        self.root = name
-
-        ident_match = re.search("RTSP_[0-9]+-", file_name)
-        self.RTSP_id = ident_match.group() if ident_match is not None else ""
-
-    @property
-    def iso8601(self):
-        current_iso8601 = self.file_date.astimezone(get_localzone()).isoformat()
-        return current_iso8601
-
-    @property
-    def week(self):
-        week = self.file_date.isocalendar()[1]
-        return week
-
-
 def get_open_files_in_dir(dir_name):
     result = subprocess.run(['lsof', '-w', '-Fn', '+D', f'{dir_name}'], check=False, capture_output=True)
     ret = result.stdout.decode('utf-8')
@@ -118,3 +78,39 @@ def get_wav_files():
     open_recs = get_open_files_in_dir(rec_dir)
     files = [file for file in files if file not in open_recs]
     return files
+
+
+def get_language(language=None):
+    if language is None:
+        language = get_settings()['DATABASE_LANG']
+    file_name = os.path.join(MODEL_PATH, f'l18n/labels_{language}.json')
+    with open(file_name) as f:
+        ret = json.loads(f.read())
+    return ret
+
+
+def save_language(labels, language):
+    file_name = os.path.join(MODEL_PATH, f'l18n/labels_{language}.json')
+    with open(file_name, 'w') as f:
+        f.write(json.dumps(OrderedDict(sorted(labels.items())), indent=2, ensure_ascii=False))
+
+
+def get_model_labels(model=None):
+    if model is None:
+        model = get_settings()['MODEL']
+    file_name = os.path.join(MODEL_PATH, f'{model}_Labels.txt')
+    with open(file_name) as f:
+        labels = [line.strip() for line in f.readlines()]
+    if labels and labels[0].count('_') == 1:
+        labels = [re.sub(r'_.+$', '', label) for label in labels]
+    return labels
+
+
+def set_label_file():
+    lang = get_language()
+    labels = [f'{label}_{lang[label]}\n' for label in get_model_labels()]
+    file_name = os.path.join(MODEL_PATH, 'labels.txt')
+    if os.path.islink(file_name):
+        os.remove(file_name)
+    with open(file_name, 'w') as f:
+        f.writelines(labels)
