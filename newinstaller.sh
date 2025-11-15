@@ -42,9 +42,6 @@ if [[ ! -z $PACKAGES_MISSING ]] ; then
   sudo apt update
   sudo apt -y install $PACKAGES_MISSING
 fi
-
-git clone -b $branch --depth=1 https://github.com/Nachtzuster/BirdNET-Pi.git ${HOME}/BirdNET-Pi &&
-
 branch=main
 git clone -b $branch --depth=1 https://github.com/StellarStoic/BirdNET-Pi.git ${HOME}/BirdNET-Pi &&
 
