@@ -17,10 +17,30 @@ if (isset($_GET['run_species_count'])) {
    echo "</script>";
  }
 
+if (isset($_GET['rotate_tor_onion'])) {
+  if (isset($config['TOR_ENABLED']) && $config['TOR_ENABLED'] == 1) {
+    syslog(LOG_INFO, "Rotating Tor onion keys");
+    $tor_script = "/usr/local/bin/update_tor_service.sh";
+    // Run synchronously and capture output to display to user
+    $output = shell_exec('sudo bash ' . escapeshellarg($tor_script) . ' rotate 2>&1');
+    echo "<script>";
+    $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
+    echo "alert('Tor onion regeneration result:\\n\\n' + `$escaped_output`);";
+    echo "location.reload();";
+    echo "</script>";
+  } else {
+    echo "<script>";
+    echo "alert('Tor is not enabled. Enable Tor in Advanced Settings first.');";
+    echo "</script>";
+  }
+}
+
 if(isset($_GET['submit'])) {
   $contents = file_get_contents('/etc/birdnet/birdnet.conf');
   $restart_livestream = false;
   $update_caddyfile = false;
+  // remember previous tor enabled state so we can act after saving
+  $old_tor_enabled = (isset($config['TOR_ENABLED']) && $config['TOR_ENABLED'] == 1) ? 1 : 0;
 
   if(isset($_GET["caddy_pwd"])) {
     $caddy_pwd = $_GET["caddy_pwd"];
@@ -220,6 +240,19 @@ if (isset($_GET["max_files_species"])) {
   } else {
     $contents = preg_replace("/RAW_SPECTROGRAM=.*/", "RAW_SPECTROGRAM=0", $contents);
   }
+  
+  // Tor hidden service enable/disable
+  if (isset($_GET["enable_tor"])) {
+    $enable_tor = 1;
+    if (!isset($config['TOR_ENABLED']) || $config['TOR_ENABLED'] != 1) {
+      $contents = preg_replace("/TOR_ENABLED=.*/", "TOR_ENABLED=1", $contents);
+    }
+  } else {
+    // mark tor disabled in config contents
+    if (isset($config['TOR_ENABLED']) && $config['TOR_ENABLED'] == 1) {
+      $contents = preg_replace("/TOR_ENABLED=.*/", "TOR_ENABLED=0", $contents);
+    }
+  }
 
   if(isset($_GET["rare_species_threshold"])) {
     $rare_species_threshold = $_GET["rare_species_threshold"];
@@ -269,6 +302,19 @@ if (isset($_GET["max_files_species"])) {
   $fh = fopen('/etc/birdnet/birdnet.conf', "w");
   fwrite($fh, $contents);
   $config = get_config($force_reload=true);
+
+  // Handle enabling/disabling the Tor hidden service AFTER the config file
+  // has been written to avoid race conditions where the helper writes the
+  // TOR_* settings and then this script would overwrite them.
+  $tor_script = $home . "/BirdNET-Pi/scripts/update_tor_service.sh";
+  $wants_tor = isset($_GET['enable_tor']) ? 1 : 0;
+  if ($wants_tor && !$old_tor_enabled) {
+    // enable asynchronously
+    exec('sudo bash ' . escapeshellarg($tor_script) . ' enable > /dev/null 2>&1 &');
+  } elseif (!$wants_tor && $old_tor_enabled) {
+    // disable asynchronously
+    exec('sudo bash ' . escapeshellarg($tor_script) . ' disable > /dev/null 2>&1 &');
+  }
 
   syslog(LOG_INFO, "Restarting Services");
   if ($update_caddyfile){
@@ -334,6 +380,20 @@ $newconfig = get_config();
       <br>
       <button type="submit" name="run_species_count" value="1" onclick="{this.innerHTML = 'Loading ... please wait.';this.classList.add('disabled')}"><i>[Click here for disk usage summary]</i></button>
       </td></tr></table><br>
+      <table class="settingstable"><tr><td>
+
+      <h2>Tor Hosting</h2>
+      <label for="enable_tor">
+      <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>> Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
+      <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
+        <p>Onion address: <a target="_blank" href="<?php print($newconfig['TOR_ONION']);?>"><?php print($newconfig['TOR_ONION']);?></a></p>
+        <button type="submit" name="rotate_tor_onion" value="1" onclick="{this.innerHTML = 'Regenerating... please wait.';this.classList.add('disabled')}"><i>[Regenerate Onion Address]</i></button>
+      <?php } else { ?>
+        <p><small>No onion address configured. Enable Tor and save settings to generate one.</small></p>
+      <?php } ?>
+
+      </td></tr></table><br>
+
       <table class="settingstable"><tr><td>
 
       <h2>Audio Settings</h2>

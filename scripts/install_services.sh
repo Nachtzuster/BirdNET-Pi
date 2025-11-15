@@ -19,7 +19,7 @@ install_depends() {
   echo "icecast2 icecast2/icecast-setup boolean false" | debconf-set-selections
   apt install --no-install-recommends -qqy caddy sqlite3 php-sqlite3 php-fpm php-curl php-xml php-zip php icecast2 \
     pulseaudio avahi-utils sox libsox-fmt-mp3 alsa-utils ffmpeg \
-    wget curl unzip bc \
+    wget curl unzip bc tor \
     python3-pip python3-venv lsof net-tools inotify-tools
 }
 
@@ -36,6 +36,12 @@ update_etc_hosts() {
 
 install_scripts() {
   ln -sf ${my_dir}/scripts/* /usr/local/bin/
+}
+
+install_tor_helper() {
+  echo "Installing Tor helper script to /usr/local/bin"
+  cp ${my_dir}/scripts/update_tor_service.sh /usr/local/bin/update_tor_service.sh
+  chmod +x /usr/local/bin/update_tor_service.sh
 }
 
 install_birdnet_analysis() {
@@ -409,6 +415,7 @@ install_services() {
 
   install_depends
   install_scripts
+  install_tor_helper
   install_Caddyfile
   install_avahi_aliases
   install_birdnet_analysis
