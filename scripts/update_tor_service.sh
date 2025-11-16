@@ -113,7 +113,6 @@ enable_tor_service() {
     log_info "Adding $include_directive directive to /etc/tor/torrc"
     # Use echo instead of printf for better reliability
     echo "" >> /etc/tor/torrc
-    echo "# Include drop-in configs" >> /etc/tor/torrc
     echo "$include_directive /etc/tor/torrc.d/*.conf" >> /etc/tor/torrc
     
     # Verify the addition was successful
@@ -142,7 +141,8 @@ EOF
 
   # Before restarting Tor, verify the configuration is valid
   log_info "Verifying Tor configuration..."
-  if ! tor --verify-config >/dev/null 2>&1; then
+  # Run verification as the Tor user to avoid permission conflicts
+  if ! sudo -u debian-tor tor --verify-config >/dev/null 2>&1; then
     log_error "Tor configuration verification failed"
     log_error "Please check /etc/tor/torrc for syntax errors"
     return 1
