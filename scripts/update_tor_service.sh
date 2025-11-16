@@ -70,6 +70,18 @@ enable_tor_service() {
   local tor_user
   tor_user=$(check_tor_user) || return 1
   
+  # Ensure /var/lib/tor exists and has correct permissions
+  log_info "Ensuring /var/lib/tor exists with correct permissions..."
+  mkdir -p /var/lib/tor
+  chown -R "$tor_user:$tor_user" /var/lib/tor 2>/dev/null || {
+    log_error "Failed to set ownership of /var/lib/tor"
+    return 1
+  }
+  chmod 0755 /var/lib/tor 2>/dev/null || {
+    log_error "Failed to set permissions on /var/lib/tor"
+    return 1
+  }
+  
   mkdir -p "$TORRC_DIR"
   mkdir -p "$HS_DIR"
   
@@ -90,26 +102,43 @@ EOF
     return 1
   }
   
-  log_info "Restarting Tor service..."
-  if ! systemctl restart tor 2>&1 | tail -3; then
-    log_error "Failed to restart Tor service"
-    return 1
-  fi
+  log_info "Restarting Tor daemon..."
+  # Stop any running Tor instances
+  pkill -SIGTERM tor 2>/dev/null || true
+  sleep 1
+  
+  # Enable and start the tor@default instance (actual Tor daemon)
+  log_info "Starting Tor daemon with tor@default service..."
+  systemctl daemon-reload 2>/dev/null || true
+  systemctl enable tor@default >/dev/null 2>&1 || true
+  systemctl restart tor@default 2>&1 | tail -3 || {
+    log_info "Note: tor@default may not exist; trying standard tor service"
+    systemctl restart tor 2>&1 | tail -3 || true
+  }
+  
+  # Give Tor time to initialize and create the hidden service
+  log_info "Waiting for Tor daemon to initialize..."
+  sleep 3
   
   log_info "Waiting for Tor hidden service hostname to be generated..."
   local HOSTNAME=""
-  for i in {1..20}; do
+  for i in {1..60}; do
     if [ -f "$HS_DIR/hostname" ]; then
       HOSTNAME=$(cat "$HS_DIR/hostname" | tr -d '\n')
+      log_info "Success! Hostname file found on attempt $i"
       break
     fi
-    log_info "Attempt $i/20: waiting for hostname..."
+    if [ $((i % 5)) -eq 0 ]; then
+      log_info "Attempt $i/60: waiting for hostname..."
+    fi
     sleep 1
   done
   
   if [ -z "$HOSTNAME" ]; then
-    log_error "Tor hidden service hostname not found in $HS_DIR/hostname after 20 seconds"
-    log_error "Check Tor service status: systemctl status tor"
+    log_error "Tor hidden service hostname not found after 60 seconds"
+    log_error "Tor may not have started correctly. Checking status..."
+    log_error "$(systemctl status tor@default 2>&1 || systemctl status tor 2>&1)"
+    log_error "Directory contents: $(ls -la $HS_DIR 2>&1 || echo 'Directory not readable')"
     return 1
   fi
   
