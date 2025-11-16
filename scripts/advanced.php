@@ -369,7 +369,7 @@ $newconfig = get_config();
       <p><small>Hosting on Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank">Tor Browser</a>.</small></p>    <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
         <p>Onion address: 
           <input type="text" id="onionAddress" value="<?php print($newconfig['TOR_ONION']);?>" 
-                readonly style="border: 1px solid #ccc; padding: 2px 5px; width: 400px; cursor: auto;">
+                readonly style="border: 1px solid #ccc; padding: 2px 5px; width: 400px; cursor: auto; font-size: 0.8em;background-color: #4B0082; color: white;">
           <button type="button" style="margin-left: 8px;" onclick="var el = document.getElementById('onionAddress'); el.select(); try { document.execCommand('copy'); alert('✅ Address copied!'); } catch(e) { alert('Please manually copy: ' + el.value); }">Copy</button>
         </p>
         <p><small style="color: gray;">To change the address, disable the Tor settings → save settings → reenable Tor → you'll get new .onion address.</small></p>
@@ -378,8 +378,8 @@ $newconfig = get_config();
       <?php } ?>
 
       <!-- Add Tor operation status indicator -->
-      <div id="torStatus" style="display: none; color: blue; font-weight: bold;">
-        ⏳ Tor operation in progress... Please wait (this may take up to 60 seconds)
+      <div id="torStatus" style="display: none; color: #4B0082; font-weight: italic;">
+        Tor operation in progress... Please wait (this may take up to 60 seconds) If nothing happens, please refresh the page.
       </div>
 
       <script>
@@ -392,7 +392,7 @@ $newconfig = get_config();
         // Reload page after 8 seconds to show updated Tor status
         setTimeout(function() {
           window.location.href = window.location.pathname + '?view=Advanced';
-        }, 8000);
+        }, 15000);
       }
 
       // Check if we just performed a Tor operation and show status
