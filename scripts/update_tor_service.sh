@@ -86,9 +86,24 @@ enable_tor_service() {
   mkdir -p "$HS_DIR"
 
   # Ensure tor reads /etc/tor/torrc.d/*.conf by including it in /etc/tor/torrc if missing
-  if ! grep -qF "Include /etc/tor/torrc.d/*.conf" /etc/tor/torrc 2>/dev/null; then
-    log_info "Adding Include directive to /etc/tor/torrc to load /etc/tor/torrc.d/*.conf"
-    echo "\n# Include drop-in configs\nInclude /etc/tor/torrc.d/*.conf" >> /etc/tor/torrc
+  # Detect Tor version to use correct include syntax
+  local tor_version
+  tor_version=$(/usr/bin/tor --version 2>&1 | sed -n 's/Tor version \([0-9.]*\).*/\1/p')
+  local include_directive="%include"
+  
+  # Tor 0.4.8+ supports Include; older versions need %include
+  if [ -n "$tor_version" ]; then
+    if [[ "$tor_version" > "0.4.8" ]] || [[ "$tor_version" == "0.4.8" ]]; then
+      include_directive="Include"
+      log_info "Tor version $tor_version detected, using Include directive"
+    else
+      log_info "Tor version $tor_version detected, using %include directive"
+    fi
+  fi
+  
+  if ! grep -qF "$include_directive /etc/tor/torrc.d/*.conf" /etc/tor/torrc 2>/dev/null; then
+    log_info "Adding $include_directive directive to /etc/tor/torrc"
+    echo -e "\n# Include drop-in configs\n$include_directive /etc/tor/torrc.d/*.conf" >> /etc/tor/torrc
   fi
   
   log_info "Writing Tor configuration to $TORRC_FILE"
