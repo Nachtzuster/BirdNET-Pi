@@ -366,10 +366,10 @@ $newconfig = get_config();
       <h2>Tor Hosting</h2>
       <label for="enable_tor">
       <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>> Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
-      <p><small>Hosting on Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank">Tor Browser</a>.</small></p>    <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
+      <p><small>Hosting on Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank">Tor Browser 🧅</a>.</small></p>    <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
         <p>Onion address: 
           <input type="text" id="onionAddress" value="<?php print($newconfig['TOR_ONION']);?>" 
-                readonly style="border: 1px solid #ccc; padding: 2px 5px; width: 400px; cursor: auto; font-size: 0.8em;background-color: #4B0082; color: white;">
+                readonly style="border: 1px solid #ccc; padding: 2px 5px; width: 450px; cursor: auto; font-size: 0.8em;background-color: #4B0082; color: white;">
           <button type="button" style="margin-left: 8px;" onclick="var el = document.getElementById('onionAddress'); el.select(); try { document.execCommand('copy'); alert('✅ Address copied!'); } catch(e) { alert('Please manually copy: ' + el.value); }">Copy</button>
         </p>
         <p><small style="color: gray;">To change the address, disable the Tor settings → save settings → reenable Tor → you'll get new .onion address.</small></p>

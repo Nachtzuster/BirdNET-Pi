@@ -277,7 +277,6 @@ sudo sh -c 'cat > /etc/rc.local << EOF
 # This script disables WiFi power saving for better performance
 
 # Disable WiFi power saving
-sudo iw wlan0 set power_save off
 
 exit 0
 EOF'
@@ -287,7 +286,8 @@ EOF'
 -  `sudo reboot`
 -  Now proceed with normal installation
 
-1. **Install BirdNET-Pi** (version that includes Tor)
+1. **Install BirdNET-Pi** (From fork that includes Tor currently! `curl -fsSL https://raw.githubusercontent.com/StellarStoic/BirdNET-Pi/main/newinstaller.sh | bash` )
+
 2. **Enable Tor** via Advanced Settings UI
 3. **Copy your onion address** (e.g., `http://abc1.....23xyz.onion`)
 4. **Share with others:** Give them your onion address (via Tor or encrypted channel)
