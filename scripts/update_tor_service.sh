@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Helper to enable/disable/rotate Tor hidden service for BirdNET-Pi
-# Usage: update_tor_service.sh enable|disable|rotate
+# Helper to enable/disable Tor hidden service for BirdNET-Pi
+# Usage: update_tor_service.sh enable|disable
 # Exit codes: 0=success, 1=error, 2=bad usage
 
 ACTION="${1:-}"
@@ -250,6 +250,12 @@ disable_tor_service() {
     rm -f "$TORRC_FILE"
   fi
 
+  # Remove hidden service directory to ensure new keys on re-enable
+  if [ -d "$HS_DIR" ]; then
+    log_info "Removing hidden service directory for key regeneration"
+    rm -rf "$HS_DIR"
+  fi
+
   log_info "Stopping Tor service..."
   if systemctl stop tor@default 2>/dev/null; then
     log_info "Tor service stopped successfully"
@@ -267,86 +273,18 @@ disable_tor_service() {
   return 0
 }
 
-rotate_onion_keys() {
-  log_info "Rotating Tor hidden service keys..."
-
-  cleanup_old_logs "rotate" 
-  
-  if [ ! -d "$HS_DIR" ]; then
-    log_error "Hidden service directory does not exist: $HS_DIR"
-    return 1
-  fi
-  
-  check_systemd || return 1
-  
-  local tor_user
-  tor_user=$(check_tor_user) || return 1
-  
-  log_info "Removing old Tor hidden service keys..."
-  rm -rf "$HS_DIR" || {
-    log_error "Failed to remove $HS_DIR"
-    return 1
-  }
-  
-  mkdir -p "$HS_DIR"
-  chown -R "$tor_user:$tor_user" "$HS_DIR" 2>/dev/null || {
-    log_error "Failed to set ownership of $HS_DIR"
-    return 1
-  }
-  chmod 0700 "$HS_DIR" 2>/dev/null || {
-    log_error "Failed to set permissions on $HS_DIR"
-    return 1
-  }
-  
-  log_info "Restarting Tor service to regenerate keys..."
-  if ! systemctl restart tor@default 2>&1 | tail -3; then
-    log_info "Note: tor@default may not exist; trying standard tor service"
-    if ! systemctl restart tor 2>&1 | tail -3; then
-        log_error "Failed to restart Tor service"
-        return 1
-    fi
-  fi
-  
-  log_info "Waiting for new Tor hidden service hostname to be generated..."
-  local HOSTNAME=""
-  for i in {1..60}; do
-    if [ -f "$HS_DIR/hostname" ]; then
-      HOSTNAME=$(cat "$HS_DIR/hostname" | tr -d '\n')
-      break
-    fi
-    log_info "Attempt $i/60: waiting for new hostname..."
-    sleep 1
-  done
-  
-  if [ -z "$HOSTNAME" ]; then
-    log_error "New Tor hidden service hostname not found after 20 seconds"
-    return 2
-  fi
-  
-  log_info "Updating $CONFIG_FILE with new onion address"
-  if grep -q "^TOR_ONION=" "$CONFIG_FILE" 2>/dev/null; then
-    sed -i "s|^TOR_ONION=.*|TOR_ONION=\"http://$HOSTNAME\"|" "$CONFIG_FILE"
-  else
-    echo "TOR_ONION=\"http://$HOSTNAME\"" >> "$CONFIG_FILE"
-  fi
-  
-  log_info "Tor hidden service keys rotated successfully"
-  log_info "New onion address: http://$HOSTNAME"
-  return 0
-}
-
 if [ -z "$ACTION" ]; then
   cat <<EOF >&2
-Usage: $0 enable|disable|rotate
+Usage: $0 enable|disable
   enable   - Install Tor and enable hidden service
   disable  - Disable hidden service
-  rotate   - Rotate hidden service keys (generates new onion address)
   
 Log file: $LOG_FILE
 EOF
   exit 2
 fi
 
+# To this:
 case "$ACTION" in
   enable)
     enable_tor_service
@@ -354,10 +292,6 @@ case "$ACTION" in
     ;;
   disable)
     disable_tor_service
-    exit $?
-    ;;
-  rotate)
-    rotate_onion_keys
     exit $?
     ;;
   *)

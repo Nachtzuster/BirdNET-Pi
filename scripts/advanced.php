@@ -17,24 +17,6 @@ if (isset($_GET['run_species_count'])) {
    echo "</script>";
  }
 
-if (isset($_GET['rotate_tor_onion'])) {
-  if (isset($config['TOR_ENABLED']) && $config['TOR_ENABLED'] == 1) {
-    syslog(LOG_INFO, "Rotating Tor onion keys");
-    $tor_script = "/usr/local/bin/update_tor_service.sh";
-    // Run synchronously and capture output to display to user
-    $output = shell_exec('sudo bash ' . escapeshellarg($tor_script) . ' rotate 2>&1');
-    echo "<script>";
-    $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
-    echo "alert('Tor onion regeneration result:\\n\\n' + `$escaped_output`);";
-    echo "setTimeout(function() { window.location.href = window.location.pathname + '?view=Advanced'; }, 6000);";
-    echo "</script>";
-  } else {
-    echo "<script>";
-    echo "alert('Tor is not enabled. Enable Tor in Advanced Settings first.');";
-    echo "</script>";
-  }
-}
-
 if(isset($_GET['submit'])) {
   $contents = file_get_contents('/etc/birdnet/birdnet.conf');
   $restart_livestream = false;
@@ -389,10 +371,9 @@ $newconfig = get_config();
           <input type="text" id="onionAddress" value="<?php print($newconfig['TOR_ONION']);?>" 
                 readonly style="border: 1px solid #ccc; padding: 2px 5px; width: 400px; cursor: auto;">
           <button type="button" style="margin-left: 8px;" onclick="var el = document.getElementById('onionAddress'); el.select(); try { document.execCommand('copy'); alert('✅ Address copied!'); } catch(e) { alert('Please manually copy: ' + el.value); }">Copy</button>
-        </p>
-      <p><small style="color: orange;">⚠️ Warning: Regenerating will make your old address unusable</small></p>
-      <button type="submit" name="rotate_tor_onion" value="1" onclick="{this.innerHTML = 'Regenerating... please wait.';this.classList.add('disabled')}"><i>[Regenerate Onion Address]</i></button>
-    <?php } else { ?>
+          </p>
+        <p><small style="color: gray;">To change the address, disable the Tor settings → save settings → reenable Tor → you'll get new .onion address.</small></p>
+      <?php } else { ?>
         <p><small>No onion address configured. Enable Tor by checking the checkbox and save settings to generate one.</small></p>
       <?php } ?>
 

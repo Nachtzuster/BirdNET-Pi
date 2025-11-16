@@ -1,6 +1,6 @@
 # Tor Hosting Guide for BirdNET-Pi
 
-This document explains how to host your BirdNET-Pi instance over Tor, a network that provides anonymity and bypasses censorship/geographic restrictions.
+This document explains how to host your BirdNET-Pi instance over Tor, a network that provides anonymity and bypasses censorship/geographic restrictions and its FREE.
 
 ## Overview
 
@@ -14,6 +14,7 @@ BirdNET-Pi can be exposed as a Tor hidden service (v3 onion address). When enabl
 - Optimized for Raspberry Pi running Raspberry Pi OS (Debian-based)
 
 ## Installation
+**This Tor option has only been tested on the RPi3B+**
 
 ### Automatic (Recommended)
 
@@ -56,6 +57,7 @@ sudo chmod +x /usr/local/bin/update_tor_service.sh
 5. Click **"Update Settings"**
 6. Wait 10-15 seconds for the onion address to be generated
 7. Reload the page; the onion address will appear
+8. If you think nothing has happened, refresh the page
 
 ### Via Command Line
 
@@ -93,30 +95,6 @@ curl --socks5 localhost:9050 http://your-onion-address.onion/
 
 (Ensure Tor is running: `systemctl status tor`)
 
-## Regenerating Your Onion Address (Key Rotation)
-
-To change your onion address and generate new keys:
-
-### Via Web UI
-
-1. Go to **Settings → Advanced Settings**
-2. In the **Tor Hosting** section, click **"[Regenerate Onion Address]"**
-3. Wait 10-15 seconds
-4. An alert will show the result; reload the page to see the new onion address
-
-### Via Command Line
-
-```bash
-sudo /usr/local/bin/update_tor_service.sh rotate
-```
-
-**Why rotate keys?**
-- Security: If you suspect your keys have been compromised
-- Privacy: Change your onion identity
-- Troubleshooting: If Tor service is unresponsive
-
-**Note:** Old bookmarks/links to your previous onion address will no longer work after rotation.
-
 ## Security & Privacy Considerations
 
 ### Benefits of Tor
@@ -125,13 +103,14 @@ sudo /usr/local/bin/update_tor_service.sh rotate
 - **Censorship Resistance:** Accessible from countries that block your domain/IP
 - **No Domain Needed:** No need for DNS or public IP registration
 - **Encryption:** All Tor traffic is encrypted end-to-end
+- **Price:** FREE
 
 ### Limitations
 
 - **Slower:** Tor routes through multiple nodes, adding latency (typically 1-3 seconds slower)
 - **IP Leaks:** Your BirdNET-Pi is still discoverable if you expose your actual IP elsewhere
 - **Not Anonymous by Default:** Tor hides *visitors*, not the server. Your clearnet interface (HTTP/HTTPS) is separate
-- **Onion Address Permanence:** Write down your onion address; if you rotate keys, it changes forever
+- **Onion Address Permanence:** Not a limitation but a feature. .onion address will change if you disable and re-enable the tor exposure.
 
 ### Best Practices
 
@@ -153,8 +132,6 @@ sudo /usr/local/bin/update_tor_service.sh rotate
 
 4. **Don't Mix Identities:** If you want anonymity, don't access your BirdNET-Pi from the clearnet and Tor simultaneously from the same browser
 
-5. **Regular Backups:** Your onion address is stable until you rotate keys. Store it securely if it's important
-
 ## Troubleshooting
 
 ### Onion Address Not Showing
@@ -173,10 +150,6 @@ sudo /usr/local/bin/update_tor_service.sh rotate
 3. Ensure the hidden service directory exists:
    ```bash
    sudo ls -la /var/lib/tor/birdnet_hidden_service/
-   ```
-4. If directory exists but hostname file is missing, try rotating:
-   ```bash
-   sudo /usr/local/bin/update_tor_service.sh rotate
    ```
 
 ### Cannot Connect via Onion Address
@@ -212,9 +185,7 @@ sudo /usr/local/bin/update_tor_service.sh rotate
 
 ### Non-Debian/Non-Systemd Systems
 
-This guide assumes you are running BirdNET-Pi on Raspberry Pi OS (Debian-based). If you are using a different Linux distribution or init system, you may need to adapt the instructions.
-
-For custom setups, refer to the Tor Project documentation for your specific OS.
+This guide assumes you are running BirdNET-Pi on Raspberry Pi OS (Debian-based).
 
 ## Configuration Files
 
@@ -275,12 +246,7 @@ sudo cat /var/lib/tor/birdnet_ssh/hostname
 
 ### Permanent Onion Address
 
-Your onion address is tied to the private keys in `/var/lib/tor/birdnet_hidden_service/`. As long as you don't delete this directory, the address stays the same.
-
-To keep your address even after disabling/re-enabling Tor:
-1. The `disable` action removes the torrc configuration but **preserves the keys**
-2. The `enable` action recreates the config and reuses existing keys
-3. Only the `rotate` action deletes and regenerates keys
+Your onion address is tied to the private keys in `/var/lib/tor/birdnet_hidden_service/`. As long as you don't delete this directory which you will if you disable and re-enable the tor exposure, the address stays the same.
 
 ## Getting Help
 
@@ -297,13 +263,36 @@ sudo journalctl -u caddy
 
 ## Example Workflow
 
-1. **Install BirdNET-Pi** (includes Tor)
+0. **Prerequisites** before birdnetPi install for **rpi3b+** & **rpi 0 W2**
+-  `sudo sed -i 's/CONF_SWAPSIZE=100/CONF_SWAPSIZE=2048/g' /etc/dphys-swapfile`
+-  `sudo sed -i 's/#CONF_MAXSWAP=2048/CONF_MAXSWAP=4096/g' /etc/dphys-swapfile`
+-  `sudo nano /etc/rc.local`
+-  Paste this in the file:
+```bash
+sudo sh -c 'cat > /etc/rc.local << EOF
+#!/bin/sh -e
+#
+# rc.local - executed at the end of each multiuser runlevel
+#
+# This script disables WiFi power saving for better performance
+
+# Disable WiFi power saving
+sudo iw wlan0 set power_save off
+
+exit 0
+EOF'
+```
+-  `sudo sed -i '/^exit 0/i sudo iw wlan0 set power_save off' /etc/rc.local`
+-  `sudo chmod +x /etc/rc.local`
+-  `sudo reboot`
+-  Now proceed with normal installation
+
+1. **Install BirdNET-Pi** (version that includes Tor)
 2. **Enable Tor** via Advanced Settings UI
-3. **Note your onion address** (e.g., `http://abc123xyz.onion`)
+3. **Copy your onion address** (e.g., `http://abc1.....23xyz.onion`)
 4. **Share with others:** Give them your onion address (via Tor or encrypted channel)
 5. **They access via Tor Browser:** Visit your onion address
 6. **Monitor access:** Check Caddy logs for unusual activity
-7. **Rotate keys periodically** for security
 
 ---
 
