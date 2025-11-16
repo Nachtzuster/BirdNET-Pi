@@ -67,6 +67,13 @@ enable_tor_service() {
   install_tor || return 1
   check_systemd || return 1
   
+  # Ensure Tor service is running
+  log_info "Starting Tor service..."
+  if ! systemctl start tor@default 2>/dev/null; then
+    log_error "Failed to start Tor service"
+    return 1
+  fi
+
   local tor_user
   tor_user=$(check_tor_user) || return 1
   
@@ -128,19 +135,30 @@ EOF
   pkill -SIGTERM tor 2>/dev/null || true
   sleep 1
   
-  # Enable and start the tor@default instance (actual Tor daemon)
-  log_info "Starting Tor daemon with tor@default service..."
-  systemctl daemon-reload 2>/dev/null || true
-  systemctl enable tor@default >/dev/null 2>&1 || true
-  systemctl restart tor@default 2>&1 | tail -3 || {
-    log_info "Note: tor@default may not exist; trying standard tor service"
-    systemctl restart tor 2>&1 | tail -3 || true
-  }
+  # # Enable and start the tor@default instance (actual Tor daemon)
+  # log_info "Starting Tor daemon with tor@default service..."
+  # systemctl daemon-reload 2>/dev/null || true
+  # systemctl enable tor@default >/dev/null 2>&1 || true
+  # systemctl restart tor@default 2>&1 | tail -3 || {
+  #   log_info "Note: tor@default may not exist; trying standard tor service"
+  #   systemctl restart tor 2>&1 | tail -3 || true
+  # }
   
   # Give Tor time to initialize and create the hidden service
   log_info "Waiting for Tor daemon to initialize..."
   sleep 3
+
+  # Single restart after configuration is complete
+  log_info "Restarting Tor service to apply hidden service configuration..."
+  if ! systemctl restart tor@default 2>/dev/null; then
+    log_info "Note: tor@default may not exist; trying standard tor service"
+    if ! systemctl restart tor 2>/dev/null; then
+      log_error "Failed to restart Tor service"
+      return 1
+    fi
+  fi
   
+  # Wait for hostname generation
   log_info "Waiting for Tor hidden service hostname to be generated..."
   local HOSTNAME=""
   for i in {1..60}; do
@@ -190,10 +208,12 @@ disable_tor_service() {
     log_info "Removing Tor configuration $TORRC_FILE"
     rm -f "$TORRC_FILE"
   fi
-  
-  log_info "Restarting Tor service..."
-  if ! systemctl restart tor 2>&1 | tail -3; then
-    log_error "Warning: Failed to restart Tor service, but continuing with disable"
+
+  log_info "Stopping Tor service..."
+  if systemctl stop tor@default 2>/dev/null; then
+    log_info "Tor service stopped successfully"
+  else
+    log_error "Warning: Failed to stop Tor service"
   fi
   
   log_info "Removing Tor settings from $CONFIG_FILE"
