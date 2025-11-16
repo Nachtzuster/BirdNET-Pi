@@ -20,8 +20,19 @@ if (isset($_GET['run_species_count'])) {
 if (isset($_GET['rotate_tor_onion'])) {
   if (isset($config['TOR_ENABLED']) && $config['TOR_ENABLED'] == 1) {
     
-    // Show warning to ALL users before proceeding
-    if (!isset($_GET['confirmed'])) {
+    // Check if user has already confirmed
+    if (isset($_GET['confirmed'])) {
+      // User confirmed, proceed with rotation
+      syslog(LOG_INFO, "Rotating Tor onion keys");
+      $tor_script = "/usr/local/bin/update_tor_service.sh";
+      $output = shell_exec('sudo bash ' . escapeshellarg($tor_script) . ' rotate 2>&1');
+      echo "<script>";
+      $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
+      echo "alert('Tor 🧅 onion regeneration result:\\n\\n' + `$escaped_output`);";
+      echo "setTimeout(function() { location.reload(); }, 6000);";
+      echo "</script>";
+    } else {
+      // Show warning to ALL users before proceeding
       echo "<script>";
       echo "if(confirm('⚠️ WARNING: Regenerating your onion address will:\\n\\n' +
                    '• Make your OLD address permanently unusable\\n' +
@@ -34,17 +45,6 @@ if (isset($_GET['rotate_tor_onion'])) {
       echo "  // User cancelled";
       echo "  alert('Key rotation cancelled.');";
       echo "}";
-      echo "</script>";
-    } else {
-      // Only proceed if user confirmed
-      syslog(LOG_INFO, "Rotating Tor onion keys");
-      $tor_script = "/usr/local/bin/update_tor_service.sh";
-      // Run synchronously and capture output to display to user
-      $output = shell_exec('sudo bash ' . escapeshellarg($tor_script) . ' rotate 2>&1');
-      echo "<script>";
-      $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
-      echo "alert('Tor 🧅 onion regeneration result:\\n\\n' + `$escaped_output`);";
-      echo "setTimeout(function() { location.reload(); }, 6000);"; // Reload after 6 seconds
       echo "</script>";
     }
   } else {
