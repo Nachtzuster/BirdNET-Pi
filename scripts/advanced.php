@@ -26,7 +26,7 @@ if (isset($_GET['rotate_tor_onion'])) {
     echo "<script>";
     $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
     echo "alert('Tor onion regeneration result:\\n\\n' + `$escaped_output`);";
-    echo "setTimeout(function() { location.reload(); }, 6000);"; // Reload after 6 seconds
+    echo "setTimeout(function() { window.location.href = window.location.pathname + '?view=Advanced'; }, 6000);";
     echo "</script>";
   } else {
     echo "<script>";
@@ -381,20 +381,41 @@ $newconfig = get_config();
       <button type="submit" name="run_species_count" value="1" onclick="{this.innerHTML = 'Loading ... please wait.';this.classList.add('disabled')}"><i>[Click here for disk usage summary]</i></button>
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
-
       <h2>Tor Hosting</h2>
       <label for="enable_tor">
       <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>> Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
-      <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
-        <p>Onion address: <a target="_blank" href="<?php print($newconfig['TOR_ONION']);?>"><?php print($newconfig['TOR_ONION']);?></a></p>
-        <p><small style="color: orange;">⚠️ Warning: Regenerating will make your old address unusable</small></p>
-        <button type="submit" name="rotate_tor_onion" value="1" onclick="{this.innerHTML = 'Regenerating... please wait.';this.classList.add('disabled')}"><i>[Regenerate Onion Address]</i></button>
-      <?php } else { ?>
+    <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
+      <p>Onion address: 
+        <a target="_blank" href="<?php print($newconfig['TOR_ONION']);?>" 
+          onclick="copyToClipboard('<?php print($newconfig['TOR_ONION']);?>'); return false;" 
+          style="cursor: pointer; text-decoration: underline;" 
+          title="Click to copy to clipboard">
+          <?php print($newconfig['TOR_ONION']);?>
+        </a>
+      </p>
+      <p><small style="color: orange;">⚠️ Warning: Regenerating will make your old address unusable</small></p>
+      <button type="submit" name="rotate_tor_onion" value="1" onclick="{this.innerHTML = 'Regenerating... please wait.';this.classList.add('disabled')}"><i>[Regenerate Onion Address]</i></button>
+      <script>
+      function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+          alert('Onion address copied to clipboard: ' + text);
+        }, function(err) {
+          // Fallback for older browsers
+          var textArea = document.createElement("textarea");
+          textArea.value = text;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          alert('Onion address copied to clipboard: ' + text);
+        });
+      }
+      </script>
+    <?php } else { ?>
         <p><small>No onion address configured. Enable Tor by checking the checkbox and save settings to generate one.</small></p>
       <?php } ?>
-
+      
       </td></tr></table><br>
-
       <table class="settingstable"><tr><td>
 
       <h2>Audio Settings</h2>
