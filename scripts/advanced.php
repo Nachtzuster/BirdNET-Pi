@@ -19,34 +19,15 @@ if (isset($_GET['run_species_count'])) {
 
 if (isset($_GET['rotate_tor_onion'])) {
   if (isset($config['TOR_ENABLED']) && $config['TOR_ENABLED'] == 1) {
-    
-    // Check if user has already confirmed
-    if (isset($_GET['confirmed'])) {
-      // User confirmed, proceed with rotation
-      syslog(LOG_INFO, "Rotating Tor onion keys");
-      $tor_script = "/usr/local/bin/update_tor_service.sh";
-      $output = shell_exec('sudo bash ' . escapeshellarg($tor_script) . ' rotate 2>&1');
-      echo "<script>";
-      $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
-      echo "alert('Tor 🧅 onion regeneration result:\\n\\n' + `$escaped_output`);";
-      echo "setTimeout(function() { location.reload(); }, 6000);";
-      echo "</script>";
-    } else {
-      // Show warning to ALL users before proceeding
-      echo "<script>";
-      echo "if(confirm('⚠️ WARNING: Regenerating your onion address will:\\n\\n' +
-                   '• Make your OLD address permanently unusable\\n' +
-                   '• You will NOT be able to see the new address unless you access BirdNET-Pi locally\\n\\n' +
-                   'Only proceed if you are fully aware of this and have local access.\\n\\n' +
-                   'Click OK to continue with key rotation.')) {";
-      echo "  // User confirmed, proceed with rotation";
-      echo "  window.location.href = '?rotate_tor_onion=1&confirmed=1';";
-      echo "} else {";
-      echo "  // User cancelled";
-      echo "  alert('Key rotation cancelled.');";
-      echo "}";
-      echo "</script>";
-    }
+    syslog(LOG_INFO, "Rotating Tor onion keys");
+    $tor_script = "/usr/local/bin/update_tor_service.sh";
+    // Run synchronously and capture output to display to user
+    $output = shell_exec('sudo bash ' . escapeshellarg($tor_script) . ' rotate 2>&1');
+    echo "<script>";
+    $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
+    echo "alert('Tor onion regeneration result:\\n\\n' + `$escaped_output`);";
+    echo "setTimeout(function() { location.reload(); }, 6000);"; // Reload after 6 seconds
+    echo "</script>";
   } else {
     echo "<script>";
     echo "alert('Tor is not enabled. Enable Tor in Advanced Settings first.');";
@@ -406,6 +387,7 @@ $newconfig = get_config();
       <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>> Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
       <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
         <p>Onion address: <a target="_blank" href="<?php print($newconfig['TOR_ONION']);?>"><?php print($newconfig['TOR_ONION']);?></a></p>
+        <p><small style="color: orange;">⚠️ Warning: Regenerating will make your old address unusable</small></p>
         <button type="submit" name="rotate_tor_onion" value="1" onclick="{this.innerHTML = 'Regenerating... please wait.';this.classList.add('disabled')}"><i>[Regenerate Onion Address]</i></button>
       <?php } else { ?>
         <p><small>No onion address configured. Enable Tor by checking the checkbox and save settings to generate one.</small></p>
