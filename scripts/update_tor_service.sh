@@ -67,12 +67,6 @@ enable_tor_service() {
   
   install_tor || return 1
   check_systemd || return 1
-  
-  # Wait for web services before enabling Tor
-  check_web_services || {
-    log_error "Cannot enable Tor - web services not available"
-    return 1
-  }
 
   # Ensure Tor service is running
   log_info "Starting Tor service..."
