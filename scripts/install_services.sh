@@ -407,6 +407,25 @@ EOF
   systemctl daemon-reload
 }
 
+configure_tor_dependencies() {
+  echo "Configuring Tor service dependencies..."
+  # Create systemd override for tor@default
+  mkdir -p /etc/systemd/system/tor@default.service.d
+  cat << 'EOF' > /etc/systemd/system/tor@default.service.d/birdnet-dependencies.conf
+[Unit]
+After=caddy.service
+Wants=caddy.service
+After=php8.2-fpm.service
+Wants=php8.2-fpm.service
+After=birdnet_analysis.service
+Wants=birdnet_analysis.service
+[Service]
+ExecStartPre=/bin/sleep 10
+EOF
+  systemctl daemon-reload
+  echo "Tor service dependencies configured"
+}
+
 install_services() {
   set_hostname
   update_etc_hosts
@@ -432,6 +451,7 @@ install_services() {
   install_weekly_cron
   install_automatic_update_cron
   increase_caddy_timeout
+  configure_tor_dependencies
 
   create_necessary_dirs
   generate_BirdDB
