@@ -420,7 +420,7 @@ Wants=php8.2-fpm.service
 After=birdnet_analysis.service
 Wants=birdnet_analysis.service
 [Service]
-ExecStartPre=/bin/sleep 10
+ExecStartPre=/bin/sleep 13
 EOF
   systemctl daemon-reload
   echo "Tor service dependencies configured"

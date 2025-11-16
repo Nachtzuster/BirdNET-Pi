@@ -111,7 +111,16 @@ enable_tor_service() {
 
   if ! grep -qF "$include_directive /etc/tor/torrc.d/*.conf" /etc/tor/torrc 2>/dev/null; then
     log_info "Adding $include_directive directive to /etc/tor/torrc"
-    printf "\n# Include drop-in configs\n$include_directive /etc/tor/torrc.d/*.conf" >> /etc/tor/torrc
+    # Use echo instead of printf for better reliability
+    echo "" >> /etc/tor/torrc
+    echo "# Include drop-in configs" >> /etc/tor/torrc
+    echo "$include_directive /etc/tor/torrc.d/*.conf" >> /etc/tor/torrc
+    
+    # Verify the addition was successful
+    if ! grep -qF "$include_directive /etc/tor/torrc.d/*.conf" /etc/tor/torrc 2>/dev/null; then
+      log_error "Failed to add include directive to /etc/tor/torrc"
+      return 1
+    fi
   fi
   
   log_info "Writing Tor configuration to $TORRC_FILE"
@@ -130,6 +139,14 @@ EOF
     log_error "Failed to set permissions on $HS_DIR"
     return 1
   }
+
+  # Before restarting Tor, verify the configuration is valid
+  log_info "Verifying Tor configuration..."
+  if ! tor --verify-config >/dev/null 2>&1; then
+    log_error "Tor configuration verification failed"
+    log_error "Please check /etc/tor/torrc for syntax errors"
+    return 1
+  fi
   
   log_info "Restarting Tor daemon..."
   # Stop any running Tor instances
