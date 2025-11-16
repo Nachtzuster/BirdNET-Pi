@@ -63,6 +63,7 @@ install_tor() {
 
 enable_tor_service() {
   log_info "Enabling Tor hidden service..."
+  cleanup_old_logs "enable"
   
   install_tor || return 1
   check_systemd || return 1
@@ -199,6 +200,14 @@ EOF
   return 0
 }
 
+cleanup_old_logs() {
+  # Keep only the last 3 log files for each action type
+  local action="$1"
+  local keep_count=3
+  
+  ls -t /tmp/tor_service_${action}_*.log 2>/dev/null | tail -n +$((keep_count + 1)) | xargs rm -f 2>/dev/null || true
+}
+
 disable_tor_service() {
   log_info "Disabling Tor hidden service..."
   
@@ -228,6 +237,8 @@ disable_tor_service() {
 
 rotate_onion_keys() {
   log_info "Rotating Tor hidden service keys..."
+
+  cleanup_old_logs "rotate" 
   
   if [ ! -d "$HS_DIR" ]; then
     log_error "Hidden service directory does not exist: $HS_DIR"
