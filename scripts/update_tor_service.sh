@@ -42,32 +42,6 @@ check_tor_user() {
   fi
 }
 
-check_web_services() {
-  local max_attempts=30
-  local attempt=1
-  
-  log_info "Waiting for BirdNET-Pi web services to be ready..."
-  
-  while [ $attempt -le $max_attempts ]; do
-    if systemctl is-active --quiet caddy && \
-       systemctl is-active --quiet php*-fpm && \
-       curl -s http://localhost/ >/dev/null 2>&1; then
-      log_info "Web services are ready after $attempt attempts"
-      return 0
-    fi
-    
-    if [ $((attempt % 5)) -eq 0 ]; then
-      log_info "Attempt $attempt/$max_attempts: Waiting for web services..."
-    fi
-    
-    sleep 2
-    ((attempt++))
-  done
-  
-  log_error "Web services not ready after $max_attempts attempts"
-  return 1
-}
-
 install_tor() {
   log_info "Checking/installing Tor..."
   
