@@ -386,15 +386,18 @@ $newconfig = get_config();
       <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>> Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
       <p><small>Hosting on Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank">Tor Browser</a>.</small></p>    <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
       <p>Onion address: 
-        <a href="#" 
-          onclick="copyToClipboard('<?php print($newconfig['TOR_ONION']);?>'); return false;" 
-          style="cursor: pointer; text-decoration: underline;" 
-          title="Click to copy to clipboard">
+        <span onclick="copyToClipboard('<?php print($newconfig['TOR_ONION']);?>')" 
+              style="cursor: pointer; text-decoration: underline; color: indigo;" 
+              title="Click to copy to clipboard">
           <?php print($newconfig['TOR_ONION']);?>
-        </a>
+        </span>
       </p>
       <p><small style="color: orange;">⚠️ Warning: Regenerating will make your old address unusable</small></p>
       <button type="submit" name="rotate_tor_onion" value="1" onclick="{this.innerHTML = 'Regenerating... please wait.';this.classList.add('disabled')}"><i>[Regenerate Onion Address]</i></button>
+    <?php } else { ?>
+        <p><small>No onion address configured. Enable Tor by checking the checkbox and save settings to generate one.</small></p>
+      <?php } ?>
+
       <script>
       function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(function() {
@@ -411,9 +414,6 @@ $newconfig = get_config();
         });
       }
       </script>
-    <?php } else { ?>
-        <p><small>No onion address configured. Enable Tor by checking the checkbox and save settings to generate one.</small></p>
-      <?php } ?>
 
       </td></tr></table><br>
       <table class="settingstable"><tr><td>
