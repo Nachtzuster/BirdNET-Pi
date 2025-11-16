@@ -100,10 +100,10 @@ enable_tor_service() {
       log_info "Tor version $tor_version detected, using %include directive"
     fi
   fi
-  
+
   if ! grep -qF "$include_directive /etc/tor/torrc.d/*.conf" /etc/tor/torrc 2>/dev/null; then
     log_info "Adding $include_directive directive to /etc/tor/torrc"
-    echo -e "\n# Include drop-in configs\n$include_directive /etc/tor/torrc.d/*.conf" >> /etc/tor/torrc
+    printf "\n# Include drop-in configs\n$include_directive /etc/tor/torrc.d/*.conf" >> /etc/tor/torrc
   fi
   
   log_info "Writing Tor configuration to $TORRC_FILE"
@@ -243,18 +243,18 @@ rotate_onion_keys() {
   
   log_info "Waiting for new Tor hidden service hostname to be generated..."
   local HOSTNAME=""
-  for i in {1..20}; do
+  for i in {1..60}; do
     if [ -f "$HS_DIR/hostname" ]; then
       HOSTNAME=$(cat "$HS_DIR/hostname" | tr -d '\n')
       break
     fi
-    log_info "Attempt $i/20: waiting for new hostname..."
+    log_info "Attempt $i/60: waiting for new hostname..."
     sleep 1
   done
   
   if [ -z "$HOSTNAME" ]; then
     log_error "New Tor hidden service hostname not found after 20 seconds"
-    return 1
+    return 2
   fi
   
   log_info "Updating $CONFIG_FILE with new onion address"

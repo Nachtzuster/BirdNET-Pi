@@ -26,7 +26,7 @@ if (isset($_GET['rotate_tor_onion'])) {
     echo "<script>";
     $escaped_output = htmlspecialchars($output, ENT_QUOTES | ENT_SUBSTITUTE);
     echo "alert('Tor onion regeneration result:\\n\\n' + `$escaped_output`);";
-    echo "location.reload();";
+    echo "setTimeout(function() { location.reload(); }, 6000);"; // Reload after 6 seconds
     echo "</script>";
   } else {
     echo "<script>";
@@ -389,7 +389,7 @@ $newconfig = get_config();
         <p>Onion address: <a target="_blank" href="<?php print($newconfig['TOR_ONION']);?>"><?php print($newconfig['TOR_ONION']);?></a></p>
         <button type="submit" name="rotate_tor_onion" value="1" onclick="{this.innerHTML = 'Regenerating... please wait.';this.classList.add('disabled')}"><i>[Regenerate Onion Address]</i></button>
       <?php } else { ?>
-        <p><small>No onion address configured. Enable Tor and save settings to generate one.</small></p>
+        <p><small>No onion address configured. Enable Tor by checking the checkbox and save settings to generate one.</small></p>
       <?php } ?>
 
       </td></tr></table><br>
