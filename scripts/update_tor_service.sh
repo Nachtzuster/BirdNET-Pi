@@ -84,6 +84,12 @@ enable_tor_service() {
   
   mkdir -p "$TORRC_DIR"
   mkdir -p "$HS_DIR"
+
+  # Ensure tor reads /etc/tor/torrc.d/*.conf by including it in /etc/tor/torrc if missing
+  if ! grep -qF "Include /etc/tor/torrc.d/*.conf" /etc/tor/torrc 2>/dev/null; then
+    log_info "Adding Include directive to /etc/tor/torrc to load /etc/tor/torrc.d/*.conf"
+    echo "\n# Include drop-in configs\nInclude /etc/tor/torrc.d/*.conf" >> /etc/tor/torrc
+  fi
   
   log_info "Writing Tor configuration to $TORRC_FILE"
   cat <<EOF > "$TORRC_FILE"
