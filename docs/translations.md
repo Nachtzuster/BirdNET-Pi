@@ -1,0 +1,36 @@
+| Language | Translated species | Translated species (%) |
+| -------- | ------- | ------ |
+| Afrikaans | 743 | 10.5% |
+| Arabic | 526 | 7.5% |
+| Catalan | 5818 | 82.4% |
+| Chinese | 6174 | 87.5% |
+| Croatian | 5995 | 84.9% |
+| Czech | 6049 | 85.7% |
+| Danish | 5944 | 84.2% |
+| Dutch | 6707 | 95.0% |
+| Estonian | 3230 | 45.8% |
+| Finnish | 6377 | 90.4% |
+| French | 6782 | 96.1% |
+| German | 6790 | 96.2% |
+| Hungarian | 3728 | 52.8% |
+| Icelandic | 827 | 11.7% |
+| Indonesian | 865 | 12.3% |
+| Italian | 5794 | 82.1% |
+| Japanese | 6659 | 94.3% |
+| Korean | 616 | 8.7% |
+| Latvian | 1588 | 22.5% |
+| Lithuanian | 5812 | 82.3% |
+| Norwegian | 6727 | 95.3% |
+| Polish | 6786 | 96.1% |
+| Portuguese | 6400 | 90.7% |
+| Romanian | 807 | 11.4% |
+| Russian | 6643 | 94.1% |
+| Serbian | 5391 | 76.4% |
+| Slovak | 6782 | 96.1% |
+| Slovenian | 1190 | 16.9% |
+| Spanish | 6746 | 95.6% |
+| Swedish | 6733 | 95.4% |
+| Thai | 994 | 14.1% |
+| Turkish | 6361 | 90.1% |
+| Ukrainian | 6680 | 94.6% |
+
