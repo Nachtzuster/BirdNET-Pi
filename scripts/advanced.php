@@ -378,7 +378,7 @@ $newconfig = get_config();
       <label for="enable_tor">
       <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>>
       Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
-      <p><small>Hosting over Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank"><span id="torbrowserline">Tor Browser</span></a>.</small></p>
+      <p><small>Hosting over Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank">Tor Browser</a>.</small></p>
           <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
         <p><small> + Visitors can't see your home IP. - The down side is that some ISPs block Tor traffic entirely.</small></p>
         <p>🧅 Onion address: 
