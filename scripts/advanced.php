@@ -301,26 +301,26 @@ if (isset($_GET["max_files_species"])) {
   // Handle enabling/disabling the Tor hidden service AFTER the config file
 // has been written to avoid race conditions where the helper writes the
 // TOR_* settings and then this script would overwrite them.
-$tor_script = $home . "/BirdNET-Pi/scripts/update_tor_service.sh";
-$wants_tor = isset($_GET['enable_tor']) ? 1 : 0;
+  $tor_script = $home . "/BirdNET-Pi/scripts/update_tor_service.sh";
+  $wants_tor = isset($_GET['enable_tor']) ? 1 : 0;
 
-// Only process Tor if the setting actually changed
-$tor_changed = false;
-if ($wants_tor && !$old_tor_enabled) {
-    $tor_changed = true;
-} elseif (!$wants_tor && $old_tor_enabled) {
-    $tor_changed = true;
-}
+  // Only process Tor if the setting actually changed
+  $tor_changed = false;
+  if ($wants_tor && !$old_tor_enabled) {
+      $tor_changed = true;
+  } elseif (!$wants_tor && $old_tor_enabled) {
+      $tor_changed = true;
+  }
 
-if ($tor_changed) {
-    if ($wants_tor) {
-        // enable asynchronously
-        exec('sudo bash ' . escapeshellarg($tor_script) . ' enable > /dev/null 2>&1 &');
-    } else {
-        // disable asynchronously
-        exec('sudo bash ' . escapeshellarg($tor_script) . ' disable > /dev/null 2>&1 &');
-    }
-}
+  if ($tor_changed) {
+      if ($wants_tor) {
+          // enable asynchronously
+          exec('sudo bash ' . escapeshellarg($tor_script) . ' enable > /dev/null 2>&1 &');
+      } else {
+          // disable asynchronously
+          exec('sudo bash ' . escapeshellarg($tor_script) . ' disable > /dev/null 2>&1 &');
+      }
+  }
 
   syslog(LOG_INFO, "Restarting Services");
   if ($update_caddyfile){
@@ -390,11 +390,12 @@ $newconfig = get_config();
       <h2>Tor Hosting</h2>
       <label for="enable_tor">
       <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>> Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
-      <p><small>Hosting on Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank"><span style="background-color: #4B0082">Tor Browser</span> 🧅</a>.</small></p>    <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
-        <p>Onion address: 
+      <p><small>Hosting on Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank"><span style="background-color: #4B0082; color: #fff">Tor Browser</span></a>.</small></p>    <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
+        <p><small>Hosting on Tor hides your IP from visitors. Some ISPs block Tor traffic entirely.</small></p>
+        <p>Onion address 🧅 
           <input type="text" id="onionAddress" value="<?php print($newconfig['TOR_ONION']);?>" 
                 readonly style="border: 1px solid #ccc; padding: 2px 5px; width: 450px; cursor: auto; font-size: 0.7em;background-color: #4B0082; color: white;">
-          <button type="button" style="margin-left: 8px;" onclick="var el = document.getElementById('onionAddress'); el.select(); try { document.execCommand('copy'); alert('✅ Address copied!'); } catch(e) { alert('Please manually copy: ' + el.value); }">Copy</button>
+          <button type="button" style="margin-left: 8px; background-color: #51c88e" onclick="var el = document.getElementById('onionAddress'); el.select(); try { document.execCommand('copy'); alert('✅ Address copied!'); } catch(e) { alert('Please manually copy: ' + el.value); }">Copy</button>
         </p>
         <p><small style="color: gray;">To change the address, disable the Tor settings → save settings → reenable Tor → you'll get new .onion address.</small></p>
       <?php } else { ?>
@@ -403,8 +404,9 @@ $newconfig = get_config();
       <?php } ?>
 
       <!-- Add Tor operation status indicator -->
-      <div id="torStatus" style="display: none; color: #536881ff; font-weight: italic;">
-        Tor operation in progress... Please wait (this may take up to 60 seconds) If you see no changes, please refresh the page.
+      <div id="torStatus" style="display: none; color: ##ccc; font-weight: italic;">
+          <p></p>Tor operation in progress... Please wait (this may take up to 60+ seconds).</p>
+          <p>The page will refresh automatically when complete. If you don't see your onion address, please refresh manually.</p>
       </div>
 
       <script>
@@ -414,15 +416,15 @@ $newconfig = get_config();
         document.getElementById('advancedformsubmit').innerHTML = 'Processing Tor... please wait';
         document.getElementById('advancedformsubmit').classList.add('disabled');
         
-        // Reload page after 8 seconds to show updated Tor status
+        // Reload page after 60 seconds to show updated Tor status
         setTimeout(function() {
           window.location.href = window.location.pathname + '?view=Advanced';
-        }, 15000);
+        }, 60000);
       }
 
       // Check if we just performed a Tor operation and show status
       <?php 
-      if (isset($_GET['submit']) && (isset($_GET['enable_tor']) || (isset($old_tor_enabled) && $old_tor_enabled != (isset($_GET['enable_tor']) ? 1 : 0)))) {
+      if (isset($_GET['submit']) && $tor_changed) {
         echo "showTorStatus();";
       }
       ?>
@@ -736,7 +738,7 @@ foreach($formats as $format){
       <br><br>
       <input type="hidden" name="view" value="Advanced">
 <div class="float">
-      <button type="submit" id="advancedformsubmit" onclick="collectrtspUrls(); if(document.getElementById('advancedform').checkValidity()){this.innerHTML = 'Updating... please wait.';this.classList.add('disabled'); if(document.getElementById('enable_tor').checked || <?php echo $old_tor_enabled ? 'true' : 'false'; ?>) { showTorStatus(); }}" name="submit" value="advanced">
+      <button type="submit" id="advancedformsubmit" onclick="collectrtspUrls(); if(document.getElementById('advancedform').checkValidity()){this.innerHTML = 'Updating... please wait.';this.classList.add('disabled'); if(<?php echo $tor_changed ? 'true' : 'false'; ?>) { showTorStatus(); }}" name="submit" value="advanced">
 <?php
 if(isset($_GET['submit'])){
   echo '<script>alert("Settings successfully updated");</script>';
