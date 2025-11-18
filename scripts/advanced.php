@@ -288,19 +288,6 @@ if (isset($_GET["max_files_species"])) {
   // Handle enabling/disabling the Tor hidden service AFTER the config file
   // has been written to avoid race conditions where the helper writes the
   // TOR_* settings and then this script would overwrite them.
-  // $tor_script = $home . "/BirdNET-Pi/scripts/update_tor_service.sh";
-  // $wants_tor = isset($_GET['enable_tor']) ? 1 : 0;
-  // if ($wants_tor && !$old_tor_enabled) {
-  //   // enable asynchronously
-  //   exec('sudo bash ' . escapeshellarg($tor_script) . ' enable > /dev/null 2>&1 &');
-  // } elseif (!$wants_tor && $old_tor_enabled) {
-  //   // disable asynchronously
-  //   exec('sudo bash ' . escapeshellarg($tor_script) . ' disable > /dev/null 2>&1 &');
-  // }
-
-  // Handle enabling/disabling the Tor hidden service AFTER the config file
-// has been written to avoid race conditions where the helper writes the
-// TOR_* settings and then this script would overwrite them.
   $tor_script = $home . "/BirdNET-Pi/scripts/update_tor_service.sh";
   $wants_tor = isset($_GET['enable_tor']) ? 1 : 0;
 
@@ -389,22 +376,23 @@ $newconfig = get_config();
       <table class="settingstable"><tr><td>
       <h2>Tor Hosting</h2>
       <label for="enable_tor">
-      <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>> Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
-      <p><small>Hosting on Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank"><span style="background-color: #4B0082; color: #fff">Tor Browser</span></a>.</small></p>    <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
-        <p><small>Hosting on Tor hides your IP from visitors. Some ISPs block Tor traffic entirely.</small></p>
-        <p>Onion address 🧅 
-          <input type="text" id="onionAddress" value="<?php print($newconfig['TOR_ONION']);?>" 
-                readonly style="border: 1px solid #ccc; padding: 2px 5px; width: 450px; cursor: auto; font-size: 0.7em;background-color: #4B0082; color: white;">
-          <button type="button" style="margin-left: 8px; background-color: #51c88e" onclick="var el = document.getElementById('onionAddress'); el.select(); try { document.execCommand('copy'); alert('✅ Address copied!'); } catch(e) { alert('Please manually copy: ' + el.value); }">Copy</button>
+      <input name="enable_tor" type="checkbox" id="enable_tor" value="1" <?php if (isset($newconfig['TOR_ENABLED']) && $newconfig['TOR_ENABLED'] == 1) { echo "checked"; }?>>
+      Host this BirdNET-Pi on Tor (create a Tor hidden service and expose the web interface via an .onion address)</label>
+      <p><small>Hosting over Tor will allow you to access your BirdNET-Pi from anywhere using <a href="https://www.torproject.org/download/" target="_blank"><span id="torbrowserline">Tor Browser</span></a>.</small></p>
+          <?php if (isset($newconfig['TOR_ONION']) && strlen($newconfig['TOR_ONION'])>0) { ?>
+        <p><small> + Visitors can't see your home IP. - The down side is that some ISPs block Tor traffic entirely.</small></p>
+        <p>🧅 Onion address: 
+          <input type="text" id="onionAddress" value="<?php print($newconfig['TOR_ONION']);?>" readonly>
+          <button id="onioncopybtn" type="button" onclick="var el = document.getElementById('onionAddress'); el.select(); try { document.execCommand('copy'); alert('✅ Address copied!'); } catch(e) { alert('Please manually copy: ' + el.value); }">Copy</button>
         </p>
         <p><small style="color: gray;">To change the address, disable the Tor settings → save settings → reenable Tor → you'll get new .onion address.</small></p>
       <?php } else { ?>
         <p><small>No onion address configured. Enable Tor by checking the checkbox and save settings to generate one.</small></p>
-        <p><small>If you se no changes, please refresh the page.</small></p>
+        <p><small>If you see no changes, please refresh the page.</small></p>
       <?php } ?>
 
       <!-- Add Tor operation status indicator -->
-      <div id="torStatus" style="display: none; color: ##ccc; font-weight: italic;">
+      <div id="torStatus">
           <p></p>Tor operation in progress... Please wait (this may take up to 60+ seconds).</p>
           <p>The page will refresh automatically when complete. If you don't see your onion address, please refresh manually.</p>
       </div>

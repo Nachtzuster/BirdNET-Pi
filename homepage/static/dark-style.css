@@ -950,6 +950,37 @@ pre#timer.bash {
   color: #f5f5f5;
 }
 
+#torbrowserline {
+  background-color: #fff;
+  color: #4B0082"
+}
+
+#onionAddress {
+  border: 1px solid #ccc;
+  padding: 2px 5px;
+  width: 450px;
+  cursor: auto;
+  font-size: 0.75em;
+  background-color: white;
+  color: #4B0082;
+}
+
+#torStatus {
+   display: none;
+   color: #fcf679;
+   font-weight: italic;
+}
+
+#onioncopybtn{
+  cursor: pointer;
+  margin-left: 5px;
+  height: 5px;
+  line-height: 5px;
+  padding: 3px;
+  background-color: #3b3b3b;
+  color: #f5f5f5;
+}
+
 #newrtspstream{
   cursor: pointer;
   margin-left: 2px;

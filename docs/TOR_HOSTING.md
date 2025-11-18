@@ -31,14 +31,6 @@ This will:
 - Copy the Tor helper script (`update_tor_service.sh`) to `/usr/local/bin`
 - Enable the Tor service to start on boot
 
-### Manual Installation (if needed)
-
-If you need to install Tor separately:
-
-```bash
-sudo apt-get update
-sudo apt-get install tor
-```
 
 Then ensure the helper script is available:
 ```bash
@@ -261,7 +253,7 @@ sudo journalctl -u tor
 sudo journalctl -u caddy
 ```
 
-## Example Workflow
+## Example Installation Workflow
 
 0. **Prerequisites** before birdnetPi install for **rpi3b+** & **rpi 0 W2**
 -  `sudo sed -i 's/CONF_SWAPSIZE=100/CONF_SWAPSIZE=2048/g' /etc/dphys-swapfile`
