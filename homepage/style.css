@@ -925,10 +925,7 @@ pre#timer.bash {
 
 #onioncopybtn{
   cursor: pointer;
-  margin-left: 5px;
-  height: 5px;
-  line-height: 5px;
-  padding: 3px;
+  line-height: 1px;
   background-color: #9fe29b;
 }
 
