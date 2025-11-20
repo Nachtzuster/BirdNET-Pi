@@ -907,6 +907,28 @@ pre#timer.bash {
   background-color:#9fe29b
 }
 
+#onionAddress {
+  border: 1px solid #ccc;
+  padding: 2px 5px;
+  width: 450px;
+  cursor: auto;
+  font-size: 0.75em;
+  background-color: #4B0082;
+  color: white;
+}
+
+#torStatus {
+   display: none;
+   color: #b48454;
+   font-weight: italic;
+}
+
+#onioncopybtn{
+  cursor: pointer;
+  line-height: 1px;
+  background-color: #9fe29b;
+}
+
 #newrtspstream{
   cursor: pointer;
   margin-left: 2px;

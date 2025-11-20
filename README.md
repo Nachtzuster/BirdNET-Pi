@@ -29,6 +29,7 @@ Changes include:
  - Rework analysis to consolidate analysis/server/extraction. Should make analysis more robust and slightly more efficient, especially on installations with a large number of recordings
  - Bump tflite_runtime to 2.11.0, it is faster
  - Rework daily_plot.py (chart_viewer) to run as a daemon to avoid the very expensive startup
+ - Tor Hidden Service Support – Host your BirdNET-Pi over Tor with a .onion address (see [Tor Hosting Guide](docs/TOR_HOSTING.md))
  - Lots of fixes & cleanups
 
 !! note: see 'Migrating' on how to migrate from mcguirepr89
