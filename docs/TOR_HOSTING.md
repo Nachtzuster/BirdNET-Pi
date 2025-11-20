@@ -8,35 +8,41 @@ BirdNET-Pi can be exposed as a Tor hidden service (v3 onion address). When enabl
 
 **Key Features:**
 - One-click enable/disable from Advanced Settings UI
-- Automatic Tor installation and configuration
 - Onion v3 address generation
-- Key rotation support (regenerate onion address)
-- Optimized for Raspberry Pi running Raspberry Pi OS (Debian-based)
+- Regenerate onion address if needed
+
 
 ## Installation
-**This Tor option has only been tested on the RPi3B+**
+**This Tor option has only been tested on the RPi3B+ (bookworm 64bit Lite)**
 
-### Automatic (Recommended)
 
-Tor is automatically installed during the BirdNET-Pi installation process via `install_services.sh`:
+## Example Installation Workflow
 
+0. **Prerequisites** before birdnetPi install for **rpi3b+** & **rpi 0 W2**
+-  `sudo sed -i 's/CONF_SWAPSIZE=100/CONF_SWAPSIZE=2048/g' /etc/dphys-swapfile`
+-  `sudo sed -i 's/#CONF_MAXSWAP=2048/CONF_MAXSWAP=4096/g' /etc/dphys-swapfile`
+-  `sudo nano /etc/rc.local`
+-  Paste this in the file:
 ```bash
-# Standard BirdNET-Pi installation
-cd ~/BirdNET-Pi
-./newinstaller.sh
+sudo sh -c 'cat > /etc/rc.local << EOF
+#!/bin/sh -e
+#
+# rc.local - executed at the end of each multiuser runlevel
+#
+# This script disables WiFi power saving for better performance
+
+# Disable WiFi power saving
+
+exit 0
+EOF'
 ```
+-  `sudo sed -i '/^exit 0/i sudo iw wlan0 set power_save off' /etc/rc.local`
+-  `sudo chmod +x /etc/rc.local`
+-  `sudo reboot`
+-  Now proceed with normal installation
 
-This will:
-- Install Tor package via apt-get
-- Copy the Tor helper script (`update_tor_service.sh`) to `/usr/local/bin`
-- Enable the Tor service to start on boot
+1. **Install BirdNET-Pi** (From fork that includes Tor currently! `curl -fsSL https://raw.githubusercontent.com/StellarStoic/BirdNET-Pi/main/newinstaller.sh | bash` )
 
-
-Then ensure the helper script is available:
-```bash
-sudo cp ~/BirdNET-Pi/scripts/update_tor_service.sh /usr/local/bin/
-sudo chmod +x /usr/local/bin/update_tor_service.sh
-```
 
 ## Enabling Tor Hosting
 
@@ -47,11 +53,14 @@ sudo chmod +x /usr/local/bin/update_tor_service.sh
 3. Find the **Tor Hosting** section
 4. Check the box: **"Host this BirdNET-Pi on Tor"**
 5. Click **"Update Settings"**
-6. Wait 10-15 seconds for the onion address to be generated
+6. Wait 60 seconds for the onion address to be generated
 7. Reload the page; the onion address will appear
 8. If you think nothing has happened, refresh the page
 
-### Via Command Line
+
+### Usefull commands
+
+(Ensure Tor is running: `systemctl status tor`)
 
 ```bash
 # Enable
@@ -72,20 +81,6 @@ Once enabled, you can access your BirdNET-Pi via Tor:
 3. **Visit your onion address** (e.g., `http://example1234567890abcdef.onion`)
 
 The address appears in the **Tor Hosting** section under Advanced Settings, and is stored in `/etc/birdnet/birdnet.conf` as `TOR_ONION`.
-
-### Access from Command Line
-
-You can also use `curl` with Tor:
-```bash
-torify curl http://your-onion-address.onion/
-```
-
-Or configure a SOCKS5 proxy:
-```bash
-curl --socks5 localhost:9050 http://your-onion-address.onion/
-```
-
-(Ensure Tor is running: `systemctl status tor`)
 
 ## Security & Privacy Considerations
 
@@ -252,41 +247,6 @@ For issues with the helper script, check:
 sudo journalctl -u tor
 sudo journalctl -u caddy
 ```
-
-## Example Installation Workflow
-
-0. **Prerequisites** before birdnetPi install for **rpi3b+** & **rpi 0 W2**
--  `sudo sed -i 's/CONF_SWAPSIZE=100/CONF_SWAPSIZE=2048/g' /etc/dphys-swapfile`
--  `sudo sed -i 's/#CONF_MAXSWAP=2048/CONF_MAXSWAP=4096/g' /etc/dphys-swapfile`
--  `sudo nano /etc/rc.local`
--  Paste this in the file:
-```bash
-sudo sh -c 'cat > /etc/rc.local << EOF
-#!/bin/sh -e
-#
-# rc.local - executed at the end of each multiuser runlevel
-#
-# This script disables WiFi power saving for better performance
-
-# Disable WiFi power saving
-
-exit 0
-EOF'
-```
--  `sudo sed -i '/^exit 0/i sudo iw wlan0 set power_save off' /etc/rc.local`
--  `sudo chmod +x /etc/rc.local`
--  `sudo reboot`
--  Now proceed with normal installation
-
-1. **Install BirdNET-Pi** (From fork that includes Tor currently! `curl -fsSL https://raw.githubusercontent.com/StellarStoic/BirdNET-Pi/main/newinstaller.sh | bash` )
-
-2. **Enable Tor** via Advanced Settings UI
-3. **Copy your onion address** (e.g., `http://abc1.....23xyz.onion`)
-4. **Share with others:** Give them your onion address (via Tor or encrypted channel)
-5. **They access via Tor Browser:** Visit your onion address
-6. **Monitor access:** Check Caddy logs for unusual activity
-
----
 
 **Last Updated:** November 2025  
 **BirdNET-Pi Tor Integration v1.0**
