@@ -87,52 +87,42 @@ def analyzeAudioData(chunks, overlap, lat, lon, week):
     return labeled, predicted_species_list
 
 
-def filter_humans(detections):
+def filter_humans(predictions):
     conf = get_settings()
     priv_thresh = conf.getfloat('PRIVACY_THRESHOLD')
     human_cutoff = max(10, int(6000 * priv_thresh / 100.0))
     log.debug("HUMAN-CUTOFF AT: %d", human_cutoff)
-
-    censored_detections = []
-    for detection in detections:
-        p = detection[:human_cutoff]
-        human_detected = False
-        # Catch if Human is recognized in any of the predictions
-        for x in p:
-            if 'Human' in x[0]:
-                human_detected = True
-
-        # If human detected set detection to human to make sure voices are not saved
-        if human_detected is True:
-            p = [('Human_Human', 0.0)]
-        else:
-            p = p[:10]
-
-        censored_detections.append(p)
-
-    # now overwrite detections that have a human neighbour too
     try:
-        extraction_length = conf.getint('EXTRACTION_LENGTH')
+        if conf.getint('EXTRACTION_LENGTH') > 9:
+            log.warning("EXTRACTION_LENGTH is set to %d. Privacy filter might miss human sound, "
+                        "if you care about privacy, set EXTRACTION_LENGTH to below 9 or leave empty.", conf.getint('EXTRACTION_LENGTH'))
     except ValueError:
-        extraction_length = 6
-    if extraction_length > 9:
-        log.warning("EXTRACTION_LENGTH is set to %d. Privacy filter might miss human sound, "
-                    "if you care about privacy, set EXTRACTION_LENGTH to below 9 or leave empty.", extraction_length)
-    human_neighbour_mask = [False] * len(censored_detections)
-    for i, detection in enumerate(censored_detections):
-        if i != 0:
-            if censored_detections[i - 1][0][0] == 'Human_Human':
-                human_neighbour_mask[i] = True
-        if i != len(censored_detections) - 1:
-            if censored_detections[i + 1][0][0] == 'Human_Human':
-                human_neighbour_mask[i] = True
+        pass
+
+    # mask for humans
+    human_mask = [False] * len(predictions)
+    for i, prediction in enumerate(predictions):
+        for p in prediction[:human_cutoff]:
+            if 'Human' in p[0]:
+                human_mask[i] = True
+                break
+
+    # now mask for predictions that have a human neighbour
+    human_neighbour_mask = [False] * len(predictions)
+    for i, prediction in enumerate(human_mask):
+        if i != 0 and human_mask[i - 1]:
+            human_neighbour_mask[i] = True
+        if i != len(human_mask) - 1 and human_mask[i + 1]:
+            human_neighbour_mask[i] = True
 
     clean_detections = []
-    for i, (has_human_neighbour, detection) in enumerate(zip(human_neighbour_mask, censored_detections)):
-        if has_human_neighbour and detection[0][0] != 'Human_Human':
-            log.debug('Overwriting detection %d %s - Has Human neighbour', i + 1, detection[0])
-            detection = [('Human_Human', 0.0)]
-        clean_detections.append(detection)
+    for prediction, human, has_human_neighbour in zip(predictions, human_mask, human_neighbour_mask):
+        if human or has_human_neighbour:
+            log.debug('Overwriting prediction %s', prediction[0])
+            prediction = [('Human_Human', 0.0)]
+        else:
+            prediction = prediction[:10]
+        clean_detections.append(prediction)
 
     return clean_detections
 
