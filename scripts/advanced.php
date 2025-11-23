@@ -329,7 +329,7 @@ $newconfig = get_config();
       </td></tr><tr><td>
       If different than 0 (keep all), defines the number of files to keep for each species, with priority given to files with higher confidence. This value does not include files from the last 7 days, these new files are protected against auto-deletion.
       </td></tr><tr><td>
-      Note only the spectrogram and audio files are deleted, the obsevation data remains in the database.
+      Note only the spectrogram and audio files are deleted, the observation data remains in the database.
       The files protected through the "lock" icon are also not affected.
       <br>
       <button type="submit" name="run_species_count" value="1" onclick="{this.innerHTML = 'Loading ... please wait.';this.classList.add('disabled')}"><i>[Click here for disk usage summary]</i></button>
@@ -345,7 +345,7 @@ $newconfig = get_config();
       Set Channels to the number of channels supported by your sound card. 32 max.<br><br>
       <label for="recording_length">Recording Length: </label>
       <input name="recording_length" oninput="document.getElementsByName('extraction_length')[0].setAttribute('max', this.value);" type="number" style="width:3em;" min="3" max="60" step="1" value="<?php print($newconfig['RECORDING_LENGTH']);?>" required/><br>
-      Set Recording Length in seconds between 6 and 60. Multiples of 3 are recommended, as BirdNET analyzes in 3-second chunks.<br><br> 
+      Set Recording Length in seconds between 6 and 60. Multiples of 3 are recommended for BirdNET models, multiples of 5 for Perch.<br><br>
       <label for="extraction_length">Extraction Length: </label>
       <input name="extraction_length" oninput="this.setAttribute('max', document.getElementsByName('recording_length')[0].value);" type="number" style="width:3em;" min="3" value="<?php print($newconfig['EXTRACTION_LENGTH']);?>" /><br>
       Set Extraction Length to something less than your Recording Length. Min=3 Max=Recording Length<br><br>
