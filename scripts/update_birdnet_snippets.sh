@@ -162,6 +162,7 @@ fi
 
 ensure_python_package inotify inotify
 ensure_python_package soundfile soundfile
+ensure_python_package resampy resampy
 
 if ! which inotifywait &>/dev/null;then
   ensure_apt_updated
