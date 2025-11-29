@@ -2,10 +2,10 @@ import os
 import unittest
 from unittest.mock import patch
 
+from scripts.utils.analysis import filter_humans
 from scripts.utils.analysis import run_analysis
 from scripts.utils.classes import ParseFileName
 from tests.helpers import TESTDATA, Settings
-from scripts.utils.analysis import filter_humans
 
 
 class TestRunAnalysis(unittest.TestCase):
@@ -57,13 +57,15 @@ class TestFilterHumans(unittest.TestCase):
         # Input detections without humans
         detections = [
             [('Bird_A', 0.9), ('Bird_B', 0.8)],
-            [('Bird_C', 0.7), ('Bird_D', 0.6)]
+            [('Bird_C', 0.9), ('Pacarina schumanni', 0.8)],
+            [('Bird_F', 0.7), ('Bird_F', 0.6)]
         ]
 
         # Expected output
         expected = [
             [('Bird_A', 0.9), ('Bird_B', 0.8)],
-            [('Bird_C', 0.7), ('Bird_D', 0.6)]
+            [('Bird_C', 0.9), ('Pacarina schumanni', 0.8)],
+            [('Bird_F', 0.7), ('Bird_F', 0.6)]
         ]
 
         # Run filter_humans
@@ -187,6 +189,60 @@ class TestFilterHumans(unittest.TestCase):
             [('Human_Human', 0.0)],
             [('Human_Human', 0.0)]
         ]
+
+        # Run filter_humans
+        result = filter_humans(detections)
+
+        # Assertions
+        self.assertEqual(result, expected)
+
+    @patch('scripts.utils.helpers._load_settings')
+    def test_filter_humans_for_perch(self, mock_load_settings):
+        mock_load_settings.return_value = Settings.with_defaults()
+
+        # Input detections with "humans" from FSD50K
+        # Child_speech_and_kid_speaking
+        # Conversation
+        # Female_singing
+        # Female_speech_and_woman_speaking
+        # Human_voice
+        # Male_singing
+        # Male_speech_and_man_speaking
+        # Speech
+        # Speech_synthesizer
+        # Yell
+
+        # Human_group_actions ??
+        detections = [
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_A', 0.8), ('Child_speech_and_kid_speaking', 0.75)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Conversation', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Female_singing', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Female_speech_and_woman_speaking', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Human_group_actions', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Human_voice', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Male_singing', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Male_speech_and_man_speaking', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Speech', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Speech_synthesizer', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+            [('Bird_B', 0.9), ('Yell', 0.8)],
+            [('Bird_A', 0.9), ('Bird_B', 0.8)],
+        ]
+
+        # Expected output
+        expected = [
+                       [('Human_Human', 0.0)]
+                   ] * 23
 
         # Run filter_humans
         result = filter_humans(detections)

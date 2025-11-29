@@ -4,24 +4,32 @@ source /etc/birdnet/birdnet.conf
 
 loop_ffmpeg(){
   while true;do
-    if ! ffmpeg -hide_banner -xerror -loglevel $LOGGING_LEVEL -nostdin ${1} -i ${2} -vn -map a:0 -acodec pcm_s16le -ac 2 -ar 48000 -f segment -segment_format wav -segment_time ${RECORDING_LENGTH} -strftime 1 ${RECS_DIR}/StreamData/%F-birdnet-RTSP_${3}-%H:%M:%S.wav
+    if ! ffmpeg -hide_banner -xerror -loglevel $LOGGING_LEVEL -nostdin ${1} -i ${2} -vn -map a:0 -acodec pcm_s16le -ac 1 -ar ${SAMPLERATE} -f segment -segment_format wav -segment_time ${RECORDING_LENGTH} -strftime 1 ${RECS_DIR}/StreamData/%F-birdnet-RTSP_${3}-%H:%M:%S.wav
     then
       sleep 1
     fi
   done
 }
 
-# Read the logging level from the configuration option
-LOGGING_LEVEL="${LogLevel_BirdnetRecordingService}"
-# If empty for some reason default to log level of error
-[ -z $LOGGING_LEVEL ] && LOGGING_LEVEL='error'
+# Set logging level, default to 'error' if not set
+LOGGING_LEVEL="${LogLevel_BirdnetRecordingService:-error}"
+
 # Additionally if we're at debug or info level then allow printing of script commands and variables
 if [ "$LOGGING_LEVEL" == "info" ] || [ "$LOGGING_LEVEL" == "debug" ];then
   # Enable printing of commands/variables etc to terminal for debugging
   set -x
 fi
 
-[ -z $RECORDING_LENGTH ] && RECORDING_LENGTH=15
+REC_CARD="${REC_CARD:-default}"
+RECORDING_LENGTH="${RECORDING_LENGTH:-15}"
+
+# Set sample rate based on the model
+if [[ "$MODEL" == "Perch_v2" ]]; then
+  SAMPLERATE=32000
+else
+  SAMPLERATE=48000
+fi
+
 [ -d $RECS_DIR/StreamData ] || mkdir -p $RECS_DIR/StreamData
 
 if [ -n "${RTSP_STREAM}" ];then
@@ -50,12 +58,7 @@ else
   if pgrep arecord &> /dev/null ;then
     echo "Recording"
   else
-    if [ -z ${REC_CARD} ];then
-      arecord -f S16_LE -c${CHANNELS} -r48000 -t wav --max-file-time ${RECORDING_LENGTH}\
-	      	      	       --use-strftime ${RECS_DIR}/StreamData/%F-birdnet-%H:%M:%S.wav
-    else
-      arecord -f S16_LE -c${CHANNELS} -r48000 -t wav --max-file-time ${RECORDING_LENGTH}\
-        -D "${REC_CARD}" --use-strftime ${RECS_DIR}/StreamData/%F-birdnet-%H:%M:%S.wav
-    fi
+    arecord -f S16_LE -c${CHANNELS} -r ${SAMPLERATE} -t wav --max-file-time ${RECORDING_LENGTH}\
+          -D "${REC_CARD}" --use-strftime ${RECS_DIR}/StreamData/%F-birdnet-%H:%M:%S.wav
   fi
 fi
