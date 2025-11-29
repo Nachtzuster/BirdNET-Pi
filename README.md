@@ -155,7 +155,7 @@ For more information : https://github.com/alexbelgium/hassio-addons/blob/master/
 
 ## Docker
 
-BirdNET-Pi can also be run as as a docker container.
+BirdNET-Pi can also be run as a docker container.
 For more information : https://github.com/alexbelgium/hassio-addons/blob/master/birdnet-pi/README_standalone.md
 
 ## Cool Links
@@ -169,7 +169,7 @@ For more information : https://github.com/alexbelgium/hassio-addons/blob/master/
 
 
 ### Internationalization:
-The bird names are in English by default, but other localized versions are available thanks to the wonderful efforts of [@patlevin](https://github.com/patlevin) and Wikipedia. Use the web interface's "Tools" > "Settings" and select your "Database Language" to have the detections in your language.
+The bird names are in English by default, but other localized versions are available thanks to the wonderful efforts of [@patlevin](https://github.com/patlevin), [Wikipedia](https://www.wikipedia.org/) and [eBird](https://ebird.org). Use the web interface's "Tools" > "Settings" and select your "Database Language" to have the detections in your language.
 
 [Internationalization](docs/translations.md)
 
