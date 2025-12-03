@@ -77,7 +77,7 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
     if websiteurl is None or len(websiteurl) == 0:
         websiteurl = f"http://{socket.gethostname()}.local"
 
-    listenurl = f"{websiteurl}?filename= {path}"
+    listenurl = f"{websiteurl}?filename={path}"
     friendlyurl = f"[Listen here]({listenurl})"
 
     image_url = ""
