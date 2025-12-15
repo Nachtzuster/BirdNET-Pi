@@ -108,7 +108,7 @@ def get_model_labels(model=None):
 
 def set_label_file():
     lang = get_language()
-    labels = [f'{label}_{lang[label]}\n' for label in get_model_labels()]
+    labels = [f'{label}_{lang.get(label, label)}\n' for label in get_model_labels()]
     file_name = os.path.join(MODEL_PATH, 'labels.txt')
     if os.path.islink(file_name):
         os.remove(file_name)
