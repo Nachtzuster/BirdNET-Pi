@@ -133,7 +133,6 @@ if (isset($_GET['delete'])) {
   $info = collect_species_targets($db, $species, $home, $base);
   $deleted = count($info['files']);
   foreach ($info['dirs'] as $dir) {
-    if (!under_base($dir, $base)) continue;
     if (exec("sudo rm -r $dir 2>&1", $output)) {
       echo "Error - files deletion failed : " . implode(", ", $output) . "<br>";
 	  exit;
