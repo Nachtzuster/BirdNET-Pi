@@ -12,7 +12,8 @@ from time import sleep
 import requests
 from PIL import Image, ImageDraw, ImageFont
 
-from .helpers import get_settings, ParseFileName, Detection, get_font, DB_PATH
+from .helpers import get_settings, get_font, DB_PATH
+from .classes import Detection, ParseFileName
 from .notifications import sendAppriseNotifications
 
 log = logging.getLogger(__name__)
@@ -45,12 +46,13 @@ def extract_safe(in_file, out_file, start, stop):
     extract(in_file, out_file, safe_start, safe_stop)
 
 
-def spectrogram(in_file, title, comment, raw=False):
+def spectrogram(in_file, title, comment, raw=0):
     fd, tmp_file = tempfile.mkstemp(suffix='.png')
     os.close(fd)
     args = ['sox', '-V1', f'{in_file}', '-n', 'remix', '1', 'rate', '24k', 'spectrogram',
             '-t', '', '-c', '', '-o', tmp_file]
-    args += ['-r'] if raw else []
+    args += ['-r'] if int(raw) else []
+
     result = subprocess.run(args, check=True, capture_output=True)
     ret = result.stdout.decode('utf-8')
     err = result.stderr.decode('utf-8')
@@ -81,7 +83,7 @@ def extract_detection(file: ParseFileName, detection: Detection):
     else:
         os.makedirs(new_dir, exist_ok=True)
         extract_safe(file.file_name, new_file, detection.start, detection.stop)
-        spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''))
+        spectrogram(new_file, detection.common_name, new_file.replace(os.path.expanduser('~/'), ''), conf['RAW_SPECTROGRAM'])
     return new_file
 
 
@@ -155,10 +157,10 @@ def apprise(file: ParseFileName, detections: [Detection]):
         # Apprise of detection if not already alerted this run.
         if detection.species not in species_apprised_this_run:
             try:
-                sendAppriseNotifications(detection.species, str(detection.confidence), str(detection.confidence_pct),
+                sendAppriseNotifications(detection.scientific_name, detection.common_name, str(detection.confidence), str(detection.confidence_pct),
                                          os.path.basename(detection.file_name_extr), detection.date, detection.time, str(detection.week),
-                                         conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], conf['SENSITIVITY'],
-                                         conf['OVERLAP'], dict(conf), DB_PATH)
+                                         conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], conf['SENSITIVITY'], conf['OVERLAP'])
+
             except BaseException as e:
                 log.exception('Error during Apprise:', exc_info=e)
 

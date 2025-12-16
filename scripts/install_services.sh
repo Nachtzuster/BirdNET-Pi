@@ -119,7 +119,6 @@ install_recording_service() {
 [Unit]
 Description=BirdNET Recording
 [Service]
-Environment=XDG_RUNTIME_DIR=/run/user/1000
 Restart=always
 Type=simple
 RestartSec=3
@@ -138,7 +137,6 @@ install_custom_recording_service() {
 [Unit]
 Description=BirdNET Custom Recording
 [Service]
-Environment=XDG_RUNTIME_DIR=/run/user/1000
 Restart=always
 Type=simple
 RestartSec=3
@@ -319,8 +317,9 @@ Description=BirdNET-Pi Web Terminal
 Restart=on-failure
 RestartSec=3
 Type=simple
+User=${USER}
 Environment=TERM=xterm-256color
-ExecStart=/usr/local/bin/gotty --address localhost -w -p 8888 --path terminal --title-format "BirdNET-Pi Terminal" login
+ExecStart=/usr/local/bin/gotty --address localhost -w -p 8888 --path terminal --title-format "BirdNET-Pi Terminal" bash -c 'read -p "Login: " username && [[ "\$username" =~ ^[-_.a-z0-9]{1,30}$ ]] && su --pty -l \$username'
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -365,7 +364,6 @@ Description=BirdNET-Pi Live Stream
 After=network-online.target
 Requires=network-online.target
 [Service]
-Environment=XDG_RUNTIME_DIR=/run/user/1000
 Restart=always
 Type=simple
 RestartSec=3
@@ -384,6 +382,10 @@ install_cleanup_cron() {
 
 install_weekly_cron() {
   sed "s/\$USER/$USER/g" $my_dir/templates/weekly_report.cron >> /etc/crontab
+}
+
+install_automatic_update_cron() {
+  sed "s/\$USER/$USER/g" $my_dir/templates/automatic_update.cron >> /etc/crontab
 }
 
 chown_things() {
@@ -421,6 +423,7 @@ install_services() {
   install_birdnet_mount
   install_cleanup_cron
   install_weekly_cron
+  install_automatic_update_cron
   increase_caddy_timeout
 
   create_necessary_dirs

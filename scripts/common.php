@@ -93,30 +93,10 @@ function debug_log($message) {
 
 function get_com_en_name($sci_name) {
   if (!isset($_labels_flickr)) {
-    $_labels_flickr = file(get_home() . "/BirdNET-Pi/model/labels_flickr.txt");
+    $_labels_flickr = json_decode(file_get_contents(get_home() . "/BirdNET-Pi/model/l18n/labels_en.json"), true);
   }
-  $engname = null;
-  foreach ($_labels_flickr as $label) {
-    if (trim(explode("_", $label)[0]) === $sci_name) {
-      $engname = trim(explode("_", $label)[1]);
-      break;
-    }
-  }
+  $engname = $_labels_flickr[$sci_name];
   return $engname;
-}
-
-function get_sci_name($com_name) {
-  if (!isset($_labels)) {
-    $_labels = file(get_home() . "/BirdNET-Pi/model/labels.txt");
-  }
-  $sciname = null;
-  foreach ($_labels as $label) {
-    if (trim(explode("_", $label)[1]) === $com_name) {
-      $sciname = trim(explode("_", $label)[0]);
-      break;
-    }
-  }
-  return $sciname;
 }
 
 function get_label($record, $sort_by, $date=null) {
@@ -140,20 +120,25 @@ function get_label($record, $sort_by, $date=null) {
   return $ret;
 }
 
-function fetch_species_array($sort_by, $date=null) {
+function get_db() {
   if (!isset($_db)) {
     $_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
     $_db->busyTimeout(1000);
   }
+  return $_db;
+}
+
+function fetch_species_array($sort_by, $date=null) {
+  $db = get_db();
   $where = (isset($date)) ? "WHERE Date == \"$date\"" : "";
   if ($sort_by === "occurrences") {
-    $statement = $_db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY COUNT(*) DESC");
+    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY COUNT(*) DESC");
   } elseif ($sort_by === "confidence") {
-    $statement = $_db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MAX(Confidence) DESC");
+    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MAX(Confidence) DESC");
   } elseif ($sort_by === "date") {
-    $statement = $_db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MIN(Date) DESC, Time DESC");
+    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MIN(Date) DESC, Time DESC");
   } else {
-    $statement = $_db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY Com_Name ASC");
+    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY Com_Name ASC");
   }
   ensure_db_ok($statement);
   $result = $statement->execute();
@@ -161,35 +146,65 @@ function fetch_species_array($sort_by, $date=null) {
 }
 
 function fetch_best_detection($com_name) {
-  if (!isset($_db)) {
-    $_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-    $_db->busyTimeout(1000);
-  }
-  $statement = $_db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = \"$com_name\"");
+  $db = get_db();
+  $statement = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = \"$com_name\"");
   ensure_db_ok($statement);
   $result = $statement->execute();
   return $result;
 }
 
 function fetch_all_detections($sci_name, $sort_by, $date=null) {
-  if (!isset($_db)) {
-    $_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-    $_db->busyTimeout(1000);
-  }
+  $db = get_db();
   $filter = (isset($date)) ? "AND Date == \"$date\"" : "";
   if ($sort_by === "occurrences") {
-    $statement = $_db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY COUNT(*) DESC");
+    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY COUNT(*) DESC");
   } elseif ($sort_by === "confidence") {
-    $statement = $_db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY Confidence DESC");
+    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY Confidence DESC");
   } else {
     $order = (isset($date)) ? "Time DESC" : "Date DESC, Time DESC";
-    $statement = $_db->prepare("SELECT * FROM detections where Sci_Name == \"$sci_name\" $filter ORDER BY $order");
+    $statement = $db->prepare("SELECT * FROM detections where Sci_Name == \"$sci_name\" $filter ORDER BY $order");
   }
   ensure_db_ok($statement);
   $result = $statement->execute();
   return $result;
 }
 
+function get_summary() {
+  $db = get_db();
+  $statement = $db->prepare('SELECT COUNT(*) FROM detections');
+  ensure_db_ok($statement);
+  $result = $statement->execute();
+  $totalcount = $result->fetchArray(SQLITE3_ASSOC);
+
+  $statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == DATE(\'now\', \'localtime\')');
+  ensure_db_ok($statement2);
+  $result2 = $statement2->execute();
+  $todaycount = $result2->fetchArray(SQLITE3_ASSOC);
+
+  $statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date == Date(\'now\', \'localtime\') AND TIME >= TIME(\'now\', \'localtime\', \'-1 hour\')');
+  ensure_db_ok($statement3);
+  $result3 = $statement3->execute();
+  $hourcount = $result3->fetchArray(SQLITE3_ASSOC);
+
+  $statement5 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections WHERE Date == Date(\'now\',\'localtime\')');
+  ensure_db_ok($statement5);
+  $result5 = $statement5->execute();
+  $todayspeciestally = $result5->fetchArray(SQLITE3_ASSOC);
+
+  $statement6 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections');
+  ensure_db_ok($statement6);
+  $result6 = $statement6->execute();
+  $totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
+
+  $ret = [
+    'totalcount' => $totalcount['COUNT(*)'],
+    'todaycount' => $todaycount['COUNT(*)'],
+    'hourcount' => $hourcount['COUNT(*)'],
+    'speciestally' => $todayspeciestally['COUNT(DISTINCT(Sci_Name))'],
+    'totalspeciestally' => $totalspeciestally['COUNT(DISTINCT(Sci_Name))']
+  ];
+  return $ret;
+}
 
 class ImageProvider {
 
@@ -408,15 +423,18 @@ class Wikipedia extends ImageProvider {
   protected $db_path = __ROOT__ . '/scripts/wikipedia.db';
 
   protected function get_from_source($sci_name) {
-    $title = str_replace(' ', '_', $sci_name);
-    $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/$title");
+    $page_title = str_replace(' ', '_', $sci_name);
+    $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/$page_title");
     if ($data == false or !isset($data['originalimage']))
       return;
 
     $image_name = substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1);
-    $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=Image:$image_name&prop=imageinfo&iiprop=extmetadata&format=json");
+    $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=File:$image_name&prop=imageinfo&iiprop=extmetadata|size&format=json");
     if ($metadata == false or !isset($metadata['query']['pages']))
       return;
+
+    $image_url = $data['originalimage']['source'];
+    $title = $data['title'];
 
     foreach ($metadata['query']['pages'] as $page) {
       $details = $page['imageinfo']['0']['extmetadata'];
@@ -425,15 +443,19 @@ class Wikipedia extends ImageProvider {
       if (preg_match('/href="(http\S*)"/', $author, $matches)) {
         $author_url = $matches[1];
       } else {
-        $author_url = "https://en.wikipedia.org/wiki/File:$image_name";
+        $author_url = $this->get_external_link($image_url);
       }
-
-      $license_url = $details['LicenseUrl']['value'];
+      if (isset($details['LicenseUrl'])) {
+        $license_url = $details['LicenseUrl']['value'];
+      } else {
+        $license_url = $this->get_external_link($image_url);
+      }
+      if ($page["imageinfo"][0]["width"] > 1024) {
+        $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-'. $image_name;
+      }
     }
 
     $engname = get_com_en_name($sci_name);
-    $image_url = $data['originalimage']['source'];
-    $title = $data['title'];
 
     //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
     $this->set_image_in_db($sci_name, $engname, $image_url, $title, $sci_name, $author_url, $license_url);
@@ -443,11 +465,20 @@ class Wikipedia extends ImageProvider {
     $image = parent::get_image($sci_name);
     if ($image === false)
       return false;
-    $image_name = substr($image['image_url'], strrpos($image['image_url'], '/') + 1);
-    // external link to photo
-    $photos_url = "https://en.wikipedia.org/wiki/File:$image_name";
-    $image['photos_url'] = $photos_url;
+
+    $image['photos_url'] = $this->get_external_link($image['image_url']);
     return $image;
+  }
+
+  private function get_external_link($image_url) {
+    if (strpos($image_url, '/commons/thumb/') !== false) {
+      $parts = explode('/', $image_url);
+      $image_name = $parts[count($parts) - 2];
+    } else {
+      $image_name = substr($image_url, strrpos($image_url, '/') + 1);
+    }
+    $photo_url = "https://en.wikipedia.org/wiki/File:$image_name";
+    return $photo_url;
   }
 }
 

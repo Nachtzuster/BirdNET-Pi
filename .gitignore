@@ -39,6 +39,7 @@ scripts/*.txt
 scripts/*.db
 analyzing_now.txt
 apprise.txt
+body.txt
 BirdDB.txt
 exclude_species_list.txt
 firstrun.ini
