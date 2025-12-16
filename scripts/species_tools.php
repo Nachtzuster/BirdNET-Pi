@@ -57,17 +57,6 @@ $sf_thresh = isset($config['SF_THRESH']) ? (float)$config['SF_THRESH'] : 0.0;
 /* ---------- helpers ---------- */
 function join_path(...$parts): string { return preg_replace('#/+#', '/', implode('/', $parts)); }
 function can_unlink(string $p): bool { return is_link($p) || is_file($p); }
-function under_base(string $path, string $base): bool {
-  if ($base === false) return false;
-  $baseReal = rtrim(realpath($base) ?: $base, DIRECTORY_SEPARATOR);
-  $resolved = realpath($path);
-  if ($resolved === false) {
-    $parent = realpath(dirname($path));
-    if ($parent === false) return false;
-    $resolved = $parent . DIRECTORY_SEPARATOR . basename($path);
-  }
-  return $resolved === $baseReal || strpos($resolved, $baseReal . DIRECTORY_SEPARATOR) === 0;
-}
 
 /* Collect files/dirs for a species */
 function collect_species_targets(SQLite3 $db, string $species, string $home, $base): array {
@@ -89,7 +78,7 @@ function collect_species_targets(SQLite3 $db, string $species, string $home, $ba
       $d = realpath(dirname($c));
       if ($d !== false) {
         $alt = $d . DIRECTORY_SEPARATOR . basename($c);
-        if (can_unlink($alt) && under_base($alt, $base)) { $files[$alt] = true; $dirs[] = dirname($alt); }
+        if (can_unlink($alt)) { $files[$alt] = true; $dirs[] = dirname($alt); }
       }
     }
   }
