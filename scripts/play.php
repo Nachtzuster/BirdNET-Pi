@@ -106,7 +106,7 @@ if(isset($_GET['shiftfile'])) {
   $freqshift_tool = $config['FREQSHIFT_TOOL'];
 
   if ($freqshift_tool == "ffmpeg") {
-    $cmd = "sudo /usr/bin/nohup /usr/bin/ffmpeg -y -i ".escapeshellarg($pi.$filename)." -af \"rubberband=pitch=".$config['FREQSHIFT_LO']."/".$config['FREQSHIFT_HI']."\" ".escapeshellarg($shifted_path.$filename)."";
+    $cmd = "sudo /usr/bin/nohup /usr/bin/ffmpeg -rtsp_transport tcp -y -i ".escapeshellarg($pi.$filename)." -af \"rubberband=pitch=".$config['FREQSHIFT_LO']."/".$config['FREQSHIFT_HI']."\" ".escapeshellarg($shifted_path.$filename)."";
     shell_exec("sudo mkdir -p ".$shifted_path.$dir." && ".$cmd);
 
   } else if ($freqshift_tool == "sox") {
