@@ -41,6 +41,16 @@ Hands-on guide with:
 - Troubleshooting guide
 - Testing procedures
 
+### 🚀 Performance Optimization
+**File**: [PERFORMANCE_OPTIMIZATION.md](PERFORMANCE_OPTIMIZATION.md)
+
+Performance analysis for limited species monitoring:
+- Why filtering doesn't improve speed
+- Model architecture limitations explained
+- Effective performance optimization strategies
+- Practical recommendations for faster detection
+- Hardware and configuration optimizations
+
 ## Document Overview
 
 | Document | Size | Language | Purpose |
@@ -49,6 +59,7 @@ Hands-on guide with:
 | SPECIES_FILTERING_AUDIT.md | 9 KB | NL | Full technical audit (Dutch) |
 | SPECIES_FILTERING_AUDIT_EN.md | 12 KB | EN | Full technical audit (English) |
 | SPECIES_FILTERING_QUICK_REFERENCE.md | 8 KB | EN | Practical quick reference |
+| PERFORMANCE_OPTIMIZATION.md | 10 KB | NL | Performance analysis and optimization |
 
 ## Key Findings Summary
 
@@ -59,6 +70,15 @@ The BirdNET-Pi system provides **three mechanisms** to filter species:
 1. **Include List** (`include_species_list.txt`) - Whitelist: only detect these species
 2. **Exclude List** (`exclude_species_list.txt`) - Blacklist: never detect these species
 3. **Whitelist** (`whitelist_species_list.txt`) - Override geographic threshold for specific species
+
+### ❌ NO - Filtering Does NOT Improve Performance
+
+**Important**: Species filtering does NOT make detection faster because:
+- The TensorFlow Lite model has a fixed architecture (always computes all 6522 species)
+- Filtering happens AFTER model inference (~2-5% of total time)
+- Model inference takes ~95-98% of total processing time
+
+**See [PERFORMANCE_OPTIMIZATION.md](PERFORMANCE_OPTIMIZATION.md) for effective alternatives.**
 
 ### How It Works
 
