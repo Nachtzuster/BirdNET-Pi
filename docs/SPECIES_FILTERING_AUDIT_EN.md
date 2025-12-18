@@ -65,9 +65,11 @@ The BirdNET model consists of multiple components:
 ```
 Audio Input
     ↓
-[BirdNET Model Inference] ← No filtering here
+[BirdNET Model Inference] ← No filtering here (6522 species)
     ↓
-[Top 6000 predictions sorted]
+[All predictions sorted by confidence]
+    ↓
+[Top 10 per audio chunk retained]
     ↓
 [Privacy Filter] ← Removes human sounds
     ↓
