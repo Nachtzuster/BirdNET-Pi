@@ -45,6 +45,7 @@ Check out birds from around the world
 * **Tools to visualize your recorded bird data** and analyze trends
 * **Live audio stream and spectrogram**
 * **Automatic disk space management** that periodically purges old audio files
+* **WiFi roaming support** for automatic connection to the strongest available signal
 * [BirdWeather](https://app.birdweather.com) integration -- you can request a BirdWeather ID from BirdNET-Pi's "Tools" > "Settings" page
 * Web interface access to all data and logs provided by [Caddy](https://caddyserver.com)
 * [GoTTY](https://github.com/yudai/gotty) and [GoTTY x86](https://github.com/sorenisanerd/gotty) Web Terminal
@@ -64,14 +65,18 @@ Check out birds from around the world
 ## Installation
 [A comprehensive installation guide is available here](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Installation-Guide). This guide is slightly out-dated: make sure to pick Bookworm, also the curl command is still pointing to mcguirepr89's repo.
 
+**For installation from this repository (YvedD/BirdNET-Pi-MigCount):**
+- [Complete Installation Guide (Nederlands)](docs/INSTALLATIE_NL.md) - Includes WiFi setup and automatic roaming configuration
+
 Please note that installing BirdNET-Pi on top of other servers is not supported. If this is something that you require, please open a discussion for your idea and inquire about how to contribute to development.
 
 [Raspberry Pi 3B[+] and 0W2 installation guide available here](https://github.com/mcguirepr89/BirdNET-Pi/wiki/RPi0W2-Installation-Guide)
 
 The system can be installed with:
 ```
-curl -s https://raw.githubusercontent.com/Nachtzuster/BirdNET-Pi/main/newinstaller.sh | bash
+curl -s https://raw.githubusercontent.com/YvedD/BirdNET-Pi-MigCount/main/newinstaller.sh | bash
 ```
+**Note:** If you don't have internet connection during installation, the installer will automatically start a web-based WiFi configuration interface accessible at `http://birdnetpi.local:8080`
 The installer takes care of any and all necessary updates, so you can run that as the very first command upon the first boot, if you'd like.
 
 The installation creates a log in `$HOME/installation-$(date "+%F").txt`.
@@ -86,6 +91,7 @@ Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki)
 - [making your installation public](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Sharing-Your-BirdNET-Pi)
 - [backing up and restoring your database](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Backup-and-Restore-the-Database)
 - [adjusting your sound card settings](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Adjusting-your-sound-card)
+- [configuring WiFi roaming](docs/wifi_roaming.md) for automatic connection to the strongest signal
 - [suggested USB microphones](https://github.com/mcguirepr89/BirdNET-Pi/discussions/39)
 - [building your own microphone](https://github.com/DD4WH/SASS/wiki/Stereo--(Mono)-recording-low-noise-low-cost-system)
 - [privacy concerns and options](https://github.com/mcguirepr89/BirdNET-Pi/discussions/166)
