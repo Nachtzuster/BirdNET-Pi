@@ -578,14 +578,14 @@ network={{
             if interface:
                 subprocess.run(['sudo', 'wpa_cli', '-i', interface, 'reconfigure'], 
                              stderr=subprocess.DEVNULL)
-            
-            # Check connection
-            for _ in range(15):
-                time.sleep(1)
-                result = subprocess.run(['iwconfig', interface], 
-                                      capture_output=True, text=True)
-                if f'ESSID:"{ssid}"' in result.stdout:
-                    return True
+                
+                # Check connection
+                for _ in range(15):
+                    time.sleep(1)
+                    result = subprocess.run(['iwconfig', interface], 
+                                          capture_output=True, text=True)
+                    if f'ESSID:"{ssid}"' in result.stdout:
+                        return True
             
             return False
         except Exception as e:
