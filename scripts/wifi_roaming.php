@@ -12,6 +12,7 @@ ensure_authenticated();
 // Handle form submission
 $message = '';
 $message_type = '';
+$output = [];
 
 if (isset($_GET['action'])) {
     switch ($_GET['action']) {
@@ -61,10 +62,11 @@ exec('iwconfig 2>&1 | grep -A 10 "wlan0"', $wifi_status);
 $wifi_connected = !empty($wifi_status);
 
 // Check if roaming is configured
-exec('grep -E "ap_scan=1|fast_reauth=1|bgscan=" /etc/wpa_supplicant/wpa_supplicant.conf 2>&1', $roaming_check);
+exec('grep -v "^#" /etc/wpa_supplicant/wpa_supplicant.conf 2>&1 | grep -E "ap_scan=1|fast_reauth=1|bgscan="', $roaming_check);
 $roaming_configured = count($roaming_check) >= 2;
 
 // Get available backups
+$backups = [];
 exec('ls -1t /etc/wpa_supplicant/wpa_supplicant.conf.backup.* 2>/dev/null', $backups);
 
 ?>

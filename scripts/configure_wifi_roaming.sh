@@ -43,6 +43,10 @@ configure_roaming() {
     # This enables background scanning and automatic roaming
     # We need to add it after the opening brace of network blocks
     local temp_file=$(mktemp)
+    
+    # Ensure cleanup on exit
+    trap "rm -f $temp_file" EXIT ERR
+    
     awk '
     /^network={/ {
         in_network = 1
@@ -69,7 +73,15 @@ configure_roaming() {
     { print }
     ' "$conf_file" > "$temp_file"
     
+    # Validate the generated configuration has valid syntax
+    if ! grep -q "^network={" "$temp_file"; then
+        echo "Error: Generated configuration appears invalid"
+        rm -f "$temp_file"
+        return 1
+    fi
+    
     sudo mv "$temp_file" "$conf_file"
+    trap - EXIT ERR  # Clear the trap after successful move
     
     echo "WiFi roaming configuration added successfully"
     echo ""
@@ -124,20 +136,32 @@ case "${1:-configure}" in
         else
             # Validate that the file is a legitimate backup file
             backup_basename=$(basename "$2")
+            backup_dirname=$(dirname "$2")
+            
+            # Check format
             if [[ ! "$backup_basename" =~ ^wpa_supplicant\.conf\.backup\.[0-9]{8}_[0-9]{6}$ ]]; then
                 echo "Error: Invalid backup file format. Expected: wpa_supplicant.conf.backup.YYYYMMDD_HHMMSS"
                 exit 1
             fi
             
-            # Verify file exists
-            if [ ! -f "$2" ]; then
-                echo "Error: Backup file not found: $2"
+            # Check that the file is in the expected directory
+            if [ "$backup_dirname" != "/etc/wpa_supplicant" ] && [ "$2" != "$backup_basename" ]; then
+                echo "Error: Backup file must be in /etc/wpa_supplicant/"
                 exit 1
             fi
             
-            sudo cp "$2" /etc/wpa_supplicant/wpa_supplicant.conf
+            # Construct safe full path
+            full_path="/etc/wpa_supplicant/$backup_basename"
+            
+            # Verify file exists
+            if [ ! -f "$full_path" ]; then
+                echo "Error: Backup file not found: $full_path"
+                exit 1
+            fi
+            
+            sudo cp "$full_path" /etc/wpa_supplicant/wpa_supplicant.conf
             sudo systemctl restart wpa_supplicant.service || sudo systemctl restart dhcpcd.service || true
-            echo "Configuration restored from $2"
+            echo "Configuration restored from $full_path"
         fi
         ;;
     help|--help|-h)
