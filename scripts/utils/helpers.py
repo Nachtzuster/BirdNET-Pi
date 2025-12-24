@@ -20,7 +20,7 @@ def get_font():
     conf = get_settings()
     if conf['DATABASE_LANG'] == 'ar':
         ret = {'font.family': 'Noto Sans Arabic', 'path': os.path.join(FONT_DIR, 'NotoSansArabic-Regular.ttf')}
-    elif conf['DATABASE_LANG'] in ['ja', 'zh']:
+    elif conf['DATABASE_LANG'] in ['ja', 'zh_CN', 'zh_TW']:
         ret = {'font.family': 'Noto Sans JP', 'path': os.path.join(FONT_DIR, 'NotoSansJP-Regular.ttf')}
     elif conf['DATABASE_LANG'] == 'ko':
         ret = {'font.family': 'Noto Sans KR', 'path': os.path.join(FONT_DIR, 'NotoSansKR-Regular.ttf')}

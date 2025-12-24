@@ -65,6 +65,7 @@ create_necessary_dirs() {
   [ -L ${EXTRACTED}/spectrogram.png ] || sudo -u ${USER} ln -sf ${RECS_DIR}/StreamData/spectrogram.png ${EXTRACTED}/spectrogram.png
 
   sudo -u ${USER} ln -fs $my_dir/exclude_species_list.txt $my_dir/scripts
+  sudo -u ${USER} ln -fs $my_dir/confirmed_species_list.txt $my_dir/scripts
   sudo -u ${USER} ln -fs $my_dir/include_species_list.txt $my_dir/scripts
   sudo -u ${USER} ln -fs $my_dir/whitelist_species_list.txt $my_dir/scripts
   sudo -u ${USER} ln -fs $my_dir/homepage/* ${EXTRACTED}

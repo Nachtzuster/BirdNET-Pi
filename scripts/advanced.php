@@ -329,7 +329,7 @@ $newconfig = get_config();
       </td></tr><tr><td>
       If different than 0 (keep all), defines the number of files to keep for each species, with priority given to files with higher confidence. This value does not include files from the last 7 days, these new files are protected against auto-deletion.
       </td></tr><tr><td>
-      Note only the spectrogram and audio files are deleted, the obsevation data remains in the database.
+      Note only the spectrogram and audio files are deleted, the observation data remains in the database.
       The files protected through the "lock" icon are also not affected.
       <br>
       <button type="submit" name="run_species_count" value="1" onclick="{this.innerHTML = 'Loading ... please wait.';this.classList.add('disabled')}"><i>[Click here for disk usage summary]</i></button>
