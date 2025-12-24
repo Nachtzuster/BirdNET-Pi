@@ -26,6 +26,29 @@ if (isset($_GET['action'])) {
             }
             break;
         
+        case 'restore':
+            if (isset($_GET['file']) && !empty($_GET['file'])) {
+                // Sanitize the file path to prevent directory traversal
+                $backup_file = basename($_GET['file']);
+                $full_path = '/etc/wpa_supplicant/' . $backup_file;
+                
+                // Verify the file exists and has the correct prefix
+                if (strpos($backup_file, 'wpa_supplicant.conf.backup.') === 0 && file_exists($full_path)) {
+                    exec('sudo /usr/local/bin/configure_wifi_roaming.sh restore ' . escapeshellarg($full_path) . ' 2>&1', $output, $return_code);
+                    if ($return_code === 0) {
+                        $message = "Configuration restored successfully!";
+                        $message_type = "success";
+                    } else {
+                        $message = "Error restoring configuration: " . implode("\n", $output);
+                        $message_type = "error";
+                    }
+                } else {
+                    $message = "Invalid backup file selected.";
+                    $message_type = "error";
+                }
+            }
+            break;
+        
         case 'status':
             // Get status info
             exec('sudo /usr/local/bin/configure_wifi_roaming.sh status 2>&1', $output, $return_code);

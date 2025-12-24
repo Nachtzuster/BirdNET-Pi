@@ -41,13 +41,35 @@ configure_roaming() {
     
     # Add bgscan to all network blocks that don't have it
     # This enables background scanning and automatic roaming
-    sudo sed -i '/^network={/,/^}/{
-        /key_mgmt=/a\    bgscan="simple:30:-45:300"
-    }' "$conf_file" 2>/dev/null || true
+    # We need to add it after the opening brace of network blocks
+    local temp_file=$(mktemp)
+    awk '
+    /^network={/ {
+        in_network = 1
+        has_bgscan = 0
+        network_lines = $0 "\n"
+        next
+    }
+    in_network {
+        network_lines = network_lines $0 "\n"
+        if (/bgscan=/) {
+            has_bgscan = 1
+        }
+        if (/^}/) {
+            if (!has_bgscan) {
+                # Add bgscan before the closing brace
+                sub(/}/, "    bgscan=\"simple:30:-45:300\"\n}", network_lines)
+            }
+            printf "%s", network_lines
+            in_network = 0
+            next
+        }
+        next
+    }
+    { print }
+    ' "$conf_file" > "$temp_file"
     
-    # Remove duplicate bgscan entries if any were created
-    sudo awk '!seen[$0]++ || !/bgscan/' "$conf_file" > /tmp/wpa_supplicant_temp.conf
-    sudo mv /tmp/wpa_supplicant_temp.conf "$conf_file"
+    sudo mv "$temp_file" "$conf_file"
     
     echo "WiFi roaming configuration added successfully"
     echo ""
