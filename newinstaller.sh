@@ -44,7 +44,31 @@ if [[ ! -z $PACKAGES_MISSING ]] ; then
 fi
 
 branch=main
-git clone -b $branch --depth=1 https://github.com/Nachtzuster/BirdNET-Pi.git ${HOME}/BirdNET-Pi &&
+git clone -b $branch --depth=1 https://github.com/YvedD/BirdNET-Pi-MigCount.git ${HOME}/BirdNET-Pi &&
+
+# Check if WiFi setup is needed
+if ! ping -c 1 -W 2 google.com &> /dev/null; then
+    echo "No internet connection detected. Starting WiFi setup..."
+    $HOME/BirdNET-Pi/scripts/setup_wifi_web.sh
+    python3 /tmp/birdnet-wifi-setup/wifi_server.py &
+    WIFI_PID=$!
+    
+    echo ""
+    echo "=========================================="
+    echo "  Open uw browser en ga naar:"
+    echo "  http://birdnetpi.local:8080"
+    echo "  of gebruik het IP adres van deze Pi"
+    echo "=========================================="
+    echo ""
+    
+    # Wait for WiFi configuration to complete
+    while [ ! -f /tmp/birdnet-wifi-setup/complete ]; do
+        sleep 1
+    done
+    
+    kill $WIFI_PID 2>/dev/null || true
+    rm -rf /tmp/birdnet-wifi-setup
+fi
 
 $HOME/BirdNET-Pi/scripts/install_birdnet.sh
 if [ ${PIPESTATUS[0]} -eq 0 ];then
