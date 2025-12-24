@@ -45,6 +45,7 @@ Check out birds from around the world
 * **Tools to visualize your recorded bird data** and analyze trends
 * **Live audio stream and spectrogram**
 * **Automatic disk space management** that periodically purges old audio files
+* **WiFi roaming support** for automatic connection to the strongest available signal
 * [BirdWeather](https://app.birdweather.com) integration -- you can request a BirdWeather ID from BirdNET-Pi's "Tools" > "Settings" page
 * Web interface access to all data and logs provided by [Caddy](https://caddyserver.com)
 * [GoTTY](https://github.com/yudai/gotty) and [GoTTY x86](https://github.com/sorenisanerd/gotty) Web Terminal
@@ -86,6 +87,7 @@ Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki)
 - [making your installation public](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Sharing-Your-BirdNET-Pi)
 - [backing up and restoring your database](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Backup-and-Restore-the-Database)
 - [adjusting your sound card settings](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Adjusting-your-sound-card)
+- [configuring WiFi roaming](docs/wifi_roaming.md) for automatic connection to the strongest signal
 - [suggested USB microphones](https://github.com/mcguirepr89/BirdNET-Pi/discussions/39)
 - [building your own microphone](https://github.com/DD4WH/SASS/wiki/Stereo--(Mono)-recording-low-noise-low-cost-system)
 - [privacy concerns and options](https://github.com/mcguirepr89/BirdNET-Pi/discussions/166)
