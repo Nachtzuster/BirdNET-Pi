@@ -245,7 +245,7 @@ exec('ls -1t /etc/wpa_supplicant/wpa_supplicant.conf.backup.* 2>/dev/null', $bac
         
         <a href="?action=status" class="button secondary">Refresh Status</a>
         
-        <a href="scripts/wifi_roaming.php?view=docs" class="button secondary">View Documentation</a>
+        <a href="../docs/wifi_roaming.md" class="button secondary" target="_blank">View Documentation</a>
     </div>
 
     <?php if (!empty($backups)): ?>
@@ -256,7 +256,7 @@ exec('ls -1t /etc/wpa_supplicant/wpa_supplicant.conf.backup.* 2>/dev/null', $bac
                 <?php foreach ($backups as $backup): ?>
                     <div>
                         📄 <?php echo basename($backup); ?>
-                        <a href="?action=restore&file=<?php echo urlencode($backup); ?>" 
+                        <a href="?action=restore&file=<?php echo urlencode(basename($backup)); ?>" 
                            class="button danger" 
                            style="font-size: 11px; padding: 3px 8px;"
                            onclick="return confirm('Restore this backup? This will replace your current configuration.')">

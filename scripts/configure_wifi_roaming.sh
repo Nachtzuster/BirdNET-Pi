@@ -3,13 +3,13 @@
 # This script configures wpa_supplicant to automatically connect to the strongest WiFi signal
 set -e
 
-echo "Configuring WiFi roaming for BirdNET-Pi..."
-
 # Backup existing wpa_supplicant configuration
-if [ -f /etc/wpa_supplicant/wpa_supplicant.conf ]; then
-    sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.backup.$(date +%Y%m%d_%H%M%S)
-    echo "Backed up existing wpa_supplicant configuration"
-fi
+backup_config() {
+    if [ -f /etc/wpa_supplicant/wpa_supplicant.conf ]; then
+        sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.backup.$(date +%Y%m%d_%H%M%S)
+        echo "Backed up existing wpa_supplicant configuration"
+    fi
+}
 
 # Function to add roaming settings to wpa_supplicant.conf
 configure_roaming() {
@@ -92,6 +92,8 @@ show_current_config() {
 # Main execution
 case "${1:-configure}" in
     configure)
+        echo "Configuring WiFi roaming for BirdNET-Pi..."
+        backup_config
         show_current_config
         configure_roaming
         echo ""
@@ -120,6 +122,19 @@ case "${1:-configure}" in
             echo ""
             echo "Usage: $0 restore <backup_file>"
         else
+            # Validate that the file is a legitimate backup file
+            backup_basename=$(basename "$2")
+            if [[ ! "$backup_basename" =~ ^wpa_supplicant\.conf\.backup\.[0-9]{8}_[0-9]{6}$ ]]; then
+                echo "Error: Invalid backup file format. Expected: wpa_supplicant.conf.backup.YYYYMMDD_HHMMSS"
+                exit 1
+            fi
+            
+            # Verify file exists
+            if [ ! -f "$2" ]; then
+                echo "Error: Backup file not found: $2"
+                exit 1
+            fi
+            
             sudo cp "$2" /etc/wpa_supplicant/wpa_supplicant.conf
             sudo systemctl restart wpa_supplicant.service || sudo systemctl restart dhcpcd.service || true
             echo "Configuration restored from $2"
