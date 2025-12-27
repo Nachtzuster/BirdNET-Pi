@@ -9,20 +9,20 @@ get_tf_whl () {
   
   # Determine which wheel to use based on architecture and Python version
   case "${ARCH}-${PY_VERSION}" in
-    aarch64-313)
-      WHL=tflite_runtime-2.17.1-cp313-cp313-linux_aarch64.whl
-      ;;
-    aarch64-312)
-      WHL=tflite_runtime-2.17.1-cp312-cp312-linux_aarch64.whl
-      ;;
-    aarch64-311)
-      WHL=tflite_runtime-2.17.1-cp311-cp311-linux_aarch64.whl
+    aarch64-39)
+      WHL=tflite_runtime-2.17.1-cp39-cp39-linux_aarch64.whl
       ;;
     aarch64-310)
       WHL=tflite_runtime-2.17.1-cp310-cp310-linux_aarch64.whl
       ;;
-    aarch64-39)
-      WHL=tflite_runtime-2.17.1-cp39-cp39-linux_aarch64.whl
+    aarch64-311)
+      WHL=tflite_runtime-2.17.1-cp311-cp311-linux_aarch64.whl
+      ;;
+    aarch64-312)
+      WHL=tflite_runtime-2.17.1-cp312-cp312-linux_aarch64.whl
+      ;;
+    aarch64-313)
+      WHL=tflite_runtime-2.17.1-cp313-cp313-linux_aarch64.whl
       ;;
     x86_64-*)
       # For x86_64, don't download a wheel - let pip install tensorflow from PyPI
