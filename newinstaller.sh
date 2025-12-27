@@ -44,7 +44,48 @@ if [[ ! -z $PACKAGES_MISSING ]] ; then
 fi
 
 branch=main
-git clone -b $branch --depth=1 https://github.com/Nachtzuster/BirdNET-Pi.git ${HOME}/BirdNET-Pi &&
+git clone -b $branch --depth=1 https://github.com/YvedD/BirdNET-Pi-MigCount.git ${HOME}/BirdNET-Pi &&
+
+# Check if WiFi setup is needed
+if ! ping -c 1 -W 2 google.com &> /dev/null; then
+    echo "No internet connection detected. Starting WiFi setup..."
+    
+    if [ -f $HOME/BirdNET-Pi/scripts/setup_wifi_web.sh ]; then
+        $HOME/BirdNET-Pi/scripts/setup_wifi_web.sh
+        
+        if [ -f /tmp/birdnet-wifi-setup/wifi_server.py ]; then
+            python3 /tmp/birdnet-wifi-setup/wifi_server.py &
+            WIFI_PID=$!
+            
+            echo ""
+            echo "=========================================="
+            echo "  Open uw browser en ga naar:"
+            echo "  http://birdnetpi.local:8080"
+            echo "  of gebruik het IP adres van deze Pi"
+            echo "=========================================="
+            echo ""
+            
+            # Wait for WiFi configuration to complete (max 30 minutes)
+            TIMEOUT=1800
+            ELAPSED=0
+            while [ ! -f /tmp/birdnet-wifi-setup/complete ] && [ $ELAPSED -lt $TIMEOUT ]; do
+                sleep 5
+                ELAPSED=$((ELAPSED + 5))
+            done
+            
+            kill $WIFI_PID 2>/dev/null || true
+            rm -rf /tmp/birdnet-wifi-setup
+            
+            if [ $ELAPSED -ge $TIMEOUT ]; then
+                echo "WiFi setup timeout. Continuing anyway..."
+            fi
+        else
+            echo "Warning: WiFi setup files not found. Continuing with installation..."
+        fi
+    else
+        echo "Warning: WiFi setup script not found. Continuing with installation..."
+    fi
+fi
 
 $HOME/BirdNET-Pi/scripts/install_birdnet.sh
 if [ ${PIPESTATUS[0]} -eq 0 ];then
