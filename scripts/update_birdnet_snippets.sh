@@ -161,16 +161,11 @@ PY_VERSION=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import sys; print(f'{sys.v
 ARCH=$(uname -m)
 tf_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import tflite_runtime; print(tflite_runtime.__version__)" 2>/dev/null || echo "not_installed")
 # Check if tflite_runtime needs to be updated
-# Python 3.9 on aarch64 uses v2.11.0
-# Python 3.10+ on aarch64 uses v2.16.1
+# All Python versions on aarch64 now use v2.17.1 from Nachtzuster repository
 # x86_64 uses tensorflow from PyPI (not a specific wheel)
 EXPECTED_VERSION=""
 if [ "$ARCH" == "aarch64" ]; then
-  if [ "$PY_VERSION" == 39 ]; then
-    EXPECTED_VERSION="2.11.0"
-  else
-    EXPECTED_VERSION="2.16.1"
-  fi
+  EXPECTED_VERSION="2.17.1"
 fi
 
 if [ -n "$EXPECTED_VERSION" ] && [ "$tf_version" != "$EXPECTED_VERSION" ]; then
