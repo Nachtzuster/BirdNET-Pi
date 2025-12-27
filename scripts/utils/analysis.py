@@ -149,8 +149,8 @@ def run_analysis(file):
     # Read audio data & handle errors
     try:
         audio_data = readAudioData(file.file_name, conf.getfloat('OVERLAP'), model.sample_rate, model.chunk_duration)
-    except (NameError, TypeError) as e:
-        log.error("Error with the following info: %s", e)
+    except Exception as e:
+        log.error("Error reading audio file %s: %s: %s", file.file_name, type(e).__name__, e)
         return []
 
     # Process audio data and get detections
