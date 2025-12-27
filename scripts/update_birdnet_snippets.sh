@@ -158,13 +158,30 @@ version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import pyarrow; print(pyarrow
 [[ $version != "20.0.0" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install pyarrow==20.0.0
 
 PY_VERSION=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import sys; print(f'{sys.version_info[0]}{sys.version_info[1]}')")
-tf_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import tflite_runtime; print(tflite_runtime.__version__)")
+ARCH=$(uname -m)
+tf_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import tflite_runtime; print(tflite_runtime.__version__)" 2>/dev/null || echo "not_installed")
 # Check if tflite_runtime needs to be updated
-# Python 3.9 uses v2.11.0, Python 3.10+ uses v2.16.1
-if [ "$PY_VERSION" == 39 ] && [ "$tf_version" != "2.11.0" ] || [ "$PY_VERSION" != 39 ] && [ "$tf_version" != "2.16.1" ]; then
+# Python 3.9 on aarch64 uses v2.11.0
+# Python 3.10+ on aarch64 uses v2.16.1
+# x86_64 uses tensorflow from PyPI (not a specific wheel)
+EXPECTED_VERSION=""
+if [ "$ARCH" == "aarch64" ]; then
+  if [ "$PY_VERSION" == 39 ]; then
+    EXPECTED_VERSION="2.11.0"
+  else
+    EXPECTED_VERSION="2.16.1"
+  fi
+fi
+
+if [ -n "$EXPECTED_VERSION" ] && [ "$tf_version" != "$EXPECTED_VERSION" ]; then
   get_tf_whl
   # include our numpy dependants so pip can figure out which numpy version to install
-  sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install $HOME/BirdNET-Pi/$WHL pandas librosa matplotlib
+  if [ -n "$WHL" ]; then
+    sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install $HOME/BirdNET-Pi/$WHL pandas librosa matplotlib
+  else
+    # For x86_64, install from requirements which includes tensorflow
+    sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install -U tensorflow pandas librosa matplotlib
+  fi
 fi
 
 ensure_python_package inotify inotify
