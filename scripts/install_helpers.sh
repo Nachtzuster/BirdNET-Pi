@@ -1,39 +1,28 @@
 # this should only contain functions and assignments, ie source install.sh should not have side effects.
 
 get_tf_whl () {
-  # Use PINTO0309's TensorflowLite-bin repository as the source for tflite wheels
-  BASE_URL=https://github.com/PINTO0309/TensorflowLite-bin/releases/download/
+  # Use Nachtzuster's BirdNET-Pi repository as the source for tflite wheels
+  BASE_URL=https://github.com/Nachtzuster/BirdNET-Pi/releases/download/v0.1/
 
   ARCH=$(uname -m)
   PY_VERSION=$(python3 -c "import sys; print(f'{sys.version_info[0]}{sys.version_info[1]}')")
   
   # Determine which wheel to use based on architecture and Python version
-  # Note: PINTO0309's repository primarily supports ARM architectures (aarch64, armv7l)
-  # For x86_64, we'll use pip to install tensorflow which includes tflite_runtime
   case "${ARCH}-${PY_VERSION}" in
-    aarch64-39)
-      WHL=tflite_runtime-2.11.0-cp39-none-linux_aarch64.whl
-      VERSION=v2.11.0
-      ;;
-    aarch64-310)
-      WHL=tflite_runtime-2.16.1-cp310-none-linux_aarch64.whl
-      VERSION=v2.16.1
-      ;;
-    aarch64-311)
-      WHL=tflite_runtime-2.16.1-cp311-none-linux_aarch64.whl
-      VERSION=v2.16.1
+    aarch64-313)
+      WHL=tflite_runtime-2.17.1-cp313-cp313-linux_aarch64.whl
       ;;
     aarch64-312)
-      # Python 3.12 not available, fallback to 3.11
-      WHL=tflite_runtime-2.16.1-cp311-none-linux_aarch64.whl
-      VERSION=v2.16.1
-      echo "Warning: Python 3.12 wheels not available, using Python 3.11 wheel"
+      WHL=tflite_runtime-2.17.1-cp312-cp312-linux_aarch64.whl
       ;;
-    aarch64-313)
-      # Python 3.13 not available, fallback to 3.11
-      WHL=tflite_runtime-2.16.1-cp311-none-linux_aarch64.whl
-      VERSION=v2.16.1
-      echo "Warning: Python 3.13 wheels not available, using Python 3.11 wheel"
+    aarch64-311)
+      WHL=tflite_runtime-2.17.1-cp311-cp311-linux_aarch64.whl
+      ;;
+    aarch64-310)
+      WHL=tflite_runtime-2.17.1-cp310-cp310-linux_aarch64.whl
+      ;;
+    aarch64-39)
+      WHL=tflite_runtime-2.17.1-cp39-cp39-linux_aarch64.whl
       ;;
     x86_64-*)
       # For x86_64, don't download a wheel - let pip install tensorflow from PyPI
@@ -48,7 +37,7 @@ get_tf_whl () {
   
   if [ -n "$WHL" ]; then
     {
-      curl -L -o $HOME/BirdNET-Pi/$WHL ${BASE_URL}${VERSION}/${WHL}
+      curl -L -o $HOME/BirdNET-Pi/$WHL ${BASE_URL}${WHL}
       sed "s/tensorflow.*/$WHL/" $HOME/BirdNET-Pi/requirements.txt > requirements_custom.txt
     }
   else
