@@ -66,8 +66,8 @@ echo "BirdNET-Pi supports TFT displays with XPT2046 touch controller."
 echo "This allows you to display bird detections on a small screen connected via SPI."
 echo ""
 
-# Check if we're in an interactive session
-if [ -t 0 ]; then
+# Check if we're in an interactive session and if TFT scripts are available
+if [ -t 0 ] && [ -f "./detect_tft.sh" ] && [ -f "./install_tft.sh" ]; then
     # Attempt to detect TFT hardware
     echo "Detecting TFT hardware..."
     if ./detect_tft.sh > /dev/null 2>&1; then
@@ -95,7 +95,11 @@ if [ -t 0 ]; then
         fi
     fi
 else
-    echo "Non-interactive installation detected. Skipping TFT installation."
+    if [ ! -t 0 ]; then
+        echo "Non-interactive installation detected. Skipping TFT installation."
+    else
+        echo "TFT installation scripts not found. Skipping TFT installation."
+    fi
     echo "You can install TFT support later by running: ~/BirdNET-Pi/scripts/install_tft.sh"
 fi
 

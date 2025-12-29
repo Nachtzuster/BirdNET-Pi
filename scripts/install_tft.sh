@@ -216,8 +216,8 @@ configure_boot_config() {
         SWAPXY=1
     fi
     
-    # Remove old touchscreen configurations if present
-    sudo sed -i '/dtoverlay=ads7846/d' "${CONFIG_FILE}"
+    # Remove old touchscreen configurations if present (only lines starting with dtoverlay=ads7846)
+    sudo sed -i '/^dtoverlay=ads7846/d' "${CONFIG_FILE}"
     
     # Add touchscreen overlay with rotation-aware configuration
     echo "dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=${SWAPXY},pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900" | sudo tee -a "${CONFIG_FILE}" > /dev/null
