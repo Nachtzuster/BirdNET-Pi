@@ -118,6 +118,36 @@ check_framebuffer() {
     fi
 }
 
+# Get framebuffer resolution
+get_framebuffer_resolution() {
+    local fb_device="${1:-/dev/fb1}"
+    
+    if [ ! -c "$fb_device" ]; then
+        return 1
+    fi
+    
+    # Try to get resolution using fbset
+    if command -v fbset &>/dev/null; then
+        local resolution=$(fbset -fb "$fb_device" 2>/dev/null | grep "geometry" | awk '{print $2"x"$3}')
+        if [ -n "$resolution" ]; then
+            echo "$resolution"
+            return 0
+        fi
+    fi
+    
+    # Fallback: try to read from sysfs
+    local fb_name=$(basename "$fb_device")
+    if [ -f "/sys/class/graphics/$fb_name/virtual_size" ]; then
+        local resolution=$(cat "/sys/class/graphics/$fb_name/virtual_size" | tr ',' 'x')
+        if [ -n "$resolution" ]; then
+            echo "$resolution"
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
 # Check SPI interface is enabled
 check_spi_enabled() {
     echo -n "Checking if SPI is enabled... "
@@ -172,6 +202,18 @@ display_summary() {
     
     echo -n "Framebuffer Devices:      "
     [ "$FRAMEBUFFER_DETECTED" -eq 1 ] && echo -e "${GREEN}Available${NC}" || echo -e "${RED}Not available${NC}"
+    
+    # Try to detect framebuffer resolution
+    if [ "$FRAMEBUFFER_DETECTED" -eq 1 ]; then
+        for fb in /dev/fb*; do
+            if [ -c "$fb" ]; then
+                local resolution=$(get_framebuffer_resolution "$fb")
+                if [ -n "$resolution" ]; then
+                    echo "  → $fb: ${resolution}"
+                fi
+            fi
+        done
+    fi
     
     echo ""
     

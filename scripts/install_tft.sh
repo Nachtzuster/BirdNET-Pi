@@ -253,12 +253,21 @@ TFT_SCROLL_SPEED=2
 TFT_MAX_DETECTIONS=20
 TFT_UPDATE_INTERVAL=5
 TFT_TYPE=${TFT_TYPE}
+TFT_SCREENSAVER_TIMEOUT=300
+TFT_SCREENSAVER_BRIGHTNESS=0
 EOF
     
     echo -e "${GREEN}BirdNET-Pi configuration updated${NC}"
     echo ""
     echo "Note: TFT display is disabled by default (TFT_ENABLED=0)"
     echo "Enable it by setting TFT_ENABLED=1 in ${BIRDNET_CONF}"
+    echo ""
+    echo "Power-saving features configured:"
+    echo "  - Screensaver timeout: 300 seconds (5 minutes)"
+    echo "  - Screensaver mode: blank screen (brightness=0)"
+    echo "  - Screen wakes on new bird detections"
+    echo "  - Adjust TFT_SCREENSAVER_TIMEOUT (0 to disable)"
+    echo "  - Set TFT_SCREENSAVER_BRIGHTNESS (0-100) for dim mode"
 }
 
 # Display completion message
@@ -272,6 +281,13 @@ display_completion() {
     echo "  3. Enable TFT display by editing ${BIRDNET_CONF}"
     echo "     Set: TFT_ENABLED=1"
     echo "  4. Restart BirdNET-Pi services or reboot again"
+    echo ""
+    echo "Features enabled:"
+    echo "  ✓ Automatic display size detection from framebuffer"
+    echo "  ✓ Portrait mode with touchscreen coordination (rotation=${TFT_ROTATION}°)"
+    echo "  ✓ Screensaver after 5 minutes of inactivity"
+    echo "  ✓ Works independently without HDMI monitor"
+    echo "  ✓ Screen wakes on touch or new bird detections"
     echo ""
     echo "Configuration backups saved in: ${BACKUP_DIR}"
     echo "To rollback, run: ./rollback_tft.sh"
