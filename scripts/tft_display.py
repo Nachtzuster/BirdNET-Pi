@@ -25,13 +25,13 @@ try:
     from luma.core.interface.serial import spi
     from luma.core.render import canvas
     from luma.lcd.device import ili9341, st7735, st7789v, ili9488
-    # ILI9486 is typically available in luma.lcd
+    LUMA_AVAILABLE = True
+    # ILI9486 may not be available in all versions of luma.lcd
     try:
         from luma.lcd.device import ili9486
         ILI9486_AVAILABLE = True
     except ImportError:
         ILI9486_AVAILABLE = False
-    LUMA_AVAILABLE = True
 except ImportError:
     LUMA_AVAILABLE = False
     ILI9486_AVAILABLE = False
