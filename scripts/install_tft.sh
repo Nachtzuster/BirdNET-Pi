@@ -191,10 +191,7 @@ configure_boot_config() {
             echo "dtoverlay=vc4-kms-v3d" | sudo tee -a "${CONFIG_FILE}" > /dev/null
             echo "dtoverlay=vc4-kms-dpi-generic" | sudo tee -a "${CONFIG_FILE}" > /dev/null
             ;;
-        ili9488)
-            echo "dtoverlay=waveshare35a,speed=16000000,rotate=${TFT_ROTATION}" | sudo tee -a "${CONFIG_FILE}" > /dev/null
-            ;;
-        ili9486)
+        ili9488|ili9486)
             echo "dtoverlay=waveshare35a,speed=16000000,rotate=${TFT_ROTATION}" | sudo tee -a "${CONFIG_FILE}" > /dev/null
             ;;
     esac
