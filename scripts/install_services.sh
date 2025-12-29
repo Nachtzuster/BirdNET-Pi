@@ -291,6 +291,27 @@ EOF
   systemctl enable chart_viewer.service
 }
 
+install_tft_display_service() {
+  echo "Installing the tft_display.service"
+  cat << EOF > $HOME/BirdNET-Pi/templates/tft_display.service
+[Unit]
+Description=BirdNET-Pi TFT Display Service
+After=birdnet_analysis.service
+[Service]
+Restart=on-failure
+RestartSec=10
+Type=simple
+User=$USER
+ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/tft_display.py
+[Install]
+WantedBy=multi-user.target
+EOF
+  ln -sf $HOME/BirdNET-Pi/templates/tft_display.service /usr/lib/systemd/system
+  # Note: Service is installed but NOT enabled by default
+  # User must enable it after TFT configuration by setting TFT_ENABLED=1
+  echo "TFT Display service installed (not enabled by default)"
+}
+
 install_gotty_logs() {
   sudo -u ${USER} ln -sf $my_dir/templates/gotty \
     ${HOME}/.gotty
@@ -418,6 +439,7 @@ install_services() {
   install_custom_recording_service # But does not enable
   install_spectrogram_service
   install_chart_viewer_service
+  install_tft_display_service # Install TFT display service (not enabled by default)
   install_gotty_logs
   install_phpsysinfo
   install_livestream_service
