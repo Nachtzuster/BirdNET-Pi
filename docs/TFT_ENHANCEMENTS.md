@@ -7,7 +7,7 @@ This document describes the enhancements made to address user feedback on TFT di
 ## User Requirements (from Comment #3697777973)
 
 1. **Automatic pixel size detection** for SPI TFT screens
-   - User's ILI9486 is 320x480 (not 240x320 as initially documented)
+   - User's ILI9486 is 380x480 (not 320x480 or 240x320)
    - Support for 5-inch and larger displays with minimal user intervention
 
 2. **Field deployment without HDMI**
@@ -35,7 +35,7 @@ $ ./detect_tft.sh
 ...
 Framebuffer Devices:      FOUND
   → /dev/fb0: 1920x1080
-  → /dev/fb1: 320x480     ← Actual ILI9486 size detected
+  → /dev/fb1: 380x480     ← Actual ILI9486 size detected
 ```
 
 #### tft_display.py
@@ -53,7 +53,8 @@ def detect_display_size(self):
 **Integration:**
 - Called during `initialize_display()`
 - Overrides hardcoded device defaults if detection succeeds
-- Logs detected size: `Display initialized: 320x480`
+- Logs detected size: `Display initialized: 380x480`
+- **Critical:** ILI9486 displays vary (320x480 or 380x480), auto-detection ensures correct size
 
 ### 2. Field Deployment (HDMI-Independent Operation)
 
@@ -218,7 +219,7 @@ sudo systemctl restart tft_display.service
 | Display Model | Detected Size | Mode | Notes |
 |---------------|---------------|------|-------|
 | ILI9341 | 240x320 | Portrait | Standard 2.8" |
-| ILI9486 | 320x480 | Portrait | User's 3.5" display |
+| ILI9486 | 380x480 | Portrait | User's 3.5" display (varies by model) |
 | ST7735 | 128x160 | Portrait | Small 1.8" |
 | ST7789 | 240x240 | Square | 1.54" square |
 | ILI9488 | 320x480 | Portrait | Larger 3.5" |
@@ -231,8 +232,8 @@ sudo systemctl restart tft_display.service
 3. **tft_display.py starts:**
    ```
    [INFO] Display Type: ili9486
-   [INFO] Detected framebuffer size: 320x480
-   [INFO] Display initialized: 480x320 (portrait)
+   [INFO] Detected framebuffer size: 380x480
+   [INFO] Display initialized: 480x380 (portrait)
    [INFO] Screensaver timeout: 300s
    ```
 4. **Display operates with correct dimensions**
@@ -241,7 +242,7 @@ sudo systemctl restart tft_display.service
 
 ### Size Detection
 - [ ] ILI9341 (240x320) detected correctly
-- [ ] ILI9486 (320x480) detected correctly  
+- [ ] ILI9486 (380x480) detected correctly  
 - [ ] ST7735 (128x160) detected correctly
 - [ ] ST7789 (240x240) detected correctly
 - [ ] 5-inch display detected correctly
