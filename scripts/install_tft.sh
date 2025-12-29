@@ -88,7 +88,7 @@ install_packages() {
         evtest \
         python3-dev \
         python3-pip \
-        libfreetype6-dev \
+        libfreetype-dev \
         libjpeg-dev \
         libopenjp2-7 \
         libtiff6
