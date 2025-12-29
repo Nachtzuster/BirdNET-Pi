@@ -12,6 +12,7 @@ BirdNET-Pi now supports small TFT displays with XPT2046 touch controllers. The d
   - ST7735 (128x160) - Small displays  
   - ST7789 (240x240) - Square displays
   - ILI9488 (320x480) - Larger displays
+  - ILI9486 (320x480) - 3.5 inch displays
 - **Touch Controller**: XPT2046 (ADS7846 compatible)
 
 ### Features

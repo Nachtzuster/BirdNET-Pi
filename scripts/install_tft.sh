@@ -115,20 +115,22 @@ select_display_type() {
     echo "  2) ST7735 (128x160) - Small displays"
     echo "  3) ST7789 (240x240) - Square displays"
     echo "  4) ILI9488 (320x480) - Larger displays"
-    echo "  5) Custom/Other"
-    echo "  6) Skip display configuration (manual setup)"
+    echo "  5) ILI9486 (320x480) - 3.5 inch displays"
+    echo "  6) Custom/Other"
+    echo "  7) Skip display configuration (manual setup)"
     echo ""
-    read -p "Enter your choice [1-6]: " choice
+    read -p "Enter your choice [1-7]: " choice
     
     case $choice in
         1) TFT_TYPE="ili9341" ;;
         2) TFT_TYPE="st7735r" ;;
         3) TFT_TYPE="st7789" ;;
         4) TFT_TYPE="ili9488" ;;
-        5) 
+        5) TFT_TYPE="ili9486" ;;
+        6) 
             read -p "Enter your display type: " TFT_TYPE
             ;;
-        6)
+        7)
             echo "Skipping display configuration."
             TFT_TYPE=""
             return
@@ -175,6 +177,7 @@ configure_boot_config() {
     sudo sed -i '/dtoverlay=.*st7735/d' "${CONFIG_FILE}"
     sudo sed -i '/dtoverlay=.*st7789/d' "${CONFIG_FILE}"
     sudo sed -i '/dtoverlay=.*ili9488/d' "${CONFIG_FILE}"
+    sudo sed -i '/dtoverlay=.*ili9486/d' "${CONFIG_FILE}"
     
     # Add appropriate overlay
     case "$TFT_TYPE" in
@@ -189,6 +192,9 @@ configure_boot_config() {
             echo "dtoverlay=vc4-kms-dpi-generic" | sudo tee -a "${CONFIG_FILE}" > /dev/null
             ;;
         ili9488)
+            echo "dtoverlay=waveshare35a,speed=16000000,rotate=${TFT_ROTATION}" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+            ;;
+        ili9486)
             echo "dtoverlay=waveshare35a,speed=16000000,rotate=${TFT_ROTATION}" | sudo tee -a "${CONFIG_FILE}" > /dev/null
             ;;
     esac

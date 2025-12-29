@@ -25,9 +25,16 @@ try:
     from luma.core.interface.serial import spi
     from luma.core.render import canvas
     from luma.lcd.device import ili9341, st7735, st7789v, ili9488
+    # ILI9486 is typically available in luma.lcd
+    try:
+        from luma.lcd.device import ili9486
+        ILI9486_AVAILABLE = True
+    except ImportError:
+        ILI9486_AVAILABLE = False
     LUMA_AVAILABLE = True
 except ImportError:
     LUMA_AVAILABLE = False
+    ILI9486_AVAILABLE = False
     print("Warning: luma.lcd not available. Install with: pip install luma.lcd")
 
 # Setup logging
@@ -173,6 +180,15 @@ class TFTDisplay:
             elif device_type == 'ili9488':
                 self.device = ili9488(serial, rotate=self.config.rotation // 90)
                 self.width, self.height = 320, 480
+            elif device_type == 'ili9486':
+                if ILI9486_AVAILABLE:
+                    self.device = ili9486(serial, rotate=self.config.rotation // 90)
+                    self.width, self.height = 320, 480
+                else:
+                    # Fallback to ili9488 which has similar specs
+                    log.warning('ILI9486 not available in luma.lcd, using ILI9488 as fallback')
+                    self.device = ili9488(serial, rotate=self.config.rotation // 90)
+                    self.width, self.height = 320, 480
             else:
                 log.error(f'Unknown display type: {device_type}')
                 return False
