@@ -209,9 +209,19 @@ configure_boot_config() {
     
     # Add touchscreen overlay for XPT2046
     echo -n "  - Adding touchscreen overlay... "
-    if ! grep -q "dtoverlay=ads7846" "${CONFIG_FILE}"; then
-        echo "dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=0,pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+    
+    # Determine swapxy based on rotation (portrait modes need swapxy=1)
+    SWAPXY=0
+    if [ "$TFT_ROTATION" -eq 90 ] || [ "$TFT_ROTATION" -eq 270 ]; then
+        SWAPXY=1
     fi
+    
+    # Remove old touchscreen configurations if present
+    sudo sed -i '/dtoverlay=ads7846/d' "${CONFIG_FILE}"
+    
+    # Add touchscreen overlay with rotation-aware configuration
+    echo "dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=${SWAPXY},pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+    
     echo -e "${GREEN}OK${NC}"
     
     echo -e "${GREEN}Boot configuration updated${NC}"
