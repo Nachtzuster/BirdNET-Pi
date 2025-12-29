@@ -91,7 +91,7 @@ install_packages() {
         libfreetype6-dev \
         libjpeg-dev \
         libopenjp2-7 \
-        libtiff5
+        libtiff6
     
     echo -e "${GREEN}Base packages installed${NC}"
 }
