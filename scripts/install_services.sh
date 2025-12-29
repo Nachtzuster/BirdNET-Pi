@@ -432,12 +432,6 @@ install_services() {
   configure_caddy_php
   config_icecast
   USER=$USER HOME=$HOME ${my_dir}/scripts/createdb.sh
-  
-  # Configure WiFi roaming if WiFi is available
-  if [ -f /etc/wpa_supplicant/wpa_supplicant.conf ] && [ -f /usr/local/bin/configure_wifi_roaming.sh ]; then
-    echo "Configuring WiFi roaming..."
-    sudo -u $USER /usr/local/bin/configure_wifi_roaming.sh configure || true
-  fi
 }
 
 if [ -f ${config_file} ];then
