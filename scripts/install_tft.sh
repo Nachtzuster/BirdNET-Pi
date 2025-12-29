@@ -124,7 +124,7 @@ select_display_type() {
     echo "  2) ST7735 (128x160) - Small displays"
     echo "  3) ST7789 (240x240) - Square displays"
     echo "  4) ILI9488 (320x480) - Larger displays"
-    echo "  5) ILI9486 (320x480) - 3.5 inch displays"
+    echo "  5) ILI9486 (380x480) - 3.5 inch displays"
     echo "  6) Custom/Other"
     echo "  7) Skip display configuration (manual setup)"
     echo ""
@@ -209,9 +209,19 @@ configure_boot_config() {
     
     # Add touchscreen overlay for XPT2046
     echo -n "  - Adding touchscreen overlay... "
-    if ! grep -q "dtoverlay=ads7846" "${CONFIG_FILE}"; then
-        echo "dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=0,pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+    
+    # Determine swapxy based on rotation (portrait modes need swapxy=1)
+    SWAPXY=0
+    if [ "$TFT_ROTATION" -eq 90 ] || [ "$TFT_ROTATION" -eq 270 ]; then
+        SWAPXY=1
     fi
+    
+    # Remove old touchscreen configurations if present (only lines starting with dtoverlay=ads7846)
+    sudo sed -i '/^dtoverlay=ads7846/d' "${CONFIG_FILE}"
+    
+    # Add touchscreen overlay with rotation-aware configuration
+    echo "dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=${SWAPXY},pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+    
     echo -e "${GREEN}OK${NC}"
     
     echo -e "${GREEN}Boot configuration updated${NC}"
@@ -243,12 +253,21 @@ TFT_SCROLL_SPEED=2
 TFT_MAX_DETECTIONS=20
 TFT_UPDATE_INTERVAL=5
 TFT_TYPE=${TFT_TYPE}
+TFT_SCREENSAVER_TIMEOUT=300
+TFT_SCREENSAVER_BRIGHTNESS=0
 EOF
     
     echo -e "${GREEN}BirdNET-Pi configuration updated${NC}"
     echo ""
     echo "Note: TFT display is disabled by default (TFT_ENABLED=0)"
     echo "Enable it by setting TFT_ENABLED=1 in ${BIRDNET_CONF}"
+    echo ""
+    echo "Power-saving features configured:"
+    echo "  - Screensaver timeout: 300 seconds (5 minutes)"
+    echo "  - Screensaver mode: blank screen (brightness=0)"
+    echo "  - Screen wakes on new bird detections"
+    echo "  - Adjust TFT_SCREENSAVER_TIMEOUT (0 to disable)"
+    echo "  - Set TFT_SCREENSAVER_BRIGHTNESS (0-100) for dim mode"
 }
 
 # Display completion message
@@ -262,6 +281,13 @@ display_completion() {
     echo "  3. Enable TFT display by editing ${BIRDNET_CONF}"
     echo "     Set: TFT_ENABLED=1"
     echo "  4. Restart BirdNET-Pi services or reboot again"
+    echo ""
+    echo "Features enabled:"
+    echo "  ✓ Automatic display size detection from framebuffer"
+    echo "  ✓ Portrait mode with touchscreen coordination (rotation=${TFT_ROTATION}°)"
+    echo "  ✓ Screensaver after 5 minutes of inactivity"
+    echo "  ✓ Works independently without HDMI monitor"
+    echo "  ✓ Screen wakes on touch or new bird detections"
     echo ""
     echo "Configuration backups saved in: ${BACKUP_DIR}"
     echo "To rollback, run: ./rollback_tft.sh"

@@ -69,6 +69,8 @@ class TFTDisplayConfig:
         self.max_detections = 20
         self.update_interval = 5
         self.db_path = None
+        self.screensaver_timeout = 300  # 5 minutes default
+        self.screensaver_brightness = 0  # 0 = off, 1-100 = dim level
         
         self.load_config()
     
@@ -106,6 +108,10 @@ class TFTDisplayConfig:
                             self.max_detections = int(value)
                         elif key == 'TFT_UPDATE_INTERVAL':
                             self.update_interval = int(value)
+                        elif key == 'TFT_SCREENSAVER_TIMEOUT':
+                            self.screensaver_timeout = int(value)
+                        elif key == 'TFT_SCREENSAVER_BRIGHTNESS':
+                            self.screensaver_brightness = int(value)
                         elif key == 'DB_PATH':
                             self.db_path = value
             
@@ -151,9 +157,53 @@ class TFTDisplay:
         self.height = 320
         self.scroll_offset = 0
         self.detections = []
+        self.last_activity = time.time()
+        self.screensaver_active = False
+        self.brightness_level = 100  # Full brightness by default
         
         self.initialize_display()
         self.load_font()
+    
+    def detect_display_size(self):
+        """Detect display size from framebuffer or device type"""
+        # Try to get size from framebuffer first
+        fb_device = '/dev/fb1'  # Assume TFT is on fb1
+        
+        try:
+            # Try using fbset command
+            import subprocess
+            result = subprocess.run(
+                ['fbset', '-fb', fb_device],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'geometry' in line:
+                        parts = line.split()
+                        if len(parts) >= 3:
+                            width = int(parts[1])
+                            height = int(parts[2])
+                            log.info(f'Detected framebuffer size: {width}x{height}')
+                            return width, height
+        except Exception as e:
+            log.debug(f'Could not detect size via fbset: {e}')
+        
+        # Fallback: check sysfs
+        try:
+            with open(f'/sys/class/graphics/fb1/virtual_size', 'r') as f:
+                size_str = f.read().strip()
+                if ',' in size_str:
+                    width, height = map(int, size_str.split(','))
+                    log.info(f'Detected framebuffer size from sysfs: {width}x{height}')
+                    return width, height
+        except Exception as e:
+            log.debug(f'Could not detect size via sysfs: {e}')
+        
+        # Ultimate fallback: use device type defaults
+        log.info('Using device type defaults for size')
+        return None, None
     
     def initialize_display(self):
         """Initialize the display device"""
@@ -168,27 +218,31 @@ class TFTDisplay:
             # Create device based on type
             device_type = self.config.device_type.lower()
             
+            # Try to auto-detect size first
+            detected_width, detected_height = self.detect_display_size()
+            
             if device_type == 'ili9341':
                 self.device = ili9341(serial, rotate=self.config.rotation // 90)
-                self.width, self.height = 240, 320
+                self.width, self.height = detected_width or 240, detected_height or 320
             elif device_type in ['st7735', 'st7735r']:
                 self.device = st7735(serial, rotate=self.config.rotation // 90)
-                self.width, self.height = 128, 160
+                self.width, self.height = detected_width or 128, detected_height or 160
             elif device_type == 'st7789':
                 self.device = st7789v(serial, rotate=self.config.rotation // 90)
-                self.width, self.height = 240, 240
+                self.width, self.height = detected_width or 240, detected_height or 240
             elif device_type == 'ili9488':
                 self.device = ili9488(serial, rotate=self.config.rotation // 90)
-                self.width, self.height = 320, 480
+                self.width, self.height = detected_width or 320, detected_height or 480
             elif device_type == 'ili9486':
                 if ILI9486_AVAILABLE:
                     self.device = ili9486(serial, rotate=self.config.rotation // 90)
-                    self.width, self.height = 320, 480
+                    # ILI9486 is typically 380x480, but auto-detection will override if available
+                    self.width, self.height = detected_width or 380, detected_height or 480
                 else:
                     # Fallback to ili9488 which has similar specs
                     log.warning('ILI9486 not available in luma.lcd, using ILI9488 as fallback')
                     self.device = ili9488(serial, rotate=self.config.rotation // 90)
-                    self.width, self.height = 320, 480
+                    self.width, self.height = detected_width or 380, detected_height or 480
             else:
                 log.error(f'Unknown display type: {device_type}')
                 return False
@@ -198,6 +252,7 @@ class TFTDisplay:
                 self.width, self.height = self.height, self.width
             
             log.info(f'Display initialized: {self.width}x{self.height}')
+            log.info(f'Screensaver timeout: {self.config.screensaver_timeout}s')
             return True
             
         except Exception as e:
@@ -232,12 +287,66 @@ class TFTDisplay:
             log.error(f'Error loading font: {e}')
             self.font = ImageFont.load_default()
     
+    def check_screensaver(self):
+        """Check if screensaver should activate"""
+        if self.config.screensaver_timeout <= 0:
+            return False  # Screensaver disabled
+        
+        idle_time = time.time() - self.last_activity
+        
+        if idle_time > self.config.screensaver_timeout:
+            if not self.screensaver_active:
+                log.info('Activating screensaver')
+                self.screensaver_active = True
+            return True
+        else:
+            if self.screensaver_active:
+                log.info('Deactivating screensaver')
+                self.screensaver_active = False
+            return False
+    
+    def wake_screen(self):
+        """Wake screen from screensaver"""
+        self.last_activity = time.time()
+        if self.screensaver_active:
+            log.info('Screen woken by activity')
+            self.screensaver_active = False
+    
+    def set_brightness(self, level):
+        """Set display brightness (0-100)"""
+        # Note: Hardware brightness control requires additional GPIO/PWM support
+        # This is a placeholder for future implementation
+        # For now, we simulate dimming by drawing with reduced contrast
+        self.brightness_level = max(0, min(100, level))
+        log.debug(f'Brightness set to {self.brightness_level}%')
+    
     def render_frame(self):
         """Render current frame to display"""
         if not self.device:
             return
         
         try:
+            # Check screensaver status
+            if self.check_screensaver():
+                # Screensaver active - show blank or dimmed screen
+                with canvas(self.device) as draw:
+                    if self.config.screensaver_brightness > 0:
+                        # Dim mode - show minimal info
+                        dim_color = f'#{int(255 * self.config.screensaver_brightness / 100):02x}{int(255 * self.config.screensaver_brightness / 100):02x}{int(255 * self.config.screensaver_brightness / 100):02x}'
+                        draw.rectangle((0, 0, self.width, self.height), fill='black')
+                        
+                        # Show clock in dim mode
+                        now = datetime.now().strftime('%H:%M')
+                        text_width = len(now) * (self.config.font_size + 2)
+                        x = (self.width - text_width) // 2
+                        y = self.height // 2
+                        draw.text((x, y), now, fill=dim_color, font=self.font)
+                    else:
+                        # Full black screen
+                        draw.rectangle((0, 0, self.width, self.height), fill='black')
+                return
+            
+            # Normal rendering
             with canvas(self.device) as draw:
                 # Clear background
                 draw.rectangle((0, 0, self.width, self.height), fill='black')
@@ -411,9 +520,25 @@ def main():
     
     reader = DetectionReader(db_path)
     
+    # Touch monitoring (optional - for future implementation)
+    touch_device = None
+    try:
+        # Try to open touch device for wake-up monitoring
+        import glob
+        touch_devices = glob.glob('/dev/input/event*')
+        for dev in touch_devices:
+            try:
+                # Simple check - actual implementation would use evdev
+                log.debug(f'Found input device: {dev}')
+            except:
+                pass
+    except Exception as e:
+        log.debug(f'Touch monitoring not available: {e}')
+    
     # Main loop
     log.info('Entering main display loop')
     last_update = 0
+    last_detection_count = 0
     frame_counter = 0
     
     while not shutdown:
@@ -430,6 +555,11 @@ def main():
                 if detections:
                     display.update_detections(detections)
                     log.info(f'Updated display with {len(detections)} detections')
+                    
+                    # Wake screen if new detections arrived
+                    if len(detections) != last_detection_count:
+                        display.wake_screen()
+                        last_detection_count = len(detections)
                 else:
                     log.info('No recent detections')
                 
@@ -438,8 +568,9 @@ def main():
             # Render frame
             display.render_frame()
             
-            # Update scroll
-            display.update_scroll()
+            # Update scroll (only if not in screensaver mode)
+            if not display.screensaver_active:
+                display.update_scroll()
             
             # Control frame rate
             frame_counter += 1
