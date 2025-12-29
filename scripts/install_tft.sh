@@ -68,7 +68,16 @@ install_packages() {
     
     # Update package list
     echo "Updating package list..."
-    sudo apt-get update -qq
+    # Temporarily disable exit on error for apt-get update
+    set +e
+    sudo apt-get update -qq --allow-releaseinfo-change
+    UPDATE_EXIT_CODE=$?
+    set -e
+    
+    if [ $UPDATE_EXIT_CODE -ne 0 ]; then
+        echo -e "${YELLOW}Warning: Some repository updates failed, but continuing with installation...${NC}"
+        echo "This is usually not a problem if the required packages are still available."
+    fi
     
     # Install base dependencies
     echo "Installing base dependencies..."
