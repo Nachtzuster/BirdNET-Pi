@@ -247,10 +247,10 @@ BirdNET-Pi/
 - evtest
 - python3-dev
 - python3-pip
-- libfreetype6-dev
+- libfreetype-dev (updated from libfreetype6-dev for Trixie)
 - libjpeg-dev
 - libopenjp2-7
-- libtiff5
+- libtiff6 (updated from libtiff5 for Trixie compatibility)
 
 ### Python Packages (via pip):
 - luma.lcd
