@@ -93,7 +93,7 @@ User runs: ./install_tft.sh
          ▼
 ┌────────────────────┐
 │ Select Display     │ → User chooses:
-│ Type               │   - ILI9341, ST7735, ST7789, ILI9488, etc.
+│ Type               │   - ILI9341, ST7735, ST7789, ILI9488, ILI9486, etc.
 └────────┬───────────┘
          │
          ▼

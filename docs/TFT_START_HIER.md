@@ -41,7 +41,7 @@ Dit vertelt je of je TFT al gedetecteerd wordt (waarschijnlijk nog niet voor eer
 ```
 
 De installer vraagt je:
-- Welk type display je hebt (ILI9341, ST7735, ST7789, ILI9488, of custom)
+- Welk type display je hebt (ILI9341, ST7735, ST7789, ILI9488, ILI9486, of custom)
 - Bevestiging voor reboot
 
 De installer maakt automatisch backups van je configuratie!
@@ -285,7 +285,7 @@ Problemen of vragen?
 **v1.0** (2024-12-29):
 - ✅ Initiële implementatie
 - ✅ XPT2046 ondersteuning
-- ✅ Meerdere display types (ILI9341, ST7735, ST7789, ILI9488)
+- ✅ Meerdere display types (ILI9341, ST7735, ST7789, ILI9488, ILI9486)
 - ✅ Portrait mode scrolling
 - ✅ Graceful fallback
 - ✅ Rollback mechanisme

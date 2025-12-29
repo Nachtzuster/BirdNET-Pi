@@ -40,8 +40,9 @@ Deze implementatie voegt volledige ondersteuning toe voor TFT schermen met XPT20
 2. ST7735 (128x160) - Klein
 3. ST7789 (240x240) - Vierkant
 4. ILI9488 (320x480) - Groter
-5. Custom/Other - Handmatige configuratie
-6. Skip - Voor later configureren
+5. ILI9486 (320x480) - 3.5 inch displays
+6. Custom/Other - Handmatige configuratie
+7. Skip - Voor later configureren
 
 ### 3. Display Daemon (`scripts/tft_display.py`)
 ✅ **Functionaliteit**:
