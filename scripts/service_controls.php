@@ -5,6 +5,13 @@ $home = get_home();
 function do_service_mount($action) {
   echo "value=\"sudo systemctl ".$action." ".get_service_mount_name()." && sudo reboot\"";
 }
+
+function is_tft_service_installed() {
+  // Check if tft_display.service file exists
+  $service_file = "/usr/lib/systemd/system/tft_display.service";
+  return file_exists($service_file);
+}
+
 function service_status($name) {
   global $home;
   
@@ -145,12 +152,26 @@ function service_status($name) {
     <button type="submit" name="submit" value="sudo systemctl enable --now spectrogram_viewer.service">Enable</button>
   </div>
     <h3>TFT Display <?php echo service_status("tft_display.service");?></h3>
+  <?php if (is_tft_service_installed()): ?>
   <div role="group" class="btn-group-center">
     <button type="submit" name="submit" value="sudo systemctl stop tft_display.service">Stop</button>
     <button type="submit" name="submit" value="sudo systemctl restart tft_display.service">Restart</button>
     <button type="submit" name="submit" value="sudo systemctl disable --now tft_display.service">Disable</button>
     <button type="submit" name="submit" value="sudo systemctl enable --now tft_display.service">Enable</button>
   </div>
+  <?php else: ?>
+  <div role="group" class="btn-group-center">
+    <button type="submit" name="submit" value="install_tft_service.sh" 
+            style="background-color: #4CAF50; color: white;" 
+            onclick="return confirm('This will install TFT Display support. The system may need to reboot after installation. Continue?')">
+      Install TFT Support
+    </button>
+  </div>
+  <p style="color: gray; font-size: 0.9em; margin-top: 10px;">
+    TFT display service is not installed. Click "Install TFT Support" to set it up.<br>
+    This is optional and only needed if you have or plan to connect an SPI TFT display.
+  </p>
+  <?php endif; ?>
     <h3>Ram drive (!experimental!) <?php echo service_status(get_service_mount_name());?></h3>
   <div role="group" class="btn-group-center">
     <button type="submit" name="submit" <?php do_service_mount("disable");?> onclick="return confirm('This will reboot, are you sure?')">Disable</button>
