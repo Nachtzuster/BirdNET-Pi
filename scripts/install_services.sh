@@ -312,6 +312,40 @@ EOF
   echo "TFT Display service installed (not enabled by default)"
 }
 
+auto_detect_and_enable_tft() {
+  echo "Checking for TFT display hardware..."
+  
+  # Check if TFT hardware is configured in config.txt
+  CONFIG_FILE="/boot/firmware/config.txt"
+  TFT_CONFIGURED=false
+  
+  if [ -f "$CONFIG_FILE" ]; then
+    if grep -qE "dtoverlay=(spi|tft|ili9341|st7735|st7789|ads7846|xpt2046)" "$CONFIG_FILE"; then
+      TFT_CONFIGURED=true
+      echo "TFT hardware configuration detected in $CONFIG_FILE"
+    fi
+  fi
+  
+  # If TFT hardware is configured, enable the service
+  if [ "$TFT_CONFIGURED" = true ]; then
+    echo "Enabling TFT display service..."
+    systemctl enable tft_display.service
+    
+    # Update birdnet.conf to enable TFT
+    if [ -f "/etc/birdnet/birdnet.conf" ]; then
+      if grep -q "^TFT_ENABLED=" "/etc/birdnet/birdnet.conf"; then
+        sed -i 's/^TFT_ENABLED=.*/TFT_ENABLED=1/' "/etc/birdnet/birdnet.conf"
+      else
+        echo "TFT_ENABLED=1" >> "/etc/birdnet/birdnet.conf"
+      fi
+    fi
+    
+    echo "TFT display service enabled (will start on next boot)"
+  else
+    echo "No TFT hardware detected - service remains disabled"
+  fi
+}
+
 install_gotty_logs() {
   sudo -u ${USER} ln -sf $my_dir/templates/gotty \
     ${HOME}/.gotty
@@ -440,6 +474,7 @@ install_services() {
   install_spectrogram_service
   install_chart_viewer_service
   install_tft_display_service # Install TFT display service (not enabled by default)
+  auto_detect_and_enable_tft # Auto-detect TFT hardware and enable service if present
   install_gotty_logs
   install_phpsysinfo
   install_livestream_service
