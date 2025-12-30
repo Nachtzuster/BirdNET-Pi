@@ -242,13 +242,13 @@ class TFTDisplay:
             elif device_type == 'ili9486':
                 if ILI9486_AVAILABLE:
                     self.device = ili9486(serial, rotate=self.config.rotation // 90)
-                    # ILI9486 is typically 380x480, but auto-detection will override if available
-                    self.width, self.height = detected_width or 380, detected_height or 480
+                    # ILI9486 is typically 320x480, but auto-detection will override if available
+                    self.width, self.height = detected_width or 320, detected_height or 480
                 else:
                     # Fallback to ili9488 which has similar specs
                     log.warning('ILI9486 not available in luma.lcd, using ILI9488 as fallback')
                     self.device = ili9488(serial, rotate=self.config.rotation // 90)
-                    self.width, self.height = detected_width or 380, detected_height or 480
+                    self.width, self.height = detected_width or 320, detected_height or 480
             else:
                 log.error(f'Unknown display type: {device_type}')
                 return False

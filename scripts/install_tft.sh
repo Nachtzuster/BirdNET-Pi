@@ -124,7 +124,7 @@ select_display_type() {
     echo "  2) ST7735 (128x160) - Small displays"
     echo "  3) ST7789 (240x240) - Square displays"
     echo "  4) ILI9488 (320x480) - Larger displays"
-    echo "  5) ILI9486 (380x480) - 3.5 inch displays"
+    echo "  5) ILI9486 (320x480) - 3.5 inch displays"
     echo "  6) Custom/Other"
     echo "  7) Skip display configuration (manual setup)"
     echo ""
