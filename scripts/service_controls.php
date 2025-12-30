@@ -29,8 +29,10 @@ function service_status($name) {
   // Get full status output once
   $full_status = shell_exec("sudo systemctl status ".$safe_name." 2>&1");
   
-  // Check if service is not installed
-  if (stripos($full_status, "could not be found") !== false) {
+  // Check if service is not installed (check multiple common patterns)
+  if (stripos($full_status, "could not be found") !== false || 
+      stripos($full_status, "not found") !== false ||
+      empty($full_status)) {
       // For optional services like TFT display, show a more helpful message
       if ($name == "tft_display.service") {
           echo "<span style='color:gray' title='This is an optional service. Run ~/BirdNET-Pi/scripts/install_tft.sh to install TFT display support.'>(not installed - optional)</span>";
@@ -45,9 +47,19 @@ function service_status($name) {
   $op = "";
   foreach ($lines as $line) {
       if (stripos($line, "Active:") !== false) {
-          $op = $line;
+          $op = trim($line);
           break;
       }
+  }
+  
+  // If no Active line found, show the full status as error
+  if (empty($op)) {
+      $full_status_escaped = htmlspecialchars($full_status, ENT_QUOTES, 'UTF-8');
+      $service_id = str_replace('.', '_', $name);
+      $safe_service_id = json_encode($service_id);
+      echo "<span style='color:red;cursor:pointer;text-decoration:underline;' onclick='showErrorDetails(".$safe_service_id.")'>(unknown status)</span>";
+      echo "<div id='error_details_".htmlspecialchars($service_id, ENT_QUOTES, 'UTF-8')."' style='display:none;'>".$full_status_escaped."</div>";
+      return;
   }
   
   if (stripos($op, " active (running)") || stripos($op, " active (mounted)")) {
