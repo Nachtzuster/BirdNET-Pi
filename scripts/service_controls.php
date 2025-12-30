@@ -141,9 +141,24 @@ function closeErrorModal() {
 function copyErrorDetails() {
   var errorText = document.getElementById('errorDetailsContent').textContent;
   
+  // Try modern Clipboard API first (more secure and recommended)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(errorText).then(function() {
+      alert('Error details copied to clipboard!');
+    }).catch(function(err) {
+      // Fallback to deprecated method if modern API fails
+      copyErrorDetailsFallback(errorText);
+    });
+  } else {
+    // Fallback for older browsers
+    copyErrorDetailsFallback(errorText);
+  }
+}
+
+function copyErrorDetailsFallback(text) {
   // Create a temporary textarea element
   var textarea = document.createElement('textarea');
-  textarea.value = errorText;
+  textarea.value = text;
   textarea.style.position = 'fixed';
   textarea.style.left = '-9999px';
   document.body.appendChild(textarea);

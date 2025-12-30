@@ -148,6 +148,10 @@ class TFTDisplayConfig:
 class TFTDisplay:
     """TFT Display handler"""
     
+    # Display layout constants
+    HEADER_HEIGHT = 30  # Height of title and separator area
+    FOOTER_HEIGHT = 20  # Height of timestamp footer area
+    
     def __init__(self, config):
         """Initialize TFT display"""
         self.config = config
@@ -356,17 +360,18 @@ class TFTDisplay:
                 draw.text((5, 5), title, fill='white', font=self.font)
                 
                 # Separator line
-                draw.line((0, 25, self.width, 25), fill='white')
+                separator_y = 25
+                draw.line((0, separator_y, self.width, separator_y), fill='white')
                 
                 # Render detections with upward scrolling
                 # Start position accounts for scroll offset (negative moves items up)
-                y_start = 30
+                y_start = self.HEADER_HEIGHT
                 y_pos = y_start - self.scroll_offset
                 line_height = self.config.font_size + 4
                 
                 for detection in self.detections:
-                    # Only render if within visible area
-                    if y_pos + line_height * 2 > 25 and y_pos < self.height - 20:
+                    # Only render if within visible area (below separator, above footer)
+                    if y_pos + line_height * 2 > separator_y and y_pos < self.height - self.FOOTER_HEIGHT:
                         # Format: "Common Name" on first line
                         text = f"{detection['common_name']}"
                         draw.text((5, y_pos), text, fill='white', font=self.font)
@@ -397,7 +402,7 @@ class TFTDisplay:
         total_height = len(self.detections) * item_height
         
         # Visible area (exclude header and footer)
-        visible_height = self.height - 30 - 20  # 30 for header, 20 for footer
+        visible_height = self.height - self.HEADER_HEIGHT - self.FOOTER_HEIGHT
         
         # Maximum scroll is when all content has scrolled up past the top
         max_scroll = total_height
