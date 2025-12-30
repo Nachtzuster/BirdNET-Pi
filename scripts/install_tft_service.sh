@@ -95,13 +95,8 @@ if install_tft_display_service; then
     CONFIG_FILE="/boot/firmware/config.txt"
     
     if [ -f "$CONFIG_FILE" ]; then
-        if grep -q "dtoverlay=spi" "$CONFIG_FILE" || \
-           grep -q "dtoverlay=tft" "$CONFIG_FILE" || \
-           grep -q "dtoverlay=ili9341" "$CONFIG_FILE" || \
-           grep -q "dtoverlay=st7735" "$CONFIG_FILE" || \
-           grep -q "dtoverlay=st7789" "$CONFIG_FILE" || \
-           grep -q "dtoverlay=ads7846" "$CONFIG_FILE" || \
-           grep -q "dtoverlay=xpt2046" "$CONFIG_FILE"; then
+        # Use single grep with multiple patterns for better performance
+        if grep -qE "dtoverlay=(spi|tft|ili9341|st7735|st7789|ads7846|xpt2046)" "$CONFIG_FILE"; then
             
             log "INFO: TFT hardware configuration detected in $CONFIG_FILE"
             NEEDS_REBOOT=true
@@ -113,12 +108,9 @@ if install_tft_display_service; then
             echo "TFT hardware configuration detected in your system."
             echo "A reboot is NECESSARY to activate the TFT display."
             echo ""
-            echo "Would you like to reboot now? (Y/N)"
-            echo ""
-            echo "From web interface: Click the REBOOT button below"
-            echo "From command line: Run 'sudo reboot' or answer Y"
-            echo ""
-            echo "► REBOOT: Go to Tools -> System Controls -> Reboot"
+            echo "How to reboot:"
+            echo "  • Web interface: Tools -> System Controls -> Reboot"
+            echo "  • Command line: sudo reboot"
             echo ""
         fi
     fi
