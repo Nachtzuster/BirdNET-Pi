@@ -26,7 +26,7 @@ function service_status($name) {
   // Use escapeshellarg for additional safety
   $safe_name = escapeshellarg($name);
   
-  // First check if service exists by getting full status output
+  // Get full status output once
   $full_status = shell_exec("sudo systemctl status ".$safe_name." 2>&1");
   
   // Check if service is not installed
@@ -40,7 +40,15 @@ function service_status($name) {
       return;
   }
   
-  $op = shell_exec("sudo systemctl status ".$safe_name." | grep Active");
+  // Extract Active line from full status (avoiding duplicate systemctl call)
+  $lines = explode("\n", $full_status);
+  $op = "";
+  foreach ($lines as $line) {
+      if (stripos($line, "Active:") !== false) {
+          $op = $line;
+          break;
+      }
+  }
   
   if (stripos($op, " active (running)") || stripos($op, " active (mounted)")) {
       echo "<span style='color:green'>(active)</span>";
