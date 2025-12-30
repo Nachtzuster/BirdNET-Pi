@@ -7,6 +7,14 @@ function do_service_mount($action) {
 }
 function service_status($name) {
   global $home;
+  
+  // Validate service name to prevent command injection
+  // Only allow alphanumeric, underscore, hyphen, and dot (typical service name characters)
+  if (!preg_match('/^[a-zA-Z0-9._-]+$/', $name)) {
+      echo "<span style='color:red'>(invalid service name)</span>";
+      return;
+  }
+  
   if($name == "birdnet_analysis.service") {
     $filesinproc=trim(shell_exec("ls ".$home."/BirdSongs/StreamData | wc -l"));
     if($filesinproc > 200) { 
@@ -14,7 +22,11 @@ function service_status($name) {
        return;
     }
   } 
-  $op = shell_exec("sudo systemctl status ".$name." | grep Active");
+  
+  // Use escapeshellarg for additional safety
+  $safe_name = escapeshellarg($name);
+  $op = shell_exec("sudo systemctl status ".$safe_name." | grep Active");
+  
   if (stripos($op, " active (running)") || stripos($op, " active (mounted)")) {
       echo "<span style='color:green'>(active)</span>";
   } elseif (stripos($op, " inactive ")) {
@@ -24,7 +36,16 @@ function service_status($name) {
       if (preg_match("/(\S*)\s*\((\S+)\)/", $op, $matches)) {
           $status =  $matches[1]. " [" . $matches[2] . "]";
       }
-      echo "<span style='color:red'>($status)</span>";
+      // Get full systemctl status output for error details
+      $full_status = shell_exec("sudo systemctl status ".$safe_name." 2>&1");
+      $full_status = htmlspecialchars($full_status, ENT_QUOTES, 'UTF-8');
+      
+      // Safely encode service_id for JavaScript context
+      $service_id = str_replace('.', '_', $name);
+      $safe_service_id = json_encode($service_id);
+      
+      echo "<span style='color:red;cursor:pointer;text-decoration:underline;' onclick='showErrorDetails(".$safe_service_id.")'>($status)</span>";
+      echo "<div id='error_details_".htmlspecialchars($service_id, ENT_QUOTES, 'UTF-8')."' style='display:none;'>".$full_status."</div>";
   }
 }
 ?>
@@ -109,3 +130,76 @@ function service_status($name) {
   </div>
 </form>
 </div>
+
+<!-- Modal for Error Details -->
+<div id="errorModal" class="modal">
+  <div class="modal-content">
+    <h2>Service Error Details</h2>
+    <pre id="errorDetailsContent" style="text-align:left;background-color:black;color:white;padding:15px;overflow-x:auto;max-height:400px;overflow-y:auto;"></pre>
+    <div style="margin-top:15px;">
+      <button onclick="copyErrorDetails()" style="background-color: rgb(219, 255, 235);padding: 12px;">Copy to Clipboard</button>
+      <button onclick="closeErrorModal()" style="background-color: rgb(219, 255, 235);padding: 12px;">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showErrorDetails(serviceId) {
+  var errorDetails = document.getElementById('error_details_' + serviceId).textContent;
+  document.getElementById('errorDetailsContent').textContent = errorDetails;
+  document.getElementById('errorModal').style.display = 'block';
+}
+
+function closeErrorModal() {
+  document.getElementById('errorModal').style.display = 'none';
+}
+
+function copyErrorDetails() {
+  var errorText = document.getElementById('errorDetailsContent').textContent;
+  
+  // Try modern Clipboard API first (more secure and recommended)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(errorText).then(function() {
+      alert('Error details copied to clipboard!');
+    }).catch(function(err) {
+      // Fallback to deprecated method if modern API fails
+      copyErrorDetailsFallback(errorText);
+    });
+  } else {
+    // Fallback for older browsers
+    copyErrorDetailsFallback(errorText);
+  }
+}
+
+function copyErrorDetailsFallback(text) {
+  // Fallback for older browsers using deprecated document.execCommand('copy')
+  // Note: document.execCommand is deprecated but still widely supported
+  // This is only used when the modern Clipboard API is unavailable
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  
+  // Select and copy the text
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); // For mobile devices
+  
+  try {
+    document.execCommand('copy');
+    alert('Error details copied to clipboard!');
+  } catch (err) {
+    alert('Failed to copy error details. Please select and copy manually.');
+  }
+  
+  document.body.removeChild(textarea);
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+  var modal = document.getElementById('errorModal');
+  if (event.target == modal) {
+    closeErrorModal();
+  }
+}
+</script>

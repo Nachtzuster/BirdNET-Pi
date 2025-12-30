@@ -148,6 +148,12 @@ class TFTDisplayConfig:
 class TFTDisplay:
     """TFT Display handler"""
     
+    # Display layout constants
+    HEADER_HEIGHT = 30  # Height of title and separator area
+    FOOTER_HEIGHT = 20  # Height of timestamp footer area
+    LINES_PER_DETECTION = 2  # Number of text lines per detection (name + confidence)
+    DETECTION_SPACING = 2  # Spacing in pixels between detections
+    
     def __init__(self, config):
         """Initialize TFT display"""
         self.config = config
@@ -348,33 +354,36 @@ class TFTDisplay:
             
             # Normal rendering
             with canvas(self.device) as draw:
-                # Clear background
+                # Clear background to black
                 draw.rectangle((0, 0, self.width, self.height), fill='black')
                 
-                # Title
+                # Title (stays at top)
                 title = "BirdNET-Pi Detections"
                 draw.text((5, 5), title, fill='white', font=self.font)
                 
                 # Separator line
-                draw.line((0, 25, self.width, 25), fill='white')
+                separator_y = 25
+                draw.line((0, separator_y, self.width, separator_y), fill='white')
                 
-                # Render detections
-                y_pos = 30 - self.scroll_offset
+                # Render detections with upward scrolling
+                # Start position accounts for scroll offset (negative moves items up)
+                y_start = self.HEADER_HEIGHT
+                y_pos = y_start - self.scroll_offset
                 line_height = self.config.font_size + 4
                 
                 for detection in self.detections:
-                    if y_pos > -line_height and y_pos < self.height:
-                        # Format: "Common Name (Confidence%)"
+                    # Only render if within visible area (below separator, above footer)
+                    if y_pos + line_height * self.LINES_PER_DETECTION > separator_y and y_pos < self.height - self.FOOTER_HEIGHT:
+                        # Format: "Common Name" on first line
                         text = f"{detection['common_name']}"
                         draw.text((5, y_pos), text, fill='white', font=self.font)
                         
-                        # Confidence on next line
+                        # Confidence on next line with green color
                         conf_text = f"  {detection['confidence']:.1f}%"
                         draw.text((5, y_pos + line_height), conf_text, fill='lightgreen', font=self.font)
-                        
-                        y_pos += line_height * 2 + 2
-                    else:
-                        y_pos += line_height * 2 + 2
+                    
+                    # Move to next detection position
+                    y_pos += line_height * self.LINES_PER_DETECTION + self.DETECTION_SPACING
                 
                 # Draw timestamp at bottom
                 now = datetime.now().strftime('%H:%M:%S')
@@ -384,13 +393,28 @@ class TFTDisplay:
             log.error(f'Error rendering frame: {e}')
     
     def update_scroll(self):
-        """Update scroll position"""
-        total_height = len(self.detections) * (self.config.font_size + 4) * 2
-        max_scroll = max(0, total_height - self.height + 50)
+        """Update scroll position for upward scrolling"""
+        if not self.detections:
+            self.scroll_offset = 0
+            return
         
+        line_height = self.config.font_size + 4
+        # Each detection takes LINES_PER_DETECTION lines + DETECTION_SPACING pixels
+        item_height = line_height * self.LINES_PER_DETECTION + self.DETECTION_SPACING
+        total_height = len(self.detections) * item_height
+        
+        # Visible area (exclude header and footer)
+        visible_height = self.height - self.HEADER_HEIGHT - self.FOOTER_HEIGHT
+        
+        # Maximum scroll is when all content has scrolled up past the top
+        max_scroll = total_height
+        
+        # Increment scroll offset to move content upward
         self.scroll_offset += self.config.scroll_speed
         
-        if self.scroll_offset > max_scroll:
+        # Reset to 0 when all content has scrolled off the top
+        # Add visible_height to allow content to completely disappear
+        if self.scroll_offset > max_scroll + visible_height:
             self.scroll_offset = 0
     
     def update_detections(self, detections):
@@ -443,7 +467,7 @@ class DetectionReader:
                 SELECT Com_Name, Confidence, Date, Time
                 FROM detections
                 WHERE Date >= ?
-                ORDER BY Date DESC, Time DESC
+                ORDER BY Date ASC, Time ASC
                 LIMIT ?
             """
             
