@@ -42,7 +42,7 @@ function service_status($name) {
       empty($full_status)) {
       // For optional services like TFT display, show a more helpful message
       if ($name == "tft_display.service") {
-          echo "<span style='color:gray' title='This is an optional service. Run ~/BirdNET-Pi/scripts/install_tft.sh to install TFT display support.'>(not installed - optional)</span>";
+          echo "<span style='color:gray' title='This is an optional service. Use the \"Install TFT Support\" button below to install the service.'>(not installed - optional)</span>";
       } else {
           echo "<span style='color:gray'>(not installed)</span>";
       }
@@ -163,7 +163,7 @@ function service_status($name) {
   <div role="group" class="btn-group-center">
     <button type="submit" name="submit" value="install_tft_service.sh" 
             style="background-color: #4CAF50; color: white;" 
-            onclick="return confirm('This will install TFT Display support. The system may need to reboot after installation. Continue?')">
+            onclick="return confirm('This will install the TFT Display service.\n\nThe service will be created but not enabled automatically.\n\nAfter installation, you can:\n1. Configure TFT hardware (if connected) using install_tft.sh\n2. Enable the service when ready\n\nContinue with installation?')">
       Install TFT Support
     </button>
   </div>
