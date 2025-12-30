@@ -89,16 +89,61 @@ if install_tft_display_service; then
     echo ""
     echo "✓ TFT Display service has been installed successfully!"
     echo ""
+    
+    # Check if hardware is already configured (SPI/TFT overlays in config.txt)
+    NEEDS_REBOOT=false
+    CONFIG_FILE="/boot/firmware/config.txt"
+    
+    if [ -f "$CONFIG_FILE" ]; then
+        if grep -q "dtoverlay=spi" "$CONFIG_FILE" || \
+           grep -q "dtoverlay=tft" "$CONFIG_FILE" || \
+           grep -q "dtoverlay=ili9341" "$CONFIG_FILE" || \
+           grep -q "dtoverlay=st7735" "$CONFIG_FILE" || \
+           grep -q "dtoverlay=st7789" "$CONFIG_FILE" || \
+           grep -q "dtoverlay=ads7846" "$CONFIG_FILE" || \
+           grep -q "dtoverlay=xpt2046" "$CONFIG_FILE"; then
+            
+            log "INFO: TFT hardware configuration detected in $CONFIG_FILE"
+            NEEDS_REBOOT=true
+            
+            echo "======================================================="
+            echo "⚠️  REBOOT REQUIRED TO ACTIVATE TFT DISPLAY"
+            echo "======================================================="
+            echo ""
+            echo "TFT hardware configuration detected in your system."
+            echo "A reboot is NECESSARY to activate the TFT display."
+            echo ""
+            echo "Would you like to reboot now? (Y/N)"
+            echo ""
+            echo "From web interface: Click the REBOOT button below"
+            echo "From command line: Run 'sudo reboot' or answer Y"
+            echo ""
+            echo "► REBOOT: Go to Tools -> System Controls -> Reboot"
+            echo ""
+        fi
+    fi
+    
+    if [ "$NEEDS_REBOOT" = false ]; then
+        log "No reboot required for service installation"
+        echo "✓ No reboot required."
+        echo ""
+    fi
+    
     echo "Next steps:"
-    echo "1. If you have a TFT display connected, run: ~/BirdNET-Pi/scripts/install_tft.sh"
-    echo "   to configure the hardware settings (SPI, display type, rotation, etc.)"
+    if [ "$NEEDS_REBOOT" = true ]; then
+        echo "1. ⚠️  REBOOT the system NOW (required for TFT hardware)"
+        echo "2. After reboot, enable the service:"
+        echo "   sudo systemctl enable --now tft_display.service"
+    else
+        echo "1. If you have a TFT display to configure:"
+        echo "   ~/BirdNET-Pi/scripts/install_tft.sh"
+        echo ""
+        echo "2. To enable the service:"
+        echo "   sudo systemctl enable --now tft_display.service"
+    fi
     echo ""
-    echo "2. To enable the service: sudo systemctl enable --now tft_display.service"
-    echo ""
-    echo "3. The service will start automatically after hardware configuration."
-    echo ""
-    echo "Note: The service is now available but NOT enabled. This is intentional"
-    echo "      so you can configure your TFT hardware first."
+    echo "Note: The service is installed but NOT enabled automatically."
+    echo "      Configure your TFT hardware first if needed."
     echo ""
     log "Log file saved to: $LOG_FILE"
     exit 0
