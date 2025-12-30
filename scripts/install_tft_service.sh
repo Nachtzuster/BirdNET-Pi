@@ -81,6 +81,12 @@ EOF
     sudo systemctl daemon-reload
     
     log "TFT display service installed successfully!"
+    
+    # Install auto-configuration service
+    log "Installing TFT auto-configuration service..."
+    if [ -f "$SCRIPT_DIR/install_tft_autoconfig_service.sh" ]; then
+        bash "$SCRIPT_DIR/install_tft_autoconfig_service.sh" || log "Auto-config service installation completed with warnings"
+    fi
 }
 
 # Run the installation
@@ -100,6 +106,12 @@ if install_tft_display_service; then
             
             log "INFO: TFT hardware configuration detected in $CONFIG_FILE"
             NEEDS_REBOOT=true
+            
+            # Run auto-configuration to detect and set up TFT properly
+            log "Running automatic TFT configuration..."
+            if [ -f "$SCRIPT_DIR/auto_configure_tft.sh" ]; then
+                bash "$SCRIPT_DIR/auto_configure_tft.sh" || log "Auto-configuration completed with warnings"
+            fi
             
             echo "======================================================="
             echo "⚠️  REBOOT REQUIRED TO ACTIVATE TFT DISPLAY"

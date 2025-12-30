@@ -507,8 +507,25 @@ def main():
     
     if not config.enabled:
         log.info('TFT display is disabled in configuration')
+        log.info('Running in standby mode - waiting for configuration')
         log.info('Enable it by setting TFT_ENABLED=1 in /etc/birdnet/birdnet.conf')
-        sys.exit(0)
+        
+        # Stay running in standby mode, checking for config changes
+        log.info('Entering standby mode (checking for config changes every 60 seconds)')
+        while not shutdown:
+            time.sleep(60)
+            # Reload configuration periodically
+            config = TFTDisplayConfig()
+            if config.enabled:
+                log.info('TFT display has been enabled - restarting service')
+                break
+        
+        if not config.enabled:
+            log.info('TFT Display daemon stopped from standby mode')
+            sys.exit(0)
+        
+        # If we get here, TFT was enabled, continue with initialization
+        log.info('TFT display now enabled - initializing...')
     
     # Check for required libraries
     if not PIL_AVAILABLE or not LUMA_AVAILABLE:
@@ -522,13 +539,37 @@ def main():
     if not display.device:
         log.error('Failed to initialize display. Running in fallback mode.')
         log.info('Display will not be available, but service will continue running.')
+        log.info('This allows the service to be managed and restarted easily.')
+        log.info('Common causes:')
+        log.info('  - TFT hardware not properly connected')
+        log.info('  - Missing device drivers (check dmesg)')
+        log.info('  - Incorrect device type in configuration')
+        log.info('  - SPI not enabled in /boot/firmware/config.txt')
         
-        # Keep running but do nothing (fallback mode)
-        while not shutdown:
-            time.sleep(config.update_interval)
+        # Keep running in fallback mode, checking periodically for hardware
+        log.info('Checking for hardware availability every 120 seconds...')
+        retry_count = 0
+        max_retries = 5
         
-        log.info('TFT Display daemon stopped (fallback mode)')
-        sys.exit(0)
+        while not shutdown and retry_count < max_retries:
+            time.sleep(120)
+            retry_count += 1
+            
+            # Try to reinitialize display
+            log.info(f'Retry {retry_count}/{max_retries}: Attempting to initialize display...')
+            display = TFTDisplay(config)
+            if display.device:
+                log.info('Display initialized successfully after retry!')
+                break
+        
+        if not display.device:
+            log.info('Display initialization failed after retries. Staying in standby mode.')
+            # Stay running in standby mode indefinitely
+            while not shutdown:
+                time.sleep(config.update_interval)
+            
+            log.info('TFT Display daemon stopped (fallback mode)')
+            sys.exit(0)
     
     # Show startup message
     display.show_message('BirdNET-Pi\nStarting...')

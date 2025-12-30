@@ -296,7 +296,8 @@ install_tft_display_service() {
   cat << EOF > $HOME/BirdNET-Pi/templates/tft_display.service
 [Unit]
 Description=BirdNET-Pi TFT Display Service
-After=birdnet_analysis.service
+After=birdnet_analysis.service tft_autoconfig.service
+Wants=tft_autoconfig.service
 [Service]
 Restart=on-failure
 RestartSec=10
@@ -307,42 +308,57 @@ ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/tft_display.py
 WantedBy=multi-user.target
 EOF
   ln -sf $HOME/BirdNET-Pi/templates/tft_display.service /usr/lib/systemd/system
-  # Note: Service is installed but NOT enabled by default
-  # User must enable it after TFT configuration by setting TFT_ENABLED=1
-  echo "TFT Display service installed (not enabled by default)"
+  echo "TFT Display service installed"
+}
+
+install_tft_autoconfig_service() {
+  echo "Installing TFT auto-configuration service..."
+  
+  cat << EOF > $HOME/BirdNET-Pi/templates/tft_autoconfig.service
+[Unit]
+Description=BirdNET-Pi TFT Auto-Configuration Service
+After=network.target
+Before=tft_display.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/bin/bash ${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  
+  ln -sf $HOME/BirdNET-Pi/templates/tft_autoconfig.service /usr/lib/systemd/system
+  systemctl enable tft_autoconfig.service
+  echo "TFT auto-configuration service installed and enabled"
 }
 
 auto_detect_and_enable_tft() {
-  echo "Checking for TFT display hardware..."
+  echo "Setting up automatic TFT detection and configuration..."
   
-  # Check if TFT hardware is configured in config.txt
-  CONFIG_FILE="/boot/firmware/config.txt"
-  TFT_CONFIGURED=false
+  # Install the auto-configuration service
+  install_tft_autoconfig_service
   
-  if [ -f "$CONFIG_FILE" ]; then
-    if grep -qE "dtoverlay=(spi|tft|ili9341|st7735|st7789|ads7846|xpt2046)" "$CONFIG_FILE"; then
-      TFT_CONFIGURED=true
-      echo "TFT hardware configuration detected in $CONFIG_FILE"
-    fi
+  # Run auto-configuration now to detect and configure any present TFT hardware
+  echo "Running TFT auto-configuration..."
+  if [ -f "${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh" ]; then
+    bash "${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh" || echo "Auto-configuration completed with warnings"
   fi
   
-  # If TFT hardware is configured, enable the service
-  if [ "$TFT_CONFIGURED" = true ]; then
-    echo "Enabling TFT display service..."
-    systemctl enable tft_display.service
-    
-    # Update birdnet.conf to enable TFT
-    if [ -f "/etc/birdnet/birdnet.conf" ]; then
-      if grep -q "^TFT_ENABLED=" "/etc/birdnet/birdnet.conf"; then
-        sed -i 's/^TFT_ENABLED=.*/TFT_ENABLED=1/' "/etc/birdnet/birdnet.conf"
-      else
-        echo "TFT_ENABLED=1" >> "/etc/birdnet/birdnet.conf"
-      fi
+  # Check if TFT was detected and configured
+  if [ -f "/etc/birdnet/birdnet.conf" ]; then
+    if grep -q "^TFT_ENABLED=1" "/etc/birdnet/birdnet.conf"; then
+      echo "TFT display detected and configured - enabling service"
+      systemctl enable tft_display.service
+    else
+      echo "No TFT hardware detected - service will remain disabled until hardware is detected"
+      echo "The auto-configuration service will check for TFT hardware at each boot"
     fi
-    
-    echo "TFT display service enabled (will start on next boot)"
-  else
-    echo "No TFT hardware detected - service remains disabled"
   fi
 }
 
