@@ -9,7 +9,16 @@ HOME=${HOME:-$(eval echo ~$USER)}
 
 echo "Installing TFT auto-configuration service..."
 
-# Create the systemd service file
+# Resolve HOME to absolute path for service
+SCRIPT_PATH="${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh"
+
+# Verify script exists
+if [ ! -f "$SCRIPT_PATH" ]; then
+    echo "Error: Script not found at $SCRIPT_PATH"
+    exit 1
+fi
+
+# Create the systemd service file with absolute path
 cat << EOF | sudo tee /usr/lib/systemd/system/tft_autoconfig.service > /dev/null
 [Unit]
 Description=BirdNET-Pi TFT Auto-Configuration Service
@@ -20,7 +29,7 @@ DefaultDependencies=no
 [Service]
 Type=oneshot
 User=root
-ExecStart=/bin/bash ${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh
+ExecStart=/bin/bash $SCRIPT_PATH
 RemainAfterExit=yes
 StandardOutput=journal
 StandardError=journal

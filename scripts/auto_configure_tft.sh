@@ -29,17 +29,19 @@ log "=== Automatic TFT Display Configuration ==="
 detect_tft_type() {
     local tft_type=""
     
-    # Check device tree for display type
+    # Check device tree for display type - run find once and check all patterns
     if [ -d /proc/device-tree ]; then
-        if find /proc/device-tree -name "compatible" -exec cat {} \; 2>/dev/null | grep -qi "ili9341"; then
+        local compatible_output=$(find /proc/device-tree -name "compatible" -exec cat {} \; 2>/dev/null)
+        
+        if echo "$compatible_output" | grep -qi "ili9341"; then
             tft_type="ili9341"
-        elif find /proc/device-tree -name "compatible" -exec cat {} \; 2>/dev/null | grep -qi "st7735"; then
+        elif echo "$compatible_output" | grep -qi "st7735"; then
             tft_type="st7735r"
-        elif find /proc/device-tree -name "compatible" -exec cat {} \; 2>/dev/null | grep -qi "st7789"; then
+        elif echo "$compatible_output" | grep -qi "st7789"; then
             tft_type="st7789"
-        elif find /proc/device-tree -name "compatible" -exec cat {} \; 2>/dev/null | grep -qi "ili9488"; then
+        elif echo "$compatible_output" | grep -qi "ili9488"; then
             tft_type="ili9488"
-        elif find /proc/device-tree -name "compatible" -exec cat {} \; 2>/dev/null | grep -qi "ili9486"; then
+        elif echo "$compatible_output" | grep -qi "ili9486"; then
             tft_type="ili9486"
         fi
     fi

@@ -314,6 +314,9 @@ EOF
 install_tft_autoconfig_service() {
   echo "Installing TFT auto-configuration service..."
   
+  # Create absolute path (HOME variable will be expanded during cat command)
+  local script_path="${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh"
+  
   cat << EOF > $HOME/BirdNET-Pi/templates/tft_autoconfig.service
 [Unit]
 Description=BirdNET-Pi TFT Auto-Configuration Service
@@ -324,7 +327,7 @@ DefaultDependencies=no
 [Service]
 Type=oneshot
 User=root
-ExecStart=/bin/bash ${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh
+ExecStart=/bin/bash ${script_path}
 RemainAfterExit=yes
 StandardOutput=journal
 StandardError=journal

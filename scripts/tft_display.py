@@ -515,7 +515,7 @@ def main():
         while not shutdown:
             time.sleep(60)
             # Reload configuration periodically
-            config = TFTDisplayConfig()
+            config.load_config()  # Reload config in-place
             if config.enabled:
                 log.info('TFT display has been enabled - restarting service')
                 break
@@ -555,11 +555,11 @@ def main():
             time.sleep(120)
             retry_count += 1
             
-            # Try to reinitialize display
+            # Try to reinitialize display in-place
             log.info(f'Retry {retry_count}/{max_retries}: Attempting to initialize display...')
-            display = TFTDisplay(config)
-            if display.device:
+            if display.initialize_display():
                 log.info('Display initialized successfully after retry!')
+                display.load_font()  # Reload font after successful initialization
                 break
         
         if not display.device:
