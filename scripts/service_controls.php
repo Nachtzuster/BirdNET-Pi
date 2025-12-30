@@ -7,6 +7,14 @@ function do_service_mount($action) {
 }
 function service_status($name) {
   global $home;
+  
+  // Validate service name to prevent command injection
+  // Only allow alphanumeric, underscore, hyphen, and dot (typical service name characters)
+  if (!preg_match('/^[a-zA-Z0-9._-]+$/', $name)) {
+      echo "<span style='color:red'>(invalid service name)</span>";
+      return;
+  }
+  
   if($name == "birdnet_analysis.service") {
     $filesinproc=trim(shell_exec("ls ".$home."/BirdSongs/StreamData | wc -l"));
     if($filesinproc > 200) { 
@@ -14,7 +22,11 @@ function service_status($name) {
        return;
     }
   } 
-  $op = shell_exec("sudo systemctl status ".$name." | grep Active");
+  
+  // Use escapeshellarg for additional safety
+  $safe_name = escapeshellarg($name);
+  $op = shell_exec("sudo systemctl status ".$safe_name." | grep Active");
+  
   if (stripos($op, " active (running)") || stripos($op, " active (mounted)")) {
       echo "<span style='color:green'>(active)</span>";
   } elseif (stripos($op, " inactive ")) {
@@ -25,11 +37,15 @@ function service_status($name) {
           $status =  $matches[1]. " [" . $matches[2] . "]";
       }
       // Get full systemctl status output for error details
-      $full_status = shell_exec("sudo systemctl status ".$name." 2>&1");
+      $full_status = shell_exec("sudo systemctl status ".$safe_name." 2>&1");
       $full_status = htmlspecialchars($full_status, ENT_QUOTES, 'UTF-8');
+      
+      // Safely encode service_id for JavaScript context
       $service_id = str_replace('.', '_', $name);
-      echo "<span style='color:red;cursor:pointer;text-decoration:underline;' onclick='showErrorDetails(\"".$service_id."\")'>($status)</span>";
-      echo "<div id='error_details_".$service_id."' style='display:none;'>".$full_status."</div>";
+      $safe_service_id = json_encode($service_id);
+      
+      echo "<span style='color:red;cursor:pointer;text-decoration:underline;' onclick='showErrorDetails(".$safe_service_id.")'>($status)</span>";
+      echo "<div id='error_details_".htmlspecialchars($service_id, ENT_QUOTES, 'UTF-8')."' style='display:none;'>".$full_status."</div>";
   }
 }
 ?>
@@ -156,7 +172,9 @@ function copyErrorDetails() {
 }
 
 function copyErrorDetailsFallback(text) {
-  // Create a temporary textarea element
+  // Fallback for older browsers using deprecated document.execCommand('copy')
+  // Note: document.execCommand is deprecated but still widely supported
+  // This is only used when the modern Clipboard API is unavailable
   var textarea = document.createElement('textarea');
   textarea.value = text;
   textarea.style.position = 'fixed';

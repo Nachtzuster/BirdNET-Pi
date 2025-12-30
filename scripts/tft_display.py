@@ -151,6 +151,8 @@ class TFTDisplay:
     # Display layout constants
     HEADER_HEIGHT = 30  # Height of title and separator area
     FOOTER_HEIGHT = 20  # Height of timestamp footer area
+    LINES_PER_DETECTION = 2  # Number of text lines per detection (name + confidence)
+    DETECTION_SPACING = 2  # Spacing in pixels between detections
     
     def __init__(self, config):
         """Initialize TFT display"""
@@ -371,7 +373,7 @@ class TFTDisplay:
                 
                 for detection in self.detections:
                     # Only render if within visible area (below separator, above footer)
-                    if y_pos + line_height * 2 > separator_y and y_pos < self.height - self.FOOTER_HEIGHT:
+                    if y_pos + line_height * self.LINES_PER_DETECTION > separator_y and y_pos < self.height - self.FOOTER_HEIGHT:
                         # Format: "Common Name" on first line
                         text = f"{detection['common_name']}"
                         draw.text((5, y_pos), text, fill='white', font=self.font)
@@ -381,7 +383,7 @@ class TFTDisplay:
                         draw.text((5, y_pos + line_height), conf_text, fill='lightgreen', font=self.font)
                     
                     # Move to next detection position
-                    y_pos += line_height * 2 + 2
+                    y_pos += line_height * self.LINES_PER_DETECTION + self.DETECTION_SPACING
                 
                 # Draw timestamp at bottom
                 now = datetime.now().strftime('%H:%M:%S')
@@ -397,8 +399,8 @@ class TFTDisplay:
             return
         
         line_height = self.config.font_size + 4
-        # Each detection takes 2 lines + 2 pixels spacing
-        item_height = line_height * 2 + 2
+        # Each detection takes LINES_PER_DETECTION lines + DETECTION_SPACING pixels
+        item_height = line_height * self.LINES_PER_DETECTION + self.DETECTION_SPACING
         total_height = len(self.detections) * item_height
         
         # Visible area (exclude header and footer)
