@@ -298,10 +298,14 @@ dtoverlay=ads7846,swapxy=${SWAPXY}
 ### Service Status Indicatie
 ```php
 service_status("tft_display.service") geeft:
-- (active)   → Groen  → TFT display draait
-- (inactive) → Oranje → TFT display gestopt
-- (failed)   → Rood   → TFT display error
+- (active)                    → Groen  → TFT display draait
+- (inactive)                  → Oranje → TFT display gestopt
+- (failed)                    → Rood   → TFT display error
+- (not installed - optional)  → Grijs  → TFT display nog niet geïnstalleerd (optioneel)
 ```
+
+**Let op:** Als de service nog niet is geïnstalleerd, toont de status "(not installed - optional)" in grijs. 
+Installeer de service via `~/BirdNET-Pi/scripts/install_tft.sh`.
 
 ### Locatie in BirdNET-Pi GUI
 ```
