@@ -245,7 +245,7 @@ configure_birdnet() {
     cat << EOF | sudo tee -a "${BIRDNET_CONF}" > /dev/null
 
 # TFT Display Configuration
-TFT_ENABLED=0
+TFT_ENABLED=1
 TFT_DEVICE=/dev/fb1
 TFT_ROTATION=${TFT_ROTATION}
 TFT_FONT_SIZE=12
@@ -259,8 +259,7 @@ EOF
     
     echo -e "${GREEN}BirdNET-Pi configuration updated${NC}"
     echo ""
-    echo "Note: TFT display is disabled by default (TFT_ENABLED=0)"
-    echo "Enable it by setting TFT_ENABLED=1 in ${BIRDNET_CONF}"
+    echo "TFT display is ENABLED (TFT_ENABLED=1)"
     echo ""
     echo "Power-saving features configured:"
     echo "  - Screensaver timeout: 300 seconds (5 minutes)"
@@ -270,17 +269,29 @@ EOF
     echo "  - Set TFT_SCREENSAVER_BRIGHTNESS (0-100) for dim mode"
 }
 
+# Install auto-configuration service
+install_autoconfig_service() {
+    echo ""
+    echo "Installing automatic TFT configuration service..."
+    
+    if [ -f "${HOME}/BirdNET-Pi/scripts/install_tft_autoconfig_service.sh" ]; then
+        bash "${HOME}/BirdNET-Pi/scripts/install_tft_autoconfig_service.sh"
+        echo -e "${GREEN}Auto-configuration service installed${NC}"
+    else
+        echo -e "${YELLOW}Warning: Auto-configuration script not found${NC}"
+    fi
+}
+
 # Display completion message
 display_completion() {
     echo ""
     echo -e "${GREEN}=== TFT Display Installation Complete ===${NC}"
     echo ""
-    echo "Next steps:"
-    echo "  1. Reboot your Raspberry Pi: sudo reboot"
-    echo "  2. After reboot, verify detection: ./detect_tft.sh"
-    echo "  3. Enable TFT display by editing ${BIRDNET_CONF}"
-    echo "     Set: TFT_ENABLED=1"
-    echo "  4. Restart BirdNET-Pi services or reboot again"
+    echo "✓ Hardware drivers and overlays configured"
+    echo "✓ Python packages installed"
+    echo "✓ BirdNET-Pi configuration updated"
+    echo "✓ TFT display ENABLED in configuration"
+    echo "✓ Automatic configuration service installed"
     echo ""
     echo "Features enabled:"
     echo "  ✓ Automatic display size detection from framebuffer"
@@ -288,24 +299,34 @@ display_completion() {
     echo "  ✓ Screensaver after 5 minutes of inactivity"
     echo "  ✓ Works independently without HDMI monitor"
     echo "  ✓ Screen wakes on touch or new bird detections"
+    echo "  ✓ Auto-detection at every boot"
     echo ""
     echo "Configuration backups saved in: ${BACKUP_DIR}"
     echo "To rollback, run: ./rollback_tft.sh"
     echo ""
-    echo -e "${YELLOW}⚠ Reboot is required for changes to take effect${NC}"
+    echo -e "${YELLOW}⚠ Reboot is REQUIRED for hardware changes to take effect${NC}"
+    echo ""
+    echo "After reboot:"
+    echo "  • TFT display will be automatically detected and configured"
+    echo "  • Display service will start automatically"
+    echo "  • Check status with: sudo systemctl status tft_display.service"
+    echo "  • View logs with: sudo journalctl -u tft_display.service -f"
     echo ""
     read -p "Reboot now? (y/n): " reboot_choice
     if [ "$reboot_choice" = "y" ] || [ "$reboot_choice" = "Y" ]; then
         echo "Rebooting in 5 seconds... (Ctrl+C to cancel)"
         sleep 5
         sudo reboot
+    else
+        echo ""
+        echo "Remember to reboot before the TFT display will work!"
     fi
 }
 
 # Main installation flow
 main() {
     echo "This script will install TFT display support for BirdNET-Pi."
-    echo "It will modify system configuration files."
+    echo "It will modify system configuration files and enable automatic detection."
     echo ""
     read -p "Continue? (y/n): " confirm
     
@@ -321,6 +342,7 @@ main() {
     select_display_type
     configure_boot_config
     configure_birdnet
+    install_autoconfig_service
     display_completion
 }
 
