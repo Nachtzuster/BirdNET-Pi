@@ -25,6 +25,21 @@ function service_status($name) {
   
   // Use escapeshellarg for additional safety
   $safe_name = escapeshellarg($name);
+  
+  // First check if service exists by getting full status output
+  $full_status = shell_exec("sudo systemctl status ".$safe_name." 2>&1");
+  
+  // Check if service is not installed
+  if (stripos($full_status, "could not be found") !== false) {
+      // For optional services like TFT display, show a more helpful message
+      if ($name == "tft_display.service") {
+          echo "<span style='color:gray' title='This is an optional service. Run ~/BirdNET-Pi/scripts/install_tft.sh to install TFT display support.'>(not installed - optional)</span>";
+      } else {
+          echo "<span style='color:gray'>(not installed)</span>";
+      }
+      return;
+  }
+  
   $op = shell_exec("sudo systemctl status ".$safe_name." | grep Active");
   
   if (stripos($op, " active (running)") || stripos($op, " active (mounted)")) {
@@ -36,8 +51,7 @@ function service_status($name) {
       if (preg_match("/(\S*)\s*\((\S+)\)/", $op, $matches)) {
           $status =  $matches[1]. " [" . $matches[2] . "]";
       }
-      // Get full systemctl status output for error details
-      $full_status = shell_exec("sudo systemctl status ".$safe_name." 2>&1");
+      // Escape full status for display
       $full_status = htmlspecialchars($full_status, ENT_QUOTES, 'UTF-8');
       
       // Safely encode service_id for JavaScript context
