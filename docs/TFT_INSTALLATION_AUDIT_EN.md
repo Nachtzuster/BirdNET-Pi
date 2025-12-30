@@ -310,8 +310,13 @@ Top Menu Bar → Tools → Services → TFT Display
 
 ### 1. Service Controls (service_controls.php)
 - Added TFT Display section with Stop/Restart/Disable/Enable buttons
-- Service status indicator shows active/inactive/error state
+- Service status indicator shows active/inactive/error/not installed state
+  - **(active)** - Green: TFT display is running
+  - **(inactive)** - Orange: TFT display is stopped
+  - **(failed)** - Red: TFT display error
+  - **(not installed - optional)** - Gray: TFT display not yet installed (optional)
 - Consistent with other services in the GUI
+- Helpful tooltip shows installation instructions when service is not installed
 
 ### 2. Touchscreen Rotation (install_tft.sh)
 - Calculate `swapxy` parameter based on `TFT_ROTATION`

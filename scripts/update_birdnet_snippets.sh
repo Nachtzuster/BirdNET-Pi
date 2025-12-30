@@ -283,6 +283,61 @@ sqlite3 $HOME/BirdNET-Pi/scripts/birds.db << EOF
 CREATE INDEX IF NOT EXISTS "detections_Sci_Name" ON "detections" ("Sci_Name");
 EOF
 
+# Ensure TFT display service is installed and check for auto-enablement
+ensure_tft_service() {
+  echo "Ensuring TFT display service is installed..."
+  
+  # Check if service file exists, if not create it
+  if [ ! -f "/usr/lib/systemd/system/tft_display.service" ]; then
+    echo "Installing TFT display service..."
+    PYTHON_VIRTUAL_ENV="$HOME/BirdNET-Pi/birdnet/bin/python3"
+    
+    cat << EOF_TFT > $HOME/BirdNET-Pi/templates/tft_display.service
+[Unit]
+Description=BirdNET-Pi TFT Display Service
+After=birdnet_analysis.service
+[Service]
+Restart=on-failure
+RestartSec=10
+Type=simple
+User=$USER
+ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/tft_display.py
+[Install]
+WantedBy=multi-user.target
+EOF_TFT
+    
+    ln -sf $HOME/BirdNET-Pi/templates/tft_display.service /usr/lib/systemd/system
+    echo "TFT display service installed"
+  fi
+  
+  # Check if TFT hardware is configured and auto-enable if needed
+  CONFIG_FILE="/boot/firmware/config.txt"
+  if [ -f "$CONFIG_FILE" ]; then
+    if grep -qE "dtoverlay=(spi|tft|ili9341|st7735|st7789|ads7846|xpt2046)" "$CONFIG_FILE"; then
+      echo "TFT hardware configuration detected - ensuring service is enabled"
+      
+      # Enable the service if not already enabled
+      if ! systemctl is-enabled tft_display.service &>/dev/null; then
+        systemctl enable tft_display.service
+        echo "TFT display service enabled"
+      fi
+      
+      # Update birdnet.conf to enable TFT
+      if [ -f "/etc/birdnet/birdnet.conf" ]; then
+        if grep -q "^TFT_ENABLED=" "/etc/birdnet/birdnet.conf"; then
+          sed -i 's/^TFT_ENABLED=.*/TFT_ENABLED=1/' "/etc/birdnet/birdnet.conf"
+        else
+          echo "TFT_ENABLED=1" >> "/etc/birdnet/birdnet.conf"
+        fi
+      fi
+    else
+      echo "No TFT hardware detected - service remains in current state"
+    fi
+  fi
+}
+
+ensure_tft_service
+
 # update snippets above
 
 systemctl daemon-reload

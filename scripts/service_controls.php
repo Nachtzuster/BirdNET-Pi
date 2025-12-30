@@ -5,6 +5,13 @@ $home = get_home();
 function do_service_mount($action) {
   echo "value=\"sudo systemctl ".$action." ".get_service_mount_name()." && sudo reboot\"";
 }
+
+function is_tft_service_installed() {
+  // Check if tft_display.service file exists
+  $service_file = "/usr/lib/systemd/system/tft_display.service";
+  return file_exists($service_file);
+}
+
 function service_status($name) {
   global $home;
   
@@ -25,7 +32,42 @@ function service_status($name) {
   
   // Use escapeshellarg for additional safety
   $safe_name = escapeshellarg($name);
-  $op = shell_exec("sudo systemctl status ".$safe_name." | grep Active");
+  
+  // Get full status output once
+  $full_status = shell_exec("sudo systemctl status ".$safe_name." 2>&1");
+  
+  // Check if service is not installed (check multiple common patterns)
+  if (stripos($full_status, "could not be found") !== false || 
+      stripos($full_status, "not found") !== false ||
+      empty($full_status)) {
+      // For optional services like TFT display, show a more helpful message
+      if ($name == "tft_display.service") {
+          echo "<span style='color:gray' title='This is an optional service. Use the \"Install TFT Support\" button below to install the service.'>(not installed - optional)</span>";
+      } else {
+          echo "<span style='color:gray'>(not installed)</span>";
+      }
+      return;
+  }
+  
+  // Extract Active line from full status (avoiding duplicate systemctl call)
+  $lines = explode("\n", $full_status);
+  $op = "";
+  foreach ($lines as $line) {
+      if (stripos($line, "Active:") !== false) {
+          $op = trim($line);
+          break;
+      }
+  }
+  
+  // If no Active line found, show the full status as error
+  if (empty($op)) {
+      $full_status_escaped = htmlspecialchars($full_status, ENT_QUOTES, 'UTF-8');
+      $service_id = str_replace('.', '_', $name);
+      $safe_service_id = json_encode($service_id);
+      echo "<span style='color:red;cursor:pointer;text-decoration:underline;' onclick='showErrorDetails(".$safe_service_id.")'>(unknown status)</span>";
+      echo "<div id='error_details_".htmlspecialchars($service_id, ENT_QUOTES, 'UTF-8')."' style='display:none;'>".$full_status_escaped."</div>";
+      return;
+  }
   
   if (stripos($op, " active (running)") || stripos($op, " active (mounted)")) {
       echo "<span style='color:green'>(active)</span>";
@@ -36,8 +78,7 @@ function service_status($name) {
       if (preg_match("/(\S*)\s*\((\S+)\)/", $op, $matches)) {
           $status =  $matches[1]. " [" . $matches[2] . "]";
       }
-      // Get full systemctl status output for error details
-      $full_status = shell_exec("sudo systemctl status ".$safe_name." 2>&1");
+      // Escape full status for display
       $full_status = htmlspecialchars($full_status, ENT_QUOTES, 'UTF-8');
       
       // Safely encode service_id for JavaScript context
@@ -111,12 +152,26 @@ function service_status($name) {
     <button type="submit" name="submit" value="sudo systemctl enable --now spectrogram_viewer.service">Enable</button>
   </div>
     <h3>TFT Display <?php echo service_status("tft_display.service");?></h3>
+  <?php if (is_tft_service_installed()): ?>
   <div role="group" class="btn-group-center">
     <button type="submit" name="submit" value="sudo systemctl stop tft_display.service">Stop</button>
     <button type="submit" name="submit" value="sudo systemctl restart tft_display.service">Restart</button>
     <button type="submit" name="submit" value="sudo systemctl disable --now tft_display.service">Disable</button>
     <button type="submit" name="submit" value="sudo systemctl enable --now tft_display.service">Enable</button>
   </div>
+  <?php else: ?>
+  <div role="group" class="btn-group-center">
+    <button type="submit" name="submit" value="install_tft_service.sh" 
+            style="background-color: #4CAF50; color: white;" 
+            onclick="return confirm('This will install the TFT Display service.\n\nThe service will be created but not enabled automatically.\n\nAfter installation, you can:\n1. Configure TFT hardware (if connected) using install_tft.sh\n2. Enable the service when ready\n\nContinue with installation?')">
+      Install TFT Support
+    </button>
+  </div>
+  <p style="color: gray; font-size: 0.9em; margin-top: 10px;">
+    TFT display service is not installed. Click "Install TFT Support" to set it up.<br>
+    This is optional and only needed if you have or plan to connect an SPI TFT display.
+  </p>
+  <?php endif; ?>
     <h3>Ram drive (!experimental!) <?php echo service_status(get_service_mount_name());?></h3>
   <div role="group" class="btn-group-center">
     <button type="submit" name="submit" <?php do_service_mount("disable");?> onclick="return confirm('This will reboot, are you sure?')">Disable</button>

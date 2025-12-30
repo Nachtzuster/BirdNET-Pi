@@ -260,6 +260,7 @@ if(isset($_GET['view'])){
                      'sudo systemctl disable '.get_service_mount_name().' && sudo reboot',
                      'stop_core_services.sh',
                      'restart_services.sh',
+                     'install_tft_service.sh',
                      'sudo reboot',
                      'update_birdnet.sh',
                      'sudo shutdown now',
