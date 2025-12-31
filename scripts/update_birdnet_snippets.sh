@@ -309,6 +309,26 @@ ensure_tft_service() {
     fi
   fi
   
+  # Always update the wrapper script if it exists in the repo
+  if [ -f "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" ]; then
+    echo "Installing/updating tft_display_wrapper.sh script to /usr/local/bin..."
+    TEMP_FILE=$(mktemp)
+    if ! cp "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" "$TEMP_FILE"; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to copy tft_display_wrapper.sh to temporary file"
+      return 1
+    fi
+    if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display_wrapper.sh; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to move tft_display_wrapper.sh to /usr/local/bin"
+      return 1
+    fi
+    if ! sudo chmod +x /usr/local/bin/tft_display_wrapper.sh; then
+      echo "ERROR: Failed to set execute permission on /usr/local/bin/tft_display_wrapper.sh"
+      return 1
+    fi
+  fi
+  
   # Check if service file exists, if not create it
   if [ ! -f "/usr/lib/systemd/system/tft_display.service" ]; then
     echo "Installing TFT display service..."
@@ -323,7 +343,7 @@ Restart=on-failure
 RestartSec=10
 Type=simple
 User=$USER
-ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/tft_display.py
+ExecStart=/usr/local/bin/tft_display_wrapper.sh
 [Install]
 WantedBy=multi-user.target
 EOF_TFT
