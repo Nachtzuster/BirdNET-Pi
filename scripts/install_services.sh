@@ -318,6 +318,29 @@ install_tft_display_service() {
     return 1
   fi
   
+  # Install the wrapper script to /usr/local/bin
+  echo "Installing tft_display_wrapper.sh script..."
+  if [ -f "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" ]; then
+    TEMP_FILE=$(mktemp -t tft_wrapper.XXXXXX)
+    if ! cp "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" "$TEMP_FILE"; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to copy tft_display_wrapper.sh to temporary file"
+      return 1
+    fi
+    if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display_wrapper.sh; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to move tft_display_wrapper.sh to /usr/local/bin"
+      return 1
+    fi
+    if ! sudo chmod +x /usr/local/bin/tft_display_wrapper.sh; then
+      echo "ERROR: Failed to set execute permission on /usr/local/bin/tft_display_wrapper.sh"
+      return 1
+    fi
+  else
+    echo "ERROR: tft_display_wrapper.sh not found at $HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh"
+    return 1
+  fi
+  
   cat << EOF > $HOME/BirdNET-Pi/templates/tft_display.service
 [Unit]
 Description=BirdNET-Pi TFT Display Service
@@ -328,7 +351,7 @@ Restart=on-failure
 RestartSec=10
 Type=simple
 User=$USER
-ExecStart=$PYTHON_VIRTUAL_ENV /usr/local/bin/tft_display.py
+ExecStart=/usr/local/bin/tft_display_wrapper.sh
 [Install]
 WantedBy=multi-user.target
 EOF
