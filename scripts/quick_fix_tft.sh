@@ -16,13 +16,20 @@ fi
 
 # Step 1: Copy updated script to /usr/local/bin
 echo "Step 1: Installing updated tft_display.py script..."
-if sudo cp scripts/tft_display.py /usr/local/bin/tft_display.py; then
-    sudo chmod +x /usr/local/bin/tft_display.py
-    echo "  ✓ Script installed to /usr/local/bin/tft_display.py"
-else
-    echo "  ✗ Failed to install script"
+# Use a temporary file to avoid "same file" error when destination is a symlink
+TEMP_FILE=$(mktemp)
+if ! cp scripts/tft_display.py "$TEMP_FILE"; then
+    rm -f "$TEMP_FILE" 2>/dev/null || true
+    echo "  ✗ Failed to copy script to temporary file"
     exit 1
 fi
+if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display.py; then
+    rm -f "$TEMP_FILE" 2>/dev/null || true
+    echo "  ✗ Failed to move script to /usr/local/bin"
+    exit 1
+fi
+sudo chmod +x /usr/local/bin/tft_display.py
+echo "  ✓ Script installed to /usr/local/bin/tft_display.py"
 
 # Step 2: Check if virtual environment exists
 echo ""

@@ -60,8 +60,16 @@ install_tft_display_service() {
     # Install the tft_display.py script to /usr/local/bin
     log "Installing tft_display.py script to /usr/local/bin..."
     if [ -f "$HOME/BirdNET-Pi/scripts/tft_display.py" ]; then
-        if ! sudo cp "$HOME/BirdNET-Pi/scripts/tft_display.py" /usr/local/bin/tft_display.py; then
-            log "ERROR: Failed to copy tft_display.py to /usr/local/bin"
+        # Use a temporary file to avoid "same file" error when destination is a symlink
+        TEMP_FILE=$(mktemp)
+        if ! cp "$HOME/BirdNET-Pi/scripts/tft_display.py" "$TEMP_FILE"; then
+            rm -f "$TEMP_FILE" 2>/dev/null || true
+            log "ERROR: Failed to copy tft_display.py to temporary file"
+            return 1
+        fi
+        if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display.py; then
+            rm -f "$TEMP_FILE" 2>/dev/null || true
+            log "ERROR: Failed to move tft_display.py to /usr/local/bin"
             return 1
         fi
         if ! sudo chmod +x /usr/local/bin/tft_display.py; then
