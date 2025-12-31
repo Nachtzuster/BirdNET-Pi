@@ -13,7 +13,8 @@ services=(chart_viewer.service
   birdnet_recording.service
   birdnet_analysis.service
   birdnet_log.service
-  birdnet_stats.service)
+  birdnet_stats.service
+  tft_display.service)
 
 for i in  "${services[@]}";do
   sudo systemctl restart "${i}"
