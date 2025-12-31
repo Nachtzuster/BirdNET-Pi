@@ -295,7 +295,10 @@ ensure_tft_service() {
       echo "ERROR: Failed to copy tft_display.py to /usr/local/bin"
       return 1
     fi
-    sudo chmod +x /usr/local/bin/tft_display.py
+    if ! sudo chmod +x /usr/local/bin/tft_display.py; then
+      echo "ERROR: Failed to set execute permission on /usr/local/bin/tft_display.py"
+      return 1
+    fi
   fi
   
   # Check if service file exists, if not create it

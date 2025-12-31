@@ -297,8 +297,14 @@ install_tft_display_service() {
   # Install the tft_display.py script to /usr/local/bin
   echo "Installing tft_display.py script..."
   if [ -f "$HOME/BirdNET-Pi/scripts/tft_display.py" ]; then
-    sudo cp "$HOME/BirdNET-Pi/scripts/tft_display.py" /usr/local/bin/tft_display.py
-    sudo chmod +x /usr/local/bin/tft_display.py
+    if ! sudo cp "$HOME/BirdNET-Pi/scripts/tft_display.py" /usr/local/bin/tft_display.py; then
+      echo "ERROR: Failed to copy tft_display.py to /usr/local/bin"
+      return 1
+    fi
+    if ! sudo chmod +x /usr/local/bin/tft_display.py; then
+      echo "ERROR: Failed to set execute permission on /usr/local/bin/tft_display.py"
+      return 1
+    fi
   else
     echo "ERROR: tft_display.py not found at $HOME/BirdNET-Pi/scripts/tft_display.py"
     return 1
