@@ -16,12 +16,14 @@ fi
 
 # Step 1: Copy updated script to /usr/local/bin
 echo "Step 1: Installing updated tft_display.py script..."
-# Remove existing file/symlink to avoid "same file" error
-sudo rm -f /usr/local/bin/tft_display.py
-if sudo cp scripts/tft_display.py /usr/local/bin/tft_display.py; then
+# Use a temporary file to avoid "same file" error when destination is a symlink
+TEMP_FILE=$(mktemp)
+if cp scripts/tft_display.py "$TEMP_FILE"; then
+    sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display.py
     sudo chmod +x /usr/local/bin/tft_display.py
     echo "  ✓ Script installed to /usr/local/bin/tft_display.py"
 else
+    rm -f "$TEMP_FILE"
     echo "  ✗ Failed to install script"
     exit 1
 fi
