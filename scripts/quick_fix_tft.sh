@@ -41,13 +41,13 @@ echo "Step 3: Installing Python packages in virtual environment..."
 source birdnet/bin/activate
 
 echo "  Installing luma.lcd..."
-pip install --upgrade luma.lcd 2>&1 | grep -E "(Requirement already satisfied|Successfully installed|Collecting)" || true
+pip install --upgrade "luma.lcd>=2.11.0" 2>&1 | grep -E "(Requirement already satisfied|Successfully installed|Collecting)" || true
 
 echo "  Installing luma.core..."
-pip install --upgrade luma.core 2>&1 | grep -E "(Requirement already satisfied|Successfully installed|Collecting)" || true
+pip install --upgrade "luma.core>=2.4.0" 2>&1 | grep -E "(Requirement already satisfied|Successfully installed|Collecting)" || true
 
-echo "  Installing Pillow..."
-pip install --upgrade Pillow 2>&1 | grep -E "(Requirement already satisfied|Successfully installed|Collecting)" || true
+echo "  Installing Pillow (compatible with streamlit)..."
+pip install --upgrade "Pillow>=11.0,<12.0" 2>&1 | grep -E "(Requirement already satisfied|Successfully installed|Collecting)" || true
 
 # Verify packages are importable
 echo ""

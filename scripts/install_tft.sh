@@ -105,9 +105,12 @@ install_python_packages() {
     if [ -d "${HOME}/BirdNET-Pi/birdnet" ]; then
         source "${HOME}/BirdNET-Pi/birdnet/bin/activate"
         
-        # Install required Python packages
+        # Install required Python packages with correct versions
         pip3 install --upgrade pip setuptools wheel
-        pip3 install luma.lcd luma.core
+        # Pillow <12 required for streamlit compatibility
+        pip3 install "Pillow>=11.0,<12.0"
+        pip3 install "luma.core>=2.4.0"
+        pip3 install "luma.lcd>=2.11.0"
         
         echo -e "${GREEN}Python packages installed${NC}"
     else
