@@ -57,6 +57,23 @@ install_tft_display_service() {
         PYTHON_VIRTUAL_ENV="/usr/bin/python3"
     fi
     
+    # Install the tft_display.py script to /usr/local/bin
+    log "Installing tft_display.py script to /usr/local/bin..."
+    if [ -f "$HOME/BirdNET-Pi/scripts/tft_display.py" ]; then
+        if ! sudo cp "$HOME/BirdNET-Pi/scripts/tft_display.py" /usr/local/bin/tft_display.py; then
+            log "ERROR: Failed to copy tft_display.py to /usr/local/bin"
+            return 1
+        fi
+        if ! sudo chmod +x /usr/local/bin/tft_display.py; then
+            log "ERROR: Failed to set execute permission on /usr/local/bin/tft_display.py"
+            return 1
+        fi
+        log "tft_display.py installed successfully"
+    else
+        log "ERROR: tft_display.py not found at $HOME/BirdNET-Pi/scripts/tft_display.py"
+        return 1
+    fi
+    
     # Create service file
     cat << EOF > $HOME/BirdNET-Pi/templates/tft_display.service
 [Unit]

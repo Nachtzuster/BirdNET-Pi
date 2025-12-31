@@ -338,8 +338,9 @@ class TFTDisplay:
                 with canvas(self.device) as draw:
                     if self.config.screensaver_brightness > 0:
                         # Dim mode - show minimal info
-                        dim_color = f'#{int(255 * self.config.screensaver_brightness / 100):02x}{int(255 * self.config.screensaver_brightness / 100):02x}{int(255 * self.config.screensaver_brightness / 100):02x}'
-                        draw.rectangle((0, 0, self.width, self.height), fill='black')
+                        brightness = int(255 * self.config.screensaver_brightness / 100)
+                        dim_color = (brightness, brightness, brightness)
+                        draw.rectangle((0, 0, self.width, self.height), fill=(0, 0, 0))
                         
                         # Show clock in dim mode
                         now = datetime.now().strftime('%H:%M')
@@ -349,21 +350,26 @@ class TFTDisplay:
                         draw.text((x, y), now, fill=dim_color, font=self.font)
                     else:
                         # Full black screen
-                        draw.rectangle((0, 0, self.width, self.height), fill='black')
+                        draw.rectangle((0, 0, self.width, self.height), fill=(0, 0, 0))
                 return
             
             # Normal rendering
             with canvas(self.device) as draw:
-                # Clear background to black
-                draw.rectangle((0, 0, self.width, self.height), fill='black')
+                # Clear background to black - use RGB tuple for better compatibility
+                draw.rectangle((0, 0, self.width, self.height), fill=(0, 0, 0))
                 
-                # Title (stays at top)
+                # Title (stays at top) - use RGB white
                 title = "BirdNET-Pi Detections"
-                draw.text((5, 5), title, fill='white', font=self.font)
+                draw.text((5, 5), title, fill=(255, 255, 255), font=self.font)
                 
-                # Separator line
+                # Separator line - use RGB white
                 separator_y = 25
-                draw.line((0, separator_y, self.width, separator_y), fill='white')
+                draw.line((0, separator_y, self.width, separator_y), fill=(255, 255, 255))
+                
+                # Show detection count if no detections yet
+                if not self.detections:
+                    no_data_text = "Waiting for detections..."
+                    draw.text((5, 40), no_data_text, fill=(128, 128, 128), font=self.font)
                 
                 # Render detections with upward scrolling
                 # Start position accounts for scroll offset (negative moves items up)
@@ -374,23 +380,34 @@ class TFTDisplay:
                 for detection in self.detections:
                     # Only render if within visible area (below separator, above footer)
                     if y_pos + line_height * self.LINES_PER_DETECTION > separator_y and y_pos < self.height - self.FOOTER_HEIGHT:
-                        # Format: "Common Name" on first line
+                        # Format: "Common Name" on first line - use RGB white
                         text = f"{detection['common_name']}"
-                        draw.text((5, y_pos), text, fill='white', font=self.font)
+                        draw.text((5, y_pos), text, fill=(255, 255, 255), font=self.font)
                         
-                        # Confidence on next line with green color
+                        # Confidence on next line with color based on confidence level
+                        # High confidence (>75%): bright green (0, 255, 0)
+                        # Normal confidence (<=75%): darker green (0, 180, 0)
                         conf_text = f"  {detection['confidence']:.1f}%"
-                        draw.text((5, y_pos + line_height), conf_text, fill='lightgreen', font=self.font)
+                        confidence = detection['confidence']
+                        
+                        if confidence > 75.0:
+                            conf_color = (0, 255, 0)  # Bright green for high confidence
+                        else:
+                            conf_color = (0, 180, 0)  # Darker green for normal confidence
+                        
+                        draw.text((5, y_pos + line_height), conf_text, fill=conf_color, font=self.font)
                     
                     # Move to next detection position
                     y_pos += line_height * self.LINES_PER_DETECTION + self.DETECTION_SPACING
                 
-                # Draw timestamp at bottom
+                # Draw timestamp at bottom - use RGB gray
                 now = datetime.now().strftime('%H:%M:%S')
-                draw.text((5, self.height - 15), now, fill='gray', font=self.font)
+                draw.text((5, self.height - 15), now, fill=(128, 128, 128), font=self.font)
                 
         except Exception as e:
             log.error(f'Error rendering frame: {e}')
+            import traceback
+            log.error(f'Traceback: {traceback.format_exc()}')
     
     def update_scroll(self):
         """Update scroll position for upward scrolling"""
@@ -429,17 +446,26 @@ class TFTDisplay:
         
         try:
             with canvas(self.device) as draw:
-                draw.rectangle((0, 0, self.width, self.height), fill='black')
+                # Use RGB tuples for better compatibility
+                draw.rectangle((0, 0, self.width, self.height), fill=(0, 0, 0))
                 
-                # Center text
-                text_width = len(message) * 8
-                x = (self.width - text_width) // 2
-                y = self.height // 2
+                # Split message by newline and draw multiple lines
+                lines = message.split('\n')
+                y = self.height // 2 - (len(lines) * 10)
                 
-                draw.text((x, y), message, fill='white', font=self.font)
+                for line in lines:
+                    # Center text approximately
+                    text_width = len(line) * 8  # Approximate character width
+                    x = (self.width - text_width) // 2
+                    x = max(5, x)  # Ensure at least 5px margin
+                    
+                    draw.text((x, y), line, fill=(255, 255, 255), font=self.font)
+                    y += 20  # Line spacing
                 
         except Exception as e:
             log.error(f'Error showing message: {e}')
+            import traceback
+            log.error(f'Traceback: {traceback.format_exc()}')
 
 
 class DetectionReader:
@@ -606,6 +632,23 @@ def main():
     last_detection_count = 0
     frame_counter = 0
     
+    # Force an initial update immediately
+    log.info('Performing initial detection update...')
+    detections = reader.get_recent_detections(
+        max_count=config.max_detections,
+        hours=24
+    )
+    
+    if detections:
+        display.update_detections(detections)
+        log.info(f'Initial update: {len(detections)} detections loaded')
+        last_detection_count = len(detections)
+    else:
+        log.warning('Initial update: No recent detections found in database')
+        log.info(f'Database path: {db_path}')
+    
+    last_update = time.time()
+    
     while not shutdown:
         try:
             current_time = time.time()
@@ -625,8 +668,9 @@ def main():
                     if len(detections) != last_detection_count:
                         display.wake_screen()
                         last_detection_count = len(detections)
+                        log.info(f'Detection count changed: {last_detection_count}')
                 else:
-                    log.info('No recent detections')
+                    log.info('No recent detections found')
                 
                 last_update = current_time
             
@@ -639,13 +683,15 @@ def main():
             
             # Control frame rate
             frame_counter += 1
-            if frame_counter % 10 == 0:
-                log.debug(f'Rendered {frame_counter} frames')
+            if frame_counter % 100 == 0:  # Log every 100 frames (~10 seconds)
+                log.debug(f'Rendered {frame_counter} frames, detections: {len(display.detections)}')
             
             time.sleep(0.1)  # ~10 FPS
             
         except Exception as e:
             log.error(f'Error in main loop: {e}')
+            import traceback
+            log.error(f'Traceback: {traceback.format_exc()}')
             time.sleep(1)
     
     # Cleanup

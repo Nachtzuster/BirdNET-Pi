@@ -128,6 +128,11 @@ remove_tft_service() {
         sudo rm -f "/usr/lib/systemd/system/tft_display.service"
     fi
     
+    # Remove the installed script from /usr/local/bin
+    if [ -f "/usr/local/bin/tft_display.py" ]; then
+        sudo rm -f "/usr/local/bin/tft_display.py"
+    fi
+    
     sudo systemctl daemon-reload
     echo -e "${GREEN}OK${NC}"
 }
