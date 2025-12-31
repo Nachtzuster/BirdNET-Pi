@@ -300,12 +300,12 @@ install_tft_display_service() {
     # Use a temporary file to avoid "same file" error when destination is a symlink
     TEMP_FILE=$(mktemp)
     if ! cp "$HOME/BirdNET-Pi/scripts/tft_display.py" "$TEMP_FILE"; then
-      rm -f "$TEMP_FILE"
+      rm -f "$TEMP_FILE" 2>/dev/null || true
       echo "ERROR: Failed to copy tft_display.py to temporary file"
       return 1
     fi
     if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display.py; then
-      rm -f "$TEMP_FILE"
+      rm -f "$TEMP_FILE" 2>/dev/null || true
       echo "ERROR: Failed to move tft_display.py to /usr/local/bin"
       return 1
     fi
