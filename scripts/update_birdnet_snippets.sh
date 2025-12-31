@@ -290,12 +290,11 @@ ensure_tft_service() {
   # Always update the tft_display.py script if it exists in the repo
   # This ensures updates to the script are deployed
   if [ -f "$HOME/BirdNET-Pi/scripts/tft_display.py" ]; then
-    if [ -f "/usr/local/bin/tft_display.py" ]; then
-      echo "Updating existing tft_display.py script..."
-    else
-      echo "Installing tft_display.py script to /usr/local/bin..."
+    echo "Installing/updating tft_display.py script to /usr/local/bin..."
+    if ! sudo cp "$HOME/BirdNET-Pi/scripts/tft_display.py" /usr/local/bin/tft_display.py; then
+      echo "ERROR: Failed to copy tft_display.py to /usr/local/bin"
+      return 1
     fi
-    sudo cp "$HOME/BirdNET-Pi/scripts/tft_display.py" /usr/local/bin/tft_display.py
     sudo chmod +x /usr/local/bin/tft_display.py
   fi
   
