@@ -296,8 +296,13 @@ install_tft_display_service() {
   
   # Install the tft_display.py script to /usr/local/bin
   echo "Installing tft_display.py script..."
-  sudo cp $HOME/BirdNET-Pi/scripts/tft_display.py /usr/local/bin/tft_display.py
-  sudo chmod +x /usr/local/bin/tft_display.py
+  if [ -f "$HOME/BirdNET-Pi/scripts/tft_display.py" ]; then
+    sudo cp "$HOME/BirdNET-Pi/scripts/tft_display.py" /usr/local/bin/tft_display.py
+    sudo chmod +x /usr/local/bin/tft_display.py
+  else
+    echo "ERROR: tft_display.py not found at $HOME/BirdNET-Pi/scripts/tft_display.py"
+    return 1
+  fi
   
   cat << EOF > $HOME/BirdNET-Pi/templates/tft_display.service
 [Unit]
