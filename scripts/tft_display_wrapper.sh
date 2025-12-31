@@ -6,12 +6,13 @@ set -e
 
 # Get the home directory
 if [ -f /etc/birdnet/birdnet.conf ]; then
+    # shellcheck source=/dev/null
     source /etc/birdnet/birdnet.conf
     USER=${USER:-$(whoami)}
-    HOME=${HOME:-$(eval echo ~$USER)}
+    HOME=${HOME:-$(eval echo ~"$USER")}
 else
     USER=$(whoami)
-    HOME=$(eval echo ~$USER)
+    HOME=$(eval echo ~"$USER")
 fi
 
 REPO_SCRIPT="$HOME/BirdNET-Pi/scripts/tft_display.py"
