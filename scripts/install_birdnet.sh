@@ -59,4 +59,50 @@ CURRENT_TIMEZONE=$(timedatectl show --value --property=Timezone)
 
 ./install_language_label.sh || exit 1
 
+# Optional TFT Display Installation
+echo ""
+echo "=== TFT Display Support (Optional) ==="
+echo "BirdNET-Pi supports TFT displays with XPT2046 touch controller."
+echo "This allows you to display bird detections on a small screen connected via SPI."
+echo ""
+
+# Check if we're in an interactive session and if TFT scripts are available
+if [ -t 0 ] && [ -f "./detect_tft.sh" ] && [ -f "./install_tft.sh" ]; then
+    # Attempt to detect TFT hardware
+    echo "Detecting TFT hardware..."
+    if ./detect_tft.sh > /dev/null 2>&1; then
+        echo "TFT display hardware detected!"
+        echo ""
+        read -p "Would you like to install TFT display support now? (y/n): " install_tft_choice
+        
+        if [ "$install_tft_choice" = "y" ] || [ "$install_tft_choice" = "Y" ]; then
+            echo ""
+            echo "Installing TFT display support..."
+            ./install_tft.sh || echo "TFT installation had issues, but continuing..."
+        else
+            echo "Skipping TFT installation. You can install it later by running: ~/BirdNET-Pi/scripts/install_tft.sh"
+        fi
+    else
+        echo "No TFT display hardware detected."
+        read -p "Would you like to install TFT display support anyway for future use? (y/n): " install_tft_choice
+        
+        if [ "$install_tft_choice" = "y" ] || [ "$install_tft_choice" = "Y" ]; then
+            echo ""
+            echo "Installing TFT display support..."
+            ./install_tft.sh || echo "TFT installation had issues, but continuing..."
+        else
+            echo "Skipping TFT installation. You can install it later by running: ~/BirdNET-Pi/scripts/install_tft.sh"
+        fi
+    fi
+else
+    if [ ! -t 0 ]; then
+        echo "Non-interactive installation detected. Skipping TFT installation."
+    else
+        echo "TFT installation scripts not found. Skipping TFT installation."
+    fi
+    echo "You can install TFT support later by running: ~/BirdNET-Pi/scripts/install_tft.sh"
+fi
+
+echo ""
+
 exit 0

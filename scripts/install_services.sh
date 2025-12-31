@@ -291,6 +291,128 @@ EOF
   systemctl enable chart_viewer.service
 }
 
+install_tft_display_service() {
+  echo "Installing the tft_display.service"
+  
+  # Install the tft_display.py script to /usr/local/bin
+  echo "Installing tft_display.py script..."
+  if [ -f "$HOME/BirdNET-Pi/scripts/tft_display.py" ]; then
+    # Use a temporary file to avoid "same file" error when destination is a symlink
+    TEMP_FILE=$(mktemp)
+    if ! cp "$HOME/BirdNET-Pi/scripts/tft_display.py" "$TEMP_FILE"; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to copy tft_display.py to temporary file"
+      return 1
+    fi
+    if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display.py; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to move tft_display.py to /usr/local/bin"
+      return 1
+    fi
+    if ! sudo chmod +x /usr/local/bin/tft_display.py; then
+      echo "ERROR: Failed to set execute permission on /usr/local/bin/tft_display.py"
+      return 1
+    fi
+  else
+    echo "ERROR: tft_display.py not found at $HOME/BirdNET-Pi/scripts/tft_display.py"
+    return 1
+  fi
+  
+  # Install the wrapper script to /usr/local/bin
+  echo "Installing tft_display_wrapper.sh script..."
+  if [ -f "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" ]; then
+    TEMP_FILE=$(mktemp -t tft_wrapper.XXXXXX)
+    if ! cp "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" "$TEMP_FILE"; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to copy tft_display_wrapper.sh to temporary file"
+      return 1
+    fi
+    if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display_wrapper.sh; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to move tft_display_wrapper.sh to /usr/local/bin"
+      return 1
+    fi
+    if ! sudo chmod +x /usr/local/bin/tft_display_wrapper.sh; then
+      echo "ERROR: Failed to set execute permission on /usr/local/bin/tft_display_wrapper.sh"
+      return 1
+    fi
+  else
+    echo "ERROR: tft_display_wrapper.sh not found at $HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh"
+    return 1
+  fi
+  
+  cat << EOF > $HOME/BirdNET-Pi/templates/tft_display.service
+[Unit]
+Description=BirdNET-Pi TFT Display Service
+After=birdnet_analysis.service tft_autoconfig.service
+Wants=tft_autoconfig.service
+[Service]
+Restart=on-failure
+RestartSec=10
+Type=simple
+User=$USER
+ExecStart=/usr/local/bin/tft_display_wrapper.sh
+[Install]
+WantedBy=multi-user.target
+EOF
+  ln -sf $HOME/BirdNET-Pi/templates/tft_display.service /usr/lib/systemd/system
+  echo "TFT Display service installed"
+}
+
+install_tft_autoconfig_service() {
+  echo "Installing TFT auto-configuration service..."
+  
+  # Create absolute path (HOME variable will be expanded during cat command)
+  local script_path="${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh"
+  
+  cat << EOF > $HOME/BirdNET-Pi/templates/tft_autoconfig.service
+[Unit]
+Description=BirdNET-Pi TFT Auto-Configuration Service
+After=network.target
+Before=tft_display.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/bin/bash ${script_path}
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  
+  ln -sf $HOME/BirdNET-Pi/templates/tft_autoconfig.service /usr/lib/systemd/system
+  systemctl enable tft_autoconfig.service
+  echo "TFT auto-configuration service installed and enabled"
+}
+
+auto_detect_and_enable_tft() {
+  echo "Setting up automatic TFT detection and configuration..."
+  
+  # Install the auto-configuration service
+  install_tft_autoconfig_service
+  
+  # Run auto-configuration now to detect and configure any present TFT hardware
+  echo "Running TFT auto-configuration..."
+  if [ -f "${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh" ]; then
+    bash "${HOME}/BirdNET-Pi/scripts/auto_configure_tft.sh" || echo "Auto-configuration completed with warnings"
+  fi
+  
+  # Check if TFT was detected and configured
+  if [ -f "/etc/birdnet/birdnet.conf" ]; then
+    if grep -q "^TFT_ENABLED=1" "/etc/birdnet/birdnet.conf"; then
+      echo "TFT display detected and configured - enabling service"
+      systemctl enable tft_display.service
+    else
+      echo "No TFT hardware detected - service will remain disabled until hardware is detected"
+      echo "The auto-configuration service will check for TFT hardware at each boot"
+    fi
+  fi
+}
+
 install_gotty_logs() {
   sudo -u ${USER} ln -sf $my_dir/templates/gotty \
     ${HOME}/.gotty
@@ -418,6 +540,8 @@ install_services() {
   install_custom_recording_service # But does not enable
   install_spectrogram_service
   install_chart_viewer_service
+  install_tft_display_service # Install TFT display service (not enabled by default)
+  auto_detect_and_enable_tft # Auto-detect TFT hardware and enable service if present
   install_gotty_logs
   install_phpsysinfo
   install_livestream_service

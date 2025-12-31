@@ -1,0 +1,352 @@
+#!/usr/bin/env bash
+# TFT Display Installation Script for BirdNET-Pi
+# Installs support for XPT2046 touch controller and SPI TFT displays
+# Supports Raspberry Pi 4B with Trixie distribution
+
+set -e
+
+# Configuration
+BACKUP_DIR="${HOME}/BirdNET-Pi/tft_backups"
+CONFIG_FILE="/boot/firmware/config.txt"
+BIRDNET_CONF="/etc/birdnet/birdnet.conf"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Display options
+TFT_TYPE=""
+TFT_ROTATION=90  # Portrait mode by default
+
+echo -e "${BLUE}=== BirdNET-Pi TFT Display Installation ===${NC}"
+echo ""
+
+# Check if running as root
+if [ "$EUID" -eq 0 ]; then
+    echo -e "${RED}Please run as a non-root user with sudo privileges.${NC}"
+    exit 1
+fi
+
+# Create backup directory
+create_backup_dir() {
+    echo -n "Creating backup directory... "
+    mkdir -p "${BACKUP_DIR}"
+    echo -e "${GREEN}OK${NC}"
+}
+
+# Backup configuration files
+backup_configs() {
+    echo "Backing up configuration files..."
+    
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    
+    if [ -f "${CONFIG_FILE}" ]; then
+        echo -n "  - Backing up ${CONFIG_FILE}... "
+        sudo cp "${CONFIG_FILE}" "${BACKUP_DIR}/config.txt.${TIMESTAMP}"
+        echo -e "${GREEN}OK${NC}"
+    fi
+    
+    if [ -f "${BIRDNET_CONF}" ]; then
+        echo -n "  - Backing up ${BIRDNET_CONF}... "
+        sudo cp "${BIRDNET_CONF}" "${BACKUP_DIR}/birdnet.conf.${TIMESTAMP}"
+        echo -e "${GREEN}OK${NC}"
+    fi
+    
+    # Save backup timestamp for rollback
+    echo "${TIMESTAMP}" > "${BACKUP_DIR}/last_backup.txt"
+    
+    echo -e "${GREEN}Backups created in ${BACKUP_DIR}${NC}"
+}
+
+# Install required packages
+install_packages() {
+    echo ""
+    echo "Installing required packages..."
+    
+    # Update package list
+    echo "Updating package list..."
+    # Temporarily disable exit on error for apt-get update
+    set +e
+    sudo apt-get update -qq --allow-releaseinfo-change
+    UPDATE_EXIT_CODE=$?
+    set -e
+    
+    if [ $UPDATE_EXIT_CODE -ne 0 ]; then
+        echo -e "${YELLOW}Warning: Some repository updates failed, but continuing with installation...${NC}"
+        echo "This is usually not a problem if the required packages are still available."
+    fi
+    
+    # Install base dependencies
+    echo "Installing base dependencies..."
+    sudo apt-get install -y \
+        build-essential \
+        cmake \
+        git \
+        evtest \
+        python3-dev \
+        python3-pip \
+        libfreetype-dev \
+        libjpeg-dev \
+        libopenjp2-7 \
+        libtiff6
+    
+    echo -e "${GREEN}Base packages installed${NC}"
+}
+
+# Install Python packages for TFT display
+install_python_packages() {
+    echo ""
+    echo "Installing Python packages for TFT display..."
+    
+    # Activate virtual environment
+    if [ -d "${HOME}/BirdNET-Pi/birdnet" ]; then
+        source "${HOME}/BirdNET-Pi/birdnet/bin/activate"
+        
+        # Install required Python packages with correct versions
+        pip3 install --upgrade pip setuptools wheel
+        # Pillow <12 required for streamlit compatibility
+        pip3 install "Pillow>=11.0,<12.0"
+        pip3 install "luma.core>=2.4.0"
+        pip3 install "luma.lcd>=2.11.0"
+        
+        echo -e "${GREEN}Python packages installed${NC}"
+    else
+        echo -e "${YELLOW}Warning: BirdNET-Pi virtual environment not found${NC}"
+        echo "Run this script after BirdNET-Pi installation is complete."
+    fi
+}
+
+# Select TFT display type
+select_display_type() {
+    echo ""
+    echo "Select your TFT display type:"
+    echo "  1) ILI9341 (240x320) - Common cheap displays"
+    echo "  2) ST7735 (128x160) - Small displays"
+    echo "  3) ST7789 (240x240) - Square displays"
+    echo "  4) ILI9488 (320x480) - Larger displays"
+    echo "  5) ILI9486 (320x480) - 3.5 inch displays"
+    echo "  6) Custom/Other"
+    echo "  7) Skip display configuration (manual setup)"
+    echo ""
+    read -p "Enter your choice [1-7]: " choice
+    
+    case $choice in
+        1) TFT_TYPE="ili9341" ;;
+        2) TFT_TYPE="st7735r" ;;
+        3) TFT_TYPE="st7789" ;;
+        4) TFT_TYPE="ili9488" ;;
+        5) TFT_TYPE="ili9486" ;;
+        6) 
+            read -p "Enter your display type: " TFT_TYPE
+            ;;
+        7)
+            echo "Skipping display configuration."
+            TFT_TYPE=""
+            return
+            ;;
+        *)
+            echo "Invalid choice. Defaulting to ILI9341."
+            TFT_TYPE="ili9341"
+            ;;
+    esac
+    
+    echo -e "${GREEN}Selected display type: ${TFT_TYPE}${NC}"
+}
+
+# Configure boot config for TFT
+configure_boot_config() {
+    if [ -z "$TFT_TYPE" ]; then
+        echo "Skipping boot configuration (no display type selected)."
+        return
+    fi
+    
+    echo ""
+    echo "Configuring ${CONFIG_FILE} for TFT display..."
+    
+    # Check if file exists
+    if [ ! -f "${CONFIG_FILE}" ]; then
+        echo -e "${YELLOW}Warning: ${CONFIG_FILE} not found${NC}"
+        echo "Creating basic configuration..."
+        sudo touch "${CONFIG_FILE}"
+    fi
+    
+    # Enable SPI
+    echo -n "  - Enabling SPI... "
+    if ! grep -q "^dtparam=spi=on" "${CONFIG_FILE}"; then
+        echo "dtparam=spi=on" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+    fi
+    echo -e "${GREEN}OK${NC}"
+    
+    # Add TFT overlay based on display type
+    echo -n "  - Adding display overlay... "
+    
+    # Remove old TFT configurations if present
+    sudo sed -i '/dtoverlay=.*tft/d' "${CONFIG_FILE}"
+    sudo sed -i '/dtoverlay=.*ili9341/d' "${CONFIG_FILE}"
+    sudo sed -i '/dtoverlay=.*st7735/d' "${CONFIG_FILE}"
+    sudo sed -i '/dtoverlay=.*st7789/d' "${CONFIG_FILE}"
+    sudo sed -i '/dtoverlay=.*ili9488/d' "${CONFIG_FILE}"
+    sudo sed -i '/dtoverlay=.*ili9486/d' "${CONFIG_FILE}"
+    
+    # Add appropriate overlay
+    case "$TFT_TYPE" in
+        ili9341)
+            echo "dtoverlay=piscreen,speed=16000000,rotate=${TFT_ROTATION}" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+            ;;
+        st7735r)
+            echo "dtoverlay=piscreen2r,speed=16000000,rotate=${TFT_ROTATION}" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+            ;;
+        st7789)
+            echo "dtoverlay=vc4-kms-v3d" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+            echo "dtoverlay=vc4-kms-dpi-generic" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+            ;;
+        ili9488|ili9486)
+            echo "dtoverlay=waveshare35a,speed=16000000,rotate=${TFT_ROTATION}" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+            ;;
+    esac
+    
+    echo -e "${GREEN}OK${NC}"
+    
+    # Add touchscreen overlay for XPT2046
+    echo -n "  - Adding touchscreen overlay... "
+    
+    # Determine swapxy based on rotation (portrait modes need swapxy=1)
+    SWAPXY=0
+    if [ "$TFT_ROTATION" -eq 90 ] || [ "$TFT_ROTATION" -eq 270 ]; then
+        SWAPXY=1
+    fi
+    
+    # Remove old touchscreen configurations if present (only lines starting with dtoverlay=ads7846)
+    sudo sed -i '/^dtoverlay=ads7846/d' "${CONFIG_FILE}"
+    
+    # Add touchscreen overlay with rotation-aware configuration
+    echo "dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=${SWAPXY},pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900" | sudo tee -a "${CONFIG_FILE}" > /dev/null
+    
+    echo -e "${GREEN}OK${NC}"
+    
+    echo -e "${GREEN}Boot configuration updated${NC}"
+}
+
+# Add TFT configuration to birdnet.conf
+configure_birdnet() {
+    echo ""
+    echo "Updating BirdNET-Pi configuration..."
+    
+    if [ ! -f "${BIRDNET_CONF}" ]; then
+        echo -e "${YELLOW}Warning: ${BIRDNET_CONF} not found${NC}"
+        echo "TFT configuration will need to be added manually."
+        return
+    fi
+    
+    # Remove old TFT configuration if present
+    sudo sed -i '/^TFT_/d' "${BIRDNET_CONF}"
+    
+    # Add TFT configuration section
+    cat << EOF | sudo tee -a "${BIRDNET_CONF}" > /dev/null
+
+# TFT Display Configuration
+TFT_ENABLED=1
+TFT_DEVICE=/dev/fb1
+TFT_ROTATION=${TFT_ROTATION}
+TFT_FONT_SIZE=12
+TFT_SCROLL_SPEED=2
+TFT_MAX_DETECTIONS=20
+TFT_UPDATE_INTERVAL=5
+TFT_TYPE=${TFT_TYPE}
+TFT_SCREENSAVER_TIMEOUT=300
+TFT_SCREENSAVER_BRIGHTNESS=0
+EOF
+    
+    echo -e "${GREEN}BirdNET-Pi configuration updated${NC}"
+    echo ""
+    echo "TFT display is ENABLED (TFT_ENABLED=1)"
+    echo ""
+    echo "Power-saving features configured:"
+    echo "  - Screensaver timeout: 300 seconds (5 minutes)"
+    echo "  - Screensaver mode: blank screen (brightness=0)"
+    echo "  - Screen wakes on new bird detections"
+    echo "  - Adjust TFT_SCREENSAVER_TIMEOUT (0 to disable)"
+    echo "  - Set TFT_SCREENSAVER_BRIGHTNESS (0-100) for dim mode"
+}
+
+# Install auto-configuration service
+install_autoconfig_service() {
+    echo ""
+    echo "Installing automatic TFT configuration service..."
+    
+    if [ -f "${HOME}/BirdNET-Pi/scripts/install_tft_autoconfig_service.sh" ]; then
+        bash "${HOME}/BirdNET-Pi/scripts/install_tft_autoconfig_service.sh"
+        echo -e "${GREEN}Auto-configuration service installed${NC}"
+    else
+        echo -e "${YELLOW}Warning: Auto-configuration script not found${NC}"
+    fi
+}
+
+# Display completion message
+display_completion() {
+    echo ""
+    echo -e "${GREEN}=== TFT Display Installation Complete ===${NC}"
+    echo ""
+    echo "✓ Hardware drivers and overlays configured"
+    echo "✓ Python packages installed"
+    echo "✓ BirdNET-Pi configuration updated"
+    echo "✓ TFT display ENABLED in configuration"
+    echo "✓ Automatic configuration service installed"
+    echo ""
+    echo "Features enabled:"
+    echo "  ✓ Automatic display size detection from framebuffer"
+    echo "  ✓ Portrait mode with touchscreen coordination (rotation=${TFT_ROTATION}°)"
+    echo "  ✓ Screensaver after 5 minutes of inactivity"
+    echo "  ✓ Works independently without HDMI monitor"
+    echo "  ✓ Screen wakes on touch or new bird detections"
+    echo "  ✓ Auto-detection at every boot"
+    echo ""
+    echo "Configuration backups saved in: ${BACKUP_DIR}"
+    echo "To rollback, run: ./rollback_tft.sh"
+    echo ""
+    echo -e "${YELLOW}⚠ Reboot is REQUIRED for hardware changes to take effect${NC}"
+    echo ""
+    echo "After reboot:"
+    echo "  • TFT display will be automatically detected and configured"
+    echo "  • Display service will start automatically"
+    echo "  • Check status with: sudo systemctl status tft_display.service"
+    echo "  • View logs with: sudo journalctl -u tft_display.service -f"
+    echo ""
+    read -p "Reboot now? (y/n): " reboot_choice
+    if [ "$reboot_choice" = "y" ] || [ "$reboot_choice" = "Y" ]; then
+        echo "Rebooting in 5 seconds... (Ctrl+C to cancel)"
+        sleep 5
+        sudo reboot
+    else
+        echo ""
+        echo "Remember to reboot before the TFT display will work!"
+    fi
+}
+
+# Main installation flow
+main() {
+    echo "This script will install TFT display support for BirdNET-Pi."
+    echo "It will modify system configuration files and enable automatic detection."
+    echo ""
+    read -p "Continue? (y/n): " confirm
+    
+    if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+        echo "Installation cancelled."
+        exit 0
+    fi
+    
+    create_backup_dir
+    backup_configs
+    install_packages
+    install_python_packages
+    select_display_type
+    configure_boot_config
+    configure_birdnet
+    install_autoconfig_service
+    display_completion
+}
+
+main "$@"

@@ -158,11 +158,25 @@ version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import pyarrow; print(pyarrow
 [[ $version != "20.0.0" ]] && sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install pyarrow==20.0.0
 
 PY_VERSION=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import sys; print(f'{sys.version_info[0]}{sys.version_info[1]}')")
-tf_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import tflite_runtime; print(tflite_runtime.__version__)")
-if [ "$PY_VERSION" == 39 ] && [ "$tf_version" != "2.11.0" ] || [ "$PY_VERSION" != 39 ] && [ "$tf_version" != "2.17.1" ]; then
+ARCH=$(uname -m)
+tf_version=$($HOME/BirdNET-Pi/birdnet/bin/python3 -c "import tflite_runtime; print(tflite_runtime.__version__)" 2>/dev/null || echo "not_installed")
+# Check if tflite_runtime needs to be updated
+# All Python versions on aarch64 now use v2.17.1 from Nachtzuster repository
+# x86_64 uses tensorflow from PyPI (not a specific wheel)
+EXPECTED_VERSION=""
+if [ "$ARCH" == "aarch64" ]; then
+  EXPECTED_VERSION="2.17.1"
+fi
+
+if [ -n "$EXPECTED_VERSION" ] && [ "$tf_version" != "$EXPECTED_VERSION" ]; then
   get_tf_whl
   # include our numpy dependants so pip can figure out which numpy version to install
-  sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install $HOME/BirdNET-Pi/$WHL pandas librosa matplotlib
+  if [ -n "$WHL" ]; then
+    sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install $HOME/BirdNET-Pi/$WHL pandas librosa matplotlib
+  else
+    # For x86_64, install from requirements which includes tensorflow
+    sudo_with_user $HOME/BirdNET-Pi/birdnet/bin/pip3 install -U tensorflow pandas librosa matplotlib
+  fi
 fi
 
 ensure_python_package inotify inotify
@@ -268,6 +282,103 @@ fi
 sqlite3 $HOME/BirdNET-Pi/scripts/birds.db << EOF
 CREATE INDEX IF NOT EXISTS "detections_Sci_Name" ON "detections" ("Sci_Name");
 EOF
+
+# Ensure TFT display service is installed and check for auto-enablement
+ensure_tft_service() {
+  echo "Ensuring TFT display service is installed..."
+  
+  # Always update the tft_display.py script if it exists in the repo
+  # This ensures updates to the script are deployed
+  if [ -f "$HOME/BirdNET-Pi/scripts/tft_display.py" ]; then
+    echo "Installing/updating tft_display.py script to /usr/local/bin..."
+    # Use a temporary file to avoid "same file" error when destination is a symlink
+    TEMP_FILE=$(mktemp)
+    if ! cp "$HOME/BirdNET-Pi/scripts/tft_display.py" "$TEMP_FILE"; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to copy tft_display.py to temporary file"
+      return 1
+    fi
+    if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display.py; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to move tft_display.py to /usr/local/bin"
+      return 1
+    fi
+    if ! sudo chmod 755 /usr/local/bin/tft_display.py; then
+      echo "ERROR: Failed to set permissions on /usr/local/bin/tft_display.py"
+      return 1
+    fi
+  fi
+  
+  # Always update the wrapper script if it exists in the repo
+  if [ -f "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" ]; then
+    echo "Installing/updating tft_display_wrapper.sh script to /usr/local/bin..."
+    TEMP_FILE=$(mktemp -t tft_wrapper.XXXXXX)
+    if ! cp "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" "$TEMP_FILE"; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to copy tft_display_wrapper.sh to temporary file"
+      return 1
+    fi
+    if ! sudo mv -f "$TEMP_FILE" /usr/local/bin/tft_display_wrapper.sh; then
+      rm -f "$TEMP_FILE" 2>/dev/null || true
+      echo "ERROR: Failed to move tft_display_wrapper.sh to /usr/local/bin"
+      return 1
+    fi
+    if ! sudo chmod 755 /usr/local/bin/tft_display_wrapper.sh; then
+      echo "ERROR: Failed to set permissions on /usr/local/bin/tft_display_wrapper.sh"
+      return 1
+    fi
+  fi
+  
+  # Check if service file exists, if not create it
+  if [ ! -f "/usr/lib/systemd/system/tft_display.service" ]; then
+    echo "Installing TFT display service..."
+    PYTHON_VIRTUAL_ENV="$HOME/BirdNET-Pi/birdnet/bin/python3"
+    
+    cat << EOF_TFT > $HOME/BirdNET-Pi/templates/tft_display.service
+[Unit]
+Description=BirdNET-Pi TFT Display Service
+After=birdnet_analysis.service
+[Service]
+Restart=on-failure
+RestartSec=10
+Type=simple
+User=$USER
+ExecStart=/usr/local/bin/tft_display_wrapper.sh
+[Install]
+WantedBy=multi-user.target
+EOF_TFT
+    
+    ln -sf $HOME/BirdNET-Pi/templates/tft_display.service /usr/lib/systemd/system
+    echo "TFT display service installed"
+  fi
+  
+  # Check if TFT hardware is configured and auto-enable if needed
+  CONFIG_FILE="/boot/firmware/config.txt"
+  if [ -f "$CONFIG_FILE" ]; then
+    if grep -qE "dtoverlay=(spi|tft|ili9341|st7735|st7789|ads7846|xpt2046)" "$CONFIG_FILE"; then
+      echo "TFT hardware configuration detected - ensuring service is enabled"
+      
+      # Enable the service if not already enabled
+      if ! systemctl is-enabled tft_display.service &>/dev/null; then
+        systemctl enable tft_display.service
+        echo "TFT display service enabled"
+      fi
+      
+      # Update birdnet.conf to enable TFT
+      if [ -f "/etc/birdnet/birdnet.conf" ]; then
+        if grep -q "^TFT_ENABLED=" "/etc/birdnet/birdnet.conf"; then
+          sed -i 's/^TFT_ENABLED=.*/TFT_ENABLED=1/' "/etc/birdnet/birdnet.conf"
+        else
+          echo "TFT_ENABLED=1" >> "/etc/birdnet/birdnet.conf"
+        fi
+      fi
+    else
+      echo "No TFT hardware detected - service remains in current state"
+    fi
+  fi
+}
+
+ensure_tft_service
 
 # update snippets above
 

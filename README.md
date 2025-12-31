@@ -27,7 +27,7 @@ Changes include:
  - Bookworm and Trixie support
  - Experimental support for writing transient files to tmpfs
  - Rework analysis to consolidate analysis/server/extraction. Should make analysis more robust and slightly more efficient, especially on installations with a large number of recordings
- - Bump tflite_runtime to 2.17.1, it is faster
+ - Bump tflite_runtime to 2.16.1, it is faster
  - Rework daily_plot.py (chart_viewer) to run as a daemon to avoid the very expensive startup
  - Lots of fixes & cleanups
 
@@ -135,7 +135,7 @@ Please note that upgrading your underlying OS to Bookworm is not going to work. 
 Run these commands to migrate to this repo:
 ```
 git remote remove origin
-git remote add origin https://github.com/Nachtzuster/BirdNET-Pi.git
+git remote add origin https://github.com/YvedD/BirdNET-Pi-MigCount.git
 ./scripts/update_birdnet.sh
 ```
 ## Troubleshooting and Ideas
