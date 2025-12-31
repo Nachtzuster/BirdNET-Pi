@@ -14,7 +14,7 @@ fi
 
 PY_VERSION=$(python3 -c "import sys; print(f'{sys.version_info[0]}{sys.version_info[1]}')")
 if [ "${PY_VERSION}" == "39" ] ;then
-  echo "### BirdNET-Pi requires a newer OS. Bullseye is deprecated, please use Bookworm. ###"
+  echo "### BirdNET-Pi requires a newer OS. Bullseye is deprecated, please use Bookworm or Trixie. ###"
   [ -z "${FORCE_BULLSEYE}" ] && exit
 fi
 
@@ -44,7 +44,7 @@ if [[ ! -z $PACKAGES_MISSING ]] ; then
 fi
 
 branch=main
-git clone -b $branch --depth=1 https://github.com/Nachtzuster/BirdNET-Pi.git ${HOME}/BirdNET-Pi &&
+git clone -b $branch --depth=1 https://github.com/YvedD/BirdNET-Pi-MigCount.git ${HOME}/BirdNET-Pi &&
 
 $HOME/BirdNET-Pi/scripts/install_birdnet.sh
 if [ ${PIPESTATUS[0]} -eq 0 ];then
