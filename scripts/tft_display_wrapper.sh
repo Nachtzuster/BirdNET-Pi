@@ -31,19 +31,19 @@ if [ ! -f "$REPO_SCRIPT" ]; then
 fi
 
 # Check if target script exists, if not or if repo version is newer, update it
-UPDATE_NEEDED=false
+update_needed=false
 
 if [ ! -f "$TARGET_SCRIPT" ]; then
     log_message "Target script $TARGET_SCRIPT not found, will install it"
-    UPDATE_NEEDED=true
+    update_needed=true
 elif [ "$REPO_SCRIPT" -nt "$TARGET_SCRIPT" ]; then
     log_message "Repository script is newer than target script, will update"
-    UPDATE_NEEDED=true
+    update_needed=true
 fi
 
-if [ "$UPDATE_NEEDED" = true ]; then
+if [ "$update_needed" = true ]; then
     log_message "Updating TFT display script from repository..."
-    TEMP_FILE=$(mktemp)
+    TEMP_FILE=$(mktemp -t tft_display.XXXXXX)
     
     # Copy to temp file first
     if ! cp "$REPO_SCRIPT" "$TEMP_FILE"; then

@@ -85,7 +85,7 @@ install_tft_display_service() {
     # Install the wrapper script to /usr/local/bin
     log "Installing tft_display_wrapper.sh script to /usr/local/bin..."
     if [ -f "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" ]; then
-        TEMP_FILE=$(mktemp)
+        TEMP_FILE=$(mktemp -t tft_wrapper.XXXXXX)
         if ! cp "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" "$TEMP_FILE"; then
             rm -f "$TEMP_FILE" 2>/dev/null || true
             log "ERROR: Failed to copy tft_display_wrapper.sh to temporary file"

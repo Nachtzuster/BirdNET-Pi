@@ -26,7 +26,7 @@ fi
 
 # Update the script in /usr/local/bin
 echo "Updating TFT display script..."
-TEMP_FILE=$(mktemp)
+TEMP_FILE=$(mktemp -t tft_display.XXXXXX)
 
 # Copy to temp file first
 if ! cp "$REPO_SCRIPT" "$TEMP_FILE"; then

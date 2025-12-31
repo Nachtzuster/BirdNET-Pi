@@ -312,7 +312,7 @@ ensure_tft_service() {
   # Always update the wrapper script if it exists in the repo
   if [ -f "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" ]; then
     echo "Installing/updating tft_display_wrapper.sh script to /usr/local/bin..."
-    TEMP_FILE=$(mktemp)
+    TEMP_FILE=$(mktemp -t tft_wrapper.XXXXXX)
     if ! cp "$HOME/BirdNET-Pi/scripts/tft_display_wrapper.sh" "$TEMP_FILE"; then
       rm -f "$TEMP_FILE" 2>/dev/null || true
       echo "ERROR: Failed to copy tft_display_wrapper.sh to temporary file"
