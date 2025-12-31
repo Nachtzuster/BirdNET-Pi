@@ -303,8 +303,8 @@ ensure_tft_service() {
       echo "ERROR: Failed to move tft_display.py to /usr/local/bin"
       return 1
     fi
-    if ! sudo chmod +x /usr/local/bin/tft_display.py; then
-      echo "ERROR: Failed to set execute permission on /usr/local/bin/tft_display.py"
+    if ! sudo chmod 755 /usr/local/bin/tft_display.py; then
+      echo "ERROR: Failed to set permissions on /usr/local/bin/tft_display.py"
       return 1
     fi
   fi
@@ -323,8 +323,8 @@ ensure_tft_service() {
       echo "ERROR: Failed to move tft_display_wrapper.sh to /usr/local/bin"
       return 1
     fi
-    if ! sudo chmod +x /usr/local/bin/tft_display_wrapper.sh; then
-      echo "ERROR: Failed to set execute permission on /usr/local/bin/tft_display_wrapper.sh"
+    if ! sudo chmod 755 /usr/local/bin/tft_display_wrapper.sh; then
+      echo "ERROR: Failed to set permissions on /usr/local/bin/tft_display_wrapper.sh"
       return 1
     fi
   fi

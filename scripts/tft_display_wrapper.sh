@@ -59,9 +59,9 @@ if [ "$update_needed" = true ]; then
         exit 1
     fi
     
-    # Set execute permission
-    if ! sudo chmod +x "$TARGET_SCRIPT"; then
-        log_message "ERROR: Failed to set execute permission"
+    # Set read and execute permissions for all users
+    if ! sudo chmod 755 "$TARGET_SCRIPT"; then
+        log_message "ERROR: Failed to set permissions"
         exit 1
     fi
     
