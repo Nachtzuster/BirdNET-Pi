@@ -287,6 +287,18 @@ EOF
 ensure_tft_service() {
   echo "Ensuring TFT display service is installed..."
   
+  # Always update the tft_display.py script if it exists in the repo
+  # This ensures updates to the script are deployed
+  if [ -f "$HOME/BirdNET-Pi/scripts/tft_display.py" ]; then
+    if [ -f "/usr/local/bin/tft_display.py" ]; then
+      echo "Updating existing tft_display.py script..."
+    else
+      echo "Installing tft_display.py script to /usr/local/bin..."
+    fi
+    sudo cp "$HOME/BirdNET-Pi/scripts/tft_display.py" /usr/local/bin/tft_display.py
+    sudo chmod +x /usr/local/bin/tft_display.py
+  fi
+  
   # Check if service file exists, if not create it
   if [ ! -f "/usr/lib/systemd/system/tft_display.service" ]; then
     echo "Installing TFT display service..."

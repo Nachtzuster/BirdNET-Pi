@@ -293,6 +293,12 @@ EOF
 
 install_tft_display_service() {
   echo "Installing the tft_display.service"
+  
+  # Install the tft_display.py script to /usr/local/bin
+  echo "Installing tft_display.py script..."
+  sudo cp $HOME/BirdNET-Pi/scripts/tft_display.py /usr/local/bin/tft_display.py
+  sudo chmod +x /usr/local/bin/tft_display.py
+  
   cat << EOF > $HOME/BirdNET-Pi/templates/tft_display.service
 [Unit]
 Description=BirdNET-Pi TFT Display Service
