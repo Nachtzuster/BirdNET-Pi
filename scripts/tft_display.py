@@ -384,9 +384,18 @@ class TFTDisplay:
                         text = f"{detection['common_name']}"
                         draw.text((5, y_pos), text, fill=(255, 255, 255), font=self.font)
                         
-                        # Confidence on next line with green color - use RGB green
+                        # Confidence on next line with color based on confidence level
+                        # High confidence (>75%): bright green (0, 255, 0)
+                        # Normal confidence (<=75%): darker green (0, 180, 0)
                         conf_text = f"  {detection['confidence']:.1f}%"
-                        draw.text((5, y_pos + line_height), conf_text, fill=(0, 255, 0), font=self.font)
+                        confidence = detection['confidence']
+                        
+                        if confidence > 75.0:
+                            conf_color = (0, 255, 0)  # Bright green for high confidence
+                        else:
+                            conf_color = (0, 180, 0)  # Darker green for normal confidence
+                        
+                        draw.text((5, y_pos + line_height), conf_text, fill=conf_color, font=self.font)
                     
                     # Move to next detection position
                     y_pos += line_height * self.LINES_PER_DETECTION + self.DETECTION_SPACING
