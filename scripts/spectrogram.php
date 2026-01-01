@@ -844,14 +844,22 @@ applyCanvasSizeBtn.onclick = function() {
   var width = parseInt(canvasWidthInput.value);
   var height = parseInt(canvasHeightInput.value);
   
-  if (width >= 400 && width <= 3000 && height >= 300 && height <= 2000) {
-    window.resizeTo(width, height);
-    if (canvasElement) {
-      canvasElement.width = width;
-      canvasElement.height = height;
-    }
-  } else {
-    alert('Please enter valid dimensions (Width: 400-3000, Height: 300-2000)');
+  // Validate dimensions
+  if (isNaN(width) || width < 400 || width > 3000) {
+    alert('Width must be between 400 and 3000 pixels.');
+    return;
+  }
+  if (isNaN(height) || height < 300 || height > 2000) {
+    alert('Height must be between 300 and 2000 pixels.');
+    return;
+  }
+  
+  // Set canvas size using style properties
+  if (canvasElement) {
+    canvasElement.style.width = width + 'px';
+    canvasElement.style.height = height + 'px';
+    canvasElement.width = width;
+    canvasElement.height = height;
   }
 };
 
@@ -859,6 +867,8 @@ resetCanvasSizeBtn.onclick = function() {
   canvasWidthInput.value = window.innerWidth;
   canvasHeightInput.value = window.innerHeight;
   if (canvasElement) {
+    canvasElement.style.width = '100%';
+    canvasElement.style.height = '85%';
     canvasElement.width = window.innerWidth;
     canvasElement.height = window.innerHeight;
   }

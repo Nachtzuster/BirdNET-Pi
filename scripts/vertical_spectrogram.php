@@ -286,6 +286,15 @@ canvas {
   font-weight: 600;
 }
 
+.size-input {
+  width: 100%;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
 /* Mobile optimizations */
 @media only screen and (max-width: 768px) {
   #main-container {
@@ -428,11 +437,11 @@ canvas {
       <div class="control-group-title">Canvas Size</div>
       <div>
         <label>Width (px):</label>
-        <input type="number" id="canvas-width-input" min="200" max="2000" value="600" step="50" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(0, 0, 0, 0.5); color: white;" />
+        <input type="number" id="canvas-width-input" min="200" max="2000" value="600" step="50" class="size-input" />
       </div>
       <div style="margin-top: 8px;">
         <label>Height (px):</label>
-        <input type="number" id="canvas-height-input" min="200" max="2000" value="800" step="50" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(0, 0, 0, 0.5); color: white;" />
+        <input type="number" id="canvas-height-input" min="200" max="2000" value="800" step="50" class="size-input" />
       </div>
       <div style="margin-top: 8px;">
         <button class="control-button" id="apply-size-button" style="width: 100%; padding: 8px;">Apply Size</button>
@@ -639,17 +648,23 @@ canvas {
         const width = parseInt(canvasWidthInput.value);
         const height = parseInt(canvasHeightInput.value);
         
-        if (width >= 200 && width <= 2000 && height >= 200 && height <= 2000) {
-          canvasContainer.style.width = width + 'px';
-          canvasContainer.style.height = height + 'px';
-          canvasContainer.style.maxWidth = width + 'px';
-          canvasContainer.style.flex = 'none';
-          
-          // Trigger resize event to update canvas
-          window.dispatchEvent(new Event('resize'));
-        } else {
-          alert('Please enter valid dimensions (200-2000 pixels)');
+        // Validate dimensions
+        if (isNaN(width) || width < 200 || width > 2000) {
+          alert('Width must be between 200 and 2000 pixels.');
+          return;
         }
+        if (isNaN(height) || height < 200 || height > 2000) {
+          alert('Height must be between 200 and 2000 pixels.');
+          return;
+        }
+        
+        canvasContainer.style.width = width + 'px';
+        canvasContainer.style.height = height + 'px';
+        canvasContainer.style.maxWidth = width + 'px';
+        canvasContainer.style.flex = 'none';
+        
+        // Trigger resize event to update canvas
+        window.dispatchEvent(new Event('resize'));
       });
 
       // RTSP stream selector
