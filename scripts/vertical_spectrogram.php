@@ -314,8 +314,8 @@ canvas {
     <div class="controls-header">
       <h3>Controls</h3>
       <div class="button-group">
-        <button class="control-button" id="fullscreen-button" title="Toggle Fullscreen">⛶</button>
-        <button class="control-button" id="collapse-button" title="Collapse Controls">−</button>
+        <button class="control-button" id="fullscreen-button" title="Toggle Fullscreen" aria-label="Toggle Fullscreen Mode">⛶</button>
+        <button class="control-button" id="collapse-button" title="Collapse Controls" aria-label="Collapse Controls">−</button>
       </div>
     </div>
     <div class="controls-content">
@@ -482,7 +482,9 @@ canvas {
       const controlsPanel = document.getElementById('controls-panel');
       collapseButton.addEventListener('click', function() {
         controlsPanel.classList.toggle('collapsed');
-        this.textContent = controlsPanel.classList.contains('collapsed') ? '+' : '−';
+        const isCollapsed = controlsPanel.classList.contains('collapsed');
+        this.textContent = isCollapsed ? '+' : '−';
+        this.setAttribute('aria-label', isCollapsed ? 'Expand Controls' : 'Collapse Controls');
       });
 
       // Auto-hide controls after 5 seconds of inactivity
@@ -491,9 +493,11 @@ canvas {
         clearTimeout(hideTimer);
         controlsPanel.classList.remove('collapsed');
         collapseButton.textContent = '−';
+        collapseButton.setAttribute('aria-label', 'Collapse Controls');
         hideTimer = setTimeout(function() {
           controlsPanel.classList.add('collapsed');
           collapseButton.textContent = '+';
+          collapseButton.setAttribute('aria-label', 'Expand Controls');
         }, 5000);
       };
 

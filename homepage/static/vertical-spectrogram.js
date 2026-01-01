@@ -50,6 +50,9 @@
     // Low-cut filter configuration
     LOW_CUT_ENABLED: false,
     LOW_CUT_FREQUENCY: 200, // Hz - Default cutoff frequency for high-pass filter
+    LOW_CUT_MIN_FREQUENCY: 50, // Hz - Minimum allowed filter frequency
+    LOW_CUT_MAX_FREQUENCY: 500, // Hz - Maximum allowed filter frequency (UI limit)
+    LOW_CUT_ABSOLUTE_MAX: 2000, // Hz - Absolute maximum to prevent invalid values
   };
 
   // =================== Color Schemes ===================
@@ -74,15 +77,21 @@
       background: '#000000',
       getColor: function(normalizedValue) {
         // Lava color scheme: black -> red -> orange -> yellow -> white
-        if (normalizedValue < 0.33) {
-          const r = Math.round((normalizedValue / 0.33) * 255);
+        // Color transition thresholds
+        const RED_TO_ORANGE_THRESHOLD = 0.33;
+        const ORANGE_TO_YELLOW_THRESHOLD = 0.66;
+        const REMAINING_RANGE = 0.34; // 1.0 - 0.66
+        const YELLOW_BRIGHTNESS_FACTOR = 0.22; // Controls white component in final stage
+        
+        if (normalizedValue < RED_TO_ORANGE_THRESHOLD) {
+          const r = Math.round((normalizedValue / RED_TO_ORANGE_THRESHOLD) * 255);
           return `rgb(${r}, 0, 0)`;
-        } else if (normalizedValue < 0.66) {
-          const g = Math.round(((normalizedValue - 0.33) / 0.33) * 200);
+        } else if (normalizedValue < ORANGE_TO_YELLOW_THRESHOLD) {
+          const g = Math.round(((normalizedValue - RED_TO_ORANGE_THRESHOLD) / RED_TO_ORANGE_THRESHOLD) * 200);
           return `rgb(255, ${g}, 0)`;
         } else {
-          const intensity = Math.round(((normalizedValue - 0.66) / 0.34) * 255);
-          return `rgb(255, ${200 + Math.round(intensity * 0.22)}, ${intensity})`;
+          const intensity = Math.round(((normalizedValue - ORANGE_TO_YELLOW_THRESHOLD) / REMAINING_RANGE) * 255);
+          return `rgb(255, ${200 + Math.round(intensity * YELLOW_BRIGHTNESS_FACTOR)}, ${intensity})`;
         }
       }
     },
@@ -563,7 +572,7 @@
    * @param {number} frequency - Cutoff frequency in Hz
    */
   function setLowCutFrequency(frequency) {
-    if (filterNode && frequency >= 0 && frequency <= 2000) {
+    if (filterNode && frequency >= 0 && frequency <= CONFIG.LOW_CUT_ABSOLUTE_MAX) {
       CONFIG.LOW_CUT_FREQUENCY = frequency;
       if (CONFIG.LOW_CUT_ENABLED) {
         filterNode.frequency.value = frequency;
