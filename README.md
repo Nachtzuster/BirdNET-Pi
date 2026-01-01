@@ -153,7 +153,7 @@ To switch from another BirdNET-Pi fork to BirdNET-Pi-MigCount, make sure your in
 Run these commands to migrate to this repository:
 ```
 git remote remove origin
-git remote add origin https://github.com/YvedD/BirdNET-Pi-MigCount.git
+git remote add origin https://github.com/YvedD/BirdNET-Pi-MigCount
 ./scripts/update_birdnet.sh
 ```
 ## Troubleshooting and Ideas
