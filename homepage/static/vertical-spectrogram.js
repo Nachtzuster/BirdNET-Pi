@@ -32,6 +32,9 @@
     LABEL_PADDING: 4,
     LABEL_MARGIN: 10, // Margin from canvas edges
     LABEL_BOTTOM_OFFSET: 50, // Distance from bottom for recent detections
+    LABEL_HEIGHT: 16, // Approximate text height in pixels
+    MAX_VISIBLE_LABELS: 10, // Maximum number of labels to display
+    DETECTION_TIMEOUT_MS: 30000, // Remove detections older than 30 seconds
     
     // Spectrogram configuration
     FFT_SIZE: 2048,
@@ -278,8 +281,8 @@
     // The AJAX handling code is included in vertical_spectrogram.php
     // Use a relative path that works from the views.php iframe context
     const endpoint = window.location.pathname.includes('vertical_spectrogram') 
-      ? 'vertical_spectrogram.php?ajax_csv=true&newest_file=' + (newestDetectionFile || '')
-      : '../scripts/vertical_spectrogram.php?ajax_csv=true&newest_file=' + (newestDetectionFile || '');
+      ? 'vertical_spectrogram.php?ajax_csv=true&newest_file=' + encodeURIComponent(newestDetectionFile || '')
+      : '../scripts/vertical_spectrogram.php?ajax_csv=true&newest_file=' + encodeURIComponent(newestDetectionFile || '');
     xhr.open('GET', endpoint, true);
     
     xhr.onload = function() {
@@ -340,15 +343,14 @@
     currentDetections = [...newDetections, ...currentDetections];
     
     // Limit number of labels to prevent overcrowding
-    const MAX_LABELS = 10;
-    if (currentDetections.length > MAX_LABELS) {
-      currentDetections = currentDetections.slice(0, MAX_LABELS);
+    if (currentDetections.length > CONFIG.MAX_VISIBLE_LABELS) {
+      currentDetections = currentDetections.slice(0, CONFIG.MAX_VISIBLE_LABELS);
     }
     
-    // Remove old detections (older than 30 seconds)
+    // Remove old detections (older than configured timeout)
     const now = Date.now();
     currentDetections = currentDetections.filter(det => 
-      (now - det.timestamp) < 30000
+      (now - det.timestamp) < CONFIG.DETECTION_TIMEOUT_MS
     );
   }
 
@@ -373,7 +375,7 @@
       // Measure text
       const textMetrics = ctx.measureText(labelText);
       const textWidth = textMetrics.width;
-      const textHeight = 16; // Approximate height
+      const textHeight = CONFIG.LABEL_HEIGHT; // Use configured height
       
       // Position for rotated text (on the right side of canvas)
       const x = canvas.width - CONFIG.LABEL_MARGIN - textHeight;

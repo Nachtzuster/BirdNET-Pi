@@ -12,6 +12,10 @@ if(!empty($config['FREQSHIFT_RECONNECT_DELAY']) && is_numeric($config['FREQSHIFT
     $FREQSHIFT_RECONNECT_DELAY = 4000;
 }
 
+// Configuration constants
+define('DEFAULT_FREQSHIFT_RECONNECT_DELAY', 4000);
+define('RTSP_STREAM_RECONNECT_DELAY', 10000);
+
 // Handle AJAX request for detection data (reuse existing endpoint logic)
 if(isset($_GET['ajax_csv'])) {
   $RECS_DIR = $config["RECS_DIR"];
@@ -62,10 +66,12 @@ if(isset($_GET['ajax_csv'])) {
 
 //If the newest file param has been supplied and it's the same as the newest file found
 //then stop processing
-if($newest_file == $_GET['newest_file']) {
+if(isset($_GET['newest_file']) && $newest_file == $_GET['newest_file']) {
   die();
 }
 
+// Sanitize filename to prevent path traversal
+$newest_file = basename($newest_file);
 $contents = file_get_contents($look_in_directory . $newest_file);
 if ($contents !== false) {
   $json = json_decode($contents);
@@ -443,7 +449,7 @@ canvas {
                   audioPlayer.load();
                   audioPlayer.play();
                   rtspSpinner.style.display = 'none';
-                }, 10000);
+                }, <?php echo RTSP_STREAM_RECONNECT_DELAY; ?>);
               }
             };
           }
