@@ -262,12 +262,20 @@ canvas {
           //maybe the list of streams has been modified
           if (isset($config['RTSP_STREAM_TO_LIVESTREAM']) && array_key_exists($config['RTSP_STREAM_TO_LIVESTREAM'], $RTSP_Stream_Config) === false) {
             $contents = file_get_contents('/etc/birdnet/birdnet.conf');
-            $contents = preg_replace("/RTSP_STREAM_TO_LIVESTREAM=.*/", "RTSP_STREAM_TO_LIVESTREAM=\"0\"", $contents);
-            $fh = fopen("/etc/birdnet/birdnet.conf", "w");
-            fwrite($fh, $contents);
-            fclose($fh);
-            get_config($force_reload=true);
-            exec("sudo systemctl restart livestream.service");
+            if ($contents !== false) {
+              $contents = preg_replace("/RTSP_STREAM_TO_LIVESTREAM=.*/", "RTSP_STREAM_TO_LIVESTREAM=\"0\"", $contents);
+              $fh = fopen("/etc/birdnet/birdnet.conf", "w");
+              if ($fh !== false) {
+                fwrite($fh, $contents);
+                fclose($fh);
+                get_config($force_reload=true);
+                exec("sudo systemctl restart livestream.service");
+              } else {
+                error_log("Failed to open /etc/birdnet/birdnet.conf for writing");
+              }
+            } else {
+              error_log("Failed to read /etc/birdnet/birdnet.conf");
+            }
           }
 
           //Print out the dropdown list for the RTSP streams
