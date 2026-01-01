@@ -1,5 +1,5 @@
 <?php
-require_once "scripts/common.php";
+require_once __DIR__ . '/common.php';
 $home = get_home();
 
 function do_service_mount($action) {

@@ -3,7 +3,7 @@ error_reporting(E_ERROR);
 ini_set('display_errors',1);
 
 session_start();
-require_once "scripts/common.php";
+require_once __DIR__ . '/common.php';
 $user = get_user();
 $home = get_home();
 

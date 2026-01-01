@@ -2,7 +2,7 @@
 error_reporting(E_ERROR);
 ini_set('display_errors',1);
 
-require_once "scripts/common.php";
+require_once __DIR__ . '/common.php';
 $home = get_home();
 $config = get_config();
 
