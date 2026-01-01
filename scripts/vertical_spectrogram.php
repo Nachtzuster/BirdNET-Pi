@@ -124,16 +124,27 @@ html, body {
   font-family: 'Roboto Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+#main-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
 #canvas-container {
   position: relative;
-  width: 100%;
+  flex: 1;
   height: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 canvas {
   display: block;
   width: 100%;
   height: 100%;
+  /* Use crisp edges for better spectrogram clarity */
+  image-rendering: -moz-crisp-edges;          /* Firefox */
+  image-rendering: crisp-edges;               /* Standard */
 }
 
 #loading-message {
@@ -148,43 +159,31 @@ canvas {
   z-index: 10;
 }
 
-.controls {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.7);
+.sidebar {
+  width: 280px;
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
-  padding: 15px;
-  border-radius: 8px;
   color: white;
   font-size: 14px;
+  overflow-y: auto;
+  padding: 15px;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
   z-index: 20;
-  max-width: 90%;
-  transition: opacity 0.3s ease;
+  flex-shrink: 0;
 }
 
-.controls.collapsed {
-  opacity: 0.3;
-  pointer-events: none;
-}
-
-.controls.collapsed:hover {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.controls-header {
+.sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  padding-bottom: 8px;
+  padding-bottom: 10px;
 }
 
-.controls-header h3 {
+.sidebar-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -197,7 +196,7 @@ canvas {
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
-  padding: 4px 8px;
+  padding: 6px 10px;
   color: white;
   cursor: pointer;
   font-size: 12px;
@@ -208,87 +207,102 @@ canvas {
   background: rgba(255, 255, 255, 0.3);
 }
 
-.controls-content {
+.sidebar-content > div {
+  margin: 12px 0;
+}
+
+.sidebar-content label {
   display: block;
-}
-
-.controls.collapsed .controls-content {
-  display: none;
-}
-
-.controls > div {
-  margin: 8px 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.controls label {
-  margin-right: 10px;
+  margin-bottom: 5px;
   font-weight: 500;
-  min-width: 80px;
+  font-size: 13px;
 }
 
-.controls input[type="range"] {
-  flex: 1;
-  min-width: 100px;
-  margin: 0 10px;
+.sidebar-content input[type="range"] {
+  width: 100%;
+  margin: 5px 0;
 }
 
-.controls input[type="checkbox"] {
-  margin-left: 5px;
+.sidebar-content input[type="checkbox"] {
+  margin-right: 8px;
   width: 18px;
   height: 18px;
   cursor: pointer;
+  vertical-align: middle;
 }
 
-.controls select {
-  padding: 4px 8px;
+.sidebar-content select {
+  width: 100%;
+  padding: 6px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: rgba(0, 0, 0, 0.5);
   color: white;
   cursor: pointer;
+  font-size: 13px;
 }
 
-.controls .value-display {
-  min-width: 40px;
+.value-display {
+  display: inline-block;
+  min-width: 50px;
   text-align: right;
   font-weight: bold;
+  font-size: 13px;
+  color: #4CAF50;
 }
 
 .spinner {
   display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   vertical-align: middle;
-  margin-left: 10px;
+  margin-left: 8px;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
+.hidden {
+  display: none !important;
+}
+
+.control-group {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.control-group-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
 /* Mobile optimizations */
 @media only screen and (max-width: 768px) {
-  .controls {
-    font-size: 12px;
-    padding: 10px;
-    top: 5px;
-    left: 5px;
+  #main-container {
+    flex-direction: column;
   }
   
-  .controls label {
-    min-width: 60px;
-    font-size: 11px;
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 40vh;
+    order: 2;
   }
   
-  .controls input[type="range"] {
-    min-width: 80px;
+  #canvas-container {
+    max-width: 100%;
+    order: 1;
+    flex: 1;
   }
   
   #loading-message {
@@ -297,34 +311,35 @@ canvas {
 }
 
 @media only screen and (max-width: 768px) and (orientation: landscape) {
-  .controls {
-    font-size: 11px;
-    padding: 8px;
+  .sidebar {
+    max-height: 50vh;
   }
 }
   </style>
 </head>
 <body>
-  <div id="canvas-container">
-    <div id="loading-message">Loading Vertical Spectrogram...</div>
-    <canvas id="spectrogram-canvas"></canvas>
-  </div>
-
-  <div class="controls" id="controls-panel">
-    <div class="controls-header">
-      <h3>Controls</h3>
-      <div class="button-group">
-        <button class="control-button" id="fullscreen-button" title="Toggle Fullscreen" aria-label="Toggle Fullscreen Mode">⛶</button>
-        <button class="control-button" id="collapse-button" title="Collapse Controls" aria-label="Collapse Controls">−</button>
-      </div>
+  <div id="main-container">
+    <div id="canvas-container">
+      <div id="loading-message">Loading Vertical Spectrogram...</div>
+      <canvas id="spectrogram-canvas"></canvas>
     </div>
-    <div class="controls-content">
+
+    <div class="sidebar" id="sidebar-panel">
+      <div class="sidebar-header">
+        <h3>Spectrogram Controls</h3>
+        <div class="button-group">
+          <button class="control-button" id="fullscreen-button" title="Toggle Fullscreen" aria-label="Toggle Fullscreen Mode">⛶</button>
+        </div>
+      </div>
+      <div class="sidebar-content">
     <?php
     if (isset($RTSP_Stream_Config) && !empty($RTSP_Stream_Config)) {
       ?>
-      <div>
-        <label>RTSP Stream:</label>
-        <select id="rtsp-stream-select">
+      <div class="control-group">
+        <div class="control-group-title">Stream Selection</div>
+        <div>
+          <label>RTSP Stream:</label>
+          <select id="rtsp-stream-select">
           <?php
           //The setting representing which livestream to stream is more than the number of RTSP streams available
           //maybe the list of streams has been modified
@@ -360,49 +375,78 @@ canvas {
         </select>
         <span id="rtsp-spinner" class="spinner" style="display: none;"></span>
       </div>
+    </div>
       <?php
     }
     ?>
-    <div>
-      <label>Gain:</label>
-      <input type="range" id="gain-slider" min="0" max="250" value="100" />
-      <span class="value-display" id="gain-value">100%</span>
+    <div class="control-group">
+      <div class="control-group-title">Audio Settings</div>
+      <div>
+        <label>Gain:</label>
+        <input type="range" id="gain-slider" min="0" max="250" value="100" />
+        <span class="value-display" id="gain-value">100%</span>
+      </div>
+      <div>
+        <label>
+          <input type="checkbox" id="compression-checkbox" />
+          Compression
+        </label>
+      </div>
+      <div>
+        <label>
+          <input type="checkbox" id="freqshift-checkbox" <?php echo ($config['ACTIVATE_FREQSHIFT_IN_LIVESTREAM'] == "true") ? "checked" : ""; ?> />
+          Freq Shift
+        </label>
+        <span id="freqshift-spinner" class="spinner" style="display: none;"></span>
+      </div>
     </div>
-    <div>
-      <label>Compression:</label>
-      <input type="checkbox" id="compression-checkbox" />
+    <div class="control-group">
+      <div class="control-group-title">Display Settings</div>
+      <div>
+        <label>Redraw Interval:</label>
+        <input type="range" id="redraw-slider" min="50" max="300" value="100" step="10" />
+        <span class="value-display" id="redraw-value">100ms</span>
+      </div>
+      <div>
+        <label>Color Scheme:</label>
+        <select id="color-scheme-select">
+          <option value="purple" selected>Purple</option>
+          <option value="blackwhite">Black-White</option>
+          <option value="lava">Lava</option>
+          <option value="greenwhite">Green-White</option>
+        </select>
+      </div>
+      <div>
+        <label>
+          <input type="checkbox" id="frequency-grid-checkbox" checked />
+          Show Frequency Grid
+        </label>
+      </div>
     </div>
-    <div>
-      <label>Freq Shift:</label>
-      <input type="checkbox" id="freqshift-checkbox" <?php echo ($config['ACTIVATE_FREQSHIFT_IN_LIVESTREAM'] == "true") ? "checked" : ""; ?> />
-      <span id="freqshift-spinner" class="spinner" style="display: none;"></span>
+    <div class="control-group">
+      <div class="control-group-title">Detection Filters</div>
+      <div>
+        <label>Min Confidence:</label>
+        <input type="range" id="confidence-slider" min="10" max="100" value="70" step="5" />
+        <span class="value-display" id="confidence-value">70%</span>
+      </div>
     </div>
-    <div>
-      <label>Redraw (ms):</label>
-      <input type="range" id="redraw-slider" min="50" max="300" value="100" step="10" />
-      <span class="value-display" id="redraw-value">100ms</span>
-    </div>
-    <div>
-      <label>Min Confidence:</label>
-      <input type="range" id="confidence-slider" min="10" max="100" value="70" step="5" />
-      <span class="value-display" id="confidence-value">70%</span>
-    </div>
-    <div>
-      <label>Color Scheme:</label>
-      <select id="color-scheme-select">
-        <option value="purple" selected>Purple</option>
-        <option value="blackwhite">Black-White</option>
-        <option value="lava">Lava</option>
-        <option value="greenwhite">Green-White</option>
-      </select>
-    </div>
-    <div>
-      <label>Low-Cut Filter:</label>
-      <input type="checkbox" id="lowcut-checkbox" />
-      <input type="range" id="lowcut-slider" min="50" max="500" value="200" step="10" style="display:none;" />
-      <span class="value-display" id="lowcut-value" style="display:none;">200Hz</span>
+    <div class="control-group">
+      <div class="control-group-title">Frequency Filter</div>
+      <div>
+        <label>
+          <input type="checkbox" id="lowcut-checkbox" />
+          Low-Cut Filter
+        </label>
+      </div>
+      <div id="lowcut-controls" class="hidden">
+        <label>Cutoff Frequency:</label>
+        <input type="range" id="lowcut-slider" min="50" max="500" value="200" step="10" />
+        <span class="value-display" id="lowcut-value">200Hz</span>
+      </div>
     </div>
     </div>
+  </div>
   </div>
 
   <!-- Hidden audio element for stream -->
@@ -476,38 +520,6 @@ canvas {
           document.exitFullscreen();
         }
       });
-
-      // Collapse button
-      const collapseButton = document.getElementById('collapse-button');
-      const controlsPanel = document.getElementById('controls-panel');
-      collapseButton.addEventListener('click', function() {
-        controlsPanel.classList.toggle('collapsed');
-        const isCollapsed = controlsPanel.classList.contains('collapsed');
-        this.textContent = isCollapsed ? '+' : '−';
-        this.setAttribute('aria-label', isCollapsed ? 'Expand Controls' : 'Collapse Controls');
-      });
-
-      // Auto-hide controls after 5 seconds of inactivity
-      let hideTimer;
-      const resetHideTimer = function() {
-        clearTimeout(hideTimer);
-        controlsPanel.classList.remove('collapsed');
-        collapseButton.textContent = '−';
-        collapseButton.setAttribute('aria-label', 'Collapse Controls');
-        hideTimer = setTimeout(function() {
-          controlsPanel.classList.add('collapsed');
-          collapseButton.textContent = '+';
-          collapseButton.setAttribute('aria-label', 'Expand Controls');
-        }, 5000);
-      };
-
-      // Reset timer on any interaction
-      document.addEventListener('mousemove', resetHideTimer);
-      document.addEventListener('touchstart', resetHideTimer);
-      document.addEventListener('click', resetHideTimer);
-      
-      // Start the timer
-      resetHideTimer();
     }
 
     function setupControls() {
@@ -562,16 +574,28 @@ canvas {
         VerticalSpectrogram.setColorScheme(this.value);
       });
 
+      // Frequency grid toggle
+      const frequencyGridCheckbox = document.getElementById('frequency-grid-checkbox');
+      frequencyGridCheckbox.addEventListener('change', function() {
+        VerticalSpectrogram.updateConfig({
+          SHOW_FREQUENCY_GRID: this.checked
+        });
+      });
+
       // Low-cut filter control
       const lowcutCheckbox = document.getElementById('lowcut-checkbox');
+      const lowcutControls = document.getElementById('lowcut-controls');
       const lowcutSlider = document.getElementById('lowcut-slider');
       const lowcutValue = document.getElementById('lowcut-value');
       
       lowcutCheckbox.addEventListener('change', function() {
         VerticalSpectrogram.setLowCutFilter(this.checked);
         // Show/hide frequency slider when filter is enabled
-        lowcutSlider.style.display = this.checked ? 'inline-block' : 'none';
-        lowcutValue.style.display = this.checked ? 'inline-block' : 'none';
+        if (this.checked) {
+          lowcutControls.classList.remove('hidden');
+        } else {
+          lowcutControls.classList.add('hidden');
+        }
       });
       
       lowcutSlider.addEventListener('input', function() {

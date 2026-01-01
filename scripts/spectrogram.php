@@ -176,22 +176,78 @@ function fitTextOnCanvas(text,fontface,yPosition){
     CTX.fillText(text,document.body.querySelector('canvas').width - (document.body.querySelector('canvas').width * 0.50),yPosition);
 }
 
-function applyText(text,x,y,opacity) {
-  console.log("conf: "+opacity)
-  console.log(text+" "+parseInt(x)+" "+y)
-  if(opacity < 0.2) {
-    opacity = 0.2;
+// Configuration for detection labels
+const DETECTION_CONFIG = {
+  MIN_CONFIDENCE_THRESHOLD: 0.7,
+  CONFIDENCE_HIGH_COLOR: 'rgb(50, 255, 50)', // Bright green
+  CONFIDENCE_MEDIUM_COLOR: 'rgb(255, 165, 0)', // Orange
+  CONFIDENCE_LOW_COLOR: 'rgba(180, 180, 180, 0.6)', // Light gray
+  CONFIDENCE_THRESHOLD_RANGE: 0.05, // ±5%
+  CONFIDENCE_LOW_OFFSET: 0.10, // 10% below
+  NAME_COLOR: 'rgba(255, 255, 255, 0.9)'
+};
+
+// Get color for confidence level
+function getConfidenceColor(confidence, threshold) {
+  const diff = confidence - threshold;
+  
+  if (diff >= 0) {
+    return DETECTION_CONFIG.CONFIDENCE_HIGH_COLOR;
+  } else if (Math.abs(diff) <= DETECTION_CONFIG.CONFIDENCE_THRESHOLD_RANGE) {
+    return DETECTION_CONFIG.CONFIDENCE_MEDIUM_COLOR;
+  } else if (Math.abs(diff) <= DETECTION_CONFIG.CONFIDENCE_LOW_OFFSET) {
+    return DETECTION_CONFIG.CONFIDENCE_LOW_COLOR;
+  } else {
+    return null; // Don't show
   }
-  CTX.textAlign = "center";
-    CTX.fillStyle = "rgba(255, 255, 255, "+opacity+")";
-  CTX.font = '15px Roboto Flex';
-  //fitTextOnCanvas(text,"Roboto Flex",document.body.querySelector('canvas').scrollHeight * 0.35)
-  CTX.fillText(text,parseInt(x),y)
+}
+
+function applyText(text, x, y, confidence) {
+  console.log("conf: " + confidence);
+  console.log(text + " " + parseInt(x) + " " + y);
+  
+  // Check if we should show this detection
+  const confidenceColor = getConfidenceColor(confidence, DETECTION_CONFIG.MIN_CONFIDENCE_THRESHOLD);
+  if (!confidenceColor) {
+    return; // Don't show detections more than 10% below threshold
+  }
+  
+  // Save context state
+  CTX.save();
+  
+  // Get canvas element (cached in the rendering context)
+  const canvasEl = document.body.querySelector('canvas');
+  
+  // Position at bottom of canvas and rotate 90 degrees
+  const bottomY = canvasEl.height - 10;
+  CTX.translate(parseInt(x), bottomY);
+  CTX.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
+  
+  // Draw species name in white
+  CTX.textAlign = "right";
+  CTX.font = '13px Roboto Flex';
+  CTX.fillStyle = DETECTION_CONFIG.NAME_COLOR;
+  CTX.fillText(text, 0, 0);
+  
+  // Measure name text to position confidence
+  const nameWidth = CTX.measureText(text).width;
+  const spaceWidth = CTX.measureText(' ').width;
+  
+  // Draw confidence in color
+  const confidencePercent = '+' + Math.round(confidence * 100) + '%';
+  CTX.fillStyle = confidenceColor;
+  CTX.fillText(confidencePercent, -(nameWidth + spaceWidth), 0);
+  
+  // Restore context state
+  CTX.restore();
+  
   CTX.fillStyle = 'hsl(280, 100%, 10%)';
 }
 
 var add=0;
 var newest_file;
+var recentDetections = []; // Track recent detections for filtering
+
 function loadDetectionIfNewExists() {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
@@ -200,25 +256,67 @@ function loadDetectionIfNewExists() {
       const resp = JSON.parse(this.responseText);
       newest_file = resp.file_name;
       console.log("delay " + resp.delay);
-      for (detection of resp.detections) {
-        console.log("detection.start  " + detection.start);
-        secago = resp.delay - detection.start;
-        x = document.body.querySelector('canvas').width - (secago * avgfps);
-        y = (document.body.querySelector('canvas').height * 0.50) + add;
-        if(x > document.body.querySelector('canvas').width - (5*avgfps) && detection.common_name.length > 8) {
-          setTimeout(function (detection, x, y, x_org) {
-            console.log("originally at "+x_org+", now waiting 3 sec and at "+x);
+      
+      // Group detections by timestamp to identify multi-detections
+      const detectionGroups = {};
+      resp.detections.forEach(detection => {
+        const key = Math.floor(detection.start * 10); // Group by 0.1s intervals
+        if (!detectionGroups[key]) {
+          detectionGroups[key] = [];
+        }
+        detectionGroups[key].push(detection);
+      });
+      
+      // Clean up old recent detections (older than 2 seconds)
+      const now = Date.now() / 1000; // Convert to seconds
+      recentDetections = recentDetections.filter(d => (now - d.timestamp) < 2);
+      
+      // Process each detection group
+      Object.values(detectionGroups).forEach(group => {
+        const isMultiDetection = group.length > 1;
+        
+        group.forEach(detection => {
+          // Check for rapid consecutive single detections (not multi-detections)
+          if (!isMultiDetection) {
+            const isDuplicate = recentDetections.some(recent => 
+              recent.name === detection.common_name &&
+              Math.abs(recent.start - detection.start) < 2.0
+            );
+            
+            if (isDuplicate) {
+              console.log("Skipping rapid consecutive detection: " + detection.common_name);
+              return; // Skip this detection
+            }
+          }
+          
+          console.log("detection.start  " + detection.start);
+          secago = resp.delay - detection.start;
+          x = document.body.querySelector('canvas').width - (secago * avgfps);
+          y = (document.body.querySelector('canvas').height * 0.50) + add;
+          
+          if(x > document.body.querySelector('canvas').width - (5*avgfps) && detection.common_name.length > 8) {
+            setTimeout(function (detection, x, y, x_org) {
+              console.log("originally at "+x_org+", now waiting 3 sec and at "+x);
+              applyText(detection.common_name, x, y, detection.confidence);
+            }, 3*1000, detection, x - (5*avgfps), y, x);
+          } else {
             applyText(detection.common_name, x, y, detection.confidence);
-          }, 3*1000, detection, x - (5*avgfps), y, x);
-        } else {
-          applyText(detection.common_name, x, y, detection.confidence);
-        }
-        // stagger Y placement
-        add+= 15;
-        if(add >= 60) {
-           add = 0;
-        }
-      }
+          }
+          
+          // Track this detection
+          recentDetections.push({
+            name: detection.common_name,
+            start: detection.start,
+            timestamp: now
+          });
+          
+          // stagger Y placement
+          add+= 15;
+          if(add >= 60) {
+             add = 0;
+          }
+        });
+      });
     }
   };
   xhttp.open("GET", "spectrogram.php?ajax_csv=true&newest_file="+newest_file, true);
@@ -364,6 +462,45 @@ function initialize() {
     CTX.fillStyle = 'hsl(280, 100%, 10%)';
     CTX.fillRect(0, 0, W, H);
 
+    // Define frequency lines to draw (in Hz)
+    // These will be drawn as horizontal lines across the spectrogram
+    const SAMPLE_RATE = 48000; // Standard audio sample rate
+    const NYQUIST = SAMPLE_RATE / 2; // Maximum frequency
+    const FREQUENCY_LINES = [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000]; // Hz
+    
+    // Function to draw frequency grid lines
+    function drawFrequencyLines() {
+      CTX.save();
+      CTX.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      CTX.lineWidth = 1;
+      CTX.setLineDash([5, 5]);
+      
+      FREQUENCY_LINES.forEach(freq => {
+        if (freq <= NYQUIST) {
+          // Calculate Y position for this frequency
+          const binIndex = (freq / NYQUIST) * LEN;
+          const y = H - (binIndex * h);
+          
+          // Draw horizontal line
+          CTX.beginPath();
+          CTX.moveTo(0, y);
+          CTX.lineTo(W, y);
+          CTX.stroke();
+          
+          // Draw frequency label
+          CTX.fillStyle = 'rgba(255, 255, 255, 0.5)';
+          CTX.font = '10px Roboto Flex';
+          CTX.textAlign = 'left';
+          CTX.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 5, y - 2);
+        }
+      });
+      
+      CTX.restore();
+    }
+    
+    // Draw initial frequency lines
+    drawFrequencyLines();
+
     loop();
 
     function loop(time) {
@@ -382,6 +519,10 @@ function initialize() {
 
       CTX.fillRect(0, 0, W, H);
       CTX.putImageData(imgData, 0, 0);
+      
+      // Redraw frequency lines after scrolling
+      drawFrequencyLines();
+      
       ANALYSER.getByteFrequencyData(DATA);
       for (let i = 0; i < LEN; i++) {
         let rat = DATA[i] / 255 ;
