@@ -142,10 +142,10 @@ canvas {
   display: block;
   width: 100%;
   height: 100%;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
+  /* Use crisp edges for better spectrogram clarity */
+  image-rendering: -webkit-optimize-contrast; /* Chrome/Safari */
+  image-rendering: -moz-crisp-edges;          /* Firefox */
+  image-rendering: crisp-edges;               /* Standard */
 }
 
 #loading-message {
@@ -578,7 +578,11 @@ canvas {
       lowcutCheckbox.addEventListener('change', function() {
         VerticalSpectrogram.setLowCutFilter(this.checked);
         // Show/hide frequency slider when filter is enabled
-        lowcutControls.classList.toggle('hidden', !this.checked);
+        if (this.checked) {
+          lowcutControls.classList.remove('hidden');
+        } else {
+          lowcutControls.classList.add('hidden');
+        }
       });
       
       lowcutSlider.addEventListener('input', function() {
