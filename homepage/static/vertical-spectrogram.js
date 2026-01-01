@@ -26,15 +26,15 @@
     // Detection label configuration
     DETECTION_CHECK_INTERVAL_MS: 1000,
     MIN_CONFIDENCE_THRESHOLD: 0.7, // Only show detections >= 70% confidence
-    LABEL_FONT: '14px Roboto Flex, sans-serif',
-    LABEL_COLOR: 'rgba(255, 255, 255, 0.9)',
-    LABEL_BACKGROUND: 'rgba(0, 0, 0, 0.6)',
-    LABEL_PADDING: 4,
-    LABEL_MARGIN: 10, // Margin from canvas edges
-    LABEL_BOTTOM_OFFSET: 50, // Distance from bottom for recent detections
-    LABEL_HEIGHT: 16, // Approximate text height in pixels
-    MAX_VISIBLE_LABELS: 10, // Maximum number of labels to display
-    DETECTION_TIMEOUT_MS: 30000, // Remove detections older than 30 seconds
+    LABEL_FONT: '13px Roboto Flex, sans-serif',
+    LABEL_COLOR: 'rgba(255, 255, 255, 0.95)',
+    LABEL_BACKGROUND: 'rgba(0, 0, 0, 0.75)',
+    LABEL_PADDING: 6,
+    LABEL_MARGIN: 15, // Margin from canvas edges
+    LABEL_BOTTOM_OFFSET: 60, // Distance from bottom for recent detections
+    LABEL_HEIGHT: 18, // Approximate text height in pixels
+    MAX_VISIBLE_LABELS: 15, // Maximum number of labels to display
+    DETECTION_TIMEOUT_MS: 45000, // Remove detections older than 45 seconds
     
     // Spectrogram configuration
     FFT_SIZE: 2048,
@@ -210,8 +210,10 @@
    * Resize canvas to match window size
    */
   function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Get the canvas container dimensions
+    const container = canvas.parentElement;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
     
     // Reinitialize image data after resize
     if (ctx) {
