@@ -27,14 +27,25 @@
     DETECTION_CHECK_INTERVAL_MS: 1000,
     MIN_CONFIDENCE_THRESHOLD: 0.7, // Only show detections >= 70% confidence
     LABEL_FONT: '13px Roboto Flex, sans-serif',
-    LABEL_COLOR: 'rgba(255, 255, 255, 0.95)',
+    LABEL_NAME_COLOR: 'rgba(255, 255, 255, 0.95)',
     LABEL_BACKGROUND: 'rgba(0, 0, 0, 0.75)',
     LABEL_PADDING: 6,
     LABEL_MARGIN: 15, // Margin from canvas edges
     LABEL_BOTTOM_OFFSET: 60, // Distance from bottom for recent detections
     LABEL_HEIGHT: 18, // Approximate text height in pixels
     MAX_VISIBLE_LABELS: 15, // Maximum number of labels to display
-    DETECTION_TIMEOUT_MS: 45000, // Remove detections older than 45 seconds
+    DETECTION_TIMEOUT_MS: 45000, // Remove detections older than 45 seconds (standard)
+    DETECTION_TIMEOUT_LOW_CONFIDENCE_MS: 20000, // 20 seconds for low confidence (faster fade)
+    
+    // Color coding for confidence levels
+    CONFIDENCE_HIGH_COLOR: 'rgb(50, 255, 50)', // Bright green for above threshold
+    CONFIDENCE_MEDIUM_COLOR: 'rgb(255, 165, 0)', // Orange for near threshold (±5%)
+    CONFIDENCE_LOW_COLOR: 'rgba(180, 180, 180, 0.6)', // Light gray for 10% below
+    CONFIDENCE_THRESHOLD_RANGE: 0.05, // ±5% range for medium color
+    CONFIDENCE_LOW_OFFSET: 0.10, // 10% below threshold for low confidence
+    
+    // Rapid detection filtering
+    RAPID_DETECTION_INTERVAL_MS: 2000, // Don't show detections within 2 seconds of previous high detection
     
     // Spectrogram configuration
     FFT_SIZE: 2048,
@@ -451,30 +462,99 @@
   }
 
   /**
+   * Get color for confidence level based on threshold
+   * @param {number} confidence - Detection confidence (0-1)
+   * @returns {string} CSS color string
+   */
+  function getConfidenceColor(confidence) {
+    const threshold = CONFIG.MIN_CONFIDENCE_THRESHOLD;
+    const diff = confidence - threshold;
+    
+    if (diff >= 0) {
+      // Above or at threshold - bright green
+      return CONFIG.CONFIDENCE_HIGH_COLOR;
+    } else if (Math.abs(diff) <= CONFIG.CONFIDENCE_THRESHOLD_RANGE) {
+      // Within ±5% of threshold - orange
+      return CONFIG.CONFIDENCE_MEDIUM_COLOR;
+    } else if (Math.abs(diff) <= CONFIG.CONFIDENCE_LOW_OFFSET) {
+      // Within 10% below threshold - light gray
+      return CONFIG.CONFIDENCE_LOW_COLOR;
+    } else {
+      // More than 10% below threshold - don't show
+      return null;
+    }
+  }
+
+  /**
    * Process detection data and filter by confidence threshold
    * @param {Array} detections - Array of detection objects
    * @param {number} delay - Delay in seconds
    */
   function processDetections(detections, delay) {
-    // Filter detections by confidence threshold
-    const validDetections = detections.filter(detection => 
-      detection.confidence >= CONFIG.MIN_CONFIDENCE_THRESHOLD
+    const now = Date.now();
+    
+    // Filter detections based on confidence and color coding
+    const validDetections = detections.filter(detection => {
+      const color = getConfidenceColor(detection.confidence);
+      // Only show if we have a color (within acceptable range)
+      return color !== null;
+    });
+    
+    // Group detections by timestamp to identify multi-detections
+    const detectionGroups = {};
+    validDetections.forEach(detection => {
+      const key = Math.floor(detection.start * 10); // Group by 0.1s intervals
+      if (!detectionGroups[key]) {
+        detectionGroups[key] = [];
+      }
+      detectionGroups[key].push(detection);
+    });
+    
+    // Check for rapid consecutive detections (within RAPID_DETECTION_INTERVAL_MS)
+    // Only filter out if it's a single species, not multi-detections
+    const recentHighConfidence = currentDetections.filter(det => 
+      det.confidence >= CONFIG.MIN_CONFIDENCE_THRESHOLD && 
+      (now - det.timestamp) < CONFIG.RAPID_DETECTION_INTERVAL_MS
     );
     
-    // Calculate position for each detection
-    // In vertical mode, we need to map time to vertical position
-    // Newer detections are at the bottom
-    const newDetections = validDetections.map(detection => {
-      return {
-        name: detection.common_name,
-        confidence: detection.confidence,
-        start: detection.start,
-        delay: delay,
-        // Calculate Y position (bottom is newer)
-        // Position near bottom for recent detections using configured offset
-        y: canvas.height - CONFIG.LABEL_BOTTOM_OFFSET,
-        timestamp: Date.now()
-      };
+    const newDetections = [];
+    Object.values(detectionGroups).forEach(group => {
+      // Multi-detections (multiple species in same clip) - always show
+      const isMultiDetection = group.length > 1;
+      
+      if (isMultiDetection) {
+        // Show all species in multi-detection
+        group.forEach(detection => {
+          newDetections.push({
+            name: detection.common_name,
+            confidence: detection.confidence,
+            start: detection.start,
+            delay: delay,
+            y: canvas.height - CONFIG.LABEL_BOTTOM_OFFSET,
+            timestamp: now,
+            isMulti: true
+          });
+        });
+      } else {
+        // Single detection - check for rapid consecutive
+        const detection = group[0];
+        const isDuplicate = recentHighConfidence.some(recent => 
+          recent.name === detection.common_name &&
+          Math.abs(recent.start - detection.start) < 2.0 // Within 2 seconds
+        );
+        
+        if (!isDuplicate) {
+          newDetections.push({
+            name: detection.common_name,
+            confidence: detection.confidence,
+            start: detection.start,
+            delay: delay,
+            y: canvas.height - CONFIG.LABEL_BOTTOM_OFFSET,
+            timestamp: now,
+            isMulti: false
+          });
+        }
+      }
     });
     
     // Add new detections to current list
@@ -485,11 +565,22 @@
       currentDetections = currentDetections.slice(0, CONFIG.MAX_VISIBLE_LABELS);
     }
     
-    // Remove old detections (older than configured timeout)
-    const now = Date.now();
-    currentDetections = currentDetections.filter(det => 
-      (now - det.timestamp) < CONFIG.DETECTION_TIMEOUT_MS
-    );
+    // Remove old detections based on confidence level (low confidence fades faster)
+    currentDetections = currentDetections.filter(det => {
+      const age = now - det.timestamp;
+      const color = getConfidenceColor(det.confidence);
+      
+      // If color is null, remove immediately
+      if (color === null) return false;
+      
+      // Low confidence detections (gray) fade faster
+      if (color === CONFIG.CONFIDENCE_LOW_COLOR) {
+        return age < CONFIG.DETECTION_TIMEOUT_LOW_CONFIDENCE_MS;
+      }
+      
+      // Others use standard timeout
+      return age < CONFIG.DETECTION_TIMEOUT_MS;
+    });
   }
 
   /**
@@ -507,12 +598,22 @@
     let yOffset = CONFIG.LABEL_MARGIN;
     
     currentDetections.forEach((detection, index) => {
-      // Create label text with confidence
-      const labelText = `${detection.name} (${Math.round(detection.confidence * 100)}%)`;
+      // Get confidence color
+      const confidenceColor = getConfidenceColor(detection.confidence);
+      if (!confidenceColor) return; // Skip if no valid color
       
-      // Measure text
-      const textMetrics = ctx.measureText(labelText);
-      const textWidth = textMetrics.width;
+      const confidencePercent = Math.round(detection.confidence * 100);
+      const confidenceText = `+${confidencePercent}%`;
+      
+      // Create label text parts
+      const nameText = detection.name;
+      
+      // Measure text parts
+      const nameMetrics = ctx.measureText(nameText);
+      const confidenceMetrics = ctx.measureText(confidenceText);
+      const spaceMetrics = ctx.measureText(' ');
+      
+      const totalWidth = nameMetrics.width + spaceMetrics.width + confidenceMetrics.width;
       const textHeight = CONFIG.LABEL_HEIGHT;
       
       // Position for text (on the left side of canvas, stacked vertically)
@@ -525,15 +626,20 @@
       }
       
       // Draw background
-      const bgWidth = textWidth + CONFIG.LABEL_PADDING * 2;
+      const bgWidth = totalWidth + CONFIG.LABEL_PADDING * 2;
       const bgHeight = textHeight + CONFIG.LABEL_PADDING * 2;
       
       ctx.fillStyle = CONFIG.LABEL_BACKGROUND;
       ctx.fillRect(x - CONFIG.LABEL_PADDING, y - CONFIG.LABEL_PADDING, bgWidth, bgHeight);
       
-      // Draw text
-      ctx.fillStyle = CONFIG.LABEL_COLOR;
-      ctx.fillText(labelText, x, y);
+      // Draw species name in white
+      ctx.fillStyle = CONFIG.LABEL_NAME_COLOR;
+      ctx.fillText(nameText, x, y);
+      
+      // Draw confidence in color-coded style
+      const confidenceX = x + nameMetrics.width + spaceMetrics.width;
+      ctx.fillStyle = confidenceColor;
+      ctx.fillText(confidenceText, confidenceX, y);
       
       // Update y offset for next label
       yOffset += bgHeight + 5;
