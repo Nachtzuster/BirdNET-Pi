@@ -212,6 +212,11 @@
   function resizeCanvas() {
     // Get the canvas container dimensions
     const container = canvas.parentElement;
+    if (!container) {
+      console.error('Canvas has no parent element');
+      return;
+    }
+    
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
     

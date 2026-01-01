@@ -142,9 +142,10 @@ canvas {
   display: block;
   width: 100%;
   height: 100%;
-  image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
-  image-rendering: -webkit-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
 }
 
 #loading-message {
@@ -265,6 +266,10 @@ canvas {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.hidden {
+  display: none !important;
 }
 
 .control-group {
@@ -429,7 +434,7 @@ canvas {
           Low-Cut Filter
         </label>
       </div>
-      <div id="lowcut-controls" style="display:none;">
+      <div id="lowcut-controls" class="hidden">
         <label>Cutoff Frequency:</label>
         <input type="range" id="lowcut-slider" min="50" max="500" value="200" step="10" />
         <span class="value-display" id="lowcut-value">200Hz</span>
@@ -573,7 +578,7 @@ canvas {
       lowcutCheckbox.addEventListener('change', function() {
         VerticalSpectrogram.setLowCutFilter(this.checked);
         // Show/hide frequency slider when filter is enabled
-        lowcutControls.style.display = this.checked ? 'block' : 'none';
+        lowcutControls.classList.toggle('hidden', !this.checked);
       });
       
       lowcutSlider.addEventListener('input', function() {
