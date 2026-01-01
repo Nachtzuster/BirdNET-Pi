@@ -31,6 +31,7 @@
     LABEL_BACKGROUND: 'rgba(0, 0, 0, 0.6)',
     LABEL_PADDING: 4,
     LABEL_MARGIN: 10, // Margin from canvas edges
+    LABEL_BOTTOM_OFFSET: 50, // Distance from bottom for recent detections
     
     // Spectrogram configuration
     FFT_SIZE: 2048,
@@ -273,6 +274,8 @@
    */
   function fetchDetections() {
     const xhr = new XMLHttpRequest();
+    // Note: Using the original spectrogram.php endpoint which handles detection data
+    // The endpoint is shared between horizontal and vertical spectrogram views
     xhr.open('GET', 'spectrogram.php?ajax_csv=true&newest_file=' + (newestDetectionFile || ''), true);
     
     xhr.onload = function() {
@@ -323,8 +326,8 @@
         start: detection.start,
         delay: delay,
         // Calculate Y position (bottom is newer)
-        // This is a simplified calculation - adjust based on your timing needs
-        y: canvas.height - 50, // Position near bottom for recent detections
+        // Position near bottom for recent detections using configured offset
+        y: canvas.height - CONFIG.LABEL_BOTTOM_OFFSET,
         timestamp: Date.now()
       };
     });

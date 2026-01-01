@@ -21,7 +21,10 @@ if(isset($_GET['ajax_csv'])) {
     $look_in_directory = $STREAM_DATA_DIR;
     $files = scandir($look_in_directory, SCANDIR_SORT_ASCENDING);
     //Extract the filename, positions 0 and 1 are the folder hierarchy '.' and '..'
-    $newest_file = $files[2];
+    $newest_file = isset($files[2]) ? $files[2] : null;
+    if ($newest_file === null) {
+      die(); // No files available
+    }
   }
   else {
     $look_in_directory = $STREAM_DATA_DIR;
@@ -47,7 +50,7 @@ if(isset($_GET['ajax_csv'])) {
     foreach ($files as $file_idx => $stream_file_name) {
         //Skip the folder hierarchy entries
         if ($stream_file_name != "." && $stream_file_name != "..") {
-            //See if the filename contains the correct RTSP name, also only check .wav.csv files
+            //See if the filename contains the correct RTSP name, also only check .wav.json files
             if (stripos($stream_file_name, 'RTSP_' . $RTSP_STREAM_LISTENED_TO) !== false && stripos($stream_file_name, '.wav.json') !== false) {
                 //Found a match - set it as the newest file
                 $newest_file = $stream_file_name;
@@ -262,6 +265,7 @@ canvas {
             $contents = preg_replace("/RTSP_STREAM_TO_LIVESTREAM=.*/", "RTSP_STREAM_TO_LIVESTREAM=\"0\"", $contents);
             $fh = fopen("/etc/birdnet/birdnet.conf", "w");
             fwrite($fh, $contents);
+            fclose($fh);
             get_config($force_reload=true);
             exec("sudo systemctl restart livestream.service");
           }
