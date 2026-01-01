@@ -274,8 +274,10 @@
    */
   function fetchDetections() {
     const xhr = new XMLHttpRequest();
-    // Note: Using the original spectrogram.php endpoint which handles detection data
-    // The endpoint is shared between horizontal and vertical spectrogram views
+    // Note: This uses the shared detection data endpoint from spectrogram.php
+    // The vertical_spectrogram.php file includes the same AJAX handling code
+    // so the endpoint works regardless of which view is active.
+    // The endpoint path is relative to the current page location.
     xhr.open('GET', 'spectrogram.php?ajax_csv=true&newest_file=' + (newestDetectionFile || ''), true);
     
     xhr.onload = function() {

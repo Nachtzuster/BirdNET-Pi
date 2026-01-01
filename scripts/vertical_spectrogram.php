@@ -260,7 +260,7 @@ canvas {
           <?php
           //The setting representing which livestream to stream is more than the number of RTSP streams available
           //maybe the list of streams has been modified
-          if (array_key_exists($config['RTSP_STREAM_TO_LIVESTREAM'], $RTSP_Stream_Config) === false) {
+          if (isset($config['RTSP_STREAM_TO_LIVESTREAM']) && array_key_exists($config['RTSP_STREAM_TO_LIVESTREAM'], $RTSP_Stream_Config) === false) {
             $contents = file_get_contents('/etc/birdnet/birdnet.conf');
             $contents = preg_replace("/RTSP_STREAM_TO_LIVESTREAM=.*/", "RTSP_STREAM_TO_LIVESTREAM=\"0\"", $contents);
             $fh = fopen("/etc/birdnet/birdnet.conf", "w");
@@ -274,11 +274,11 @@ canvas {
           foreach ($RTSP_Stream_Config as $stream_id => $stream_host) {
             $isSelected = "";
             //Match up the selected value saved in config so we can preselect it
-            if ($config['RTSP_STREAM_TO_LIVESTREAM'] == $stream_id) {
+            if (isset($config['RTSP_STREAM_TO_LIVESTREAM']) && $config['RTSP_STREAM_TO_LIVESTREAM'] == $stream_id) {
               $isSelected = 'selected="selected"';
             }
-            //Create the select option
-            echo "<option value=" . $stream_id . " $isSelected >" . $stream_host . "</option>";
+            //Create the select option - escape output to prevent XSS
+            echo "<option value=\"" . htmlspecialchars($stream_id, ENT_QUOTES, 'UTF-8') . "\" $isSelected>" . htmlspecialchars($stream_host, ENT_QUOTES, 'UTF-8') . "</option>";
           }
           ?>
         </select>
