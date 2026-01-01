@@ -182,11 +182,24 @@ function applyText(text,x,y,opacity) {
   if(opacity < 0.2) {
     opacity = 0.2;
   }
-  CTX.textAlign = "center";
-    CTX.fillStyle = "rgba(255, 255, 255, "+opacity+")";
-  CTX.font = '15px Roboto Flex';
-  //fitTextOnCanvas(text,"Roboto Flex",document.body.querySelector('canvas').scrollHeight * 0.35)
-  CTX.fillText(text,parseInt(x),y)
+  
+  // Save context state
+  CTX.save();
+  
+  // Position at bottom of canvas and rotate 90 degrees
+  const bottomY = document.body.querySelector('canvas').height - 10;
+  CTX.translate(parseInt(x), bottomY);
+  CTX.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
+  
+  // Draw text
+  CTX.textAlign = "right";
+  CTX.fillStyle = "rgba(255, 255, 255, "+opacity+")";
+  CTX.font = '13px Roboto Flex';
+  CTX.fillText(text, 0, 0);
+  
+  // Restore context state
+  CTX.restore();
+  
   CTX.fillStyle = 'hsl(280, 100%, 10%)';
 }
 
@@ -364,6 +377,45 @@ function initialize() {
     CTX.fillStyle = 'hsl(280, 100%, 10%)';
     CTX.fillRect(0, 0, W, H);
 
+    // Define frequency lines to draw (in Hz)
+    // These will be drawn as horizontal lines across the spectrogram
+    const SAMPLE_RATE = 48000; // Standard audio sample rate
+    const NYQUIST = SAMPLE_RATE / 2; // Maximum frequency
+    const FREQUENCY_LINES = [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000]; // Hz
+    
+    // Function to draw frequency grid lines
+    function drawFrequencyLines() {
+      CTX.save();
+      CTX.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      CTX.lineWidth = 1;
+      CTX.setLineDash([5, 5]);
+      
+      FREQUENCY_LINES.forEach(freq => {
+        if (freq <= NYQUIST) {
+          // Calculate Y position for this frequency
+          const binIndex = (freq / NYQUIST) * LEN;
+          const y = H - (binIndex * h);
+          
+          // Draw horizontal line
+          CTX.beginPath();
+          CTX.moveTo(0, y);
+          CTX.lineTo(W, y);
+          CTX.stroke();
+          
+          // Draw frequency label
+          CTX.fillStyle = 'rgba(255, 255, 255, 0.5)';
+          CTX.font = '10px Roboto Flex';
+          CTX.textAlign = 'left';
+          CTX.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 5, y - 2);
+        }
+      });
+      
+      CTX.restore();
+    }
+    
+    // Draw initial frequency lines
+    drawFrequencyLines();
+
     loop();
 
     function loop(time) {
@@ -382,6 +434,10 @@ function initialize() {
 
       CTX.fillRect(0, 0, W, H);
       CTX.putImageData(imgData, 0, 0);
+      
+      // Redraw frequency lines after scrolling
+      drawFrequencyLines();
+      
       ANALYSER.getByteFrequencyData(DATA);
       for (let i = 0; i < LEN; i++) {
         let rat = DATA[i] / 255 ;

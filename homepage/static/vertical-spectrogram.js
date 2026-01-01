@@ -53,6 +53,14 @@
     LOW_CUT_MIN_FREQUENCY: 50, // Hz - Minimum allowed filter frequency
     LOW_CUT_MAX_FREQUENCY: 500, // Hz - Maximum allowed filter frequency (UI limit)
     LOW_CUT_ABSOLUTE_MAX: 2000, // Hz - Absolute maximum to prevent invalid values
+    
+    // Frequency grid configuration
+    SHOW_FREQUENCY_GRID: true,
+    SAMPLE_RATE: 48000, // Standard audio sample rate
+    FREQUENCY_LINES: [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000], // Hz
+    GRID_LINE_COLOR: 'rgba(255, 255, 255, 0.15)',
+    GRID_LABEL_COLOR: 'rgba(255, 255, 255, 0.5)',
+    GRID_LABEL_FONT: '10px Roboto Flex',
   };
 
   // =================== Color Schemes ===================
@@ -276,6 +284,50 @@
   }
 
   /**
+   * Draw frequency grid lines on the canvas
+   * In vertical mode, frequency lines are vertical (time flows vertically)
+   */
+  function drawFrequencyGrid() {
+    if (!CONFIG.SHOW_FREQUENCY_GRID) return;
+    
+    ctx.save();
+    ctx.strokeStyle = CONFIG.GRID_LINE_COLOR;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 5]);
+    
+    const nyquist = CONFIG.SAMPLE_RATE / 2;
+    const dataLength = frequencyData.length;
+    const barWidth = canvas.width / dataLength;
+    
+    CONFIG.FREQUENCY_LINES.forEach(freq => {
+      if (freq <= nyquist) {
+        // Calculate X position for this frequency
+        const binIndex = (freq / nyquist) * dataLength;
+        const x = binIndex * barWidth;
+        
+        // Draw vertical line
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+        
+        // Draw frequency label at top
+        ctx.fillStyle = CONFIG.GRID_LABEL_COLOR;
+        ctx.font = CONFIG.GRID_LABEL_FONT;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.save();
+        ctx.translate(x + 2, 5);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 0, 0);
+        ctx.restore();
+      }
+    });
+    
+    ctx.restore();
+  }
+
+  /**
    * Render a single frame
    */
   function renderFrame() {
@@ -289,6 +341,9 @@
     
     // Draw new FFT row at the bottom
     drawFFTRow();
+    
+    // Draw frequency grid lines
+    drawFrequencyGrid();
     
     // Draw detection labels (they don't scroll)
     drawDetectionLabels();

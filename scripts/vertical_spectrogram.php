@@ -417,6 +417,12 @@ canvas {
           <option value="greenwhite">Green-White</option>
         </select>
       </div>
+      <div>
+        <label>
+          <input type="checkbox" id="frequency-grid-checkbox" checked />
+          Show Frequency Grid
+        </label>
+      </div>
     </div>
     <div class="control-group">
       <div class="control-group-title">Detection Filters</div>
@@ -567,6 +573,14 @@ canvas {
       const colorSchemeSelect = document.getElementById('color-scheme-select');
       colorSchemeSelect.addEventListener('change', function() {
         VerticalSpectrogram.setColorScheme(this.value);
+      });
+
+      // Frequency grid toggle
+      const frequencyGridCheckbox = document.getElementById('frequency-grid-checkbox');
+      frequencyGridCheckbox.addEventListener('change', function() {
+        VerticalSpectrogram.updateConfig({
+          SHOW_FREQUENCY_GRID: this.checked
+        });
       });
 
       // Low-cut filter control
