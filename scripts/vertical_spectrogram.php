@@ -143,7 +143,6 @@ canvas {
   width: 100%;
   height: 100%;
   /* Use crisp edges for better spectrogram clarity */
-  image-rendering: -webkit-optimize-contrast; /* Chrome/Safari */
   image-rendering: -moz-crisp-edges;          /* Firefox */
   image-rendering: crisp-edges;               /* Standard */
 }

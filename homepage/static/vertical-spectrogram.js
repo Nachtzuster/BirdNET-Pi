@@ -61,6 +61,8 @@
     GRID_LINE_COLOR: 'rgba(255, 255, 255, 0.15)',
     GRID_LABEL_COLOR: 'rgba(255, 255, 255, 0.5)',
     GRID_LABEL_FONT: '10px Roboto Flex',
+    GRID_LABEL_OFFSET_X: 2, // Horizontal offset for grid labels
+    GRID_LABEL_OFFSET_Y: 5, // Vertical offset for grid labels
   };
 
   // =================== Color Schemes ===================
@@ -221,9 +223,7 @@
     // Get the canvas container dimensions
     const container = canvas.parentElement;
     if (!container) {
-      const error = 'Canvas has no parent element - cannot resize';
-      console.error(error);
-      throw new Error(error);
+      throw new Error('Canvas has no parent element - cannot resize');
     }
     
     canvas.width = container.clientWidth;
@@ -317,7 +317,7 @@
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.save();
-        ctx.translate(x + 2, 5);
+        ctx.translate(x + CONFIG.GRID_LABEL_OFFSET_X, CONFIG.GRID_LABEL_OFFSET_Y);
         ctx.rotate(-Math.PI / 2);
         ctx.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 0, 0);
         ctx.restore();

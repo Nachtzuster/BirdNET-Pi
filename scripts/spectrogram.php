@@ -186,8 +186,11 @@ function applyText(text,x,y,opacity) {
   // Save context state
   CTX.save();
   
+  // Get canvas element (cached in the rendering context)
+  const canvasEl = document.body.querySelector('canvas');
+  
   // Position at bottom of canvas and rotate 90 degrees
-  const bottomY = document.body.querySelector('canvas').height - 10;
+  const bottomY = canvasEl.height - 10;
   CTX.translate(parseInt(x), bottomY);
   CTX.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
   
