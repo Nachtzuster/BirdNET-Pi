@@ -63,6 +63,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <button type="submit" name="view" value="Overview" form="views">Overview</button>
   <button type="submit" name="view" value="Todays Detections" form="views">Today's Detections</button>
   <button type="submit" name="view" value="Spectrogram" form="views">Spectrogram</button>
+  <button type="submit" name="view" value="Vertical Spectrogram" form="views">Vertical Spectrogram</button>
   <button type="submit" name="view" value="Species Stats" form="views">Best Recordings</button>
   <button type="submit" name="view" value="Streamlit" form="views">Species Stats</button>
   <button type="submit" name="view" value="Daily Charts" form="views">Daily Charts</button>
@@ -150,6 +151,7 @@ if(isset($_GET['view'])){
     include('scripts/service_controls.php');
   }
   if($_GET['view'] == "Spectrogram"){include('spectrogram.php');}
+  if($_GET['view'] == "Vertical Spectrogram"){include('scripts/vertical_spectrogram.php');}
   if($_GET['view'] == "View Log"){echo "<body style=\"scroll:no;overflow-x:hidden;\"><iframe style=\"width:calc( 100% + 1em);\" src=\"log\"></iframe></body>";}
   if($_GET['view'] == "Overview"){include('overview.php');}
   if($_GET['view'] == "Todays Detections"){include('todays_detections.php');}
