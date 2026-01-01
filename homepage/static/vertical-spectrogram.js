@@ -230,6 +230,10 @@
     ctx.fillStyle = scheme.background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Set better text rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    
     // Create image data buffer
     imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   }
@@ -429,7 +433,7 @@
 
   /**
    * Draw detection labels on canvas
-   * Labels are rotated 90° and don't scroll with spectrogram
+   * Labels are displayed on the left side of the canvas in a fixed position
    */
   function drawDetectionLabels() {
     if (currentDetections.length === 0) return;
@@ -437,7 +441,7 @@
     ctx.save();
     ctx.font = CONFIG.LABEL_FONT;
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
+    ctx.textBaseline = 'top';
     
     let yOffset = CONFIG.LABEL_MARGIN;
     
@@ -448,36 +452,30 @@
       // Measure text
       const textMetrics = ctx.measureText(labelText);
       const textWidth = textMetrics.width;
-      const textHeight = CONFIG.LABEL_HEIGHT; // Use configured height
+      const textHeight = CONFIG.LABEL_HEIGHT;
       
-      // Position for rotated text (on the right side of canvas)
-      const x = canvas.width - CONFIG.LABEL_MARGIN - textHeight;
-      const y = yOffset + textWidth / 2;
+      // Position for text (on the left side of canvas, stacked vertically)
+      const x = CONFIG.LABEL_MARGIN;
+      const y = yOffset;
       
       // Check if label fits on screen
-      if (y + textWidth / 2 > canvas.height - CONFIG.LABEL_MARGIN) {
+      if (y + textHeight > canvas.height - CONFIG.LABEL_MARGIN) {
         return; // Skip labels that don't fit
       }
       
       // Draw background
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(-Math.PI / 2); // Rotate 90° counterclockwise
-      
       const bgWidth = textWidth + CONFIG.LABEL_PADDING * 2;
       const bgHeight = textHeight + CONFIG.LABEL_PADDING * 2;
       
       ctx.fillStyle = CONFIG.LABEL_BACKGROUND;
-      ctx.fillRect(-CONFIG.LABEL_PADDING, -bgHeight / 2, bgWidth, bgHeight);
+      ctx.fillRect(x - CONFIG.LABEL_PADDING, y - CONFIG.LABEL_PADDING, bgWidth, bgHeight);
       
       // Draw text
       ctx.fillStyle = CONFIG.LABEL_COLOR;
-      ctx.fillText(labelText, 0, 0);
-      
-      ctx.restore();
+      ctx.fillText(labelText, x, y);
       
       // Update y offset for next label
-      yOffset += textWidth + CONFIG.LABEL_PADDING * 2 + 5;
+      yOffset += bgHeight + 5;
     });
     
     ctx.restore();
