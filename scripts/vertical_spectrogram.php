@@ -165,7 +165,7 @@ canvas {
   backdrop-filter: blur(8px);
   color: white;
   font-size: 14px;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 15px;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
   z-index: 20;
