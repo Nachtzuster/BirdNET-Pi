@@ -314,6 +314,20 @@ function initialize() {
 
   ANALYSER.fftSize = 2048;  
   
+  // Handle orientation changes on mobile devices
+  window.addEventListener('orientationchange', function() {
+    setTimeout(function() {
+      CVS.width = window.innerWidth;
+      CVS.height = window.innerHeight;
+    }, 100);
+  });
+  
+  // Handle window resize
+  window.addEventListener('resize', function() {
+    CVS.width = window.innerWidth;
+    CVS.height = window.innerHeight;
+  });
+  
   try{
     process();
   } catch(e) {
@@ -402,6 +416,74 @@ h1 {
   left: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
+}
+
+/* Mobile landscape orientation optimizations */
+@media only screen and (max-width: 768px) and (orientation: landscape) {
+  canvas {
+    height: 75%;
+  }
+  
+  .centered {
+    font-size: 0.8em;
+    padding: 5px 0;
+  }
+  
+  .centered label {
+    font-size: 0.9em;
+  }
+  
+  .centered input[type="range"] {
+    width: 60px;
+    height: 25px;
+  }
+  
+  .centered select {
+    font-size: 0.85em;
+    padding: 3px;
+  }
+  
+  .centered input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Make controls more touch-friendly */
+  .centered > div {
+    margin: 0 5px;
+  }
+}
+
+/* Mobile portrait orientation optimizations */
+@media only screen and (max-width: 768px) and (orientation: portrait) {
+  canvas {
+    height: 80%;
+  }
+  
+  .centered {
+    font-size: 0.85em;
+    flex-wrap: wrap;
+  }
+  
+  .centered > div {
+    margin: 5px 3px;
+  }
+  
+  .centered input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Tablet landscape orientation */
+@media only screen and (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+  canvas {
+    height: 82%;
+  }
+  
+  .centered {
+    padding: 8px 0;
+  }
 }
 </style>
 

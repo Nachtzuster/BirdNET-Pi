@@ -14,7 +14,7 @@ Icon made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from 
 </p>
 
 ## About this fork:
-I've been building on [mcguirepr89's](https://github.com/mcguirepr89/BirdNET-Pi) most excellent work to further update and improve BirdNET-Pi. Maybe someone will find it useful.
+This is a fork of [Nachtzuster's BirdNET-Pi](https://github.com/Nachtzuster/BirdNET-Pi), which builds on [mcguirepr89's](https://github.com/mcguirepr89/BirdNET-Pi) excellent work. This fork includes additional features and customizations for migration counting and enhanced mobile viewing.
 
 Changes include:
 
@@ -61,6 +61,8 @@ Check out birds from around the world
 * An SD Card with the **_64-bit version of RaspiOS_** installed (please use Trixie) -- Lite is recommended, but the installation works on RaspiOS-ARM64-Full as well. Downloads available within the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 * A USB Microphone or Sound Card
 
+**Note:** This fork uses TFLite runtime files directly from the [Nachtzuster/BirdNET-Pi releases](https://github.com/Nachtzuster/BirdNET-Pi/releases/tag/v0.1) to automatically stay up-to-date with their maintained versions.
+
 ## Installation
 [A comprehensive installation guide is available here](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Installation-Guide). This guide is slightly out-dated: make sure to pick Bookworm, also the curl command is still pointing to mcguirepr89's repo.
 
@@ -70,7 +72,7 @@ Please note that installing BirdNET-Pi on top of other servers is not supported.
 
 The system can be installed with:
 ```
-curl -s https://raw.githubusercontent.com/Nachtzuster/BirdNET-Pi/main/newinstaller.sh | bash
+curl -s https://raw.githubusercontent.com/YvedD/BirdNET-Pi-MigCount/main/newinstaller.sh | bash
 ```
 The installer takes care of any and all necessary updates, so you can run that as the very first command upon the first boot, if you'd like.
 
@@ -96,6 +98,23 @@ Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki)
 ## Updating 
 
 Use the web interface and go to "Tools" > "System Controls" > "Update". If you encounter any issues with that, or suspect that the update did not work for some reason, please save its output and post it in an issue where we can help.
+
+### Manual Update via Terminal
+
+If you need to update manually via terminal, use these commands:
+```bash
+cd ~/BirdNET-Pi
+git fetch origin main
+git reset --hard origin/main
+./scripts/update_birdnet.sh
+```
+
+To check if updates are available:
+```bash
+cd ~/BirdNET-Pi
+git fetch origin main
+git status
+```
 
 ## Backup and Restore
 Use the web interface and go to "Tools" > "System Controls" > "Backup" or "Restore". Backup/Restore is primary meant for migrating your data for one system to another. Since the time required to create or restore a backup depends on the size of the data set and the speed of the storage, this could take quite a while.
@@ -129,13 +148,12 @@ cpu-model: BirdNet
 /usr/local/bin/uninstall.sh && cd ~ && rm -drf BirdNET-Pi
 ```
 ## Migrating
-Before switching, make sure your installation is fully up-to-date. Also make sure to have a backup, that is also the only way to get back to the original BirdNET-Pi.
-Please note that upgrading your underlying OS to Bookworm is not going to work. Please stick to Bullseye. If you do want Bookworm, you need to start from a fresh install and copy back your data. (remember the backup!)
+To switch from another BirdNET-Pi fork to BirdNET-Pi-MigCount, make sure your installation is fully up-to-date and create a backup first.
 
-Run these commands to migrate to this repo:
+Run these commands to migrate to this repository:
 ```
 git remote remove origin
-git remote add origin https://github.com/Nachtzuster/BirdNET-Pi.git
+git remote add origin https://github.com/YvedD/BirdNET-Pi-MigCount
 ./scripts/update_birdnet.sh
 ```
 ## Troubleshooting and Ideas
