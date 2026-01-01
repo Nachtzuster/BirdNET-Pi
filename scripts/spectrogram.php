@@ -470,8 +470,10 @@ function initialize() {
     
     // Function to draw frequency grid lines
     function drawFrequencyLines() {
+      if (!showGrid) return; // Skip if grid is disabled
+      
       CTX.save();
-      CTX.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      CTX.strokeStyle = 'rgba(128, 128, 128, 0.3)'; // Medium gray with lower opacity
       CTX.lineWidth = 1;
       CTX.setLineDash([5, 5]);
       
@@ -488,7 +490,7 @@ function initialize() {
           CTX.stroke();
           
           // Draw frequency label
-          CTX.fillStyle = 'rgba(255, 255, 255, 0.5)';
+          CTX.fillStyle = 'rgba(180, 180, 180, 0.6)'; // Light gray for labels
           CTX.font = '10px Roboto Flex';
           CTX.textAlign = 'left';
           CTX.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 5, y - 2);
@@ -626,9 +628,69 @@ h1 {
     padding: 8px 0;
   }
 }
+
+.control-section {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+}
+
+.control-section label {
+  font-weight: 500;
+  margin-right: 5px;
+}
+
+.control-section input[type="number"],
+.control-section input[type="range"],
+.control-section select {
+  margin: 0 5px;
+}
+
+.control-section button {
+  padding: 4px 10px;
+  margin-left: 5px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 3px;
+}
+
+.control-section button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
 </style>
 
 <img id="spectrogramimage" style="width:100%;height:100%;display:none" src="spectrogram.png?nocache=<?php echo $time;?>">
+
+<div class="control-section centered" style="font-size: 0.9em;">
+  <div style="display:inline; margin-right: 15px;">
+    <label>Width:</label>
+    <input type="number" id="canvas-width" min="400" max="3000" value="0" step="50" style="width: 80px;" />
+  </div>
+  <div style="display:inline; margin-right: 15px;">
+    <label>Height:</label>
+    <input type="number" id="canvas-height" min="300" max="2000" value="0" step="50" style="width: 80px;" />
+  </div>
+  <div style="display:inline; margin-right: 15px;">
+    <button id="apply-canvas-size">Apply Size</button>
+    <button id="reset-canvas-size">Reset</button>
+  </div>
+  &mdash;
+  <div style="display:inline; margin-right: 15px;">
+    <label>Min Confidence:</label>
+    <input type="range" id="confidence-threshold" min="10" max="100" value="70" step="5" style="width: 100px;" />
+    <span id="confidence-value">70%</span>
+  </div>
+  &mdash;
+  <div style="display:inline;">
+    <label>
+      <input type="checkbox" id="show-frequency-grid" checked />
+      Frequency Grid
+    </label>
+  </div>
+</div>
 
 <div class="centered">
 	<?php
@@ -766,4 +828,66 @@ var freqshift = document.getElementById("freqshift");
 freqshift.onclick = function() {
   toggleFreqshift(this.checked);
 }
+
+// Canvas size controls
+var canvasWidthInput = document.getElementById("canvas-width");
+var canvasHeightInput = document.getElementById("canvas-height");
+var applyCanvasSizeBtn = document.getElementById("apply-canvas-size");
+var resetCanvasSizeBtn = document.getElementById("reset-canvas-size");
+var canvasElement = document.body.querySelector('canvas');
+
+// Set initial values from current canvas size
+canvasWidthInput.value = window.innerWidth;
+canvasHeightInput.value = window.innerHeight;
+
+applyCanvasSizeBtn.onclick = function() {
+  var width = parseInt(canvasWidthInput.value);
+  var height = parseInt(canvasHeightInput.value);
+  
+  // Validate dimensions
+  if (isNaN(width) || width < 400 || width > 3000) {
+    alert('Width must be between 400 and 3000 pixels.');
+    return;
+  }
+  if (isNaN(height) || height < 300 || height > 2000) {
+    alert('Height must be between 300 and 2000 pixels.');
+    return;
+  }
+  
+  // Set canvas size using style properties
+  if (canvasElement) {
+    canvasElement.style.width = width + 'px';
+    canvasElement.style.height = height + 'px';
+    canvasElement.width = width;
+    canvasElement.height = height;
+  }
+};
+
+resetCanvasSizeBtn.onclick = function() {
+  canvasWidthInput.value = window.innerWidth;
+  canvasHeightInput.value = window.innerHeight;
+  if (canvasElement) {
+    canvasElement.style.width = '100%';
+    canvasElement.style.height = '85%';
+    canvasElement.width = window.innerWidth;
+    canvasElement.height = window.innerHeight;
+  }
+};
+
+// Confidence threshold control
+var confidenceSlider = document.getElementById("confidence-threshold");
+var confidenceValue = document.getElementById("confidence-value");
+
+confidenceSlider.oninput = function() {
+  confidenceValue.textContent = this.value + '%';
+  DETECTION_CONFIG.MIN_CONFIDENCE_THRESHOLD = parseInt(this.value) / 100;
+};
+
+// Frequency grid toggle
+var showFrequencyGrid = document.getElementById("show-frequency-grid");
+var showGrid = true;
+
+showFrequencyGrid.onclick = function() {
+  showGrid = this.checked;
+};
 </script>

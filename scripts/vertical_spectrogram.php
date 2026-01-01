@@ -134,8 +134,8 @@ html, body {
   position: relative;
   flex: 1;
   height: 100%;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
 }
 
 canvas {
@@ -286,6 +286,15 @@ canvas {
   font-weight: 600;
 }
 
+.size-input {
+  width: 100%;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
 /* Mobile optimizations */
 @media only screen and (max-width: 768px) {
   #main-container {
@@ -328,6 +337,7 @@ canvas {
       <div class="sidebar-header">
         <h3>Spectrogram Controls</h3>
         <div class="button-group">
+          <button class="control-button" id="new-tab-button" title="Open in New Tab" aria-label="Open in New Tab">↗</button>
           <button class="control-button" id="fullscreen-button" title="Toggle Fullscreen" aria-label="Toggle Fullscreen Mode">⛶</button>
         </div>
       </div>
@@ -424,6 +434,20 @@ canvas {
       </div>
     </div>
     <div class="control-group">
+      <div class="control-group-title">Canvas Size</div>
+      <div>
+        <label>Width (px):</label>
+        <input type="number" id="canvas-width-input" min="200" max="2000" value="600" step="50" class="size-input" />
+      </div>
+      <div style="margin-top: 8px;">
+        <label>Height (px):</label>
+        <input type="number" id="canvas-height-input" min="200" max="2000" value="800" step="50" class="size-input" />
+      </div>
+      <div style="margin-top: 8px;">
+        <button class="control-button" id="apply-size-button" style="width: 100%; padding: 8px;">Apply Size</button>
+      </div>
+    </div>
+    <div class="control-group">
       <div class="control-group-title">Detection Filters</div>
       <div>
         <label>Min Confidence:</label>
@@ -509,6 +533,12 @@ canvas {
     });
 
     function setupControlButtons() {
+      // New Tab button
+      const newTabButton = document.getElementById('new-tab-button');
+      newTabButton.addEventListener('click', function() {
+        window.open(window.location.href, '_blank');
+      });
+
       // Fullscreen button
       const fullscreenButton = document.getElementById('fullscreen-button');
       fullscreenButton.addEventListener('click', function() {
@@ -602,6 +632,39 @@ canvas {
         const value = parseInt(this.value);
         lowcutValue.textContent = value + 'Hz';
         VerticalSpectrogram.setLowCutFrequency(value);
+      });
+
+      // Canvas size controls
+      const canvasWidthInput = document.getElementById('canvas-width-input');
+      const canvasHeightInput = document.getElementById('canvas-height-input');
+      const applySizeButton = document.getElementById('apply-size-button');
+      
+      // Set initial values from current canvas size
+      const canvasContainer = document.getElementById('canvas-container');
+      canvasWidthInput.value = canvasContainer.clientWidth;
+      canvasHeightInput.value = canvasContainer.clientHeight;
+      
+      applySizeButton.addEventListener('click', function() {
+        const width = parseInt(canvasWidthInput.value);
+        const height = parseInt(canvasHeightInput.value);
+        
+        // Validate dimensions
+        if (isNaN(width) || width < 200 || width > 2000) {
+          alert('Width must be between 200 and 2000 pixels.');
+          return;
+        }
+        if (isNaN(height) || height < 200 || height > 2000) {
+          alert('Height must be between 200 and 2000 pixels.');
+          return;
+        }
+        
+        canvasContainer.style.width = width + 'px';
+        canvasContainer.style.height = height + 'px';
+        canvasContainer.style.maxWidth = width + 'px';
+        canvasContainer.style.flex = 'none';
+        
+        // Trigger resize event to update canvas
+        window.dispatchEvent(new Event('resize'));
       });
 
       // RTSP stream selector

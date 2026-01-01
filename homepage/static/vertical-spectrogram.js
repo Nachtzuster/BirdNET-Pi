@@ -69,8 +69,8 @@
     SHOW_FREQUENCY_GRID: true,
     SAMPLE_RATE: 48000, // Standard audio sample rate
     FREQUENCY_LINES: [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000], // Hz
-    GRID_LINE_COLOR: 'rgba(255, 255, 255, 0.15)',
-    GRID_LABEL_COLOR: 'rgba(255, 255, 255, 0.5)',
+    GRID_LINE_COLOR: 'rgba(128, 128, 128, 0.3)', // Medium gray with lower opacity
+    GRID_LABEL_COLOR: 'rgba(180, 180, 180, 0.6)', // Light gray for labels
     GRID_LABEL_FONT: '10px Roboto Flex',
     GRID_LABEL_OFFSET_X: 2, // Horizontal offset for grid labels
     GRID_LABEL_OFFSET_Y: 5, // Vertical offset for grid labels
