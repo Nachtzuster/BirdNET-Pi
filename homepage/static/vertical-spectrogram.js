@@ -43,6 +43,67 @@
     // Color mapping for frequency data
     MIN_HUE: 280,
     HUE_RANGE: 120,
+    
+    // Color scheme (default: 'purple', options: 'purple', 'blackwhite', 'lava', 'greenwhite')
+    COLOR_SCHEME: 'purple',
+    
+    // Low-cut filter configuration
+    LOW_CUT_ENABLED: false,
+    LOW_CUT_FREQUENCY: 200, // Hz - Default cutoff frequency for high-pass filter
+    LOW_CUT_MIN_FREQUENCY: 50, // Hz - Minimum allowed filter frequency
+    LOW_CUT_MAX_FREQUENCY: 500, // Hz - Maximum allowed filter frequency (UI limit)
+    LOW_CUT_ABSOLUTE_MAX: 2000, // Hz - Absolute maximum to prevent invalid values
+  };
+
+  // =================== Color Schemes ===================
+  const COLOR_SCHEMES = {
+    purple: {
+      background: 'hsl(280, 100%, 10%)',
+      getColor: function(normalizedValue) {
+        const hue = Math.round((normalizedValue * 120) + 280) % 360;
+        const saturation = 100;
+        const lightness = 10 + (70 * normalizedValue);
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+      }
+    },
+    blackwhite: {
+      background: '#000000',
+      getColor: function(normalizedValue) {
+        const intensity = Math.round(normalizedValue * 255);
+        return `rgb(${intensity}, ${intensity}, ${intensity})`;
+      }
+    },
+    lava: {
+      background: '#000000',
+      getColor: function(normalizedValue) {
+        // Lava color scheme: black -> red -> orange -> yellow -> white
+        // Color transition thresholds
+        const RED_TO_ORANGE_THRESHOLD = 0.33;
+        const ORANGE_TO_YELLOW_THRESHOLD = 0.66;
+        const REMAINING_RANGE = 0.34; // 1.0 - 0.66
+        const YELLOW_BRIGHTNESS_FACTOR = 0.22; // Controls white component in final stage
+        
+        if (normalizedValue < RED_TO_ORANGE_THRESHOLD) {
+          const r = Math.round((normalizedValue / RED_TO_ORANGE_THRESHOLD) * 255);
+          return `rgb(${r}, 0, 0)`;
+        } else if (normalizedValue < ORANGE_TO_YELLOW_THRESHOLD) {
+          const g = Math.round(((normalizedValue - RED_TO_ORANGE_THRESHOLD) / RED_TO_ORANGE_THRESHOLD) * 200);
+          return `rgb(255, ${g}, 0)`;
+        } else {
+          const intensity = Math.round(((normalizedValue - ORANGE_TO_YELLOW_THRESHOLD) / REMAINING_RANGE) * 255);
+          return `rgb(255, ${200 + Math.round(intensity * YELLOW_BRIGHTNESS_FACTOR)}, ${intensity})`;
+        }
+      }
+    },
+    greenwhite: {
+      background: '#000000',
+      getColor: function(normalizedValue) {
+        // Green to white color scheme
+        const green = Math.round(normalizedValue * 255);
+        const other = Math.round(normalizedValue * normalizedValue * 255); // Non-linear for better contrast
+        return `rgb(${other}, ${green}, ${other})`;
+      }
+    }
   };
 
   // =================== State Management ===================
@@ -50,6 +111,7 @@
   let analyser = null;
   let sourceNode = null;
   let gainNode = null;
+  let filterNode = null; // High-pass filter for low-cut
   let canvas = null;
   let ctx = null;
   let audioElement = null;
@@ -121,8 +183,16 @@
       gainNode = audioContext.createGain();
       gainNode.gain.value = 1;
       
-      // Connect nodes: source -> gain -> analyser -> destination
-      sourceNode.connect(gainNode);
+      // Create high-pass filter (low-cut filter)
+      filterNode = audioContext.createBiquadFilter();
+      filterNode.type = 'highpass';
+      filterNode.frequency.value = CONFIG.LOW_CUT_FREQUENCY;
+      filterNode.Q.value = 0.7071; // Butterworth response
+      
+      // Connect nodes: source -> filter -> gain -> analyser -> destination
+      // Filter is always in the chain but can be bypassed by setting frequency to 0
+      sourceNode.connect(filterNode);
+      filterNode.connect(gainNode);
       gainNode.connect(analyser);
       gainNode.connect(audioContext.destination);
       
@@ -153,8 +223,9 @@
    * Initialize image data buffer for scrolling
    */
   function initializeImageData() {
-    // Fill with background color
-    ctx.fillStyle = CONFIG.BACKGROUND_COLOR;
+    // Fill with background color from current color scheme
+    const scheme = COLOR_SCHEMES[CONFIG.COLOR_SCHEME] || COLOR_SCHEMES.purple;
+    ctx.fillStyle = scheme.background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Create image data buffer
@@ -218,8 +289,9 @@
     // Get current image data (excluding bottom row)
     const currentImage = ctx.getImageData(0, 1, canvas.width, canvas.height - 1);
     
-    // Clear canvas
-    ctx.fillStyle = CONFIG.BACKGROUND_COLOR;
+    // Clear canvas with current color scheme background
+    const scheme = COLOR_SCHEMES[CONFIG.COLOR_SCHEME] || COLOR_SCHEMES.purple;
+    ctx.fillStyle = scheme.background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Draw shifted image (moved up by 1 pixel)
@@ -234,16 +306,15 @@
     const barWidth = canvas.width / dataLength;
     const y = canvas.height - 1; // Bottom row
     
+    // Get current color scheme
+    const scheme = COLOR_SCHEMES[CONFIG.COLOR_SCHEME] || COLOR_SCHEMES.purple;
+    
     for (let i = 0; i < dataLength; i++) {
       const value = frequencyData[i];
       const normalizedValue = value / 255;
       
-      // Calculate color based on frequency intensity
-      const hue = Math.round((normalizedValue * CONFIG.HUE_RANGE) + CONFIG.MIN_HUE) % 360;
-      const saturation = 100;
-      const lightness = 10 + (70 * normalizedValue);
-      
-      ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+      // Get color from current scheme
+      ctx.fillStyle = scheme.getColor(normalizedValue);
       
       const x = i * barWidth;
       ctx.fillRect(x, y, Math.ceil(barWidth), 1);
@@ -467,6 +538,49 @@
     }
   }
 
+  /**
+   * Set color scheme
+   * @param {string} schemeName - Color scheme name ('purple', 'blackwhite', 'lava', 'greenwhite')
+   */
+  function setColorScheme(schemeName) {
+    if (COLOR_SCHEMES[schemeName]) {
+      CONFIG.COLOR_SCHEME = schemeName;
+      // Reinitialize background with new color scheme
+      initializeImageData();
+      console.log('Color scheme changed to:', schemeName);
+    } else {
+      console.error('Unknown color scheme:', schemeName);
+    }
+  }
+
+  /**
+   * Enable or disable low-cut filter
+   * @param {boolean} enabled - Whether to enable the filter
+   */
+  function setLowCutFilter(enabled) {
+    if (filterNode) {
+      CONFIG.LOW_CUT_ENABLED = enabled;
+      // When disabled, set frequency very low (effectively bypassing)
+      // When enabled, use configured frequency
+      filterNode.frequency.value = enabled ? CONFIG.LOW_CUT_FREQUENCY : 1;
+      console.log('Low-cut filter', enabled ? 'enabled' : 'disabled');
+    }
+  }
+
+  /**
+   * Set low-cut filter frequency
+   * @param {number} frequency - Cutoff frequency in Hz
+   */
+  function setLowCutFrequency(frequency) {
+    if (filterNode && frequency >= 0 && frequency <= CONFIG.LOW_CUT_ABSOLUTE_MAX) {
+      CONFIG.LOW_CUT_FREQUENCY = frequency;
+      if (CONFIG.LOW_CUT_ENABLED) {
+        filterNode.frequency.value = frequency;
+      }
+      console.log('Low-cut frequency set to:', frequency, 'Hz');
+    }
+  }
+
   // =================== Public API ===================
   
   window.VerticalSpectrogram = {
@@ -474,7 +588,11 @@
     stop,
     updateConfig,
     setGain,
-    CONFIG
+    setColorScheme,
+    setLowCutFilter,
+    setLowCutFrequency,
+    CONFIG,
+    COLOR_SCHEMES
   };
 
 })();
