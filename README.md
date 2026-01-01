@@ -61,7 +61,7 @@ Check out birds from around the world
 * An SD Card with the **_64-bit version of RaspiOS_** installed (please use Trixie) -- Lite is recommended, but the installation works on RaspiOS-ARM64-Full as well. Downloads available within the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 * A USB Microphone or Sound Card
 
-**Important Note:** This fork requires TFLite runtime files to be available in the releases. If you encounter installation issues related to TFLite downloads, please create an issue so these can be added to the releases section.
+**Note:** This fork uses TFLite runtime files directly from the [Nachtzuster/BirdNET-Pi releases](https://github.com/Nachtzuster/BirdNET-Pi/releases/tag/v0.1) to automatically stay up-to-date with their maintained versions.
 
 ## Installation
 [A comprehensive installation guide is available here](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Installation-Guide). This guide is slightly out-dated: make sure to pick Bookworm, also the curl command is still pointing to mcguirepr89's repo.
