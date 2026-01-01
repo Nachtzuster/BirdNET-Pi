@@ -160,6 +160,60 @@ canvas {
   font-size: 14px;
   z-index: 20;
   max-width: 90%;
+  transition: opacity 0.3s ease;
+}
+
+.controls.collapsed {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.controls.collapsed:hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 8px;
+}
+
+.controls-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.button-group {
+  display: flex;
+  gap: 5px;
+}
+
+.control-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s ease;
+}
+
+.control-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.controls-content {
+  display: block;
+}
+
+.controls.collapsed .controls-content {
+  display: none;
 }
 
 .controls > div {
@@ -256,7 +310,15 @@ canvas {
     <canvas id="spectrogram-canvas"></canvas>
   </div>
 
-  <div class="controls">
+  <div class="controls" id="controls-panel">
+    <div class="controls-header">
+      <h3>Controls</h3>
+      <div class="button-group">
+        <button class="control-button" id="fullscreen-button" title="Toggle Fullscreen">⛶</button>
+        <button class="control-button" id="collapse-button" title="Collapse Controls">−</button>
+      </div>
+    </div>
+    <div class="controls-content">
     <?php
     if (isset($RTSP_Stream_Config) && !empty($RTSP_Stream_Config)) {
       ?>
@@ -325,6 +387,22 @@ canvas {
       <input type="range" id="confidence-slider" min="10" max="100" value="70" step="5" />
       <span class="value-display" id="confidence-value">70%</span>
     </div>
+    <div>
+      <label>Color Scheme:</label>
+      <select id="color-scheme-select">
+        <option value="purple" selected>Purple</option>
+        <option value="blackwhite">Black-White</option>
+        <option value="lava">Lava</option>
+        <option value="greenwhite">Green-White</option>
+      </select>
+    </div>
+    <div>
+      <label>Low-Cut Filter:</label>
+      <input type="checkbox" id="lowcut-checkbox" />
+      <input type="range" id="lowcut-slider" min="50" max="500" value="200" step="10" style="display:none;" />
+      <span class="value-display" id="lowcut-value" style="display:none;">200Hz</span>
+    </div>
+    </div>
   </div>
 
   <!-- Hidden audio element for stream -->
@@ -383,7 +461,50 @@ canvas {
 
       // Setup controls
       setupControls();
+      setupControlButtons();
     });
+
+    function setupControlButtons() {
+      // Fullscreen button
+      const fullscreenButton = document.getElementById('fullscreen-button');
+      fullscreenButton.addEventListener('click', function() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.error('Error attempting to enable fullscreen:', err);
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      });
+
+      // Collapse button
+      const collapseButton = document.getElementById('collapse-button');
+      const controlsPanel = document.getElementById('controls-panel');
+      collapseButton.addEventListener('click', function() {
+        controlsPanel.classList.toggle('collapsed');
+        this.textContent = controlsPanel.classList.contains('collapsed') ? '+' : '−';
+      });
+
+      // Auto-hide controls after 5 seconds of inactivity
+      let hideTimer;
+      const resetHideTimer = function() {
+        clearTimeout(hideTimer);
+        controlsPanel.classList.remove('collapsed');
+        collapseButton.textContent = '−';
+        hideTimer = setTimeout(function() {
+          controlsPanel.classList.add('collapsed');
+          collapseButton.textContent = '+';
+        }, 5000);
+      };
+
+      // Reset timer on any interaction
+      document.addEventListener('mousemove', resetHideTimer);
+      document.addEventListener('touchstart', resetHideTimer);
+      document.addEventListener('click', resetHideTimer);
+      
+      // Start the timer
+      resetHideTimer();
+    }
 
     function setupControls() {
       // Gain control
@@ -429,6 +550,30 @@ canvas {
         VerticalSpectrogram.updateConfig({
           MIN_CONFIDENCE_THRESHOLD: value
         });
+      });
+
+      // Color scheme selector
+      const colorSchemeSelect = document.getElementById('color-scheme-select');
+      colorSchemeSelect.addEventListener('change', function() {
+        VerticalSpectrogram.setColorScheme(this.value);
+      });
+
+      // Low-cut filter control
+      const lowcutCheckbox = document.getElementById('lowcut-checkbox');
+      const lowcutSlider = document.getElementById('lowcut-slider');
+      const lowcutValue = document.getElementById('lowcut-value');
+      
+      lowcutCheckbox.addEventListener('change', function() {
+        VerticalSpectrogram.setLowCutFilter(this.checked);
+        // Show/hide frequency slider when filter is enabled
+        lowcutSlider.style.display = this.checked ? 'inline-block' : 'none';
+        lowcutValue.style.display = this.checked ? 'inline-block' : 'none';
+      });
+      
+      lowcutSlider.addEventListener('input', function() {
+        const value = parseInt(this.value);
+        lowcutValue.textContent = value + 'Hz';
+        VerticalSpectrogram.setLowCutFrequency(value);
       });
 
       // RTSP stream selector
