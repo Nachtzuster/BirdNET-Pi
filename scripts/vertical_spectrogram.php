@@ -605,20 +605,20 @@ canvas {
     const SETTINGS_KEY = 'verticalSpectrogramSettings';
     
     function saveSettings() {
-      const settings = {
-        gain: document.getElementById('gain-slider').value,
-        compression: document.getElementById('compression-checkbox').checked,
-        redrawInterval: document.getElementById('redraw-slider').value,
-        colorScheme: document.getElementById('color-scheme-select').value,
-        frequencyGrid: document.getElementById('frequency-grid-checkbox').checked,
-        canvasWidth: document.getElementById('canvas-width-input').value,
-        canvasHeight: document.getElementById('canvas-height-input').value,
-        minConfidence: document.getElementById('confidence-slider').value,
-        lowCutEnabled: document.getElementById('lowcut-checkbox').checked,
-        lowCutFrequency: document.getElementById('lowcut-slider').value
-      };
-      
       try {
+        const settings = {
+          gain: document.getElementById('gain-slider')?.value,
+          compression: document.getElementById('compression-checkbox')?.checked,
+          redrawInterval: document.getElementById('redraw-slider')?.value,
+          colorScheme: document.getElementById('color-scheme-select')?.value,
+          frequencyGrid: document.getElementById('frequency-grid-checkbox')?.checked,
+          canvasWidth: document.getElementById('canvas-width-input')?.value,
+          canvasHeight: document.getElementById('canvas-height-input')?.value,
+          minConfidence: document.getElementById('confidence-slider')?.value,
+          lowCutEnabled: document.getElementById('lowcut-checkbox')?.checked,
+          lowCutFrequency: document.getElementById('lowcut-slider')?.value
+        };
+        
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
         console.log('Settings saved:', settings);
       } catch (error) {
@@ -641,73 +641,107 @@ canvas {
         if (settings.gain !== undefined) {
           const gainSlider = document.getElementById('gain-slider');
           const gainValue = document.getElementById('gain-value');
-          gainSlider.value = settings.gain;
-          gainValue.textContent = settings.gain + '%';
-          VerticalSpectrogram.setGain((settings.gain / 100) * 2);
+          if (gainSlider && gainValue) {
+            gainSlider.value = settings.gain;
+            gainValue.textContent = settings.gain + '%';
+            VerticalSpectrogram.setGain((settings.gain / 100) * 2);
+          }
         }
         
         // Apply compression
         if (settings.compression !== undefined) {
-          document.getElementById('compression-checkbox').checked = settings.compression;
+          const compressionCheckbox = document.getElementById('compression-checkbox');
+          if (compressionCheckbox) {
+            compressionCheckbox.checked = settings.compression;
+          }
         }
         
         // Apply redraw interval
         if (settings.redrawInterval !== undefined) {
           const redrawSlider = document.getElementById('redraw-slider');
           const redrawValue = document.getElementById('redraw-value');
-          redrawSlider.value = settings.redrawInterval;
-          redrawValue.textContent = settings.redrawInterval + 'ms';
-          VerticalSpectrogram.updateConfig({
-            REDRAW_INTERVAL_MS: parseInt(settings.redrawInterval)
-          });
+          if (redrawSlider && redrawValue) {
+            redrawSlider.value = settings.redrawInterval;
+            redrawValue.textContent = settings.redrawInterval + 'ms';
+            VerticalSpectrogram.updateConfig({
+              REDRAW_INTERVAL_MS: parseInt(settings.redrawInterval)
+            });
+          }
         }
         
         // Apply color scheme
         if (settings.colorScheme !== undefined) {
           const colorSchemeSelect = document.getElementById('color-scheme-select');
-          colorSchemeSelect.value = settings.colorScheme;
-          VerticalSpectrogram.setColorScheme(settings.colorScheme);
+          if (colorSchemeSelect) {
+            colorSchemeSelect.value = settings.colorScheme;
+            VerticalSpectrogram.setColorScheme(settings.colorScheme);
+          }
         }
         
         // Apply frequency grid
         if (settings.frequencyGrid !== undefined) {
           const frequencyGridCheckbox = document.getElementById('frequency-grid-checkbox');
-          frequencyGridCheckbox.checked = settings.frequencyGrid;
-          VerticalSpectrogram.updateConfig({
-            SHOW_FREQUENCY_GRID: settings.frequencyGrid
-          });
+          if (frequencyGridCheckbox) {
+            frequencyGridCheckbox.checked = settings.frequencyGrid;
+            VerticalSpectrogram.updateConfig({
+              SHOW_FREQUENCY_GRID: settings.frequencyGrid
+            });
+          }
         }
         
-        // Apply canvas size
+        // Apply canvas size and trigger resize
         if (settings.canvasWidth !== undefined && settings.canvasHeight !== undefined) {
           const canvasWidthInput = document.getElementById('canvas-width-input');
           const canvasHeightInput = document.getElementById('canvas-height-input');
-          canvasWidthInput.value = settings.canvasWidth;
-          canvasHeightInput.value = settings.canvasHeight;
+          const canvasContainer = document.getElementById('canvas-container');
+          
+          if (canvasWidthInput && canvasHeightInput && canvasContainer) {
+            const width = parseInt(settings.canvasWidth);
+            const height = parseInt(settings.canvasHeight);
+            
+            // Validate dimensions before applying
+            if (width >= 200 && width <= 2000 && height >= 200 && height <= 2000) {
+              canvasWidthInput.value = width;
+              canvasHeightInput.value = height;
+              
+              // Actually apply the canvas size
+              canvasContainer.style.width = width + 'px';
+              canvasContainer.style.height = height + 'px';
+              canvasContainer.style.maxWidth = width + 'px';
+              canvasContainer.style.flex = 'none';
+              
+              // Trigger resize event to update canvas
+              window.dispatchEvent(new Event('resize'));
+            }
+          }
         }
         
         // Apply min confidence
         if (settings.minConfidence !== undefined) {
           const confidenceSlider = document.getElementById('confidence-slider');
           const confidenceValue = document.getElementById('confidence-value');
-          confidenceSlider.value = settings.minConfidence;
-          confidenceValue.textContent = settings.minConfidence + '%';
-          VerticalSpectrogram.updateConfig({
-            MIN_CONFIDENCE_THRESHOLD: parseInt(settings.minConfidence) / 100
-          });
+          if (confidenceSlider && confidenceValue) {
+            confidenceSlider.value = settings.minConfidence;
+            confidenceValue.textContent = settings.minConfidence + '%';
+            VerticalSpectrogram.updateConfig({
+              MIN_CONFIDENCE_THRESHOLD: parseInt(settings.minConfidence) / 100
+            });
+          }
         }
         
         // Apply low-cut filter
         if (settings.lowCutEnabled !== undefined) {
           const lowcutCheckbox = document.getElementById('lowcut-checkbox');
           const lowcutControls = document.getElementById('lowcut-controls');
-          lowcutCheckbox.checked = settings.lowCutEnabled;
-          VerticalSpectrogram.setLowCutFilter(settings.lowCutEnabled);
-          
-          if (settings.lowCutEnabled) {
-            lowcutControls.classList.remove('hidden');
-          } else {
-            lowcutControls.classList.add('hidden');
+          if (lowcutCheckbox && lowcutControls) {
+            lowcutCheckbox.checked = settings.lowCutEnabled;
+            VerticalSpectrogram.setLowCutFilter(settings.lowCutEnabled);
+            
+            if (settings.lowCutEnabled) {
+              lowcutControls.classList.remove('hidden');
+            } else {
+              lowcutControls.classList.add('hidden');
+            }
           }
         }
         
@@ -715,9 +749,11 @@ canvas {
         if (settings.lowCutFrequency !== undefined) {
           const lowcutSlider = document.getElementById('lowcut-slider');
           const lowcutValue = document.getElementById('lowcut-value');
-          lowcutSlider.value = settings.lowCutFrequency;
-          lowcutValue.textContent = settings.lowCutFrequency + 'Hz';
-          VerticalSpectrogram.setLowCutFrequency(parseInt(settings.lowCutFrequency));
+          if (lowcutSlider && lowcutValue) {
+            lowcutSlider.value = settings.lowCutFrequency;
+            lowcutValue.textContent = settings.lowCutFrequency + 'Hz';
+            VerticalSpectrogram.setLowCutFrequency(parseInt(settings.lowCutFrequency));
+          }
         }
         
         console.log('Settings loaded successfully');
