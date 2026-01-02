@@ -929,17 +929,21 @@
    * Set rotation for detection labels
    * @param {number} rotationRadians - Rotation in radians
    */
-  function setLabelRotation(rotationRadians) {
-    if (!Number.isFinite(rotationRadians)) {
-      console.warn('Invalid label rotation value:', rotationRadians);
-      return;
-    }
+  function normalizeRotation(rotationRadians) {
     const FULL_TURN = Math.PI * 2;
     let normalized = ((rotationRadians % FULL_TURN) + FULL_TURN) % FULL_TURN;
     if (normalized > Math.PI) {
       normalized -= FULL_TURN;
     }
-    CONFIG.LABEL_ROTATION = normalized;
+    return normalized;
+  }
+
+  function setLabelRotation(rotationRadians) {
+    if (!Number.isFinite(rotationRadians)) {
+      console.warn('Invalid label rotation value:', rotationRadians);
+      return;
+    }
+    CONFIG.LABEL_ROTATION = normalizeRotation(rotationRadians);
   }
 
   // =================== Public API ===================

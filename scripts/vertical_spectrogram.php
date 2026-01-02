@@ -568,13 +568,12 @@ canvas {
     const FREQSHIFT_RECONNECT_DELAY = <?php echo $FREQSHIFT_RECONNECT_DELAY; ?>;
     const ROTATION_INCREMENT = Math.PI / 2;
     const RAD_TO_DEG = 180 / Math.PI;
-    let labelRotation;
+    let labelRotation = -ROTATION_INCREMENT;
 
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
       if (!window.VerticalSpectrogram || !VerticalSpectrogram.CONFIG) {
-        console.error('VerticalSpectrogram unavailable; cannot initialize controls');
-        return;
+        throw new Error('VerticalSpectrogram unavailable; cannot initialize controls');
       }
 
       labelRotation = (typeof VerticalSpectrogram.CONFIG.LABEL_ROTATION === 'number')
