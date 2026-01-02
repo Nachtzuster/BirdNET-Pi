@@ -563,16 +563,21 @@ canvas {
   <!-- Load vertical spectrogram script -->
   <script src="../static/vertical-spectrogram.js"></script>
 
-    <script>
-      // Configuration from PHP
-      const FREQSHIFT_RECONNECT_DELAY = <?php echo $FREQSHIFT_RECONNECT_DELAY; ?>;
-      const ROTATION_INCREMENT = Math.PI / 2;
-      const RAD_TO_DEG = 180 / Math.PI;
-      let labelRotation;
+  <script>
+    // Configuration from PHP
+    const FREQSHIFT_RECONNECT_DELAY = <?php echo $FREQSHIFT_RECONNECT_DELAY; ?>;
+    const ROTATION_INCREMENT = Math.PI / 2;
+    const RAD_TO_DEG = 180 / Math.PI;
+    let labelRotation;
 
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
-      labelRotation = (window.VerticalSpectrogram && VerticalSpectrogram.CONFIG && typeof VerticalSpectrogram.CONFIG.LABEL_ROTATION === 'number')
+      if (!window.VerticalSpectrogram || !VerticalSpectrogram.CONFIG) {
+        console.error('VerticalSpectrogram unavailable; cannot initialize controls');
+        return;
+      }
+
+      labelRotation = (typeof VerticalSpectrogram.CONFIG.LABEL_ROTATION === 'number')
         ? VerticalSpectrogram.CONFIG.LABEL_ROTATION
         : -ROTATION_INCREMENT;
 
