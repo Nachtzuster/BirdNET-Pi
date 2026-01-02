@@ -656,7 +656,6 @@
     
     ctx.save();
     ctx.font = CONFIG.LABEL_FONT;
-    ctx.textBaseline = 'middle';
     
     currentDetections.forEach((detection, index) => {
       // Get confidence color
@@ -697,6 +696,8 @@
       // Now draw text normally - it will appear horizontally in the vertical spectrogram
       // Use right-align so text is aligned against the right edge of the canvas
       ctx.textAlign = 'right';
+      // Use top baseline so text extends downward in rotated coords (upward in final view)
+      ctx.textBaseline = 'top';
       
       // Draw background rectangle
       // In rotated coordinate system: right-align means rectangle extends to the left (upward in final view)
@@ -704,7 +705,7 @@
       const bgHeight = textHeight + CONFIG.LABEL_PADDING * 2;
       
       ctx.fillStyle = CONFIG.LABEL_BACKGROUND;
-      ctx.fillRect(-bgWidth + CONFIG.LABEL_PADDING, -bgHeight / 2, bgWidth, bgHeight);
+      ctx.fillRect(-bgWidth + CONFIG.LABEL_PADDING, -CONFIG.LABEL_PADDING, bgWidth, bgHeight);
       
       // Draw confidence in color-coded style
       // In rotated coordinates: positioned at right edge (appears at bottom in final view)
