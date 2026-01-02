@@ -689,9 +689,9 @@
       // Save context for rotation
       ctx.save();
       
-      // Move to label position and rotate 90 degrees for horizontal text
+      // Move to label position and rotate 90 degrees clockwise for correct orientation
       ctx.translate(x, y);
-      ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
+      ctx.rotate(Math.PI / 2); // Rotate 90 degrees clockwise
       
       // Now draw text normally - it will appear horizontally in the vertical spectrogram
       // Use right-align so text is aligned against the right edge of the canvas
