@@ -567,7 +567,10 @@ canvas {
       // Configuration from PHP
       const FREQSHIFT_RECONNECT_DELAY = <?php echo $FREQSHIFT_RECONNECT_DELAY; ?>;
       const ROTATION_INCREMENT = Math.PI / 2;
-      let labelRotation = -ROTATION_INCREMENT;
+      const RAD_TO_DEG = 180 / Math.PI;
+      let labelRotation = (window.VerticalSpectrogram && VerticalSpectrogram.CONFIG && typeof VerticalSpectrogram.CONFIG.LABEL_ROTATION === 'number')
+        ? VerticalSpectrogram.CONFIG.LABEL_ROTATION
+        : -ROTATION_INCREMENT;
 
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
@@ -632,7 +635,7 @@ canvas {
     function updateRotationValue() {
       const rotationValue = document.getElementById('rotation-value');
       if (rotationValue) {
-        rotationValue.textContent = Math.round(labelRotation * (180 / Math.PI)) + '\u00B0';
+        rotationValue.textContent = Math.round(labelRotation * RAD_TO_DEG) + '\u00B0';
       }
     }
 
