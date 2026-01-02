@@ -935,7 +935,11 @@
       return;
     }
     const FULL_TURN = Math.PI * 2;
-    CONFIG.LABEL_ROTATION = ((rotationRadians + Math.PI) % FULL_TURN + FULL_TURN) % FULL_TURN - Math.PI;
+    let normalized = ((rotationRadians % FULL_TURN) + FULL_TURN) % FULL_TURN;
+    if (normalized > Math.PI) {
+      normalized -= FULL_TURN;
+    }
+    CONFIG.LABEL_ROTATION = normalized;
   }
 
   // =================== Public API ===================

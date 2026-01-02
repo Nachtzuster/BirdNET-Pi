@@ -632,7 +632,7 @@ canvas {
     function updateRotationValue() {
       const rotationValue = document.getElementById('rotation-value');
       if (rotationValue) {
-        rotationValue.textContent = Math.round(labelRotation * RAD_TO_DEG) + '\u00B0';
+        rotationValue.textContent = Math.round(labelRotation * RAD_TO_DEG) + '°';
       }
     }
 
