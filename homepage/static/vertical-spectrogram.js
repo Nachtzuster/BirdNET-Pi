@@ -368,7 +368,8 @@
     overlayCtx.textBaseline = 'top';
     
     const nyquist = CONFIG.SAMPLE_RATE / 2;
-    const dataLength = frequencyData ? frequencyData.length : analyser.frequencyBinCount;
+    // Safely get data length
+    const dataLength = frequencyData ? frequencyData.length : (analyser ? analyser.frequencyBinCount : 1024);
     const barWidth = overlayCanvas.width / dataLength;
     
     CONFIG.FREQUENCY_LINES.forEach(freq => {
@@ -833,8 +834,12 @@
   function updateConfig(newConfig) {
     Object.assign(CONFIG, newConfig);
     
-    // If frequency grid visibility changed, redraw labels
-    if ('SHOW_FREQUENCY_GRID' in newConfig) {
+    // If any frequency grid-related config changed, redraw labels
+    const gridRelatedKeys = ['SHOW_FREQUENCY_GRID', 'GRID_LABEL_COLOR', 'GRID_LABEL_FONT', 
+                              'FREQUENCY_LINES', 'GRID_LABEL_OFFSET_X', 'GRID_LABEL_OFFSET_Y'];
+    const shouldRedrawLabels = gridRelatedKeys.some(key => key in newConfig);
+    
+    if (shouldRedrawLabels) {
       drawFrequencyLabels();
     }
     
