@@ -699,18 +699,20 @@
       ctx.textAlign = 'right';
       
       // Draw background rectangle
-      // With right-align, rectangle extends to the left
+      // In rotated coordinate system: right-align means rectangle extends to the left (upward in final view)
       const bgWidth = totalWidth + CONFIG.LABEL_PADDING * 2;
       const bgHeight = textHeight + CONFIG.LABEL_PADDING * 2;
       
       ctx.fillStyle = CONFIG.LABEL_BACKGROUND;
       ctx.fillRect(-bgWidth + CONFIG.LABEL_PADDING, -bgHeight / 2, bgWidth, bgHeight);
       
-      // Draw confidence in color-coded style (draw from right to left)
+      // Draw confidence in color-coded style
+      // In rotated coordinates: positioned at right edge (appears at bottom in final view)
       ctx.fillStyle = confidenceColor;
       ctx.fillText(confidenceText, -CONFIG.LABEL_PADDING, 0);
       
       // Draw species name in white
+      // In rotated coordinates: positioned left of confidence (appears above in final view)
       ctx.fillStyle = CONFIG.LABEL_NAME_COLOR;
       const nameX = -CONFIG.LABEL_PADDING - confidenceMetrics.width - spaceMetrics.width;
       ctx.fillText(nameText, nameX, 0);
