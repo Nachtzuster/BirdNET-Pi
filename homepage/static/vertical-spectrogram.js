@@ -408,7 +408,7 @@
     // Draw frequency grid lines
     drawFrequencyGrid();
     
-    // Draw detection labels (they don't scroll)
+    // Draw detection labels (they scroll with the spectrogram)
     drawDetectionLabels();
   }
 
@@ -696,7 +696,7 @@
       
       // Draw background rectangle
       const bgWidth = totalWidth + CONFIG.LABEL_PADDING * 2;
-      const bgHeight = textHeight + CONFIG.LABEL_PADDING;
+      const bgHeight = textHeight + CONFIG.LABEL_PADDING * 2;
       
       ctx.fillStyle = CONFIG.LABEL_BACKGROUND;
       ctx.fillRect(-CONFIG.LABEL_PADDING, -bgHeight / 2, bgWidth, bgHeight);
