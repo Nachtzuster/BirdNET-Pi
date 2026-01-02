@@ -88,6 +88,72 @@ if ($contents !== false) {
 die();
 }
 
+// Handle screenshot upload
+if(isset($_GET['save_screenshot']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+  header('Content-Type: application/json');
+  
+  try {
+    // Get the RECS_DIR from config
+    $RECS_DIR = $config["RECS_DIR"];
+    
+    // Create screenshots directory if it doesn't exist
+    $screenshots_dir = $RECS_DIR . "/Birdsongs - screenshots";
+    if (!file_exists($screenshots_dir)) {
+      if (!mkdir($screenshots_dir, 0755, true)) {
+        throw new Exception("Failed to create screenshots directory");
+      }
+    }
+    
+    // Verify the directory is writable
+    if (!is_writable($screenshots_dir)) {
+      throw new Exception("Screenshots directory is not writable");
+    }
+    
+    // Check if screenshot file was uploaded
+    if (!isset($_FILES['screenshot']) || $_FILES['screenshot']['error'] !== UPLOAD_ERR_OK) {
+      throw new Exception("No screenshot file uploaded or upload error");
+    }
+    
+    // Validate file type
+    $file_info = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($file_info, $_FILES['screenshot']['tmp_name']);
+    finfo_close($file_info);
+    
+    if ($mime_type !== 'image/png') {
+      throw new Exception("Invalid file type. Expected PNG image.");
+    }
+    
+    // Get timestamp from POST data or use current time
+    $timestamp = isset($_POST['timestamp']) ? preg_replace('/[^0-9_-]/', '', $_POST['timestamp']) : date('Y-m-d_H-i-s');
+    
+    // Construct filename
+    $filename = "spectrogram_" . $timestamp . ".png";
+    $filepath = $screenshots_dir . "/" . $filename;
+    
+    // Move uploaded file
+    if (!move_uploaded_file($_FILES['screenshot']['tmp_name'], $filepath)) {
+      throw new Exception("Failed to save screenshot file");
+    }
+    
+    // Success response
+    echo json_encode([
+      'success' => true,
+      'filename' => $filename,
+      'path' => $filepath
+    ]);
+    
+  } catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+      'success' => false,
+      'error' => $e->getMessage()
+    ]);
+  }
+  
+  die();
+}
+
+
 //Hold the array of RTSP steams once they are exploded
 $RTSP_Stream_Config = array();
 
@@ -160,13 +226,13 @@ canvas {
 }
 
 .sidebar {
-  width: 280px;
+  width: 240px;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   color: white;
-  font-size: 14px;
-  overflow-y: auto;
-  padding: 15px;
+  font-size: 11px;
+  overflow-y: scroll;
+  padding: 10px;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
   z-index: 20;
   flex-shrink: 0;
@@ -176,14 +242,14 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  padding-bottom: 10px;
+  padding-bottom: 6px;
 }
 
 .sidebar-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -195,11 +261,11 @@ canvas {
 .control-button {
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  padding: 6px 10px;
+  border-radius: 3px;
+  padding: 4px 8px;
   color: white;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 10px;
   transition: background 0.2s ease;
 }
 
@@ -208,59 +274,59 @@ canvas {
 }
 
 .sidebar-content > div {
-  margin: 12px 0;
+  margin: 8px 0;
 }
 
 .sidebar-content label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   font-weight: 500;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .sidebar-content input[type="range"] {
   width: 100%;
-  margin: 5px 0;
+  margin: 3px 0;
 }
 
 .sidebar-content input[type="checkbox"] {
-  margin-right: 8px;
-  width: 18px;
-  height: 18px;
+  margin-right: 6px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
   vertical-align: middle;
 }
 
 .sidebar-content select {
   width: 100%;
-  padding: 6px;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: rgba(0, 0, 0, 0.5);
   color: white;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .value-display {
   display: inline-block;
-  min-width: 50px;
+  min-width: 40px;
   text-align: right;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 11px;
   color: #4CAF50;
 }
 
 .spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   vertical-align: middle;
-  margin-left: 8px;
+  margin-left: 6px;
 }
 
 @keyframes spin {
@@ -273,26 +339,27 @@ canvas {
 
 .control-group {
   background: rgba(255, 255, 255, 0.05);
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 12px;
+  padding: 6px;
+  border-radius: 4px;
+  margin-bottom: 8px;
 }
 
 .control-group-title {
-  font-size: 12px;
+  font-size: 10px;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   font-weight: 600;
 }
 
 .size-input {
   width: 100%;
-  padding: 6px;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: rgba(0, 0, 0, 0.5);
   color: white;
+  font-size: 11px;
 }
 
 /* Mobile optimizations */
@@ -465,7 +532,7 @@ canvas {
       </div>
       <div id="lowcut-controls" class="hidden">
         <label>Cutoff Frequency:</label>
-        <input type="range" id="lowcut-slider" min="50" max="500" value="200" step="10" />
+        <input type="range" id="lowcut-slider" min="50" max="1500" value="200" step="10" />
         <span class="value-display" id="lowcut-value">200Hz</span>
       </div>
     </div>
