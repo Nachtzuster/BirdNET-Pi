@@ -934,9 +934,15 @@
       console.warn('Invalid label rotation value:', rotationRadians);
       return;
     }
-    const fullTurn = Math.PI * 2;
-    const normalized = ((rotationRadians + Math.PI) % fullTurn + fullTurn) % fullTurn - Math.PI;
-    CONFIG.LABEL_ROTATION = normalized;
+    const FULL_TURN = Math.PI * 2;
+    const HALF_TURN = Math.PI;
+    let normalizedValue = rotationRadians % FULL_TURN;
+    if (normalizedValue <= -HALF_TURN) {
+      normalizedValue += FULL_TURN;
+    } else if (normalizedValue > HALF_TURN) {
+      normalizedValue -= FULL_TURN;
+    }
+    CONFIG.LABEL_ROTATION = normalizedValue;
   }
 
   // =================== Public API ===================

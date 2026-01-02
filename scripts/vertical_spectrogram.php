@@ -625,8 +625,15 @@ canvas {
     });
 
     function normalizeRotation(value) {
-      const fullTurn = Math.PI * 2;
-      return ((value + Math.PI) % fullTurn + fullTurn) % fullTurn - Math.PI;
+      const FULL_TURN = Math.PI * 2;
+      const HALF_TURN = Math.PI;
+      let normalizedValue = value % FULL_TURN;
+      if (normalizedValue <= -HALF_TURN) {
+        normalizedValue += FULL_TURN;
+      } else if (normalizedValue > HALF_TURN) {
+        normalizedValue -= FULL_TURN;
+      }
+      return normalizedValue;
     }
 
     function updateRotationValue() {
