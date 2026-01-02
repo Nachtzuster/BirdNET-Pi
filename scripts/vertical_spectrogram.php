@@ -531,6 +531,11 @@ canvas {
         <input type="range" id="confidence-slider" min="10" max="100" value="70" step="5" />
         <span class="value-display" id="confidence-value">70%</span>
       </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <label style="flex: 1;">Rotate Labels:</label>
+        <button class="control-button" id="rotate-labels-button" title="Rotate detection labels" aria-label="Rotate detection labels">&#8635;</button>
+        <span class="value-display" id="rotation-value">-90°</span>
+      </div>
     </div>
     <div class="control-group">
       <div class="control-group-title">Frequency Filter</div>
@@ -558,9 +563,11 @@ canvas {
   <!-- Load vertical spectrogram script -->
   <script src="../static/vertical-spectrogram.js"></script>
 
-  <script>
-    // Configuration from PHP
-    const FREQSHIFT_RECONNECT_DELAY = <?php echo $FREQSHIFT_RECONNECT_DELAY; ?>;
+    <script>
+      // Configuration from PHP
+      const FREQSHIFT_RECONNECT_DELAY = <?php echo $FREQSHIFT_RECONNECT_DELAY; ?>;
+      const ROTATION_INCREMENT = Math.PI / 2;
+      let labelRotation = -ROTATION_INCREMENT;
 
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
@@ -612,6 +619,23 @@ canvas {
       loadSettings();
     });
 
+    function normalizeRotation(value) {
+      let normalizedValue = value % (Math.PI * 2);
+      if (normalizedValue <= -Math.PI) {
+        normalizedValue += Math.PI * 2;
+      } else if (normalizedValue > Math.PI) {
+        normalizedValue -= Math.PI * 2;
+      }
+      return normalizedValue;
+    }
+
+    function updateRotationValue() {
+      const rotationValue = document.getElementById('rotation-value');
+      if (rotationValue) {
+        rotationValue.textContent = Math.round(labelRotation * (180 / Math.PI)) + '\u00B0';
+      }
+    }
+
     // Settings persistence using localStorage
     const SETTINGS_KEY = 'verticalSpectrogramSettings';
     
@@ -627,7 +651,8 @@ canvas {
           canvasHeight: document.getElementById('canvas-height-input')?.value,
           minConfidence: document.getElementById('confidence-slider')?.value,
           lowCutEnabled: document.getElementById('lowcut-checkbox')?.checked,
-          lowCutFrequency: document.getElementById('lowcut-slider')?.value
+          lowCutFrequency: document.getElementById('lowcut-slider')?.value,
+          labelRotation: labelRotation
         };
         
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -642,6 +667,7 @@ canvas {
         const savedSettings = localStorage.getItem(SETTINGS_KEY);
         if (!savedSettings) {
           console.log('No saved settings found');
+          updateRotationValue();
           return;
         }
         
@@ -766,6 +792,17 @@ canvas {
             VerticalSpectrogram.setLowCutFrequency(parseInt(settings.lowCutFrequency));
           }
         }
+
+        if (settings.labelRotation !== undefined) {
+          const parsedRotation = parseFloat(settings.labelRotation);
+          if (!isNaN(parsedRotation)) {
+            labelRotation = parsedRotation;
+            VerticalSpectrogram.setLabelRotation(labelRotation);
+            updateRotationValue();
+          }
+        } else {
+          updateRotationValue();
+        }
         
         console.log('Settings loaded successfully');
       } catch (error) {
@@ -842,6 +879,16 @@ canvas {
         });
         saveSettings();
       });
+
+      const rotateLabelsButton = document.getElementById('rotate-labels-button');
+      if (rotateLabelsButton) {
+        rotateLabelsButton.addEventListener('click', function() {
+          labelRotation = normalizeRotation(labelRotation - ROTATION_INCREMENT);
+          VerticalSpectrogram.setLabelRotation(labelRotation);
+          updateRotationValue();
+          saveSettings();
+        });
+      }
 
       // Color scheme selector
       const colorSchemeSelect = document.getElementById('color-scheme-select');
@@ -943,6 +990,9 @@ canvas {
           }
         });
       }
+
+      VerticalSpectrogram.setLabelRotation(labelRotation);
+      updateRotationValue();
     }
 
     function toggleFreqshift(state) {

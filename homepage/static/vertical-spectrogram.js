@@ -37,6 +37,7 @@
     MAX_VISIBLE_LABELS: 15, // Maximum number of labels to display
     DETECTION_TIMEOUT_MS: 45000, // Remove detections older than 45 seconds (standard)
     DETECTION_TIMEOUT_LOW_CONFIDENCE_MS: 20000, // 20 seconds for low confidence (faster fade)
+    LABEL_ROTATION: -Math.PI / 2, // Default rotation for labels (horizontal)
     
     // Color coding for confidence levels
     CONFIDENCE_HIGH_COLOR: 'rgb(50, 255, 50)', // Bright green for above threshold
@@ -691,7 +692,7 @@
       
       // Move to label position and rotate 90 degrees counterclockwise for correct orientation
       ctx.translate(x, y);
-      ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counterclockwise
+      ctx.rotate(CONFIG.LABEL_ROTATION); // Rotate by configured amount
       
       // Now draw text normally - it will appear horizontally in the vertical spectrogram
       // Use right-align so text is aligned against the right edge of the canvas
@@ -924,6 +925,16 @@
     }
   }
 
+  /**
+   * Set rotation for detection labels
+   * @param {number} rotationRadians - Rotation in radians
+   */
+  function setLabelRotation(rotationRadians) {
+    if (typeof rotationRadians === 'number' && isFinite(rotationRadians)) {
+      CONFIG.LABEL_ROTATION = rotationRadians;
+    }
+  }
+
   // =================== Public API ===================
   
   window.VerticalSpectrogram = {
@@ -934,6 +945,7 @@
     setColorScheme,
     setLowCutFilter,
     setLowCutFrequency,
+    setLabelRotation,
     captureScreenshot,
     CONFIG,
     COLOR_SCHEMES
