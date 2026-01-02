@@ -110,6 +110,7 @@ const ctx = null;
 let fps =[];
 let avgfps;
 let requestTime;
+let labelRotation = -Math.PI / 2;
 
 <?php 
 if(isset($_GET['legacy']) && $_GET['legacy'] == "true") {
@@ -218,10 +219,10 @@ function applyText(text, x, y, confidence) {
   // Get canvas element (cached in the rendering context)
   const canvasEl = document.body.querySelector('canvas');
   
-  // Position at bottom of canvas and rotate 90 degrees
+  // Position at bottom of canvas and rotate by the selected amount
   const bottomY = canvasEl.height - 10;
   CTX.translate(parseInt(x), bottomY);
-  CTX.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
+  CTX.rotate(labelRotation);
   
   // Draw species name in white
   CTX.textAlign = "right";
@@ -684,6 +685,12 @@ h1 {
     <span id="confidence-value">70%</span>
   </div>
   &mdash;
+  <div style="display:inline; margin-right: 15px;">
+    <label for="rotate-labels" title="Rotate detection labels">Rotate text:</label>
+    <button id="rotate-labels" title="Rotate detection labels">&#8635;</button>
+    <span id="rotation-value" aria-live="polite">-90°</span>
+  </div>
+  &mdash;
   <div style="display:inline;">
     <label>
       <input type="checkbox" id="show-frequency-grid" checked />
@@ -882,6 +889,37 @@ confidenceSlider.oninput = function() {
   confidenceValue.textContent = this.value + '%';
   DETECTION_CONFIG.MIN_CONFIDENCE_THRESHOLD = parseInt(this.value) / 100;
 };
+
+// Rotation control
+var rotateLabelsBtn = document.getElementById("rotate-labels");
+var rotationValue = document.getElementById("rotation-value");
+
+function normalizeRotation(value) {
+  var fullTurn = Math.PI * 2;
+  value = value % fullTurn;
+  if (value <= -Math.PI) {
+    value += fullTurn;
+  } else if (value > Math.PI) {
+    value -= fullTurn;
+  }
+  return value;
+}
+
+function updateRotationValue() {
+  if (rotationValue) {
+    var degrees = Math.round((labelRotation * 180) / Math.PI);
+    rotationValue.textContent = degrees + '\u00B0';
+  }
+}
+
+if (rotateLabelsBtn) {
+  rotateLabelsBtn.onclick = function() {
+    labelRotation = normalizeRotation(labelRotation - (Math.PI / 2));
+    updateRotationValue();
+  };
+}
+
+updateRotationValue();
 
 // Frequency grid toggle
 var showFrequencyGrid = document.getElementById("show-frequency-grid");
