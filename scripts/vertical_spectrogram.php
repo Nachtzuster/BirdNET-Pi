@@ -596,7 +596,135 @@ canvas {
       // Setup controls
       setupControls();
       setupControlButtons();
+      
+      // Load saved settings
+      loadSettings();
     });
+
+    // Settings persistence using localStorage
+    const SETTINGS_KEY = 'verticalSpectrogramSettings';
+    
+    function saveSettings() {
+      const settings = {
+        gain: document.getElementById('gain-slider').value,
+        compression: document.getElementById('compression-checkbox').checked,
+        redrawInterval: document.getElementById('redraw-slider').value,
+        colorScheme: document.getElementById('color-scheme-select').value,
+        frequencyGrid: document.getElementById('frequency-grid-checkbox').checked,
+        canvasWidth: document.getElementById('canvas-width-input').value,
+        canvasHeight: document.getElementById('canvas-height-input').value,
+        minConfidence: document.getElementById('confidence-slider').value,
+        lowCutEnabled: document.getElementById('lowcut-checkbox').checked,
+        lowCutFrequency: document.getElementById('lowcut-slider').value
+      };
+      
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        console.log('Settings saved:', settings);
+      } catch (error) {
+        console.error('Failed to save settings:', error);
+      }
+    }
+    
+    function loadSettings() {
+      try {
+        const savedSettings = localStorage.getItem(SETTINGS_KEY);
+        if (!savedSettings) {
+          console.log('No saved settings found');
+          return;
+        }
+        
+        const settings = JSON.parse(savedSettings);
+        console.log('Loading saved settings:', settings);
+        
+        // Apply gain
+        if (settings.gain !== undefined) {
+          const gainSlider = document.getElementById('gain-slider');
+          const gainValue = document.getElementById('gain-value');
+          gainSlider.value = settings.gain;
+          gainValue.textContent = settings.gain + '%';
+          VerticalSpectrogram.setGain((settings.gain / 100) * 2);
+        }
+        
+        // Apply compression
+        if (settings.compression !== undefined) {
+          document.getElementById('compression-checkbox').checked = settings.compression;
+        }
+        
+        // Apply redraw interval
+        if (settings.redrawInterval !== undefined) {
+          const redrawSlider = document.getElementById('redraw-slider');
+          const redrawValue = document.getElementById('redraw-value');
+          redrawSlider.value = settings.redrawInterval;
+          redrawValue.textContent = settings.redrawInterval + 'ms';
+          VerticalSpectrogram.updateConfig({
+            REDRAW_INTERVAL_MS: parseInt(settings.redrawInterval)
+          });
+        }
+        
+        // Apply color scheme
+        if (settings.colorScheme !== undefined) {
+          const colorSchemeSelect = document.getElementById('color-scheme-select');
+          colorSchemeSelect.value = settings.colorScheme;
+          VerticalSpectrogram.setColorScheme(settings.colorScheme);
+        }
+        
+        // Apply frequency grid
+        if (settings.frequencyGrid !== undefined) {
+          const frequencyGridCheckbox = document.getElementById('frequency-grid-checkbox');
+          frequencyGridCheckbox.checked = settings.frequencyGrid;
+          VerticalSpectrogram.updateConfig({
+            SHOW_FREQUENCY_GRID: settings.frequencyGrid
+          });
+        }
+        
+        // Apply canvas size
+        if (settings.canvasWidth !== undefined && settings.canvasHeight !== undefined) {
+          const canvasWidthInput = document.getElementById('canvas-width-input');
+          const canvasHeightInput = document.getElementById('canvas-height-input');
+          canvasWidthInput.value = settings.canvasWidth;
+          canvasHeightInput.value = settings.canvasHeight;
+        }
+        
+        // Apply min confidence
+        if (settings.minConfidence !== undefined) {
+          const confidenceSlider = document.getElementById('confidence-slider');
+          const confidenceValue = document.getElementById('confidence-value');
+          confidenceSlider.value = settings.minConfidence;
+          confidenceValue.textContent = settings.minConfidence + '%';
+          VerticalSpectrogram.updateConfig({
+            MIN_CONFIDENCE_THRESHOLD: parseInt(settings.minConfidence) / 100
+          });
+        }
+        
+        // Apply low-cut filter
+        if (settings.lowCutEnabled !== undefined) {
+          const lowcutCheckbox = document.getElementById('lowcut-checkbox');
+          const lowcutControls = document.getElementById('lowcut-controls');
+          lowcutCheckbox.checked = settings.lowCutEnabled;
+          VerticalSpectrogram.setLowCutFilter(settings.lowCutEnabled);
+          
+          if (settings.lowCutEnabled) {
+            lowcutControls.classList.remove('hidden');
+          } else {
+            lowcutControls.classList.add('hidden');
+          }
+        }
+        
+        // Apply low-cut frequency
+        if (settings.lowCutFrequency !== undefined) {
+          const lowcutSlider = document.getElementById('lowcut-slider');
+          const lowcutValue = document.getElementById('lowcut-value');
+          lowcutSlider.value = settings.lowCutFrequency;
+          lowcutValue.textContent = settings.lowCutFrequency + 'Hz';
+          VerticalSpectrogram.setLowCutFrequency(parseInt(settings.lowCutFrequency));
+        }
+        
+        console.log('Settings loaded successfully');
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    }
 
     function setupControlButtons() {
       // New Tab button
@@ -626,6 +754,7 @@ canvas {
         const value = this.value / 100;
         gainValue.textContent = this.value + '%';
         VerticalSpectrogram.setGain(value * 2); // Scale to 0-2 range
+        saveSettings();
       });
 
       // Compression control (not yet implemented in vertical spectrogram)
@@ -633,6 +762,7 @@ canvas {
       compressionCheckbox.addEventListener('change', function() {
         console.log('Compression:', this.checked);
         // TODO: Implement compression if needed
+        saveSettings();
       });
 
       // Frequency shift control
@@ -651,6 +781,7 @@ canvas {
         VerticalSpectrogram.updateConfig({
           REDRAW_INTERVAL_MS: value
         });
+        saveSettings();
       });
 
       // Confidence threshold control
@@ -662,12 +793,14 @@ canvas {
         VerticalSpectrogram.updateConfig({
           MIN_CONFIDENCE_THRESHOLD: value
         });
+        saveSettings();
       });
 
       // Color scheme selector
       const colorSchemeSelect = document.getElementById('color-scheme-select');
       colorSchemeSelect.addEventListener('change', function() {
         VerticalSpectrogram.setColorScheme(this.value);
+        saveSettings();
       });
 
       // Frequency grid toggle
@@ -676,6 +809,7 @@ canvas {
         VerticalSpectrogram.updateConfig({
           SHOW_FREQUENCY_GRID: this.checked
         });
+        saveSettings();
       });
 
       // Low-cut filter control
@@ -692,12 +826,14 @@ canvas {
         } else {
           lowcutControls.classList.add('hidden');
         }
+        saveSettings();
       });
       
       lowcutSlider.addEventListener('input', function() {
         const value = parseInt(this.value);
         lowcutValue.textContent = value + 'Hz';
         VerticalSpectrogram.setLowCutFrequency(value);
+        saveSettings();
       });
 
       // Canvas size controls
@@ -731,6 +867,9 @@ canvas {
         
         // Trigger resize event to update canvas
         window.dispatchEvent(new Event('resize'));
+        
+        // Save settings after applying size
+        saveSettings();
       });
 
       // RTSP stream selector
