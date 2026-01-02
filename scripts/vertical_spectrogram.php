@@ -568,12 +568,14 @@ canvas {
       const FREQSHIFT_RECONNECT_DELAY = <?php echo $FREQSHIFT_RECONNECT_DELAY; ?>;
       const ROTATION_INCREMENT = Math.PI / 2;
       const RAD_TO_DEG = 180 / Math.PI;
-      let labelRotation = (window.VerticalSpectrogram && VerticalSpectrogram.CONFIG && typeof VerticalSpectrogram.CONFIG.LABEL_ROTATION === 'number')
-        ? VerticalSpectrogram.CONFIG.LABEL_ROTATION
-        : -ROTATION_INCREMENT;
+      let labelRotation;
 
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
+      labelRotation = (window.VerticalSpectrogram && VerticalSpectrogram.CONFIG && typeof VerticalSpectrogram.CONFIG.LABEL_ROTATION === 'number')
+        ? VerticalSpectrogram.CONFIG.LABEL_ROTATION
+        : -ROTATION_INCREMENT;
+
       const canvas = document.getElementById('spectrogram-canvas');
       const audioPlayer = document.getElementById('audio-player');
       const loadingMessage = document.getElementById('loading-message');
@@ -623,13 +625,8 @@ canvas {
     });
 
     function normalizeRotation(value) {
-      let normalizedValue = value % (Math.PI * 2);
-      if (normalizedValue <= -Math.PI) {
-        normalizedValue += Math.PI * 2;
-      } else if (normalizedValue > Math.PI) {
-        normalizedValue -= Math.PI * 2;
-      }
-      return normalizedValue;
+      const fullTurn = Math.PI * 2;
+      return ((value + Math.PI) % fullTurn + fullTurn) % fullTurn - Math.PI;
     }
 
     function updateRotationValue() {

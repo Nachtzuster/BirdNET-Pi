@@ -930,9 +930,13 @@
    * @param {number} rotationRadians - Rotation in radians
    */
   function setLabelRotation(rotationRadians) {
-    if (typeof rotationRadians === 'number' && isFinite(rotationRadians)) {
-      CONFIG.LABEL_ROTATION = rotationRadians;
+    if (!Number.isFinite(rotationRadians)) {
+      console.warn('Invalid label rotation value:', rotationRadians);
+      return;
     }
+    const fullTurn = Math.PI * 2;
+    const normalized = ((rotationRadians + Math.PI) % fullTurn + fullTurn) % fullTurn - Math.PI;
+    CONFIG.LABEL_ROTATION = normalized;
   }
 
   // =================== Public API ===================
