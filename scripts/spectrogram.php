@@ -110,7 +110,11 @@ const ctx = null;
 let fps =[];
 let avgfps;
 let requestTime;
-let labelRotation = -Math.PI / 2;
+const FULL_TURN = Math.PI * 2;
+const HALF_TURN = Math.PI;
+const ROTATION_INCREMENT = Math.PI / 2;
+const RAD_TO_DEG = 180 / Math.PI;
+let labelRotation = -ROTATION_INCREMENT;
 
 <?php 
 if(isset($_GET['legacy']) && $_GET['legacy'] == "true") {
@@ -686,8 +690,8 @@ h1 {
   </div>
   &mdash;
   <div style="display:inline; margin-right: 15px;">
-    <label for="rotate-labels" title="Rotate detection labels">Rotate text:</label>
-    <button id="rotate-labels" title="Rotate detection labels">&#8635;</button>
+    <label title="Rotate detection labels">Rotate text:</label>
+    <button id="rotate-labels" title="Rotate detection labels" aria-label="Rotate detection labels">&#8635;</button>
     <span id="rotation-value" aria-live="polite">-90°</span>
   </div>
   &mdash;
@@ -895,26 +899,25 @@ var rotateLabelsBtn = document.getElementById("rotate-labels");
 var rotationValue = document.getElementById("rotation-value");
 
 function normalizeRotation(value) {
-  var fullTurn = Math.PI * 2;
-  value = value % fullTurn;
-  if (value <= -Math.PI) {
-    value += fullTurn;
-  } else if (value > Math.PI) {
-    value -= fullTurn;
+  let normalizedValue = value % FULL_TURN;
+  if (normalizedValue <= -HALF_TURN) {
+    normalizedValue += FULL_TURN;
+  } else if (normalizedValue > HALF_TURN) {
+    normalizedValue -= FULL_TURN;
   }
-  return value;
+  return normalizedValue;
 }
 
 function updateRotationValue() {
   if (rotationValue) {
-    var degrees = Math.round((labelRotation * 180) / Math.PI);
+    var degrees = Math.round(labelRotation * RAD_TO_DEG);
     rotationValue.textContent = degrees + '\u00B0';
   }
 }
 
 if (rotateLabelsBtn) {
   rotateLabelsBtn.onclick = function() {
-    labelRotation = normalizeRotation(labelRotation - (Math.PI / 2));
+    labelRotation = normalizeRotation(labelRotation - ROTATION_INCREMENT);
     updateRotationValue();
   };
 }
