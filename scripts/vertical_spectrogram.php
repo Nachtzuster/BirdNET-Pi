@@ -203,6 +203,16 @@ html, body {
   margin: 0;
 }
 
+#frequency-labels-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
 canvas {
   display: block;
   width: 100%;
@@ -397,6 +407,7 @@ canvas {
     <div id="canvas-container">
       <div id="loading-message">Loading Vertical Spectrogram...</div>
       <canvas id="spectrogram-canvas"></canvas>
+      <canvas id="frequency-labels-overlay"></canvas>
     </div>
 
     <div class="sidebar" id="sidebar-panel">

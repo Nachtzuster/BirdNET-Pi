@@ -135,6 +135,8 @@
   let filterNode = null; // High-pass filter for low-cut
   let canvas = null;
   let ctx = null;
+  let overlayCanvas = null;
+  let overlayCtx = null;
   let audioElement = null;
   
   let imageData = null;
@@ -164,6 +166,12 @@
     audioElement = audioEl;
     ctx = canvas.getContext('2d');
     
+    // Get overlay canvas for frequency labels
+    overlayCanvas = document.getElementById('frequency-labels-overlay');
+    if (overlayCanvas) {
+      overlayCtx = overlayCanvas.getContext('2d');
+    }
+    
     // Set canvas size
     resizeCanvas();
     
@@ -172,6 +180,9 @@
     
     // Initialize image data for scrolling
     initializeImageData();
+    
+    // Draw initial frequency labels on overlay
+    drawFrequencyLabels();
     
     // Start rendering loop
     startRenderLoop();
@@ -244,10 +255,19 @@
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
     
+    // Resize overlay canvas to match
+    if (overlayCanvas) {
+      overlayCanvas.width = container.clientWidth;
+      overlayCanvas.height = container.clientHeight;
+    }
+    
     // Reinitialize image data after resize
     if (ctx) {
       initializeImageData();
     }
+    
+    // Redraw frequency labels on overlay
+    drawFrequencyLabels();
   }
 
   /**
@@ -320,26 +340,53 @@
         const binIndex = (freq / nyquist) * dataLength;
         const x = binIndex * barWidth;
         
-        // Draw vertical line
+        // Draw vertical line only (labels are on overlay)
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
         ctx.stroke();
-        
-        // Draw frequency label at top
-        ctx.fillStyle = CONFIG.GRID_LABEL_COLOR;
-        ctx.font = CONFIG.GRID_LABEL_FONT;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.save();
-        ctx.translate(x + CONFIG.GRID_LABEL_OFFSET_X, CONFIG.GRID_LABEL_OFFSET_Y);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 0, 0);
-        ctx.restore();
       }
     });
     
     ctx.restore();
+  }
+
+  /**
+   * Draw frequency labels on the fixed overlay canvas
+   * These labels don't scroll with the spectrogram
+   */
+  function drawFrequencyLabels() {
+    if (!CONFIG.SHOW_FREQUENCY_GRID || !overlayCtx || !overlayCanvas) return;
+    
+    // Clear overlay
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    
+    overlayCtx.save();
+    overlayCtx.fillStyle = CONFIG.GRID_LABEL_COLOR;
+    overlayCtx.font = CONFIG.GRID_LABEL_FONT;
+    overlayCtx.textAlign = 'left';
+    overlayCtx.textBaseline = 'top';
+    
+    const nyquist = CONFIG.SAMPLE_RATE / 2;
+    const dataLength = frequencyData ? frequencyData.length : analyser.frequencyBinCount;
+    const barWidth = overlayCanvas.width / dataLength;
+    
+    CONFIG.FREQUENCY_LINES.forEach(freq => {
+      if (freq <= nyquist) {
+        // Calculate X position for this frequency
+        const binIndex = (freq / nyquist) * dataLength;
+        const x = binIndex * barWidth;
+        
+        // Draw frequency label at top
+        overlayCtx.save();
+        overlayCtx.translate(x + CONFIG.GRID_LABEL_OFFSET_X, CONFIG.GRID_LABEL_OFFSET_Y);
+        overlayCtx.rotate(-Math.PI / 2);
+        overlayCtx.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 0, 0);
+        overlayCtx.restore();
+      }
+    });
+    
+    overlayCtx.restore();
   }
 
   /**
@@ -785,6 +832,12 @@
    */
   function updateConfig(newConfig) {
     Object.assign(CONFIG, newConfig);
+    
+    // If frequency grid visibility changed, redraw labels
+    if ('SHOW_FREQUENCY_GRID' in newConfig) {
+      drawFrequencyLabels();
+    }
+    
     console.log('Configuration updated:', CONFIG);
   }
 
