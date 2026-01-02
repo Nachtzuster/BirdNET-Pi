@@ -33,6 +33,7 @@
     LABEL_MARGIN: 15, // Margin from canvas edges
     LABEL_BOTTOM_OFFSET: 60, // Distance from bottom for recent detections
     LABEL_HEIGHT: 18, // Approximate text height in pixels
+    LABEL_OFFSCREEN_THRESHOLD: 50, // Remove labels this many pixels above canvas top
     MAX_VISIBLE_LABELS: 15, // Maximum number of labels to display
     DETECTION_TIMEOUT_MS: 45000, // Remove detections older than 45 seconds (standard)
     DETECTION_TIMEOUT_LOW_CONFIDENCE_MS: 20000, // 20 seconds for low confidence (faster fade)
@@ -433,7 +434,7 @@
     });
     
     // Remove detections that have scrolled off the top of the canvas
-    currentDetections = currentDetections.filter(det => det.y > -50);
+    currentDetections = currentDetections.filter(det => det.y > -CONFIG.LABEL_OFFSCREEN_THRESHOLD);
   }
 
   /**
