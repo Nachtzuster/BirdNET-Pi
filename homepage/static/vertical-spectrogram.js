@@ -430,7 +430,9 @@
     
     // Scroll detection labels up by 1 pixel
     currentDetections.forEach(detection => {
-      detection.y -= 1;
+      if (typeof detection.y === 'number') {
+        detection.y -= 1;
+      }
     });
     
     // Remove detections that have scrolled off the top of the canvas
