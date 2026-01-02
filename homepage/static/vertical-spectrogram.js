@@ -934,7 +934,8 @@
       console.warn('Invalid label rotation value:', rotationRadians);
       return;
     }
-    CONFIG.LABEL_ROTATION = Math.atan2(Math.sin(rotationRadians), Math.cos(rotationRadians));
+    const FULL_TURN = Math.PI * 2;
+    CONFIG.LABEL_ROTATION = ((rotationRadians + Math.PI) % FULL_TURN + FULL_TURN) % FULL_TURN - Math.PI;
   }
 
   // =================== Public API ===================

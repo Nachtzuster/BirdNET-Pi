@@ -880,6 +880,7 @@ canvas {
         saveSettings();
       });
 
+      // setLabelRotation normalizes rotation to [-π, π] like the horizontal spectrogram
       const rotateLabelsButton = document.getElementById('rotate-labels-button');
       if (rotateLabelsButton) {
         rotateLabelsButton.addEventListener('click', function() {
