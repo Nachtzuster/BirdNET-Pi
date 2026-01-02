@@ -624,18 +624,6 @@ canvas {
       loadSettings();
     });
 
-    function normalizeRotation(value) {
-      const FULL_TURN = Math.PI * 2;
-      const HALF_TURN = Math.PI;
-      let normalizedValue = value % FULL_TURN;
-      if (normalizedValue <= -HALF_TURN) {
-        normalizedValue += FULL_TURN;
-      } else if (normalizedValue > HALF_TURN) {
-        normalizedValue -= FULL_TURN;
-      }
-      return normalizedValue;
-    }
-
     function updateRotationValue() {
       const rotationValue = document.getElementById('rotation-value');
       if (rotationValue) {
@@ -803,8 +791,8 @@ canvas {
         if (settings.labelRotation !== undefined) {
           const parsedRotation = parseFloat(settings.labelRotation);
           if (!isNaN(parsedRotation)) {
-            labelRotation = parsedRotation;
-            VerticalSpectrogram.setLabelRotation(labelRotation);
+            VerticalSpectrogram.setLabelRotation(parsedRotation);
+            labelRotation = VerticalSpectrogram.CONFIG.LABEL_ROTATION;
             updateRotationValue();
           }
         } else {
@@ -890,8 +878,8 @@ canvas {
       const rotateLabelsButton = document.getElementById('rotate-labels-button');
       if (rotateLabelsButton) {
         rotateLabelsButton.addEventListener('click', function() {
-          labelRotation = normalizeRotation(labelRotation - ROTATION_INCREMENT);
-          VerticalSpectrogram.setLabelRotation(labelRotation);
+          VerticalSpectrogram.setLabelRotation(labelRotation - ROTATION_INCREMENT);
+          labelRotation = VerticalSpectrogram.CONFIG.LABEL_ROTATION;
           updateRotationValue();
           saveSettings();
         });
