@@ -62,7 +62,7 @@
     LOW_CUT_ENABLED: false,
     LOW_CUT_FREQUENCY: 200, // Hz - Default cutoff frequency for high-pass filter
     LOW_CUT_MIN_FREQUENCY: 50, // Hz - Minimum allowed filter frequency
-    LOW_CUT_MAX_FREQUENCY: 500, // Hz - Maximum allowed filter frequency (UI limit)
+    LOW_CUT_MAX_FREQUENCY: 1500, // Hz - Maximum allowed filter frequency (UI limit)
     LOW_CUT_ABSOLUTE_MAX: 2000, // Hz - Absolute maximum to prevent invalid values
     
     // Frequency grid configuration
@@ -70,10 +70,10 @@
     SAMPLE_RATE: 48000, // Standard audio sample rate
     FREQUENCY_LINES: [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000, 12000], // Hz
     GRID_LINE_COLOR: 'rgba(128, 128, 128, 0.3)', // Medium gray with lower opacity
-    GRID_LABEL_COLOR: 'rgba(180, 180, 180, 0.6)', // Light gray for labels
-    GRID_LABEL_FONT: '10px Roboto Flex',
-    GRID_LABEL_OFFSET_X: 2, // Horizontal offset for grid labels
-    GRID_LABEL_OFFSET_Y: 5, // Vertical offset for grid labels
+    GRID_LABEL_COLOR: 'rgba(255, 255, 255, 0.85)', // Brighter white for better visibility
+    GRID_LABEL_FONT: '13px Roboto Flex',
+    GRID_LABEL_OFFSET_X: 3, // Horizontal offset for grid labels
+    GRID_LABEL_OFFSET_Y: 8, // Vertical offset for grid labels
   };
 
   // =================== Color Schemes ===================
@@ -135,6 +135,8 @@
   let filterNode = null; // High-pass filter for low-cut
   let canvas = null;
   let ctx = null;
+  let overlayCanvas = null;
+  let overlayCtx = null;
   let audioElement = null;
   
   let imageData = null;
@@ -164,6 +166,12 @@
     audioElement = audioEl;
     ctx = canvas.getContext('2d');
     
+    // Get overlay canvas for frequency labels
+    overlayCanvas = document.getElementById('frequency-labels-overlay');
+    if (overlayCanvas) {
+      overlayCtx = overlayCanvas.getContext('2d');
+    }
+    
     // Set canvas size
     resizeCanvas();
     
@@ -172,6 +180,9 @@
     
     // Initialize image data for scrolling
     initializeImageData();
+    
+    // Draw initial frequency labels on overlay
+    drawFrequencyLabels();
     
     // Start rendering loop
     startRenderLoop();
@@ -182,6 +193,10 @@
     // Handle window resize
     window.addEventListener('resize', debounce(handleResize, 250));
     window.addEventListener('orientationchange', debounce(handleResize, 250));
+    
+    // Add click handler for screenshots
+    canvas.addEventListener('click', captureScreenshot);
+    canvas.style.cursor = 'pointer';
     
     isInitialized = true;
     console.log('Vertical spectrogram initialized');
@@ -240,10 +255,19 @@
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
     
+    // Resize overlay canvas to match
+    if (overlayCanvas) {
+      overlayCanvas.width = container.clientWidth;
+      overlayCanvas.height = container.clientHeight;
+    }
+    
     // Reinitialize image data after resize
     if (ctx) {
       initializeImageData();
     }
+    
+    // Redraw frequency labels on overlay
+    drawFrequencyLabels();
   }
 
   /**
@@ -316,26 +340,54 @@
         const binIndex = (freq / nyquist) * dataLength;
         const x = binIndex * barWidth;
         
-        // Draw vertical line
+        // Draw vertical line only (labels are on overlay)
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
         ctx.stroke();
-        
-        // Draw frequency label at top
-        ctx.fillStyle = CONFIG.GRID_LABEL_COLOR;
-        ctx.font = CONFIG.GRID_LABEL_FONT;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.save();
-        ctx.translate(x + CONFIG.GRID_LABEL_OFFSET_X, CONFIG.GRID_LABEL_OFFSET_Y);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 0, 0);
-        ctx.restore();
       }
     });
     
     ctx.restore();
+  }
+
+  /**
+   * Draw frequency labels on the fixed overlay canvas
+   * These labels don't scroll with the spectrogram
+   */
+  function drawFrequencyLabels() {
+    if (!CONFIG.SHOW_FREQUENCY_GRID || !overlayCtx || !overlayCanvas) return;
+    
+    // Clear overlay
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    
+    overlayCtx.save();
+    overlayCtx.fillStyle = CONFIG.GRID_LABEL_COLOR;
+    overlayCtx.font = CONFIG.GRID_LABEL_FONT;
+    overlayCtx.textAlign = 'left';
+    overlayCtx.textBaseline = 'top';
+    
+    const nyquist = CONFIG.SAMPLE_RATE / 2;
+    // Safely get data length
+    const dataLength = frequencyData ? frequencyData.length : (analyser ? analyser.frequencyBinCount : 1024);
+    const barWidth = overlayCanvas.width / dataLength;
+    
+    CONFIG.FREQUENCY_LINES.forEach(freq => {
+      if (freq <= nyquist) {
+        // Calculate X position for this frequency
+        const binIndex = (freq / nyquist) * dataLength;
+        const x = binIndex * barWidth;
+        
+        // Draw frequency label at top
+        overlayCtx.save();
+        overlayCtx.translate(x + CONFIG.GRID_LABEL_OFFSET_X, CONFIG.GRID_LABEL_OFFSET_Y);
+        overlayCtx.rotate(-Math.PI / 2);
+        overlayCtx.fillText(freq >= 1000 ? (freq/1000) + 'kHz' : freq + 'Hz', 0, 0);
+        overlayCtx.restore();
+      }
+    });
+    
+    overlayCtx.restore();
   }
 
   /**
@@ -669,6 +721,95 @@
   }
 
   /**
+   * Capture screenshot of canvas and save it
+   */
+  function captureScreenshot() {
+    if (!canvas) {
+      console.error('Canvas not available for screenshot');
+      return;
+    }
+    
+    try {
+      // Create timestamp for filename
+      const now = new Date();
+      const timestamp = now.getFullYear() + '-' + 
+                       String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                       String(now.getDate()).padStart(2, '0') + '_' +
+                       String(now.getHours()).padStart(2, '0') + '-' +
+                       String(now.getMinutes()).padStart(2, '0') + '-' +
+                       String(now.getSeconds()).padStart(2, '0');
+      
+      // Convert canvas to blob
+      canvas.toBlob(function(blob) {
+        if (!blob) {
+          console.error('Failed to create image blob');
+          return;
+        }
+        
+        // Create FormData to send to server
+        const formData = new FormData();
+        formData.append('screenshot', blob, 'spectrogram_' + timestamp + '.png');
+        formData.append('timestamp', timestamp);
+        
+        // Send to server
+        const xhr = new XMLHttpRequest();
+        // Use relative path that works from current context
+        const endpoint = window.location.pathname.includes('vertical_spectrogram')
+          ? window.location.pathname + '?save_screenshot=true'
+          : '../scripts/vertical_spectrogram.php?save_screenshot=true';
+        xhr.open('POST', endpoint, true);
+        
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            console.log('Screenshot saved successfully');
+            // Visual feedback
+            showScreenshotFeedback();
+          } else {
+            console.error('Failed to save screenshot:', xhr.status, xhr.responseText);
+          }
+        };
+        
+        xhr.onerror = function() {
+          console.error('Error sending screenshot to server');
+        };
+        
+        xhr.send(formData);
+      }, 'image/png');
+      
+    } catch (error) {
+      console.error('Error capturing screenshot:', error);
+    }
+  }
+  
+  /**
+   * Show visual feedback when screenshot is taken
+   */
+  function showScreenshotFeedback() {
+    // Flash effect on canvas
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'white';
+    overlay.style.opacity = '0.7';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.zIndex = '9999';
+    overlay.style.transition = 'opacity 0.3s';
+    
+    document.body.appendChild(overlay);
+    
+    // Fade out after brief flash
+    setTimeout(() => {
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        document.body.removeChild(overlay);
+      }, 300);
+    }, 100);
+  }
+
+  /**
    * Stop the spectrogram
    */
   function stop() {
@@ -692,6 +833,16 @@
    */
   function updateConfig(newConfig) {
     Object.assign(CONFIG, newConfig);
+    
+    // If any frequency grid-related config changed, redraw labels
+    const gridRelatedKeys = ['SHOW_FREQUENCY_GRID', 'GRID_LABEL_COLOR', 'GRID_LABEL_FONT', 
+                              'FREQUENCY_LINES', 'GRID_LABEL_OFFSET_X', 'GRID_LABEL_OFFSET_Y'];
+    const shouldRedrawLabels = gridRelatedKeys.some(key => key in newConfig);
+    
+    if (shouldRedrawLabels) {
+      drawFrequencyLabels();
+    }
+    
     console.log('Configuration updated:', CONFIG);
   }
 
@@ -758,6 +909,7 @@
     setColorScheme,
     setLowCutFilter,
     setLowCutFrequency,
+    captureScreenshot,
     CONFIG,
     COLOR_SCHEMES
   };
