@@ -705,7 +705,11 @@
         
         // Send to server
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'vertical_spectrogram.php?save_screenshot=true', true);
+        // Use relative path that works from current context
+        const endpoint = window.location.pathname.includes('vertical_spectrogram')
+          ? window.location.pathname + '?save_screenshot=true'
+          : '../scripts/vertical_spectrogram.php?save_screenshot=true';
+        xhr.open('POST', endpoint, true);
         
         xhr.onload = function() {
           if (xhr.status === 200) {

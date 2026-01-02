@@ -135,11 +135,10 @@ if(isset($_GET['save_screenshot']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
       throw new Exception("Failed to save screenshot file");
     }
     
-    // Success response
+    // Success response - return only filename, not full path
     echo json_encode([
       'success' => true,
-      'filename' => $filename,
-      'path' => $filepath
+      'filename' => $filename
     ]);
     
   } catch (Exception $e) {
