@@ -695,23 +695,25 @@
       ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
       
       // Now draw text normally - it will appear horizontally in the vertical spectrogram
-      ctx.textAlign = 'left';
+      // Use right-align so text is aligned against the right edge of the canvas
+      ctx.textAlign = 'right';
       
       // Draw background rectangle
+      // With right-align, rectangle extends to the left
       const bgWidth = totalWidth + CONFIG.LABEL_PADDING * 2;
       const bgHeight = textHeight + CONFIG.LABEL_PADDING * 2;
       
       ctx.fillStyle = CONFIG.LABEL_BACKGROUND;
-      ctx.fillRect(-CONFIG.LABEL_PADDING, -bgHeight / 2, bgWidth, bgHeight);
+      ctx.fillRect(-bgWidth + CONFIG.LABEL_PADDING, -bgHeight / 2, bgWidth, bgHeight);
+      
+      // Draw confidence in color-coded style (draw from right to left)
+      ctx.fillStyle = confidenceColor;
+      ctx.fillText(confidenceText, -CONFIG.LABEL_PADDING, 0);
       
       // Draw species name in white
       ctx.fillStyle = CONFIG.LABEL_NAME_COLOR;
-      ctx.fillText(nameText, 0, 0);
-      
-      // Draw confidence in color-coded style
-      const confidenceX = nameMetrics.width + spaceMetrics.width;
-      ctx.fillStyle = confidenceColor;
-      ctx.fillText(confidenceText, confidenceX, 0);
+      const nameX = -CONFIG.LABEL_PADDING - confidenceMetrics.width - spaceMetrics.width;
+      ctx.fillText(nameText, nameX, 0);
       
       // Restore context after rotation
       ctx.restore();
