@@ -656,7 +656,6 @@
     
     ctx.save();
     ctx.font = CONFIG.LABEL_FONT;
-    ctx.textBaseline = 'middle';
     
     currentDetections.forEach((detection, index) => {
       // Get confidence color
@@ -695,23 +694,29 @@
       ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
       
       // Now draw text normally - it will appear horizontally in the vertical spectrogram
-      ctx.textAlign = 'left';
+      // Use right-align so text is aligned against the right edge of the canvas
+      ctx.textAlign = 'right';
+      // Use top baseline so text extends downward in rotated coords (upward in final view)
+      ctx.textBaseline = 'top';
       
       // Draw background rectangle
+      // In rotated coordinate system: right-align means rectangle extends to the left (upward in final view)
       const bgWidth = totalWidth + CONFIG.LABEL_PADDING * 2;
       const bgHeight = textHeight + CONFIG.LABEL_PADDING * 2;
       
       ctx.fillStyle = CONFIG.LABEL_BACKGROUND;
-      ctx.fillRect(-CONFIG.LABEL_PADDING, -bgHeight / 2, bgWidth, bgHeight);
-      
-      // Draw species name in white
-      ctx.fillStyle = CONFIG.LABEL_NAME_COLOR;
-      ctx.fillText(nameText, 0, 0);
+      ctx.fillRect(-bgWidth + CONFIG.LABEL_PADDING, -CONFIG.LABEL_PADDING, bgWidth, bgHeight);
       
       // Draw confidence in color-coded style
-      const confidenceX = nameMetrics.width + spaceMetrics.width;
+      // In rotated coordinates: positioned at right edge (appears at bottom in final view)
       ctx.fillStyle = confidenceColor;
-      ctx.fillText(confidenceText, confidenceX, 0);
+      ctx.fillText(confidenceText, -CONFIG.LABEL_PADDING, 0);
+      
+      // Draw species name in white
+      // In rotated coordinates: positioned left of confidence (appears above in final view)
+      ctx.fillStyle = CONFIG.LABEL_NAME_COLOR;
+      const nameX = -CONFIG.LABEL_PADDING - confidenceMetrics.width - spaceMetrics.width;
+      ctx.fillText(nameText, nameX, 0);
       
       // Restore context after rotation
       ctx.restore();
