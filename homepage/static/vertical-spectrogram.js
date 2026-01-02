@@ -9,7 +9,7 @@
  * - Configurable redraw frequency
  * - Detection labels with confidence threshold filtering
  * - Labels rotated 90° (horizontally readable)
- * - Labels don't scroll with spectrogram
+ * - Labels scroll with spectrogram
  */
 
 (function() {
@@ -426,6 +426,14 @@
     
     // Draw shifted image (moved up by 1 pixel)
     ctx.putImageData(currentImage, 0, 0);
+    
+    // Scroll detection labels up by 1 pixel
+    currentDetections.forEach(detection => {
+      detection.y -= 1;
+    });
+    
+    // Remove detections that have scrolled off the top of the canvas
+    currentDetections = currentDetections.filter(det => det.y > -50);
   }
 
   /**
@@ -637,17 +645,15 @@
 
   /**
    * Draw detection labels on canvas
-   * Labels are displayed on the left side of the canvas in a fixed position
+   * Labels are displayed on the spectrogram and scroll upward with the content
+   * In vertical mode, labels are rotated 90 degrees to be horizontally readable
    */
   function drawDetectionLabels() {
     if (currentDetections.length === 0) return;
     
     ctx.save();
     ctx.font = CONFIG.LABEL_FONT;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    
-    let yOffset = CONFIG.LABEL_MARGIN;
+    ctx.textBaseline = 'middle';
     
     currentDetections.forEach((detection, index) => {
       // Get confidence color
@@ -668,33 +674,44 @@
       const totalWidth = nameMetrics.width + spaceMetrics.width + confidenceMetrics.width;
       const textHeight = CONFIG.LABEL_HEIGHT;
       
-      // Position for text (on the left side of canvas, stacked vertically)
-      const x = CONFIG.LABEL_MARGIN;
-      const y = yOffset;
+      // Position labels on the right side of canvas at their current Y position
+      // X position is on the right side with some margin
+      const x = canvas.width - CONFIG.LABEL_MARGIN;
+      const y = detection.y;
       
-      // Check if label fits on screen
-      if (y + textHeight > canvas.height - CONFIG.LABEL_MARGIN) {
-        return; // Skip labels that don't fit
+      // Skip labels that are off screen
+      if (y < -textHeight || y > canvas.height + textHeight) {
+        return;
       }
       
-      // Draw background
+      // Save context for rotation
+      ctx.save();
+      
+      // Move to label position and rotate 90 degrees for horizontal text
+      ctx.translate(x, y);
+      ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
+      
+      // Now draw text normally - it will appear horizontally in the vertical spectrogram
+      ctx.textAlign = 'left';
+      
+      // Draw background rectangle
       const bgWidth = totalWidth + CONFIG.LABEL_PADDING * 2;
-      const bgHeight = textHeight + CONFIG.LABEL_PADDING * 2;
+      const bgHeight = textHeight + CONFIG.LABEL_PADDING;
       
       ctx.fillStyle = CONFIG.LABEL_BACKGROUND;
-      ctx.fillRect(x - CONFIG.LABEL_PADDING, y - CONFIG.LABEL_PADDING, bgWidth, bgHeight);
+      ctx.fillRect(-CONFIG.LABEL_PADDING, -bgHeight / 2, bgWidth, bgHeight);
       
       // Draw species name in white
       ctx.fillStyle = CONFIG.LABEL_NAME_COLOR;
-      ctx.fillText(nameText, x, y);
+      ctx.fillText(nameText, 0, 0);
       
       // Draw confidence in color-coded style
-      const confidenceX = x + nameMetrics.width + spaceMetrics.width;
+      const confidenceX = nameMetrics.width + spaceMetrics.width;
       ctx.fillStyle = confidenceColor;
-      ctx.fillText(confidenceText, confidenceX, y);
+      ctx.fillText(confidenceText, confidenceX, 0);
       
-      // Update y offset for next label
-      yOffset += bgHeight + 5;
+      // Restore context after rotation
+      ctx.restore();
     });
     
     ctx.restore();
