@@ -21,7 +21,7 @@
     // Default: 100ms (suitable for Raspberry Pi 3)
     // For RPi 5 or powerful devices: 50ms
     // For smartphones/tablets: 100-150ms
-    REDRAW_INTERVAL_MS: 100,
+    REDRAW_INTERVAL_MS: 30,
     
     // Detection label configuration
     DETECTION_CHECK_INTERVAL_MS: 1000,
@@ -50,7 +50,7 @@
     RAPID_DETECTION_INTERVAL_MS: 2000, // Don't show detections within 2 seconds of previous high detection
     
     // Spectrogram configuration
-    FFT_SIZE: 2048,
+    FFT_SIZE: 512,
     BACKGROUND_COLOR: 'hsl(280, 100%, 10%)',
     
     // Color mapping for frequency data
@@ -77,7 +77,9 @@
     GRID_LABEL_OFFSET_X: 3, // Horizontal offset for grid labels
     GRID_LABEL_OFFSET_Y: 8, // Vertical offset for grid labels
   };
-
+  // --- Frequentiebeperkingen voor syllable-visualisatie ---
+  const MIN_FREQ = 1000;    // 1 kHz
+  const MAX_FREQ = 11000;   // 11 kHz
   // =================== Color Schemes ===================
   const COLOR_SCHEMES = {
     purple: {
@@ -212,7 +214,7 @@
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
       analyser.fftSize = CONFIG.FFT_SIZE;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.smoothingTimeConstant = 0.0;
       
       // Create source from audio element
       sourceNode = audioContext.createMediaElementSource(audioElement);
@@ -282,7 +284,7 @@
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Set better text rendering
-    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingEnabled = false;
     ctx.imageSmoothingQuality = 'high';
     
     // Create image data buffer
@@ -396,24 +398,35 @@
    * Render a single frame
    */
   function renderFrame() {
-    if (!analyser || !frequencyData) return;
-    
-    // Get frequency data from analyser
-    analyser.getByteFrequencyData(frequencyData);
-    
-    // Scroll existing content up by 1 pixel
-    scrollContentUp();
-    
-    // Draw new FFT row at the bottom
-    drawFFTRow();
-    
-    // Draw frequency grid lines
-    drawFrequencyGrid();
-    
-    // Draw detection labels (they scroll with the spectrogram)
-    drawDetectionLabels();
+  if (!analyser || !frequencyData) return;
+
+  // Haal ruwe FFT bins op (0–255)
+  analyser.getByteFrequencyData(frequencyData);
+
+  // Converteer lineaire magnitude → pseudo-dB in-place
+  // Dit verhoogt zichtbaarheid van zachte syllables
+  for (let i = 0; i < frequencyData.length; i++) {
+    const v = frequencyData[i] / 255.0;          // 0.0 – 1.0
+    let db = 20 * Math.log10(v + 1e-6);           // log schaal
+    db = Math.max(db, -80);                       // noise floor
+    frequencyData[i] = Math.floor(
+      ((db + 80) / 80) * 255                      // normaliseer naar 0–255
+    );
   }
 
+  // Scroll bestaande inhoud exact 1 pixel omhoog
+  scrollContentUp();
+
+  // Teken nieuwe FFT-rij onderaan (1 tijdstap)
+  drawFFTRow();
+
+  // Grid enkel opnieuw tekenen indien nodig
+  // (optioneel optimaliseerbaar, maar correct zo)
+  drawFrequencyGrid();
+
+  // Detectielabels volgen de spectrogram-scroll
+  drawDetectionLabels();
+}
   /**
    * Scroll canvas content up by 1 pixel
    */
