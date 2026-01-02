@@ -239,9 +239,9 @@ canvas {
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   color: white;
-  font-size: 11px;
+  font-size: 14px;
   overflow-y: scroll;
-  padding: 10px;
+  padding: 15px;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
   z-index: 20;
   flex-shrink: 0;

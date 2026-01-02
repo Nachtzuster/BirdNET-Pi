@@ -64,7 +64,6 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <button type="submit" name="view" value="Todays Detections" form="views">Today's Detections</button>
   <button type="submit" name="view" value="Spectrogram" form="views">Spectrogram</button>
   <button type="submit" name="view" value="Vertical Spectrogram" form="views">Vertical Spectrogram</button>
-  <button type="button" onclick="window.open('scripts/vertical_spectrogram.php', '_blank')" title="Open Vertical Spectrogram in New Tab" style="font-size: 0.9em;">↗ V-Spec</button>
   <button type="submit" name="view" value="Species Stats" form="views">Best Recordings</button>
   <button type="submit" name="view" value="Streamlit" form="views">Species Stats</button>
   <button type="submit" name="view" value="Daily Charts" form="views">Daily Charts</button>
