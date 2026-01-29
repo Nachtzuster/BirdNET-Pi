@@ -85,6 +85,64 @@ class TestRunAnalysis(unittest.TestCase):
             self.assertEqual(det.common_name, expected['common_name'])
 
 
+    @patch('scripts.utils.analysis.analyzeAudioData')
+    @patch('scripts.utils.analysis.readAudioData')
+    @patch('scripts.utils.helpers._load_settings')
+    @patch('scripts.utils.analysis.loadCustomSpeciesList')
+    @patch('scripts.utils.analysis.get_language')
+    def test_perch_label_filtering(self, mock_get_language, mock_loadCustomSpeciesList, mock_load_settings, mock_readAudio, mock_analyzeAudio):
+        settings = Settings.with_defaults()
+        settings.update({
+            'MODEL': 'Perch_v2',
+            'PERCH_BIRDNET_FILTER': '1',
+            'CONFIDENCE': 0.1,
+            'LATITUDE': 50.0,
+            'LONGITUDE': 5.0,
+            'OVERLAP': 0.0,
+        })
+        mock_load_settings.return_value = settings
+        mock_loadCustomSpeciesList.return_value = []
+        mock_readAudio.return_value = [] 
+        
+        birdnet_labels = {
+            'Pica pica': 'Eurasian Magpie',
+            'Turdus migratorius': 'American Robin'
+        }
+        
+        perch_labels = {
+            'Pica pica': 'Eurasian Magpie',
+            'Mock Unknown Match': 'Eurasian Magpie', 
+            'Abavorana luctuosa': 'Mock Some Frog',
+            'Acoustic_guitar': 'Acoustic guitar'
+        }
+
+        def get_language_side_effect(lang, model):
+            if 'BirdNET' in model or 'BIRDNET' in model:
+                return birdnet_labels
+            return perch_labels
+        
+        mock_get_language.side_effect = get_language_side_effect
+
+        raw_detections = {
+            '0.0;3.0': [('Pica pica', 0.9)],
+            '3.0;6.0': [('Abavorana luctuosa', 0.9)],
+            '6.0;9.0': [('Mock Unknown Match', 0.8), ('Acoustic_guitar', 0.7)]
+        }
+        mock_analyzeAudio.return_value = (raw_detections, [])
+
+        test_file = ParseFileName('2025-01-01-birdnet-00:00:00.wav')
+        detections = run_analysis(test_file)
+
+        detected_sci_names = [d.scientific_name for d in detections]
+        
+        self.assertIn('Pica pica', detected_sci_names)
+        self.assertIn('Mock Unknown Match', detected_sci_names)
+        self.assertNotIn('Abavorana luctuosa', detected_sci_names)
+        self.assertNotIn('Acoustic_guitar', detected_sci_names)
+        
+        self.assertEqual(len(detections), 2)
+
+
 class TestFilterHumans(unittest.TestCase):
 
     @patch('scripts.utils.helpers._load_settings')
