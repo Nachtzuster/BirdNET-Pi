@@ -24,6 +24,7 @@ class Settings(dict):
             "DATA_MODEL_VERSION": 1,
             "SENSITIVITY": 1.25,
             "SF_THRESH": 0.003,
+            "PERCH_BIRDNET_FILTER": "1",
             "APPRISE_NOTIFICATION_TITLE": "New backyard bird!",
             "APPRISE_NOTIFY_EACH_DETECTION": "0",
             "APPRISE_NOTIFY_NEW_SPECIES": "0",
