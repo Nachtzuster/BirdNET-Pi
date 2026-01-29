@@ -149,7 +149,7 @@ def run_analysis(file):
     names = get_language(conf['DATABASE_LANG'], conf['MODEL'])
     birdnet_sci_names_filter = None
     birdnet_common_names_filter = None
-    if conf['MODEL'] == 'Perch_v2' and conf.getint('PERCH_BIRDNET_FILTER', fallback=1):
+    if conf['MODEL'] == 'Perch_v2' and conf.getint('PERCH_BIRDNET_FILTER'):
         birdnet_labels = get_language(conf['DATABASE_LANG'], 'BirdNET_GLOBAL_6K_V2.4_Model_FP16')
         birdnet_sci_names_filter = set(birdnet_labels.keys())
         birdnet_common_names_filter = set(birdnet_labels.values())

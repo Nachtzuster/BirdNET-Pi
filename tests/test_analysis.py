@@ -16,14 +16,20 @@ class TestRunAnalysis(unittest.TestCase):
         if os.path.exists(self.test_file):
             os.unlink(self.test_file)
         os.symlink(source, self.test_file)
+        # Reset global model to force reload
+        import scripts.utils.analysis
+        scripts.utils.analysis.MODEL = None
 
     def tearDown(self):
         if os.path.exists(self.test_file):
             os.unlink(self.test_file)
+        # Reset global model to avoid bleeding into other tests
+        import scripts.utils.analysis
+        scripts.utils.analysis.MODEL = None
 
     @patch('scripts.utils.helpers._load_settings')
     @patch('scripts.utils.analysis.loadCustomSpeciesList')
-    def test_run_analysis(self, mock_loadCustomSpeciesList, mock_load_settings):
+    def test_run_analysis_birdnet(self, mock_loadCustomSpeciesList, mock_load_settings):
         # Mock the settings and species list
         mock_load_settings.return_value = Settings.with_defaults()
         mock_loadCustomSpeciesList.return_value = []
@@ -46,6 +52,37 @@ class TestRunAnalysis(unittest.TestCase):
         for det, expected in zip(detections, expected_results):
             self.assertAlmostEqual(det.confidence, expected['confidence'], delta=1e-4)
             self.assertEqual(det.scientific_name, expected['sci_name'])
+
+    @patch('scripts.utils.helpers._load_settings')
+    @patch('scripts.utils.analysis.loadCustomSpeciesList')
+    def test_run_analysis_perch(self, mock_loadCustomSpeciesList, mock_load_settings):
+        settings = Settings.with_defaults()
+        settings.update({
+            'MODEL': 'Perch_v2',
+            'PERCH_BIRDNET_FILTER': '1',
+        })
+        mock_load_settings.return_value = settings
+
+
+        # Test file
+        test_file = ParseFileName(self.test_file)
+
+        # Expected results
+        expected_results = [
+            {"confidence": 0.9641, 'sci_name': 'Pica pica', 'common_name': 'Eurasian Magpie'},
+            {"confidence": 0.9609, 'sci_name': 'Pica pica', 'common_name': 'Eurasian Magpie'},
+            {"confidence": 0.9468, 'sci_name': 'Pica pica', 'common_name': 'Eurasian Magpie'}
+        ]
+
+        # Run the analysis
+        detections = run_analysis(test_file)
+
+        # Assertions
+        self.assertEqual(len(detections), len(expected_results))
+        for det, expected in zip(detections, expected_results):
+            self.assertAlmostEqual(det.confidence, expected['confidence'], delta=1e-4)
+            self.assertEqual(det.scientific_name, expected['sci_name'])
+            self.assertEqual(det.common_name, expected['common_name'])
 
 
 class TestFilterHumans(unittest.TestCase):
