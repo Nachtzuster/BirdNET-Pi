@@ -80,10 +80,15 @@ def get_wav_files():
     return files
 
 
-def get_language(language=None):
+def get_language(language=None, model=None):
     if language is None:
         language = get_settings()['DATABASE_LANG']
-    file_name = os.path.join(MODEL_PATH, f'l18n/labels_{language}.json')
+    if model is None:
+        model = get_settings()['MODEL']
+    if model == 'Perch_v2':
+        file_name = os.path.join(MODEL_PATH, f'l18n/labels_{language}_perch.json')
+    else:
+        file_name = os.path.join(MODEL_PATH, f'l18n/labels_{language}.json')
     with open(file_name) as f:
         ret = json.loads(f.read())
     return ret
@@ -107,7 +112,9 @@ def get_model_labels(model=None):
 
 
 def set_label_file():
-    lang = get_language()
+    conf = get_settings()
+    model = conf['MODEL']
+    lang = get_language(model=model)  # Get model-specific translations
     labels = [f'{label}_{lang.get(label, label)}\n' for label in get_model_labels()]
     file_name = os.path.join(MODEL_PATH, 'labels.txt')
     if os.path.islink(file_name):

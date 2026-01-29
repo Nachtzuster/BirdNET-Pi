@@ -146,7 +146,14 @@ def run_analysis(file):
 
     conf = get_settings()
     model = load_global_model()
-    names = get_language(conf['DATABASE_LANG'])
+    names = get_language(conf['DATABASE_LANG'], conf['MODEL'])
+    birdnet_sci_names_filter = None
+    birdnet_common_names_filter = None
+    if conf['MODEL'] == 'Perch_v2' and conf.getint('PERCH_BIRDNET_FILTER'):
+        birdnet_labels = get_language(conf['DATABASE_LANG'], 'BirdNET_GLOBAL_6K_V2.4_Model_FP16')
+        birdnet_sci_names_filter = set(birdnet_labels.keys())
+        birdnet_common_names_filter = set(birdnet_labels.values())
+        log.info("Perch BirdNET filter enabled.")
 
     # Read audio data & handle errors
     try:
@@ -165,6 +172,9 @@ def run_analysis(file):
         for sci_name, confidence in entries:
             if confidence >= conf.getfloat('CONFIDENCE'):
                 com_name = names.get(sci_name, sci_name)
+                if birdnet_sci_names_filter is not None:
+                    if sci_name not in birdnet_sci_names_filter and com_name not in birdnet_common_names_filter:
+                        continue
                 if sci_name not in include_list and len(include_list) != 0:
                     log.warning("Excluded as INCLUDE_LIST is active but this species is not in it: %s %s", sci_name, com_name)
                 elif sci_name in exclude_list and len(exclude_list) != 0:
