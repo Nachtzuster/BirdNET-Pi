@@ -111,11 +111,19 @@ button:hover {
   height: 7%;
   text-align: center;
   background-color: #2b2b2b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .banner h1 {
   padding: .5em;
   letter-spacing: 5px;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .banner audio,.banner form {
@@ -205,8 +213,10 @@ button:hover {
 }
 
 .topimage {
-  width:175px;
-  display:initial !important;
+  height: 100%;
+  max-height: 100%;
+  width: auto;
+  display: inline-block !important;
   margin-left: 60px;
   filter: drop-shadow(0px 0px 20px rgba(255, 255, 255, 1.0));
 }
