@@ -106,11 +106,19 @@ button:hover {
 .banner {
   height: 7%;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .banner h1 {
   padding: .5em;
   letter-spacing: 5px;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .banner audio,.banner form {
@@ -199,8 +207,10 @@ button:hover {
 }
 
 .topimage {
-  width:175px;
-  display:initial !important;
+  height: 100%;
+  max-height: 100%;
+  width: auto;
+  display: inline-block !important;
 }
 
 .topnav form {
