@@ -3,6 +3,33 @@
    src: url('static/RobotoFlex-Regular.ttf') format('truetype');
 }
 
+:root {
+  /* Light theme colors */
+  --bg-body: rgb(119, 196, 135);
+  --bg-nav: rgb(159, 226, 155);
+  --bg-card: rgb(219, 255, 235);
+  --bg-button: rgb(219, 255, 235);
+  --bg-button-hover: rgb(159, 226, 155);
+  --bg-active: #04AA6D;
+  --text: black;
+  --text-muted: #333;
+  --accent: #047c52;
+  /* Softer radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 24px;
+  /* Softer shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+  --shadow-button: 0 2px 6px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-button-hover: 0 4px 12px rgba(0, 0, 0, 0.14), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --space-tight: 10px;
+  --space-normal: 14px;
+  --space-relaxed: 18px;
+}
+
 * {
   font-family: 'Roboto Flex', sans-serif;
   box-sizing: border-box;
@@ -31,7 +58,7 @@ iframe {
 
 body {
   margin: 0;
-  background-color: rgb(119, 196, 135);
+  background-color: var(--bg-body);
 }
 
 table {
@@ -40,21 +67,21 @@ table {
   border-spacing: 0;
   margin-left: auto;
   margin-right: auto;
-  box-shadow: 0px 0px 17px 1px rgba(0, 0, 0, 0.10);
-  border-radius:3px;
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 td {
-  padding: 10px;
+  padding: var(--space-normal) var(--space-relaxed);
   vertical-align: top;
-  background-color: rgb(219, 255, 235);
+  background-color: var(--bg-card);
   font-weight: lighter;
   text-align: center;
 }
 
 th {
-  padding: 12px;
+  padding: var(--space-normal) var(--space-relaxed);
   font-weight: bold;
   height: auto;
   text-align: center;
@@ -76,9 +103,9 @@ hr {
 button {
   background-color: transparent;
   border: none;
-  color: black;
+  color: var(--text);
   cursor: pointer;
-  transition:background-color 0.2s;
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
 
 .disabled{
@@ -136,7 +163,7 @@ button:hover {
 
 .banner a {
   text-decoration: none;
-  color: black;
+  color: var(--text);
   font-size: x-large;
 }
 
@@ -149,8 +176,8 @@ button:hover {
   background-color: #fff;
   z-index: 9999;
   overflow: auto;
-  border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
 }
 
 .logo img {
@@ -175,10 +202,12 @@ button:hover {
 .modal-content {
   background-color: #fefefe;
   margin: 15% auto;
-  padding: 20px;
-  border: 1px solid #888;
+  padding: var(--space-relaxed) 24px;
+  border: none;
   width: 80%;
-  text-align: center; /* Center the content */
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
 }
 
 @media (max-width: 768px) {
@@ -193,7 +222,7 @@ button:hover {
 }
 
 .topnav {
-  background-color: rgb(159, 226, 155);
+  background-color: var(--bg-nav);
   display: flex;
   flex: 65%;
   width: 65%;
@@ -201,9 +230,11 @@ button:hover {
   justify-content: space-between;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 15px;
-  box-shadow: 0px 0px 28px 1px rgba(0, 0, 0, 0.10) !important;
-  border-radius: 4px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-md) !important;
+  border-radius: var(--radius-md);
+  padding: 6px;
+  gap: 4px;
 }
 
 .topimage {
@@ -221,24 +252,25 @@ button:hover {
 .topnav button {
   background-color: transparent;
   text-align: center;
-  padding: 14px 16px;
+  padding: var(--space-normal) var(--space-relaxed);
   width: auto;
   vertical-align: middle;
+  border-radius: var(--radius-pill);
 }
 
 .topnav button:hover {
-  background-color: rgb(219, 255, 235);
-  color: black;
+  background-color: var(--bg-button);
+  color: var(--text);
 }
 
 .topnav button.active {
-  background-color: #04AA6D;
+  background-color: var(--bg-active);
   color: white;
 }
 
 .topnav .button-hover {
-  background-color: rgb(219, 255, 235) !important;
-  color: black;
+  background-color: var(--bg-button) !important;
+  color: var(--text);
 }
 
 .topnav .icon {
@@ -246,9 +278,9 @@ button:hover {
 }
 
 .overview th {
-  background-color: rgb(219, 255, 235);
+  background-color: var(--bg-card);
   text-align: center;
-  padding: 12px;
+  padding: var(--space-normal);
 }
 
 .overview td {
@@ -313,16 +345,17 @@ button:hover {
 }
 
 .views .centered button {
-  background-color: rgb(219, 255, 235);
-  padding: 12px;
-  transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 1px 5px 0px rgb(0 0 0 / 12%);
+  background-color: var(--bg-button);
+  padding: var(--space-normal) var(--space-relaxed);
+  border-radius: var(--radius-sm);
+  transition: box-shadow 0.2s, background-color 0.2s;
+  box-shadow: var(--shadow-button);
 }
 
 .views .centered button:hover {
-  background-color: rgb(159, 226, 155);
-  color: black;
-  box-shadow:0px 2px 4px -1px rgb(0 0 0 / 20%), 0px 4px 5px 0px rgb(0 0 0 / 14%), 0px 1px 10px 0px rgb(0 0 0 / 12%);
+  background-color: var(--bg-button-hover);
+  color: var(--text);
+  box-shadow: var(--shadow-button-hover);
 }
 
 .settings {
@@ -342,13 +375,14 @@ button:hover {
 }
 
 .settings button {
-  background-color: rgb(219, 255, 235);
-  padding: 12px;
+  background-color: var(--bg-button);
+  padding: var(--space-normal) var(--space-relaxed);
+  border-radius: var(--radius-sm);
 }
 
 .settings button:hover {
-  background-color: rgb(159, 226, 155);
-  color: black;
+  background-color: var(--bg-button-hover);
+  color: var(--text);
 }
 
 .float button {
@@ -371,10 +405,10 @@ button:hover {
 }
 
 .customlabels button,.customlabels2 button {
-  padding: 12px;
-  background-color: rgb(219, 255, 235);
-  
+  padding: var(--space-normal);
+  background-color: var(--bg-button);
   width: 100%;
+  border-radius: var(--radius-sm);
 }
 
 .column1, .column3 {
@@ -422,17 +456,19 @@ button:hover {
 }
 
 .servicecontrols button {
-  background-color: rgb(219, 255, 235);
-  padding: 12px;
+  background-color: var(--bg-button);
+  padding: var(--space-normal);
   width: 50%;
+  border-radius: var(--radius-sm);
 }
 
 .systemcontrols button {
-  background-color: rgb(219, 255, 235);
+  background-color: var(--bg-button);
   display: block;
-  padding: 12px;
+  padding: var(--space-normal);
   width: 50%;
   margin: 16px auto;
+  border-radius: var(--radius-sm);
 }
 
 .servicecontrols button {
@@ -451,7 +487,7 @@ button:hover {
   -webkit-appearance: none;
   width: 33%;
   height: 15px;
-  border-radius: 5px;
+  border-radius: var(--radius-pill);
   outline: none;
   opacity: 0.7;
   -webkit-transition: .2s;
@@ -464,7 +500,7 @@ button:hover {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: #04AA6D;
+  background: var(--bg-active);
   cursor: pointer;
 }
 
@@ -472,7 +508,7 @@ button:hover {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: #04AA6D;
+  background: var(--bg-active);
   cursor: pointer;
 }
 
@@ -526,8 +562,8 @@ button:hover {
   }
   .systemcontrols button,.servicecontrols button {
     width: 60%;
-    padding: 12px;
-    background-color: rgb(219, 255, 235);
+    padding: var(--space-normal);
+    background-color: var(--bg-button);
   }
   .topnav {
     flex: 100%;
@@ -566,8 +602,8 @@ button:hover {
   }
   .systemcontrols button,.servicecontrols button {
     width: 80%;
-    padding: 12px;
-    background-color: rgb(219, 255, 235);
+    padding: var(--space-normal);
+    background-color: var(--bg-button);
   }
   .stats img {
     width: 100%;
@@ -652,65 +688,68 @@ button:hover {
 }
 
 .sortbutton {
-  margin-top:10px;
-  font-size:x-large;
-  background:#77c487;
-  padding:5px;
-  box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.10);
+  margin-top: 10px;
+  font-size: x-large;
+  background: var(--bg-nav);
+  padding: var(--space-tight) var(--space-normal);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 .sortbutton:hover {
-  background-color: #dbffeb;
-  color: white;
+  background-color: var(--bg-card);
+  color: var(--text);
 }
 
 .sortbutton.active {
-  background-color: #dbffeb;
-  color: white;
+  background-color: var(--bg-card);
+  color: var(--text);
 }
 
 button.legacyview {
   display: none;
-  color:gray;
-  margin:5px;
-  float:right;
-  z-index:100;
-  position:relative;
-  font-size:small;
-  background:#dbffeb;
-  padding:5px;
-  transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 1px 5px 0px rgb(0 0 0 / 12%);
+  color: var(--text-muted);
+  margin: 5px;
+  float: right;
+  z-index: 100;
+  position: relative;
+  font-size: small;
+  background: var(--bg-button);
+  padding: var(--space-tight);
+  border-radius: var(--radius-sm);
+  transition: box-shadow 0.2s;
+  box-shadow: var(--shadow-button);
 }
 
-button.legacyview:hover  { 
-  box-shadow:0px 2px 4px -1px rgb(0 0 0 / 20%), 0px 4px 5px 0px rgb(0 0 0 / 14%), 0px 1px 10px 0px rgb(0 0 0 / 12%);
+button.legacyview:hover {
+  box-shadow: var(--shadow-button-hover);
 }
 
 button.loadmore {
-  margin-top:10px;
-  font-size:x-large;
-  background:#dbffeb;
-  padding:10px;
-  transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 1px 5px 0px rgb(0 0 0 / 12%);
-  
+  margin-top: 10px;
+  font-size: x-large;
+  background: var(--bg-button);
+  padding: var(--space-normal);
+  border-radius: var(--radius-sm);
+  transition: box-shadow 0.2s;
+  box-shadow: var(--shadow-button);
 }
 
-button.loadmore:hover { 
-  box-shadow:0px 2px 4px -1px rgb(0 0 0 / 20%), 0px 4px 5px 0px rgb(0 0 0 / 14%), 0px 1px 10px 0px rgb(0 0 0 / 12%);
+button.loadmore:hover {
+  box-shadow: var(--shadow-button-hover);
 }
 
 #searchterm {
-  transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.2s;
+  border-radius: var(--radius-sm);
 }
 
 #searchterm:hover {
-  box-shadow:0px 2px 4px -1px rgb(0 0 0 / 20%), 0px 4px 5px 0px rgb(0 0 0 / 14%), 0px 1px 10px 0px rgb(0 0 0 / 12%);
+  box-shadow: var(--shadow-button-hover);
 }
 
 tr {
-  background-color:#9fe29b;
+  background-color: var(--bg-nav);
 }
 
 .history.centered form {
@@ -724,14 +763,14 @@ tr {
 }
 
 .centered form#views button {
-  box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.10);
-  margin:2px;
-  transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 1px 5px 0px rgb(0 0 0 / 12%);
+  margin: 2px;
+  border-radius: var(--radius-sm);
+  transition: box-shadow 0.2s;
+  box-shadow: var(--shadow-button);
 }
 
 .centered form#views button:hover {
-  box-shadow:0px 2px 4px -1px rgb(0 0 0 / 20%), 0px 4px 5px 0px rgb(0 0 0 / 14%), 0px 1px 10px 0px rgb(0 0 0 / 12%);
+  box-shadow: var(--shadow-button-hover);
 }
 
 dl {
@@ -750,7 +789,8 @@ dd::before {
 }
 
 input {
-  box-shadow: 0px 0px 17px 1px rgba(0, 0, 0, 0.10);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-sm);
 }
 
 dialog {
@@ -776,32 +816,32 @@ dialog::backdrop {
 }
 
 .centered_image_container img.img1 {
-  transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 1px 5px 0px rgb(0 0 0 / 12%);
-  cursor:pointer;
-  height:95%;
-  position:absolute;
-  right:110%;
-  top:0px;
-  border-radius: 5px;
-  width:unset;
+  transition: box-shadow 0.2s;
+  box-shadow: var(--shadow-button);
+  cursor: pointer;
+  height: 95%;
+  position: absolute;
+  right: 110%;
+  top: 0px;
+  border-radius: var(--radius-md);
+  width: unset;
 }
 
-.centered_image_container img.img1:hover{
-  opacity:0.8;
-  box-shadow:0px 2px 4px -1px rgb(0 0 0 / 20%), 0px 4px 5px 0px rgb(0 0 0 / 14%), 0px 1px 10px 0px rgb(0 0 0 / 12%);
+.centered_image_container img.img1:hover {
+  opacity: 0.8;
+  box-shadow: var(--shadow-button-hover);
 }
 
 #birdimage {
-  transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 1px 5px 0px rgb(0 0 0 / 12%);
-  cursor:pointer;
-  border-radius: 5px;
+  transition: box-shadow 0.2s;
+  box-shadow: var(--shadow-button);
+  cursor: pointer;
+  border-radius: var(--radius-md);
 }
 
 #birdimage:hover {
-  opacity:0.8;
-  box-shadow:0px 2px 4px -1px rgb(0 0 0 / 20%), 0px 4px 5px 0px rgb(0 0 0 / 14%), 0px 1px 10px 0px rgb(0 0 0 / 12%);
+  opacity: 0.8;
+  box-shadow: var(--shadow-button-hover);
 }
 
 .centered_image_container * {
@@ -813,10 +853,11 @@ dialog::backdrop {
 }
 
 .brbanner {
-  padding:15px;
-  background-color:rgb(159, 226, 155);
-  text-align:center;
-  font-size:large;
+  padding: var(--space-relaxed);
+  background-color: var(--bg-nav);
+  text-align: center;
+  font-size: large;
+  border-radius: var(--radius-md);
 }
 
 #gain.centered {
@@ -909,27 +950,30 @@ pre#timer.bash {
 }
 
 #showpassword {
-  cursor:pointer;
-  margin-left:2px;
-  height:5px;
-  line-height:5px;
-  padding:3px;
-  background-color:#9fe29b
-}
-
-#newrtspstream{
   cursor: pointer;
   margin-left: 2px;
   height: 5px;
   line-height: 5px;
   padding: 3px;
-  background-color: #9fe29b;
+  background-color: var(--bg-nav);
+  border-radius: var(--radius-sm);
+}
+
+#newrtspstream {
+  cursor: pointer;
+  margin-left: 2px;
+  height: 5px;
+  line-height: 5px;
+  padding: 3px;
+  background-color: var(--bg-nav);
+  border-radius: var(--radius-sm);
 }
 
 .exclude_species_list_option_highlight {
-  color: black;
-  background-color: rgb(119, 196, 135);
+  color: var(--text);
+  background-color: var(--bg-body);
   font-weight: bolder;
+  border-radius: var(--radius-sm);
 }
 
 #ddnewline::before {
