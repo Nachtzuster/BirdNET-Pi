@@ -174,6 +174,12 @@ The frontend dev server proxies API requests to `localhost:8080`.
   - `build_date_utc`
 - `version.md` remains the human-readable changelog/history.
 
+Update metadata before a release/build:
+
+```bash
+./scripts/update_version_metadata.sh --service-version 0.14.0
+```
+
 ### Project Structure
 
 ```
