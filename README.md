@@ -164,6 +164,16 @@ npm run dev
 
 The frontend dev server proxies API requests to `localhost:8080`.
 
+### Version Metadata
+
+- `versions.md` stores machine-readable release metadata used by the API:
+  - `service_version` (SemVer)
+  - `git_hash` (commit hash)
+  - `git_branch`
+  - `api_version`
+  - `build_date_utc`
+- `version.md` remains the human-readable changelog/history.
+
 ### Project Structure
 
 ```
@@ -187,7 +197,9 @@ BirdNET-Pibird/
 │   ├── birdnet_analysis.py # Main analysis pipeline
 │   ├── utils/              # Python utilities (reused by backend)
 │   └── *.sh                # Shell scripts
-└── model/                   # BirdNET models & labels
+├── model/                   # BirdNET models & labels
+├── versions.md              # Machine-readable release metadata
+└── version.md               # Human-readable changelog
 ```
 
 ---

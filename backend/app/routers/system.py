@@ -11,6 +11,7 @@ from fastapi.responses import StreamingResponse
 from ..config import get_settings, Settings
 from ..dependencies import verify_credentials, get_db
 from ..models.schemas import ServiceStatus, SystemInfo
+from ..version_metadata import read_version_metadata, normalized_service_version
 
 router = APIRouter()
 
@@ -47,13 +48,9 @@ def format_uptime() -> Optional[str]:
 
 
 def read_version(settings: Settings) -> str:
-    """Read app version from version.md."""
-    version = "unknown"
-    version_path = os.path.join(settings.base_path, 'version.md')
-    if os.path.exists(version_path):
-        with open(version_path) as f:
-            version = f.read().strip()
-    return version
+    """Read concise app version from versions.md metadata."""
+    metadata = read_version_metadata(settings.base_path)
+    return normalized_service_version(metadata)
 
 
 def get_service_status(service_name: str) -> ServiceStatus:

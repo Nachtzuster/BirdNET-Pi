@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
 from .routers import detections, species, config, system, media, integrations
+from .version_metadata import read_version_metadata, normalized_service_version, normalized_git_hash
 
 
 @asynccontextmanager
@@ -66,17 +67,15 @@ async def health_check():
 async def app_info():
     """Application information."""
     settings = get_settings()
-    
-    # Read version from version.md
-    version = "unknown"
-    version_path = os.path.join(settings.base_path, 'version.md')
-    if os.path.exists(version_path):
-        with open(version_path) as f:
-            version = f.read().strip()
+    metadata = read_version_metadata(settings.base_path)
     
     return {
         "name": "BirdNET-Pi",
-        "version": version,
+        "version": normalized_service_version(metadata),
+        "git_hash": normalized_git_hash(metadata),
+        "git_branch": metadata.get("git_branch", "unknown"),
+        "api_version": metadata.get("api_version", "1.0.0"),
+        "build_date_utc": metadata.get("build_date_utc", "unknown"),
         "site_name": settings.site_name,
         "latitude": settings.latitude,
         "longitude": settings.longitude,
