@@ -70,6 +70,15 @@ export const detections = {
 
 	chartData: (date: string) => request<ChartData>(`/detections/chart-data/${date}`),
 
+	chartDataRange: (params: { start: string; end: string; group_by: 'hour' | 'day' | 'week' | 'month' }) => {
+		const searchParams = new URLSearchParams({
+			start: params.start,
+			end: params.end,
+			group_by: params.group_by,
+		});
+		return request<RangeChartData>(`/detections/chart-data-range?${searchParams}`);
+	},
+
 	delete: (filename: string, auth: { username: string; password: string }) =>
 		request(`/detections/${encodeURIComponent(filename)}`, { method: 'DELETE', auth }),
 };
@@ -330,6 +339,17 @@ export interface ChartData {
 	hourly: { hour: number; count: number }[];
 	top_species: { com_name: string; sci_name: string; count: number; max_confidence: number }[];
 	species_hourly: SpeciesHourly[];
+}
+
+export interface RangeChartData {
+	start: string;
+	end: string;
+	group_by: 'hour' | 'day' | 'week' | 'month';
+	total_detections: number;
+	species_count: number;
+	buckets: { period: number | string; count: number }[];
+	top_species: { com_name: string; sci_name: string; count: number; max_confidence: number }[];
+	species_buckets: { sci_name: string; com_name: string; counts: number[] }[];
 }
 
 export interface BirdImage {

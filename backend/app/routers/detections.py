@@ -1,6 +1,6 @@
 """Detection API endpoints."""
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -268,6 +268,145 @@ async def get_chart_data(
         "hourly": hourly,
         "top_species": top_species,
         "species_hourly": species_hourly,
+    }
+
+
+@router.get("/detections/chart-data-range")
+async def get_chart_data_range(
+    start: str = Query(..., description="Start date (YYYY-MM-DD)"),
+    end: str = Query(..., description="End date (YYYY-MM-DD)"),
+    group_by: str = Query("day", description="Grouping: hour, day, week, month"),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Get aggregated detection data over a date range.
+
+    Supports multiple groupings for different time-range views:
+    - hour: 24-hour breakdown (best for single-day or today view)
+    - day: one bucket per calendar day
+    - week: one bucket per ISO week
+    - month: one bucket per calendar month
+
+    Returns:
+        buckets: list of {period, count} dicts
+        total_detections: total count in range
+        species_count: distinct species in range
+        top_species: top 10 species with counts and max confidence
+        species_buckets: per-species breakdown matching the bucket grouping
+    """
+    if group_by not in ("hour", "day", "week", "month"):
+        raise HTTPException(status_code=400, detail="group_by must be one of: hour, day, week, month")
+
+    # Validate dates
+    try:
+        start_dt = datetime.strptime(start, "%Y-%m-%d")
+        end_dt = datetime.strptime(end, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Dates must be YYYY-MM-DD format")
+
+    if start_dt > end_dt:
+        raise HTTPException(status_code=400, detail="start must be <= end")
+
+    # Build the GROUP BY expression based on grouping mode
+    if group_by == "hour":
+        period_expr = "CAST(SUBSTR(Time, 1, 2) AS INTEGER)"
+        period_alias = "period"
+    elif group_by == "day":
+        period_expr = "Date"
+        period_alias = "period"
+    elif group_by == "week":
+        # ISO week: YYYY-Www (SQLite strftime %W is zero-padded week number)
+        period_expr = "SUBSTR(Date, 1, 4) || '-W' || strftime('%W', Date)"
+        period_alias = "period"
+    elif group_by == "month":
+        period_expr = "SUBSTR(Date, 1, 7)"
+        period_alias = "period"
+
+    # Aggregated buckets
+    bucket_sql = f"""
+        SELECT {period_expr} as {period_alias}, COUNT(*) as count
+        FROM detections
+        WHERE Date BETWEEN ? AND ?
+        GROUP BY {period_alias}
+        ORDER BY {period_alias}
+    """
+    bucket_rows = db.execute(bucket_sql, (start, end)).fetchall()
+
+    # For hour grouping, fill in all 24 hours
+    if group_by == "hour":
+        hour_map = {row[0]: row[1] for row in bucket_rows}
+        buckets = [{"period": h, "count": hour_map.get(h, 0)} for h in range(24)]
+    else:
+        buckets = [{"period": str(row[0]), "count": row[1]} for row in bucket_rows]
+
+    # Summary stats
+    total = sum(b["count"] for b in buckets)
+    species_count = db.execute(
+        "SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date BETWEEN ? AND ?",
+        (start, end),
+    ).fetchone()[0]
+
+    # Top species
+    species_sql = """
+        SELECT Com_Name, Sci_Name, COUNT(*) as count, MAX(Confidence) as max_confidence
+        FROM detections
+        WHERE Date BETWEEN ? AND ?
+        GROUP BY Sci_Name
+        ORDER BY count DESC
+        LIMIT 10
+    """
+    species_rows = db.execute(species_sql, (start, end)).fetchall()
+    top_species = [
+        {
+            "com_name": row[0],
+            "sci_name": row[1],
+            "count": row[2],
+            "max_confidence": round(row[3], 2),
+        }
+        for row in species_rows
+    ]
+
+    # Per-species bucket breakdown (for stacked charts)
+    species_bucket_sql = f"""
+        SELECT Sci_Name, Com_Name, {period_expr} as {period_alias}, COUNT(*) as count
+        FROM detections
+        WHERE Date BETWEEN ? AND ?
+        GROUP BY Sci_Name, {period_alias}
+        ORDER BY Sci_Name, {period_alias}
+    """
+    species_bucket_rows = db.execute(species_bucket_sql, (start, end)).fetchall()
+
+    species_bucket_map: dict = {}
+    for row in species_bucket_rows:
+        sci_name = row[0]
+        if sci_name not in species_bucket_map:
+            species_bucket_map[sci_name] = {
+                "sci_name": sci_name,
+                "com_name": row[1],
+                "buckets": {},
+            }
+        period_key = row[2] if group_by != "hour" else row[2]
+        species_bucket_map[sci_name]["buckets"][str(period_key) if group_by != "hour" else period_key] = row[3]
+
+    # Convert to arrays matching the bucket structure
+    all_periods = [b["period"] for b in buckets]
+    species_buckets = []
+    for entry in species_bucket_map.values():
+        counts = [entry["buckets"].get(p, 0) for p in all_periods]
+        species_buckets.append({
+            "sci_name": entry["sci_name"],
+            "com_name": entry["com_name"],
+            "counts": counts,
+        })
+
+    return {
+        "start": start,
+        "end": end,
+        "group_by": group_by,
+        "total_detections": total,
+        "species_count": species_count,
+        "buckets": buckets,
+        "top_species": top_species,
+        "species_buckets": species_buckets,
     }
 
 

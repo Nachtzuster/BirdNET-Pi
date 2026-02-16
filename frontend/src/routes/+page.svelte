@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import { detections, health, species as speciesApi, type Detection, type DetectionStats, type SpeciesSummary } from '$lib/api';
+	import { onMount, onDestroy, tick } from 'svelte';
+	import { detections, health, species as speciesApi, type Detection, type DetectionStats, type SpeciesSummary, type RangeChartData } from '$lib/api';
 	import { StatsCard, DetectionCard, SpeciesImage } from '$lib/components';
 	import { toasts } from '$lib/stores';
+
+	let ChartJS: typeof import('chart.js/auto').default;
 
 	let stats: DetectionStats | null = null;
 	let latestDetections: Detection[] = [];
@@ -11,35 +13,149 @@
 	let loading = true;
 	let refreshInterval: ReturnType<typeof setInterval>;
 
+	let hourlyData: RangeChartData | null = null;
+	let sparkCanvas: HTMLCanvasElement;
+	let sparkChart: any = null;
+	let isDark = false;
+
+	function detectTheme() {
+		isDark = document.documentElement.classList.contains('dark');
+	}
+
+	function todayStr(): string {
+		const d = new Date();
+		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+	}
+
 	async function loadData() {
 		try {
-			const [statsData, detectionsData, infoData, speciesData] = await Promise.all([
+			const today = todayStr();
+			const [statsData, detectionsData, infoData, speciesData, hourly] = await Promise.all([
 				detections.stats(),
-				detections.today({ limit: 10 }),
+				detections.today({ limit: 6 }),
 				health.info(),
 				speciesApi.list({ sort: 'count' }),
+				detections.chartDataRange({ start: today, end: today, group_by: 'hour' }),
 			]);
 			
 			stats = statsData;
 			latestDetections = detectionsData.detections;
 			siteName = infoData.site_name;
 			topSpecies = speciesData.species.slice(0, 6);
+			hourlyData = hourly;
 		} catch (e) {
 			console.error('Failed to load data:', e);
 			toasts.show('Failed to load data', 'error');
 		} finally {
 			loading = false;
 		}
+		await tick();
+		renderSparkline();
 	}
 
-	onMount(() => {
+	function getHourLabel(hour: number): string {
+		if (hour === 0) return '12am';
+		if (hour === 12) return '12pm';
+		return hour < 12 ? `${hour}am` : `${hour - 12}pm`;
+	}
+
+	function renderSparkline() {
+		if (!hourlyData || !ChartJS || !sparkCanvas) return;
+		detectTheme();
+
+		if (sparkChart) sparkChart.destroy();
+
+		const labels = hourlyData.buckets.map(b => getHourLabel(b.period as number));
+		const counts = hourlyData.buckets.map(b => b.count);
+		const maxCount = Math.max(...counts);
+
+		const barColor = isDark ? 'rgba(34,197,94,0.6)' : 'rgba(22,163,74,0.7)';
+		const barHover = isDark ? 'rgba(34,197,94,0.85)' : 'rgba(22,163,74,0.9)';
+		const textColor = isDark ? '#9ca3af' : '#6b7280';
+		const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+		// Find peak hour
+		const peakIdx = counts.indexOf(maxCount);
+		const bgColors = counts.map((_, i) =>
+			i === peakIdx && maxCount > 0 ? (isDark ? 'rgba(250,204,21,0.7)' : 'rgba(202,138,4,0.7)') : barColor
+		);
+
+		sparkChart = new ChartJS(sparkCanvas, {
+			type: 'bar',
+			data: {
+				labels,
+				datasets: [{
+					data: counts,
+					backgroundColor: bgColors,
+					hoverBackgroundColor: barHover,
+					borderRadius: 3,
+					borderSkipped: false,
+				}],
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				animation: { duration: 400, easing: 'easeOutQuart' },
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						backgroundColor: isDark ? '#1f2937' : '#fff',
+						titleColor: textColor,
+						bodyColor: isDark ? '#d1d5db' : '#374151',
+						borderColor: gridColor,
+						borderWidth: 1,
+						padding: 8,
+						cornerRadius: 6,
+						displayColors: false,
+						callbacks: {
+							title: (items) => items[0]?.label || '',
+							label: (ctx) => `${ctx.parsed.y} detection${ctx.parsed.y !== 1 ? 's' : ''}`,
+						},
+					},
+				},
+				scales: {
+					x: {
+						grid: { display: false },
+						ticks: {
+							color: textColor,
+							font: { size: 10 },
+							maxRotation: 0,
+							callback: function(_value, index) {
+								return index % 6 === 0 ? labels[index] : '';
+							},
+						},
+					},
+					y: {
+						display: false,
+						beginAtZero: true,
+					},
+				},
+			},
+		});
+	}
+
+	let themeObserver: MutationObserver;
+
+	onMount(async () => {
+		const module = await import('chart.js/auto');
+		ChartJS = module.default;
+
 		loadData();
-		// Refresh every 30 seconds
 		refreshInterval = setInterval(loadData, 30000);
+
+		themeObserver = new MutationObserver(() => {
+			if (hourlyData) renderSparkline();
+		});
+		themeObserver.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['class'],
+		});
 	});
 
 	onDestroy(() => {
 		if (refreshInterval) clearInterval(refreshInterval);
+		if (sparkChart) sparkChart.destroy();
+		if (themeObserver) themeObserver.disconnect();
 	});
 </script>
 
@@ -117,44 +233,42 @@
 					</p>
 				</div>
 			{:else}
-				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{#each latestDetections as detection (detection.File_Name)}
-						<DetectionCard {detection} showDate={false} />
-					{/each}
-				</div>
+			<div class="grid gap-4 md:grid-cols-2">
+				{#each latestDetections as detection (detection.File_Name)}
+					<DetectionCard {detection} showDate={false} />
+				{/each}
+			</div>
 			{/if}
 		</div>
 
-		<!-- Bottom Section -->
-		<!-- TODO: Add a webcam/feeder cam panel here - either a live MJPEG/HLS stream
-		     or a regularly-refreshed static snapshot from the feeder camera.
-		     Could replace or sit alongside the Top Species card. -->
-		<div class="grid md:grid-cols-3 gap-6">
-			<!-- Today's Activity -->
-			<div class="card">
-				<div class="card-header">
+		<!-- Today's Activity Chart -->
+		<div class="card mb-8">
+			<div class="card-header flex items-center justify-between">
+				<div>
 					<h3 class="font-semibold text-gray-900 dark:text-gray-100">Today's Activity</h3>
+					<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Detections by hour</p>
 				</div>
-				<div class="card-body">
-					<div class="space-y-4">
-						<div class="flex justify-between items-center">
-							<span class="text-gray-600 dark:text-gray-400">Detections</span>
-							<span class="font-semibold text-gray-900 dark:text-gray-100">{stats?.todays_count || 0}</span>
-						</div>
-						<div class="flex justify-between items-center">
-							<span class="text-gray-600 dark:text-gray-400">Species seen</span>
-							<span class="font-semibold text-gray-900 dark:text-gray-100">{stats?.todays_species_tally || 0}</span>
-						</div>
-						<div class="flex justify-between items-center">
-							<span class="text-gray-600 dark:text-gray-400">Last hour</span>
-							<span class="font-semibold text-gray-900 dark:text-gray-100">{stats?.hour_count || 0}</span>
-						</div>
-					</div>
-				</div>
+				<a href="/history" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
+					Full history →
+				</a>
 			</div>
+			<div class="card-body">
+				{#if hourlyData && hourlyData.total_detections > 0}
+					<div class="h-32">
+						<canvas bind:this={sparkCanvas}></canvas>
+					</div>
+				{:else}
+					<div class="h-32 flex items-center justify-center">
+						<p class="text-sm text-gray-400 dark:text-gray-500">No activity recorded today yet</p>
+					</div>
+				{/if}
+			</div>
+		</div>
 
+		<!-- Bottom Section -->
+		<div class="grid md:grid-cols-1 gap-6">
 			<!-- Top Species -->
-			<div class="card md:col-span-2">
+			<div class="card">
 				<div class="card-header flex items-center justify-between">
 					<h3 class="font-semibold text-gray-900 dark:text-gray-100">Top Species</h3>
 					<a href="/species" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
@@ -170,7 +284,7 @@
 						<p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Species will appear here as they are identified</p>
 					</div>
 				{:else}
-					<div class="divide-y divide-gray-200 dark:divide-dark-border">
+					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 divide-gray-200 dark:divide-dark-border">
 						{#each topSpecies as sp (sp.Sci_Name)}
 							<a href="/species/{encodeURIComponent(sp.Sci_Name)}" class="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
 								<div class="flex-shrink-0 rounded-full overflow-hidden">

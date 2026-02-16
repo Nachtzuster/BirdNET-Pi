@@ -1,33 +1,181 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { detections, integrations, type ChartData, type SpeciesHourly } from '$lib/api';
+	import { detections, integrations, type RangeChartData } from '$lib/api';
 	import { toasts } from '$lib/stores';
 
-	// Chart.js must be dynamically imported to avoid SSR issues
 	let ChartJS: typeof import('chart.js/auto').default;
 
-	let dates: string[] = [];
-	let selectedDate = '';
-	let chartData: ChartData | null = null;
+	// Range modes
+	type RangeMode = 'day' | 'week' | 'month' | 'year';
+	let rangeMode: RangeMode = 'day';
+
+	// Navigation anchor — the "current" date/period being viewed
+	let anchorDate: string = '';
+	let availableDates: string[] = [];
+
+	let chartData: RangeChartData | null = null;
 	let loading = false;
 	let exportLoading = false;
 
-	let hourlyCanvas: HTMLCanvasElement;
+	let mainCanvas: HTMLCanvasElement;
 	let speciesCanvas: HTMLCanvasElement;
-	let hourlyChart: any = null;
+	let mainChart: any = null;
 	let speciesChart: any = null;
 
-	// Species selected for hourly overlay
 	let selectedSpecies: Set<string> = new Set();
-
-	// Detect dark mode
 	let isDark = false;
 
 	function detectTheme() {
 		isDark = document.documentElement.classList.contains('dark');
 	}
 
-	// Extended palette for species (more colors for better differentiation)
+	// ── Date helpers ──────────────────────────────────────────────
+
+	function todayStr(): string {
+		const d = new Date();
+		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+	}
+
+	function dateFromStr(s: string): Date {
+		const [y, m, d] = s.split('-').map(Number);
+		return new Date(y, m - 1, d);
+	}
+
+	function formatDate(d: Date): string {
+		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+	}
+
+	/** Return {start, end} for the range around anchorDate given the mode. */
+	function getRange(anchor: string, mode: RangeMode): { start: string; end: string } {
+		const d = dateFromStr(anchor);
+		if (mode === 'day') {
+			return { start: anchor, end: anchor };
+		}
+		if (mode === 'week') {
+			const day = d.getDay(); // 0=Sun
+			const mon = new Date(d);
+			mon.setDate(d.getDate() - ((day + 6) % 7)); // Monday
+			const sun = new Date(mon);
+			sun.setDate(mon.getDate() + 6);
+			return { start: formatDate(mon), end: formatDate(sun) };
+		}
+		if (mode === 'month') {
+			const first = new Date(d.getFullYear(), d.getMonth(), 1);
+			const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+			return { start: formatDate(first), end: formatDate(last) };
+		}
+		// year
+		return { start: `${d.getFullYear()}-01-01`, end: `${d.getFullYear()}-12-31` };
+	}
+
+	/** Human-readable label for the current range */
+	function rangeLabel(anchor: string, mode: RangeMode): string {
+		if (!anchor) return '';
+		const d = dateFromStr(anchor);
+		if (mode === 'day') return anchor;
+		if (mode === 'week') {
+			const { start, end } = getRange(anchor, 'week');
+			return `${start}  —  ${end}`;
+		}
+		if (mode === 'month') {
+			return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+		}
+		return String(d.getFullYear());
+	}
+
+	function groupByForMode(mode: RangeMode): 'hour' | 'day' | 'week' | 'month' {
+		if (mode === 'day') return 'hour';
+		if (mode === 'week') return 'day';
+		if (mode === 'month') return 'day';
+		return 'month';
+	}
+
+	// ── Navigation ────────────────────────────────────────────────
+
+	function navigate(direction: -1 | 1) {
+		const d = dateFromStr(anchorDate);
+		if (rangeMode === 'day') {
+			d.setDate(d.getDate() + direction);
+		} else if (rangeMode === 'week') {
+			d.setDate(d.getDate() + direction * 7);
+		} else if (rangeMode === 'month') {
+			d.setMonth(d.getMonth() + direction);
+		} else {
+			d.setFullYear(d.getFullYear() + direction);
+		}
+		anchorDate = formatDate(d);
+		loadChartData();
+	}
+
+	function goToToday() {
+		anchorDate = todayStr();
+		loadChartData();
+	}
+
+	function changeMode(mode: RangeMode) {
+		rangeMode = mode;
+		selectedSpecies = new Set();
+		loadChartData();
+	}
+
+	// ── Data loading ──────────────────────────────────────────────
+
+	async function loadDates() {
+		try {
+			const result = await detections.dates();
+			availableDates = result.dates;
+			if (!anchorDate && availableDates.length > 0) {
+				anchorDate = availableDates[0]; // most recent date
+			} else if (!anchorDate) {
+				anchorDate = todayStr();
+			}
+			await loadChartData();
+		} catch (e) {
+			console.error('Failed to load dates:', e);
+		}
+	}
+
+	async function loadChartData() {
+		if (!anchorDate) return;
+		loading = true;
+		selectedSpecies = new Set();
+		try {
+			const { start, end } = getRange(anchorDate, rangeMode);
+			chartData = await detections.chartDataRange({
+				start,
+				end,
+				group_by: groupByForMode(rangeMode),
+			});
+		} catch (e) {
+			console.error('Failed to load chart data:', e);
+			toasts.show('Failed to load chart data', 'error');
+			chartData = null;
+		} finally {
+			loading = false;
+		}
+		await tick();
+		renderCharts();
+	}
+
+	// ── Species toggle ────────────────────────────────────────────
+
+	function toggleSpecies(sciName: string) {
+		if (selectedSpecies.has(sciName)) {
+			selectedSpecies.delete(sciName);
+		} else {
+			selectedSpecies.add(sciName);
+		}
+		selectedSpecies = new Set(selectedSpecies);
+		renderCharts();
+	}
+
+	function clearSelectedSpecies() {
+		selectedSpecies = new Set();
+		renderCharts();
+	}
+
+	// ── Colors ────────────────────────────────────────────────────
+
 	const SPECIES_COLORS = [
 		'#16a34a', '#2563eb', '#d97706', '#dc2626', '#7c3aed',
 		'#0891b2', '#c026d3', '#ea580c', '#4f46e5', '#059669',
@@ -52,66 +200,12 @@
 		if (!chartData) return SPECIES_COLORS[0];
 		const idx = chartData.top_species.findIndex(s => s.sci_name === sciName);
 		if (idx >= 0) return SPECIES_COLORS[idx % SPECIES_COLORS.length];
-		// For species not in top list, hash the name to pick a color
 		let hash = 0;
 		for (let i = 0; i < sciName.length; i++) hash = (hash * 31 + sciName.charCodeAt(i)) | 0;
 		return SPECIES_COLORS[Math.abs(hash) % SPECIES_COLORS.length];
 	}
 
-	function toggleSpecies(sciName: string) {
-		if (selectedSpecies.has(sciName)) {
-			selectedSpecies.delete(sciName);
-		} else {
-			selectedSpecies.add(sciName);
-		}
-		selectedSpecies = new Set(selectedSpecies); // Trigger reactivity
-		renderCharts();
-	}
-
-	function clearSelectedSpecies() {
-		selectedSpecies = new Set();
-		renderCharts();
-	}
-
-	async function loadDates() {
-		try {
-			const result = await detections.dates();
-			dates = result.dates;
-			if (dates.length > 0) {
-				selectedDate = dates[0];
-				await loadChartData();
-			}
-		} catch (e) {
-			console.error('Failed to load dates:', e);
-		}
-	}
-
-	async function loadChartData() {
-		if (!selectedDate) return;
-		loading = true;
-		selectedSpecies = new Set(); // Reset selections on date change
-		try {
-			chartData = await detections.chartData(selectedDate);
-		} catch (e) {
-			console.error('Failed to load chart data:', e);
-			toasts.show('Failed to load chart data', 'error');
-			chartData = null;
-		} finally {
-			loading = false;
-		}
-		// Wait for DOM update after loading=false so canvas elements are rendered,
-		// then draw the charts
-		await tick();
-		renderCharts();
-	}
-
-	function renderCharts() {
-		if (!chartData || !ChartJS) return;
-		detectTheme();
-		const colors = getChartColors();
-		renderHourlyChart(colors);
-		renderSpeciesChart(colors);
-	}
+	// ── Chart labels ──────────────────────────────────────────────
 
 	function getHourLabel(hour: number): string {
 		if (hour === 0) return '12am';
@@ -119,19 +213,49 @@
 		return hour < 12 ? `${hour}am` : `${hour - 12}pm`;
 	}
 
-	function renderHourlyChart(colors: ReturnType<typeof getChartColors>) {
-		if (!chartData || !hourlyCanvas) return;
+	function getBucketLabel(period: number | string, mode: RangeMode): string {
+		if (mode === 'day') return getHourLabel(period as number);
+		if (mode === 'week' || mode === 'month') {
+			// period is YYYY-MM-DD — show short day label
+			const d = dateFromStr(period as string);
+			if (mode === 'week') {
+				return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+			}
+			return String(d.getDate());
+		}
+		// year: period is YYYY-MM
+		const [y, m] = (period as string).split('-');
+		const d = new Date(Number(y), Number(m) - 1, 1);
+		return d.toLocaleDateString('en-US', { month: 'short' });
+	}
 
-		if (hourlyChart) hourlyChart.destroy();
+	function getXTickSkip(): number {
+		if (rangeMode === 'day') return 3;   // show every 3rd hour
+		if (rangeMode === 'week') return 1;  // show every day
+		if (rangeMode === 'month') return 3; // show every 3rd day
+		return 1; // every month for year
+	}
 
-		const labels = chartData.hourly.map(h => getHourLabel(h.hour));
-		const totalCounts = chartData.hourly.map(h => h.count);
+	// ── Chart rendering ───────────────────────────────────────────
 
-		// Build datasets based on whether species are selected
+	function renderCharts() {
+		if (!chartData || !ChartJS) return;
+		detectTheme();
+		const colors = getChartColors();
+		renderMainChart(colors);
+		renderSpeciesChart(colors);
+	}
+
+	function renderMainChart(colors: ReturnType<typeof getChartColors>) {
+		if (!chartData || !mainCanvas) return;
+		if (mainChart) mainChart.destroy();
+
+		const labels = chartData.buckets.map(b => getBucketLabel(b.period, rangeMode));
+		const totalCounts = chartData.buckets.map(b => b.count);
+
 		let datasets: any[];
 
 		if (selectedSpecies.size === 0) {
-			// No species selected: simple single-color bar chart
 			datasets = [{
 				label: 'Detections',
 				data: totalCounts,
@@ -142,34 +266,28 @@
 				hoverBackgroundColor: colors.barHoverBg,
 			}];
 		} else {
-			// Species selected: stacked bar chart
-			// Build a dataset for each selected species + an "Other" remainder
-			const speciesMap = new Map<string, SpeciesHourly>();
-			for (const sh of chartData.species_hourly) {
-				speciesMap.set(sh.sci_name, sh);
-			}
-
+			// Build species-indexed map from species_buckets
+			const speciesMap = new Map(chartData.species_buckets.map(sb => [sb.sci_name, sb]));
 			datasets = [];
-			const selectedTotals = new Array(24).fill(0);
+			const selectedTotals = new Array(chartData.buckets.length).fill(0);
 
 			for (const sciName of selectedSpecies) {
-				const sh = speciesMap.get(sciName);
-				if (!sh) continue;
+				const sb = speciesMap.get(sciName);
+				if (!sb) continue;
 				const color = getSpeciesColor(sciName);
 				datasets.push({
-					label: sh.com_name,
-					data: sh.hourly,
-					backgroundColor: color + 'cc', // slightly transparent
+					label: sb.com_name,
+					data: sb.counts,
+					backgroundColor: color + 'cc',
 					borderColor: color,
 					borderWidth: 1,
 					borderRadius: 2,
 				});
-				for (let i = 0; i < 24; i++) {
-					selectedTotals[i] += sh.hourly[i];
+				for (let i = 0; i < sb.counts.length; i++) {
+					selectedTotals[i] += sb.counts[i];
 				}
 			}
 
-			// "Other" dataset = total minus selected species
 			const otherData = totalCounts.map((t, i) => Math.max(0, t - selectedTotals[i]));
 			if (otherData.some(v => v > 0)) {
 				datasets.push({
@@ -183,7 +301,9 @@
 			}
 		}
 
-		hourlyChart = new ChartJS(hourlyCanvas, {
+		const tickSkip = getXTickSkip();
+
+		mainChart = new ChartJS(mainCanvas, {
 			type: 'bar',
 			data: { labels, datasets },
 			options: {
@@ -227,9 +347,9 @@
 						ticks: {
 							color: colors.textMuted,
 							font: { size: 11 },
-							maxRotation: 0,
+							maxRotation: rangeMode === 'week' ? 45 : 0,
 							callback: function(_value, index) {
-								return index % 3 === 0 ? labels[index] : '';
+								return index % tickSkip === 0 ? labels[index] : '';
 							},
 						},
 					},
@@ -250,7 +370,6 @@
 
 	function renderSpeciesChart(colors: ReturnType<typeof getChartColors>) {
 		if (!chartData || !speciesCanvas || chartData.top_species.length === 0) return;
-
 		if (speciesChart) speciesChart.destroy();
 
 		const species = chartData.top_species.slice(0, 8);
@@ -294,38 +413,21 @@
 		});
 	}
 
-	function prevDate() {
-		const idx = dates.indexOf(selectedDate);
-		if (idx < dates.length - 1) {
-			selectedDate = dates[idx + 1];
-			loadChartData();
-		}
-	}
-
-	function nextDate() {
-		const idx = dates.indexOf(selectedDate);
-		if (idx > 0) {
-			selectedDate = dates[idx - 1];
-			loadChartData();
-		}
-	}
+	// ── eBird export ──────────────────────────────────────────────
 
 	async function exportEbird() {
-		if (!selectedDate) return;
-		
+		if (!anchorDate) return;
 		exportLoading = true;
 		try {
-			const result = await integrations.ebirdExport(selectedDate);
-			
-			// Create download
+			const exportDate = rangeMode === 'day' ? anchorDate : anchorDate;
+			const result = await integrations.ebirdExport(exportDate);
 			const blob = new Blob([result.csv], { type: 'text/csv' });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = `ebird-export-${selectedDate}.csv`;
+			a.download = `ebird-export-${exportDate}.csv`;
 			a.click();
 			URL.revokeObjectURL(url);
-			
 			toasts.show(`Exported ${result.species_count} species`, 'success');
 		} catch (e) {
 			console.error('Failed to export:', e);
@@ -335,16 +437,34 @@
 		}
 	}
 
-	// Watch for theme changes
+	// ── Peak stat ─────────────────────────────────────────────────
+
+	function peakLabel(): string {
+		if (!chartData || chartData.buckets.length === 0) return '—';
+		const max = Math.max(...chartData.buckets.map(b => b.count));
+		const bucket = chartData.buckets.find(b => b.count === max);
+		if (!bucket || max === 0) return '—';
+		if (rangeMode === 'day') return getHourLabel(bucket.period as number);
+		return getBucketLabel(bucket.period, rangeMode);
+	}
+
+	function peakStatName(): string {
+		if (rangeMode === 'day') return 'Peak Hour';
+		if (rangeMode === 'week') return 'Peak Day';
+		if (rangeMode === 'month') return 'Peak Day';
+		return 'Peak Month';
+	}
+
+	// ── Lifecycle ─────────────────────────────────────────────────
+
 	let themeObserver: MutationObserver;
 
 	onMount(async () => {
-		// Dynamically import Chart.js (cannot be imported at top level due to SSR)
 		const module = await import('chart.js/auto');
 		ChartJS = module.default;
 
 		loadDates();
-		// Re-render charts when dark mode toggles
+
 		themeObserver = new MutationObserver(() => {
 			if (chartData) renderCharts();
 		});
@@ -355,7 +475,7 @@
 	});
 
 	onDestroy(() => {
-		if (hourlyChart) hourlyChart.destroy();
+		if (mainChart) mainChart.destroy();
 		if (speciesChart) speciesChart.destroy();
 		if (themeObserver) themeObserver.disconnect();
 	});
@@ -368,83 +488,111 @@
 <div class="container mx-auto px-4 py-6">
 	<div class="mb-6">
 		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">History</h1>
-		<p class="text-gray-600 dark:text-gray-400 mt-1">Daily detection charts and species breakdown</p>
+		<p class="text-gray-600 dark:text-gray-400 mt-1">Detection charts and species breakdown</p>
 	</div>
 
-	<!-- Date navigation -->
-	<div class="card p-4 mb-6">
-		<div class="flex items-center justify-between">
-			<button
-				on:click={prevDate}
-				disabled={dates.indexOf(selectedDate) >= dates.length - 1}
-				class="btn-ghost disabled:opacity-50"
-			>
+	<!-- Range Mode Tabs + Navigation -->
+	<div class="card mb-6">
+		<!-- Mode tabs -->
+		<div class="flex border-b border-gray-200 dark:border-dark-border">
+			{#each /** @type {[RangeMode, string][]} */([['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']]) as [mode, label]}
+				<button
+					on:click={() => changeMode(mode as RangeMode)}
+					class="flex-1 py-3 text-sm font-medium text-center transition-colors
+						{rangeMode === mode
+							? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400 -mb-px'
+							: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
+				>
+					{label}
+				</button>
+			{/each}
+		</div>
+
+		<!-- Date navigation -->
+		<div class="flex items-center justify-between p-4">
+			<button on:click={() => navigate(-1)} class="btn-ghost">
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 				</svg>
-				Previous
+				<span class="sr-only sm:not-sr-only sm:ml-1">Previous</span>
 			</button>
 
-			<div class="flex items-center gap-4">
-				<select
-					bind:value={selectedDate}
-					on:change={loadChartData}
-					class="select w-auto"
-				>
-					{#each dates as date}
-						<option value={date}>{date}</option>
-					{/each}
-				</select>
+			<div class="flex items-center gap-3">
+				<span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+					{rangeLabel(anchorDate, rangeMode)}
+				</span>
+				{#if anchorDate !== todayStr()}
+					<button
+						on:click={goToToday}
+						class="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+					>
+						Today
+					</button>
+				{/if}
 			</div>
 
-			<button
-				on:click={nextDate}
-				disabled={dates.indexOf(selectedDate) <= 0}
-				class="btn-ghost disabled:opacity-50"
-			>
-				Next
+			<button on:click={() => navigate(1)} class="btn-ghost">
+				<span class="sr-only sm:not-sr-only sm:mr-1">Next</span>
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 				</svg>
 			</button>
 		</div>
+
+		<!-- Day mode: date dropdown for quick jump -->
+		{#if rangeMode === 'day' && availableDates.length > 0}
+			<div class="px-4 pb-4">
+				<select
+					bind:value={anchorDate}
+					on:change={loadChartData}
+					class="select w-full text-sm"
+				>
+					{#each availableDates as date}
+						<option value={date}>{date}</option>
+					{/each}
+				</select>
+			</div>
+		{/if}
 	</div>
 
-	{#if selectedDate}
-		{#if loading}
-			<div class="flex items-center justify-center py-12">
-				<div class="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+	{#if loading}
+		<div class="flex items-center justify-center py-12">
+			<div class="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+		</div>
+	{:else if chartData}
+		<!-- Summary stats -->
+		<div class="grid grid-cols-3 gap-4 mb-6">
+			<div class="stat-card">
+				<p class="stat-value">{chartData.total_detections}</p>
+				<p class="stat-label">Total Detections</p>
 			</div>
-		{:else if chartData}
-			<!-- Summary stats -->
-			<div class="grid grid-cols-3 gap-4 mb-6">
-				<div class="stat-card">
-					<p class="stat-value">{chartData.total_detections}</p>
-					<p class="stat-label">Total Detections</p>
-				</div>
-				<div class="stat-card">
-					<p class="stat-value">{chartData.species_count}</p>
-					<p class="stat-label">Species Detected</p>
-				</div>
-				<div class="stat-card">
-					<p class="stat-value">{Math.max(...chartData.hourly.map(h => h.count))}</p>
-					<p class="stat-label">Peak Hour</p>
-				</div>
+			<div class="stat-card">
+				<p class="stat-value">{chartData.species_count}</p>
+				<p class="stat-label">Species Detected</p>
 			</div>
+			<div class="stat-card">
+				<p class="stat-value">{peakLabel()}</p>
+				<p class="stat-label">{peakStatName()}</p>
+			</div>
+		</div>
 
-			<!-- Hourly chart -->
-			<div class="card mb-6">
-				<div class="card-header flex items-center justify-between">
-					<div>
-						<h2 class="font-semibold text-gray-900 dark:text-gray-100">
-							Detections by Hour
-						</h2>
-						{#if selectedSpecies.size > 0}
-							<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-								Showing {selectedSpecies.size} selected species
-							</p>
-						{/if}
-					</div>
+		<!-- Main chart -->
+		<div class="card mb-6">
+			<div class="card-header flex items-center justify-between">
+				<div>
+					<h2 class="font-semibold text-gray-900 dark:text-gray-100">
+						{rangeMode === 'day' ? 'Detections by Hour' :
+						 rangeMode === 'week' ? 'Detections by Day' :
+						 rangeMode === 'month' ? 'Daily Detections' :
+						 'Monthly Detections'}
+					</h2>
+					{#if selectedSpecies.size > 0}
+						<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+							Showing {selectedSpecies.size} selected species
+						</p>
+					{/if}
+				</div>
+				{#if rangeMode === 'day'}
 					<button
 						on:click={exportEbird}
 						disabled={exportLoading}
@@ -455,15 +603,23 @@
 						{/if}
 						Export to eBird
 					</button>
-				</div>
-				<div class="card-body">
-					<div class="h-72">
-						<canvas bind:this={hourlyCanvas}></canvas>
-					</div>
-				</div>
+				{/if}
 			</div>
+			<div class="card-body">
+				{#if chartData.total_detections > 0}
+					<div class="h-72">
+						<canvas bind:this={mainCanvas}></canvas>
+					</div>
+				{:else}
+					<div class="h-72 flex items-center justify-center">
+						<p class="text-gray-400 dark:text-gray-500">No detections in this period</p>
+					</div>
+				{/if}
+			</div>
+		</div>
 
-			<!-- Species breakdown -->
+		<!-- Species breakdown -->
+		{#if chartData.top_species.length > 0}
 			<div class="grid md:grid-cols-3 gap-6 mb-6">
 				<!-- Doughnut chart -->
 				<div class="card">
@@ -473,13 +629,9 @@
 						</h2>
 					</div>
 					<div class="card-body">
-						{#if chartData.top_species.length > 0}
-							<div class="h-56">
-								<canvas bind:this={speciesCanvas}></canvas>
-							</div>
-						{:else}
-							<p class="text-gray-500 dark:text-gray-400 text-center py-8">No species data</p>
-						{/if}
+						<div class="h-56">
+							<canvas bind:this={speciesCanvas}></canvas>
+						</div>
 					</div>
 				</div>
 
@@ -501,68 +653,58 @@
 							<span class="text-xs text-gray-400 dark:text-gray-500">Click to show on chart</span>
 						</div>
 					</div>
-					{#if chartData.top_species.length > 0}
-						<div class="divide-y divide-gray-200 dark:divide-dark-border">
-							{#each chartData.top_species as sp, i}
-								<div class="flex items-center gap-0">
-									<!-- Clickable toggle for the chart -->
-									<button
-										on:click={() => toggleSpecies(sp.sci_name)}
-										class="flex items-center gap-4 flex-1 min-w-0 px-6 py-3 transition-colors
-											{selectedSpecies.has(sp.sci_name)
-												? 'bg-gray-100 dark:bg-dark-border'
-												: 'hover:bg-gray-50 dark:hover:bg-dark-border/50'}"
-										title="Toggle {sp.com_name} on hourly chart"
-									>
-										<span
-											class="w-3 h-3 rounded-full flex-shrink-0 transition-all
-												{selectedSpecies.has(sp.sci_name) ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800' : ''}"
-											style="background-color: {SPECIES_COLORS[i % SPECIES_COLORS.length]};
-												{selectedSpecies.has(sp.sci_name) ? `ring-color: ${SPECIES_COLORS[i % SPECIES_COLORS.length]}` : ''}"></span>
-										<div class="flex-1 min-w-0 text-left">
-											<p class="font-medium text-gray-900 dark:text-gray-100 truncate">{sp.com_name}</p>
-											<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">{sp.sci_name}</p>
+					<div class="divide-y divide-gray-200 dark:divide-dark-border">
+						{#each chartData.top_species as sp, i}
+							<div class="flex items-center gap-0">
+								<button
+									on:click={() => toggleSpecies(sp.sci_name)}
+									class="flex items-center gap-4 flex-1 min-w-0 px-6 py-3 transition-colors
+										{selectedSpecies.has(sp.sci_name)
+											? 'bg-gray-100 dark:bg-dark-border'
+											: 'hover:bg-gray-50 dark:hover:bg-dark-border/50'}"
+									title="Toggle {sp.com_name} on chart"
+								>
+									<span
+										class="w-3 h-3 rounded-full flex-shrink-0 transition-all
+											{selectedSpecies.has(sp.sci_name) ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800' : ''}"
+										style="background-color: {SPECIES_COLORS[i % SPECIES_COLORS.length]};
+											{selectedSpecies.has(sp.sci_name) ? `ring-color: ${SPECIES_COLORS[i % SPECIES_COLORS.length]}` : ''}"></span>
+									<div class="flex-1 min-w-0 text-left">
+										<p class="font-medium text-gray-900 dark:text-gray-100 truncate">{sp.com_name}</p>
+										<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">{sp.sci_name}</p>
+									</div>
+									<div class="flex items-center gap-4 flex-shrink-0">
+										<span class="badge-primary">{(sp.max_confidence * 100).toFixed(0)}%</span>
+										<div class="text-right">
+											<span class="text-lg font-semibold text-primary-600 dark:text-primary-400">{sp.count}</span>
 										</div>
-										<div class="flex items-center gap-4 flex-shrink-0">
-											<span class="badge-primary">{(sp.max_confidence * 100).toFixed(0)}%</span>
-											<div class="text-right">
-												<span class="text-lg font-semibold text-primary-600 dark:text-primary-400">{sp.count}</span>
-											</div>
-										</div>
-									</button>
-									<!-- Link to species detail page -->
-									<a
-										href="/species/{encodeURIComponent(sp.sci_name)}"
-										class="px-4 py-3 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 transition-colors flex-shrink-0"
-										title="View {sp.com_name} details"
-									>
-										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-										</svg>
-									</a>
-								</div>
-							{/each}
-						</div>
-					{:else}
-						<div class="card-body text-center py-8">
-							<p class="text-gray-500 dark:text-gray-400">No species detected on this date</p>
-						</div>
-					{/if}
+									</div>
+								</button>
+								<a
+									href="/species/{encodeURIComponent(sp.sci_name)}"
+									class="px-4 py-3 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 transition-colors flex-shrink-0"
+									title="View {sp.com_name} details"
+								>
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+									</svg>
+								</a>
+							</div>
+						{/each}
+					</div>
 				</div>
 			</div>
+		{/if}
 
-			<!-- View detections link -->
+		<!-- View detections link (day mode) -->
+		{#if rangeMode === 'day'}
 			<div class="text-center">
 				<a
-					href="/detections?date={selectedDate}"
+					href="/detections?date={anchorDate}"
 					class="text-primary-600 dark:text-primary-400 hover:underline"
 				>
-					View all detections for {selectedDate} →
+					View all detections for {anchorDate} →
 				</a>
-			</div>
-		{:else}
-			<div class="card p-8 text-center">
-				<p class="text-gray-600 dark:text-gray-400">No data available for this date</p>
 			</div>
 		{/if}
 	{:else}
