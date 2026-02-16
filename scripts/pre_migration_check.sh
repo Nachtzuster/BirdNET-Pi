@@ -148,7 +148,7 @@ check_local_install() {
 
   if have_cmd systemctl; then
     local must_be_active
-    must_be_active="caddy birdnet-web birdnet_analysis birdnet_recording extraction"
+    must_be_active="caddy birdnet-web birdnet_analysis birdnet_recording"
     local svc
     for svc in $must_be_active; do
       if systemctl is-active --quiet "$svc"; then
@@ -157,6 +157,18 @@ check_local_install() {
         log_fail "Service not active: $svc"
       fi
     done
+
+    # Legacy/variant service: some installs previously used "extraction",
+    # but current service topology does not require it as a standalone unit.
+    if systemctl list-unit-files | grep -q "^extraction.service"; then
+      if systemctl is-active --quiet extraction; then
+        log_pass "Optional service active: extraction"
+      else
+        log_warn "Optional service installed but inactive: extraction"
+      fi
+    else
+      log_info "Optional service not installed (expected on current builds): extraction"
+    fi
 
     if systemctl is-enabled --quiet birdnet-web 2>/dev/null; then
       log_pass "Service enabled: birdnet-web"

@@ -19,18 +19,19 @@ router = APIRouter()
 SERVICES = [
     'birdnet_analysis',
     'birdnet_recording',
+    'birdnet_stats',
     'chart_viewer',
-    'spectrogram',
+    'spectrogram_viewer',
     'livestream',
     'icecast2',
-    'extraction',
+    'birdnet_log',
+    'web_terminal',
 ]
 
 # Services that must be running for healthy detection operation.
 CORE_SERVICES = [
     'birdnet_analysis',
     'birdnet_recording',
-    'extraction',
 ]
 
 
