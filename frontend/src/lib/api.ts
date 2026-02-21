@@ -5,7 +5,7 @@
 const API_BASE = '/api';
 
 interface RequestOptions {
-	method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+	method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
 	body?: unknown;
 	auth?: { username: string; password: string };
 }
@@ -20,9 +20,11 @@ class ApiError extends Error {
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
 	const { method = 'GET', body, auth } = options;
 
-	const headers: HeadersInit = {
-		'Content-Type': 'application/json',
-	};
+	const headers: HeadersInit = {};
+	const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+	if (body && !isFormData) {
+		headers['Content-Type'] = 'application/json';
+	}
 
 	if (auth) {
 		headers['Authorization'] = `Basic ${btoa(`${auth.username}:${auth.password}`)}`;
@@ -31,7 +33,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 	const response = await fetch(`${API_BASE}${endpoint}`, {
 		method,
 		headers,
-		body: body ? JSON.stringify(body) : undefined,
+		body: body ? (isFormData ? (body as FormData) : JSON.stringify(body)) : undefined,
 	});
 
 	if (!response.ok) {
@@ -142,6 +144,21 @@ export const media = {
 		request<{ date: string; species: string; files: { name: string; has_spectrogram: boolean; size: number }[] }>(
 			`/media/dates/${date}/${encodeURIComponent(species)}/files`
 		),
+
+	shiftedAudioUrl: (date: string, species: string, filename: string) =>
+		`${API_BASE}/media/shifted/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}`,
+
+	createShifted: (date: string, species: string, filename: string, pitch = -1000) =>
+		request<{ message: string; path: string }>(
+			`/media/shift/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}?pitch=${pitch}`,
+			{ method: 'POST' }
+		),
+
+	deleteShifted: (date: string, species: string, filename: string) =>
+		request<{ message: string }>(
+			`/media/shift/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}`,
+			{ method: 'DELETE' }
+		),
 };
 
 // Config API
@@ -157,6 +174,9 @@ export const config = {
 	models: () => request<{ models: { name: string; active: boolean }[]; current: string }>('/config/models'),
 
 	languages: () => request<{ languages: { code: string; active: boolean }[]; current: string }>('/config/languages'),
+
+	previewSpecies: (threshold: number) =>
+		request<{ threshold: number; count: number; species: string[] }>(`/config/preview-species?threshold=${threshold}`),
 };
 
 // System API
@@ -184,6 +204,12 @@ export const system = {
 		request<{ service: string; lines: number; logs: string }>(`/system/logs/${service}?lines=${lines}`, { auth }),
 
 	updateStatus: () => request<{ commits_behind: number; update_available: boolean; current_commit: string }>('/system/update-status'),
+
+	restore: (file: File, auth: { username: string; password: string }) => {
+		const formData = new FormData();
+		formData.append('file', file);
+		return request<{ message: string; output?: string }>('/system/restore', { method: 'POST', body: formData, auth });
+	},
 };
 
 // Integrations API

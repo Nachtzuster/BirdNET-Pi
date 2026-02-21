@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { createEventDispatcher } from 'svelte';
 	import type { Detection } from '$lib/api';
 	import { media } from '$lib/api';
 	import AudioPlayer from './AudioPlayer.svelte';
@@ -9,6 +10,10 @@
 	export let showDate: boolean = true;
 	export let showImage: boolean = true;
 	export let href: string | null = null;
+	export let allowDelete: boolean = false;
+	export let deleting: boolean = false;
+
+	const dispatch = createEventDispatcher<{ delete: Detection }>();
 
 	$: audioUrl = media.audioUrl(detection.Date, detection.Sci_Name, detection.File_Name);
 	$: spectrogramUrl = media.spectrogramUrl(detection.Date, detection.Sci_Name, detection.File_Name);
@@ -42,10 +47,16 @@
 		event.preventDefault();
 		void goto(href);
 	}
+
+	function handleDeleteClick(event: MouseEvent) {
+		event.preventDefault();
+		event.stopPropagation();
+		dispatch('delete', detection);
+	}
 </script>
 
 <div
-	class="card p-4 fade-in {href ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}"
+	class="card w-full max-w-full p-4 fade-in {href ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}"
 	role={href ? 'link' : undefined}
 	on:click={handleCardClick}
 	on:keydown={handleCardKeydown}
@@ -69,9 +80,22 @@
 						{detection.Sci_Name}
 					</p>
 				</div>
-				<span class="badge-primary flex-shrink-0">
-					{formatConfidence(detection.Confidence)}
-				</span>
+				<div class="flex items-center gap-2 flex-shrink-0" data-no-card-link>
+					<span class="badge-primary">
+						{formatConfidence(detection.Confidence)}
+					</span>
+					{#if allowDelete}
+						<button
+							class="btn-danger btn-sm"
+							data-no-card-link
+							on:click={handleDeleteClick}
+							disabled={deleting}
+							title="Delete this detection and recording"
+						>
+							{deleting ? '...' : 'Delete'}
+						</button>
+					{/if}
+				</div>
 			</div>
 
 			<div class="mt-2 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">

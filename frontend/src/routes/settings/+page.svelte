@@ -24,6 +24,10 @@
 
 	let models: { name: string; active: boolean }[] = [];
 	let languages: { code: string; active: boolean }[] = [];
+	let previewThreshold = 0.03;
+	let previewLoading = false;
+	let previewCount: number | null = null;
+	let previewSpecies: string[] = [];
 
 	async function loadConfig() {
 		if (!$auth.isAuthenticated) {
@@ -55,6 +59,7 @@
 			sensitivity = String(configData.sensitivity);
 			overlap = String(configData.overlap);
 			birdweatherId = configData.birdweather_id;
+			previewThreshold = Number(configData.confidence) || 0.03;
 		} catch (e: any) {
 			if (e.status === 401) {
 				auth.logout();
@@ -91,6 +96,20 @@
 			toasts.show('Failed to save configuration', 'error');
 		} finally {
 			saving = false;
+		}
+	}
+
+	async function previewSpeciesList() {
+		previewLoading = true;
+		try {
+			const result = await configApi.previewSpecies(previewThreshold);
+			previewCount = result.count;
+			previewSpecies = result.species;
+		} catch (e) {
+			console.error('Failed to preview species list:', e);
+			toasts.show('Failed to preview species list', 'error');
+		} finally {
+			previewLoading = false;
 		}
 	}
 
@@ -244,6 +263,49 @@
 							/>
 						</div>
 					</div>
+				</div>
+			</div>
+
+			<!-- Species Preview -->
+			<div class="card">
+				<div class="card-header">
+					<h2 class="font-semibold text-gray-900 dark:text-gray-100">Species Preview</h2>
+				</div>
+				<div class="card-body space-y-4">
+					<p class="text-sm text-gray-600 dark:text-gray-400">
+						Preview species list size at a threshold before applying model settings.
+					</p>
+					<div class="flex flex-wrap items-end gap-3">
+						<div>
+							<label for="previewThreshold" class="label">Threshold</label>
+							<input
+								id="previewThreshold"
+								type="number"
+								step="0.01"
+								min="0"
+								max="1"
+								bind:value={previewThreshold}
+								class="input w-36"
+							/>
+						</div>
+						<button type="button" class="btn-secondary" on:click={previewSpeciesList} disabled={previewLoading}>
+							{#if previewLoading}
+								<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+							{/if}
+							Preview
+						</button>
+					</div>
+					{#if previewCount !== null}
+						<p class="text-sm text-gray-700 dark:text-gray-300">Matching species: <strong>{previewCount}</strong></p>
+						{#if previewSpecies.length > 0}
+							<div class="max-h-44 overflow-auto rounded-lg border border-gray-200 dark:border-dark-border p-3 text-sm text-gray-700 dark:text-gray-300">
+								{previewSpecies.slice(0, 50).join(', ')}
+								{#if previewSpecies.length > 50}
+									…
+								{/if}
+							</div>
+						{/if}
+					{/if}
 				</div>
 			</div>
 

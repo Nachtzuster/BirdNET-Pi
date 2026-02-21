@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { media } from '$lib/api';
-	import { AudioPlayer } from '$lib/components';
-	import { toasts } from '$lib/stores';
+	import { detections, media } from '$lib/api';
+	import { AudioPlayer, Modal } from '$lib/components';
+	import { auth, toasts } from '$lib/stores';
 	import { formatBirdName } from '$lib';
 
 	let dates: string[] = [];
@@ -13,6 +13,12 @@
 	let loading = false;
 	let queryDate = '';
 	let querySpecies = '';
+	let deletingFiles = new Set<string>();
+	let shiftingFiles = new Set<string>();
+	let deletingShiftedFiles = new Set<string>();
+	let shiftedAvailable: Record<string, boolean> = {};
+	let showLoginModal = false;
+	let passwordInput = '';
 
 	async function loadDates() {
 		try {
@@ -57,6 +63,7 @@
 		try {
 			const result = await media.filesForSpecies(selectedDate, selectedSpecies);
 			files = result.files;
+			shiftedAvailable = {};
 		} catch (e) {
 			console.error('Failed to load files:', e);
 			files = [];
@@ -73,6 +80,77 @@
 		if (bytes < 1024) return `${bytes} B`;
 		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
 		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+	}
+
+	async function requireAuth(): Promise<boolean> {
+		if ($auth.isAuthenticated) return true;
+		showLoginModal = true;
+		return false;
+	}
+
+	async function deleteFile(fileName: string) {
+		if (!(await requireAuth())) return;
+		if (!confirm(`Delete recording file ${fileName}?`)) return;
+
+		deletingFiles = new Set(deletingFiles).add(fileName);
+		try {
+			await detections.delete(fileName, auth.getCredentials());
+			files = files.filter((f) => f.name !== fileName);
+			speciesForDate = speciesForDate
+				.map((sp) => (sp.name === selectedSpecies ? { ...sp, count: Math.max(0, sp.count - 1) } : sp))
+				.filter((sp) => sp.count > 0);
+			toasts.show('Recording deleted', 'success');
+		} catch (e: any) {
+			if (e?.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				console.error('Failed to delete recording:', e);
+				toasts.show('Failed to delete recording', 'error');
+			}
+		} finally {
+			const next = new Set(deletingFiles);
+			next.delete(fileName);
+			deletingFiles = next;
+		}
+	}
+
+	async function createShifted(fileName: string) {
+		shiftingFiles = new Set(shiftingFiles).add(fileName);
+		try {
+			await media.createShifted(selectedDate, selectedSpecies, fileName);
+			shiftedAvailable = { ...shiftedAvailable, [fileName]: true };
+			toasts.show('Shifted audio created', 'success');
+		} catch (e) {
+			console.error('Failed to create shifted audio:', e);
+			toasts.show('Failed to create shifted audio', 'error');
+		} finally {
+			const next = new Set(shiftingFiles);
+			next.delete(fileName);
+			shiftingFiles = next;
+		}
+	}
+
+	async function deleteShifted(fileName: string) {
+		deletingShiftedFiles = new Set(deletingShiftedFiles).add(fileName);
+		try {
+			await media.deleteShifted(selectedDate, selectedSpecies, fileName);
+			shiftedAvailable = { ...shiftedAvailable, [fileName]: false };
+			toasts.show('Shifted audio removed', 'success');
+		} catch (e) {
+			console.error('Failed to delete shifted audio:', e);
+			toasts.show('Failed to remove shifted audio', 'error');
+		} finally {
+			const next = new Set(deletingShiftedFiles);
+			next.delete(fileName);
+			deletingShiftedFiles = next;
+		}
+	}
+
+	function handleLogin() {
+		auth.login(passwordInput);
+		passwordInput = '';
+		showLoginModal = false;
 	}
 
 	onMount(() => {
@@ -184,6 +262,7 @@
 					{#each files as file}
 						{@const audioUrl = media.audioUrl(selectedDate, selectedSpecies, file.name)}
 						{@const spectrogramUrl = media.spectrogramUrl(selectedDate, selectedSpecies, file.name)}
+						{@const shiftedUrl = media.shiftedAudioUrl(selectedDate, selectedSpecies, file.name)}
 						<div class="card p-4">
 							<div class="flex items-start gap-4">
 								<!-- Spectrogram thumbnail -->
@@ -201,13 +280,47 @@
 								{/if}
 
 								<!-- File info -->
-								<div class="flex-1 min-w-0">
-									<p class="font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-									<p class="text-sm text-gray-500 dark:text-gray-400">{formatSize(file.size)}</p>
-									<div class="mt-2">
-										<AudioPlayer src={audioUrl} compact />
+									<div class="flex-1 min-w-0">
+										<div class="flex items-center justify-between gap-2">
+											<p class="font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
+											<div class="flex items-center gap-2">
+												{#if shiftedAvailable[file.name]}
+													<button
+														class="btn-secondary btn-sm"
+														on:click={() => deleteShifted(file.name)}
+														disabled={deletingShiftedFiles.has(file.name)}
+													>
+														{deletingShiftedFiles.has(file.name) ? '...' : 'Unshift'}
+													</button>
+												{:else}
+													<button
+														class="btn-secondary btn-sm"
+														on:click={() => createShifted(file.name)}
+														disabled={shiftingFiles.has(file.name)}
+													>
+														{shiftingFiles.has(file.name) ? '...' : 'Shift'}
+													</button>
+												{/if}
+												<button
+													class="btn-danger btn-sm"
+													on:click={() => deleteFile(file.name)}
+													disabled={deletingFiles.has(file.name)}
+												>
+													{deletingFiles.has(file.name) ? '...' : 'Delete'}
+												</button>
+											</div>
+										</div>
+										<p class="text-sm text-gray-500 dark:text-gray-400">{formatSize(file.size)}</p>
+										<div class="mt-2">
+											<AudioPlayer src={audioUrl} compact />
+										</div>
+										{#if shiftedAvailable[file.name]}
+											<div class="mt-2">
+												<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Shifted</p>
+												<AudioPlayer src={shiftedUrl} compact />
+											</div>
+										{/if}
 									</div>
-								</div>
 							</div>
 						</div>
 					{/each}
@@ -216,3 +329,16 @@
 		</div>
 	{/if}
 </div>
+
+<Modal bind:open={showLoginModal} title="Authentication Required">
+	<form on:submit|preventDefault={handleLogin} class="space-y-4">
+		<div>
+			<label for="recordingsPassword" class="label">Password</label>
+			<input id="recordingsPassword" type="password" bind:value={passwordInput} class="input" placeholder="Enter password" />
+		</div>
+		<div class="flex justify-end gap-2">
+			<button type="button" on:click={() => (showLoginModal = false)} class="btn-secondary">Cancel</button>
+			<button type="submit" class="btn-primary">Log in</button>
+		</div>
+	</form>
+</Modal>

@@ -10,6 +10,8 @@
 	let showLoginModal = false;
 	let passwordInput = '';
 	let actionLoading: Record<string, boolean> = {};
+	let restoreFile: File | null = null;
+	let restoring = false;
 
 	async function loadData() {
 		if (!$auth.isAuthenticated) {
@@ -107,6 +109,39 @@
 				toasts.show('Failed to reboot', 'error');
 			}
 		}
+	}
+
+	async function restoreBackup() {
+		if (!$auth.isAuthenticated) {
+			showLoginModal = true;
+			return;
+		}
+		if (!restoreFile) {
+			toasts.show('Select a backup file first', 'error');
+			return;
+		}
+		if (!confirm('Restoring a backup will overwrite current data. Continue?')) return;
+
+		restoring = true;
+		try {
+			await systemApi.restore(restoreFile, auth.getCredentials());
+			toasts.show('Restore completed successfully', 'success');
+			restoreFile = null;
+		} catch (e: any) {
+			if (e.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				toasts.show('Restore failed', 'error');
+			}
+		} finally {
+			restoring = false;
+		}
+	}
+
+	function onRestoreFileSelected(event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		restoreFile = target.files?.[0] ?? null;
 	}
 
 	function handleLogin() {
@@ -245,6 +280,21 @@
 					<a href="/api/system/backup" class="btn-secondary">
 						Download Backup
 					</a>
+				</div>
+				<div class="mt-4 rounded-lg border border-gray-200 dark:border-dark-border p-4">
+					<p class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Restore Backup</p>
+					<div class="flex flex-col md:flex-row md:items-center gap-3">
+						<input type="file" accept=".tar.gz,.tgz,.gz" on:change={onRestoreFileSelected} class="input" />
+						<button on:click={restoreBackup} class="btn-danger" disabled={restoring || !restoreFile}>
+							{#if restoring}
+								<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+							{/if}
+							Restore
+						</button>
+					</div>
+					{#if restoreFile}
+						<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Selected: {restoreFile.name}</p>
+					{/if}
 				</div>
 				<p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
 					Warning: These actions may interrupt bird detection temporarily.

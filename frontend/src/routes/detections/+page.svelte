@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { detections, type Detection } from '$lib/api';
-	import { DetectionCard } from '$lib/components';
-	import { toasts } from '$lib/stores';
+	import { DetectionCard, Modal } from '$lib/components';
+	import { auth, toasts } from '$lib/stores';
 
 	let allDetections: Detection[] = [];
 	let loading = true;
@@ -14,16 +14,25 @@
 	let offset = 0;
 	let total = 0;
 	let hasMore = false;
+	let deletingFiles = new Set<string>();
+	let showLoginModal = false;
+	let passwordInput = '';
 
 	function todayStr(): string {
 		const d = new Date();
 		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 	}
 
+	function speciesFolderFromFilename(filename: string): string {
+		const match = filename.match(/^(.+?)-\d+-\d{4}-/);
+		if (match?.[1]) return match[1];
+		return filename.split(/-(?=\d)/, 1)[0] || filename;
+	}
+
 	function detectionRecordingsHref(detection: Detection): string {
 		const params = new URLSearchParams({
 			date: detection.Date,
-			species: detection.Sci_Name,
+			species: speciesFolderFromFilename(detection.File_Name),
 		});
 		return `/recordings?${params.toString()}`;
 	}
@@ -85,6 +94,44 @@
 	function clearSpeciesFilter() {
 		selectedSpecies = '';
 		loadDetections(true);
+	}
+
+	async function requireAuth(): Promise<boolean> {
+		if ($auth.isAuthenticated) return true;
+		showLoginModal = true;
+		return false;
+	}
+
+	async function deleteDetectionFile(detection: Detection) {
+		if (!(await requireAuth())) return;
+		if (!confirm(`Delete recording and detection for ${detection.Com_Name} at ${detection.Time}?`)) return;
+
+		deletingFiles = new Set(deletingFiles).add(detection.File_Name);
+		try {
+			await detections.delete(detection.File_Name, auth.getCredentials());
+			allDetections = allDetections.filter((item) => item.File_Name !== detection.File_Name);
+			total = Math.max(0, total - 1);
+			hasMore = allDetections.length < total;
+			toasts.show('Detection deleted', 'success');
+		} catch (e: any) {
+			if (e?.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				console.error('Failed to delete detection:', e);
+				toasts.show('Failed to delete detection', 'error');
+			}
+		} finally {
+			const next = new Set(deletingFiles);
+			next.delete(detection.File_Name);
+			deletingFiles = next;
+		}
+	}
+
+	function handleLogin() {
+		auth.login(passwordInput);
+		passwordInput = '';
+		showLoginModal = false;
 	}
 
 	onMount(() => {
@@ -165,7 +212,13 @@
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 			{#each filteredDetections as detection (detection.File_Name)}
-				<DetectionCard {detection} href={detectionRecordingsHref(detection)} />
+				<DetectionCard
+					{detection}
+					href={detectionRecordingsHref(detection)}
+					allowDelete={true}
+					deleting={deletingFiles.has(detection.File_Name)}
+					on:delete={(event) => deleteDetectionFile(event.detail)}
+				/>
 			{/each}
 		</div>
 
@@ -186,3 +239,16 @@
 		{/if}
 	{/if}
 </div>
+
+<Modal bind:open={showLoginModal} title="Authentication Required">
+	<form on:submit|preventDefault={handleLogin} class="space-y-4">
+		<div>
+			<label for="detectionsPassword" class="label">Password</label>
+			<input id="detectionsPassword" type="password" bind:value={passwordInput} class="input" placeholder="Enter password" />
+		</div>
+		<div class="flex justify-end gap-2">
+			<button type="button" on:click={() => (showLoginModal = false)} class="btn-secondary">Cancel</button>
+			<button type="submit" class="btn-primary">Log in</button>
+		</div>
+	</form>
+</Modal>

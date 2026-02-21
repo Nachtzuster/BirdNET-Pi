@@ -7,7 +7,9 @@
 	let ChartJS: typeof import('chart.js/auto').default;
 
 	let stats: DetectionStats | null = null;
-	let topSpecies: SpeciesSummary[] = [];
+	let topSpeciesToday: SpeciesSummary[] = [];
+	let topSpeciesAllTime: SpeciesSummary[] = [];
+	let topSpeciesMode: 'today' | 'all' = 'today';
 	let siteName: string = 'BirdNET-Pi';
 	let loading = true;
 	let refreshInterval: ReturnType<typeof setInterval>;
@@ -62,13 +64,16 @@
 		return `/detections?${params.toString()}`;
 	}
 
+	$: displayedTopSpecies = topSpeciesMode === 'today' ? topSpeciesToday : topSpeciesAllTime;
+
 	async function loadData() {
 		try {
 			const today = todayStr();
-				const [statsData, detectionsData, infoData, speciesData, hourly] = await Promise.all([
+				const [statsData, detectionsData, infoData, speciesTodayData, speciesAllTimeData, hourly] = await Promise.all([
 					detections.stats(),
 					detections.today({ limit: 12 }),
 					health.info(),
+					speciesApi.list({ sort: 'count', date: today }),
 					speciesApi.list({ sort: 'count' }),
 					detections.chartDataRange({ start: today, end: today, group_by: 'hour' }),
 				]);
@@ -76,7 +81,8 @@
 				stats = statsData;
 				groupedDetections = groupLatest(detectionsData.detections);
 				siteName = infoData.site_name;
-				topSpecies = speciesData.species.slice(0, 6);
+				topSpeciesToday = speciesTodayData.species.slice(0, 6);
+				topSpeciesAllTime = speciesAllTimeData.species.slice(0, 6);
 				hourlyData = hourly;
 		} catch (e) {
 			console.error('Failed to load data:', e);
@@ -216,7 +222,7 @@
 	<title>{siteName} - Overview</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-6">
+<div class="container mx-auto px-4 py-6 overflow-x-hidden">
 	<!-- Header -->
 	<div class="mb-8">
 		<h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
@@ -315,10 +321,10 @@
 			{:else}
 				<div class="grid gap-4 md:grid-cols-2">
 					{#each groupedDetections as group (group.sciName)}
-						<div>
+						<div class="min-w-0">
 							<DetectionCard detection={group.latest} showDate={false} href={detectionsHref(group.latest)} />
 							{#if group.count > 1}
-								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 break-words">
 									+{group.count - 1} more {group.comName} detections in recent activity
 								</p>
 							{/if}
@@ -333,22 +339,40 @@
 			<!-- Top Species -->
 			<div class="card">
 				<div class="card-header flex items-center justify-between">
-					<h3 class="font-semibold text-gray-900 dark:text-gray-100">Top Species</h3>
-					<a href="/species" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
-						View all →
-					</a>
+					<div class="flex items-center gap-3">
+						<h3 class="font-semibold text-gray-900 dark:text-gray-100">Top Species</h3>
+						<div class="inline-flex rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden text-xs">
+							<button
+								class="px-3 py-1 {topSpeciesMode === 'today' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-card text-gray-700 dark:text-gray-300'}"
+								on:click={() => (topSpeciesMode = 'today')}
+							>
+								Today
+							</button>
+							<button
+								class="px-3 py-1 {topSpeciesMode === 'all' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-card text-gray-700 dark:text-gray-300'}"
+								on:click={() => (topSpeciesMode = 'all')}
+							>
+								All time
+							</button>
+						</div>
+					</div>
+					<a href="/species" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">View all →</a>
 				</div>
-				{#if topSpecies.length === 0}
+				{#if displayedTopSpecies.length === 0}
 					<div class="card-body text-center py-8">
 						<svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 						</svg>
-						<p class="text-gray-500 dark:text-gray-400">No species detected yet</p>
-						<p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Species will appear here as they are identified</p>
+						<p class="text-gray-500 dark:text-gray-400">
+							{topSpeciesMode === 'today' ? 'No species detected today yet' : 'No species detected yet'}
+						</p>
+						<p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+							{topSpeciesMode === 'today' ? 'Check back after more detections today' : 'Species will appear here as they are identified'}
+						</p>
 					</div>
 				{:else}
 					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 divide-gray-200 dark:divide-dark-border">
-						{#each topSpecies as sp (sp.Sci_Name)}
+						{#each displayedTopSpecies as sp (sp.Sci_Name)}
 							<a href="/species/{encodeURIComponent(sp.Sci_Name)}" class="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
 								<div class="flex-shrink-0 rounded-full overflow-hidden">
 									<SpeciesImage sciName={sp.Sci_Name} size="xs" />

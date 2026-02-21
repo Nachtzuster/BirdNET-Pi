@@ -92,6 +92,17 @@
 				? [...lists[listType], sciName]
 				: lists[listType].filter((item) => item !== sciName);
 			lists = { ...lists, [listType]: Array.from(new Set(next)).sort() };
+
+			if (listType === 'exclude' && targetEnabled) {
+				const shouldDelete = confirm(
+					`"${sciName}" has been added to Exclude.\n\nDelete existing detections and recordings for this species now?`
+				);
+				if (shouldDelete) {
+					await speciesApi.delete(sciName, auth.getCredentials());
+					species = species.filter((sp) => sp.Sci_Name !== sciName);
+					toasts.show('Excluded species data removed', 'success');
+				}
+			}
 		} catch (error: any) {
 			if (error?.status === 401) {
 				auth.logout();
