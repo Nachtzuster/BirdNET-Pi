@@ -7,7 +7,6 @@
 	let ChartJS: typeof import('chart.js/auto').default;
 
 	let stats: DetectionStats | null = null;
-	let latestDetections: Detection[] = [];
 	let topSpecies: SpeciesSummary[] = [];
 	let siteName: string = 'BirdNET-Pi';
 	let loading = true;
@@ -17,6 +16,14 @@
 	let sparkCanvas: HTMLCanvasElement;
 	let sparkChart: any = null;
 	let isDark = false;
+	type DetectionGroup = {
+		sciName: string;
+		comName: string;
+		latest: Detection;
+		count: number;
+		detections: Detection[];
+	};
+	let groupedDetections: DetectionGroup[] = [];
 
 	function detectTheme() {
 		isDark = document.documentElement.classList.contains('dark');
@@ -27,22 +34,50 @@
 		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 	}
 
+	function groupLatest(items: Detection[]): DetectionGroup[] {
+		const grouped = new Map<string, DetectionGroup>();
+		for (const detection of items) {
+			const existing = grouped.get(detection.Sci_Name);
+			if (existing) {
+				existing.count += 1;
+				existing.detections.push(detection);
+			} else {
+				grouped.set(detection.Sci_Name, {
+					sciName: detection.Sci_Name,
+					comName: detection.Com_Name,
+					latest: detection,
+					count: 1,
+					detections: [detection],
+				});
+			}
+		}
+		return Array.from(grouped.values());
+	}
+
+	function detectionsHref(detection: Detection): string {
+		const params = new URLSearchParams({
+			date: detection.Date,
+			species: detection.Sci_Name,
+		});
+		return `/detections?${params.toString()}`;
+	}
+
 	async function loadData() {
 		try {
 			const today = todayStr();
-			const [statsData, detectionsData, infoData, speciesData, hourly] = await Promise.all([
-				detections.stats(),
-				detections.today({ limit: 6 }),
-				health.info(),
-				speciesApi.list({ sort: 'count' }),
-				detections.chartDataRange({ start: today, end: today, group_by: 'hour' }),
-			]);
+				const [statsData, detectionsData, infoData, speciesData, hourly] = await Promise.all([
+					detections.stats(),
+					detections.today({ limit: 12 }),
+					health.info(),
+					speciesApi.list({ sort: 'count' }),
+					detections.chartDataRange({ start: today, end: today, group_by: 'hour' }),
+				]);
 			
-			stats = statsData;
-			latestDetections = detectionsData.detections;
-			siteName = infoData.site_name;
-			topSpecies = speciesData.species.slice(0, 6);
-			hourlyData = hourly;
+				stats = statsData;
+				groupedDetections = groupLatest(detectionsData.detections);
+				siteName = infoData.site_name;
+				topSpecies = speciesData.species.slice(0, 6);
+				hourlyData = hourly;
 		} catch (e) {
 			console.error('Failed to load data:', e);
 			toasts.show('Failed to load data', 'error');
@@ -80,6 +115,11 @@
 			i === peakIdx && maxCount > 0 ? (isDark ? 'rgba(250,204,21,0.7)' : 'rgba(202,138,4,0.7)') : barColor
 		);
 
+		const speciesBreakdownByHour = hourlyData.species_buckets.map((species) => ({
+			comName: species.com_name,
+			counts: species.counts,
+		}));
+
 		sparkChart = new ChartJS(sparkCanvas, {
 			type: 'bar',
 			data: {
@@ -106,13 +146,26 @@
 						borderWidth: 1,
 						padding: 8,
 						cornerRadius: 6,
-						displayColors: false,
-						callbacks: {
-							title: (items) => items[0]?.label || '',
-							label: (ctx) => `${ctx.parsed.y} detection${ctx.parsed.y !== 1 ? 's' : ''}`,
+							displayColors: false,
+							callbacks: {
+								title: (items) => items[0]?.label || '',
+								label: (ctx) => `Total: ${ctx.parsed.y} detection${ctx.parsed.y !== 1 ? 's' : ''}`,
+								afterLabel: (ctx) => {
+									const bucketIdx = ctx.dataIndex;
+									const breakdown = speciesBreakdownByHour
+										.map((entry) => ({ comName: entry.comName, count: entry.counts[bucketIdx] || 0 }))
+										.filter((entry) => entry.count > 0)
+										.sort((a, b) => b.count - a.count);
+
+									if (breakdown.length === 0) return ['No species'];
+
+									const top = breakdown.slice(0, 4).map((entry) => `${entry.comName}: ${entry.count}`);
+									const otherCount = breakdown.slice(4).reduce((sum, entry) => sum + entry.count, 0);
+									return otherCount > 0 ? [...top, `Other: ${otherCount}`] : top;
+								},
+							},
 						},
 					},
-				},
 				scales: {
 					x: {
 						grid: { display: false },
@@ -211,36 +264,6 @@
 			</span>
 		</div>
 
-		<!-- Latest Detections -->
-		<div class="mb-8">
-			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-					Latest Detections
-				</h2>
-				<a href="/detections" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
-					View all →
-				</a>
-			</div>
-
-			{#if latestDetections.length === 0}
-				<div class="card p-8 text-center">
-					<svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-					</svg>
-					<p class="text-gray-600 dark:text-gray-400">No detections today yet</p>
-					<p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
-						Detections will appear here as birds are identified
-					</p>
-				</div>
-			{:else}
-			<div class="grid gap-4 md:grid-cols-2">
-				{#each latestDetections as detection (detection.File_Name)}
-					<DetectionCard {detection} showDate={false} />
-				{/each}
-			</div>
-			{/if}
-		</div>
-
 		<!-- Today's Activity Chart -->
 		<div class="card mb-8">
 			<div class="card-header flex items-center justify-between">
@@ -263,6 +286,46 @@
 					</div>
 				{/if}
 			</div>
+		</div>
+
+		<!-- Latest Detections -->
+		<div class="mb-8">
+			<div class="flex items-center justify-between mb-2">
+				<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+					Latest Detections
+				</h2>
+				<a href="/detections" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
+					View all →
+				</a>
+			</div>
+			<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+				Group view by species to reduce duplicate-card clutter. Open Detections for full timeline and recordings.
+			</p>
+
+			{#if groupedDetections.length === 0}
+				<div class="card p-8 text-center">
+					<svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+					</svg>
+					<p class="text-gray-600 dark:text-gray-400">No detections today yet</p>
+					<p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
+						Detections will appear here as birds are identified
+					</p>
+				</div>
+			{:else}
+				<div class="grid gap-4 md:grid-cols-2">
+					{#each groupedDetections as group (group.sciName)}
+						<div>
+							<DetectionCard detection={group.latest} showDate={false} href={detectionsHref(group.latest)} />
+							{#if group.count > 1}
+								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+									+{group.count - 1} more {group.comName} detections in recent activity
+								</p>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</div>
 
 		<!-- Bottom Section -->

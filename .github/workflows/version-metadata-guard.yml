@@ -1,0 +1,56 @@
+name: Version Metadata Guard
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  verify-versions-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate versions.md against tag and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          EXPECTED_VERSION="${TAG#v}"
+
+          if [[ ! -f "versions.md" ]]; then
+            echo "::error::versions.md not found."
+            exit 1
+          fi
+
+          SERVICE_VERSION="$(awk -F': ' '/^service_version:/{print $2}' versions.md | tr -d '\r' | xargs)"
+          GIT_HASH="$(awk -F': ' '/^git_hash:/{print $2}' versions.md | tr -d '\r' | xargs)"
+
+          if [[ -z "${SERVICE_VERSION}" ]]; then
+            echo "::error::service_version missing in versions.md"
+            exit 1
+          fi
+
+          if [[ "${SERVICE_VERSION}" != "${EXPECTED_VERSION}" ]]; then
+            echo "::error::service_version (${SERVICE_VERSION}) does not match tag (${EXPECTED_VERSION})"
+            exit 1
+          fi
+
+          TAG_COMMIT="$(git rev-list -n 1 "${TAG}")"
+          TAG_COMMIT_SHORT="$(git rev-parse --short "${TAG_COMMIT}")"
+
+          if [[ -z "${GIT_HASH}" ]]; then
+            echo "::error::git_hash missing in versions.md"
+            exit 1
+          fi
+
+          if [[ "${TAG_COMMIT}" != "${GIT_HASH}" && "${TAG_COMMIT_SHORT}" != "${GIT_HASH}" ]]; then
+            echo "::error::git_hash (${GIT_HASH}) does not match tagged commit (${TAG_COMMIT_SHORT}/${TAG_COMMIT})"
+            exit 1
+          fi
+
+          echo "versions.md matches tag ${TAG} and commit ${TAG_COMMIT_SHORT}"

@@ -11,14 +11,21 @@
 	let selectedSpecies = '';
 	let files: { name: string; has_spectrogram: boolean; size: number }[] = [];
 	let loading = false;
+	let queryDate = '';
+	let querySpecies = '';
 
 	async function loadDates() {
 		try {
 			const result = await media.dates();
 			dates = result.dates;
 			if (dates.length > 0) {
-				selectedDate = dates[0];
-				await loadSpecies();
+				selectedDate = queryDate && dates.includes(queryDate) ? queryDate : dates[0];
+				await loadSpecies(!!querySpecies);
+
+				if (querySpecies && speciesForDate.some((sp) => sp.name === querySpecies)) {
+					selectedSpecies = querySpecies;
+					await loadFiles();
+				}
 			}
 		} catch (e) {
 			console.error('Failed to load dates:', e);
@@ -26,14 +33,14 @@
 		}
 	}
 
-	async function loadSpecies() {
+	async function loadSpecies(preserveSelection = false) {
 		if (!selectedDate) return;
 		
 		loading = true;
 		try {
 			const result = await media.speciesForDate(selectedDate);
 			speciesForDate = result.species;
-			selectedSpecies = '';
+			if (!preserveSelection) selectedSpecies = '';
 			files = [];
 		} catch (e) {
 			console.error('Failed to load species:', e);
@@ -58,13 +65,22 @@
 		}
 	}
 
+	function handleDateChange() {
+		void loadSpecies();
+	}
+
 	function formatSize(bytes: number): string {
 		if (bytes < 1024) return `${bytes} B`;
 		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
 		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 	}
 
-	onMount(loadDates);
+	onMount(() => {
+		const query = new URLSearchParams(window.location.search);
+		queryDate = query.get('date') || '';
+		querySpecies = query.get('species') || '';
+		void loadDates();
+	});
 </script>
 
 <svelte:head>
@@ -86,7 +102,7 @@
 				<select
 					id="date"
 					bind:value={selectedDate}
-					on:change={loadSpecies}
+					on:change={handleDateChange}
 					class="select"
 				>
 					{#each dates as date}

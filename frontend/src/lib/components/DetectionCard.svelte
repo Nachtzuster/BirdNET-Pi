@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { Detection } from '$lib/api';
 	import { media } from '$lib/api';
 	import AudioPlayer from './AudioPlayer.svelte';
@@ -7,6 +8,7 @@
 	export let detection: Detection;
 	export let showDate: boolean = true;
 	export let showImage: boolean = true;
+	export let href: string | null = null;
 
 	$: audioUrl = media.audioUrl(detection.Date, detection.Sci_Name, detection.File_Name);
 	$: spectrogramUrl = media.spectrogramUrl(detection.Date, detection.Sci_Name, detection.File_Name);
@@ -18,9 +20,36 @@
 	function formatConfidence(confidence: number): string {
 		return `${(confidence * 100).toFixed(0)}%`;
 	}
+
+	function shouldIgnoreCardNav(target: HTMLElement): boolean {
+		return Boolean(
+			target.closest('button, a, audio, input, select, textarea, summary, [data-no-card-link]')
+		);
+	}
+
+	function handleCardClick(event: MouseEvent) {
+		if (!href) return;
+		const target = event.target as HTMLElement;
+		if (shouldIgnoreCardNav(target)) return;
+		void goto(href);
+	}
+
+	function handleCardKeydown(event: KeyboardEvent) {
+		if (!href) return;
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		const target = event.target as HTMLElement;
+		if (shouldIgnoreCardNav(target)) return;
+		event.preventDefault();
+		void goto(href);
+	}
 </script>
 
-<div class="card p-4 fade-in">
+<div
+	class="card p-4 fade-in {href ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}"
+	role={href ? 'link' : undefined}
+	on:click={handleCardClick}
+	on:keydown={handleCardKeydown}
+>
 	<div class="flex gap-4">
 		<!-- Bird Image -->
 		{#if showImage}
