@@ -302,11 +302,19 @@
 													</button>
 												{/if}
 												<button
-													class="btn-danger btn-sm"
+													class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
 													on:click={() => deleteFile(file.name)}
 													disabled={deletingFiles.has(file.name)}
+													title="Delete recording"
+													aria-label="Delete recording"
 												>
-													{deletingFiles.has(file.name) ? '...' : 'Delete'}
+													{#if deletingFiles.has(file.name)}
+														<span class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+													{:else}
+														<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+															<path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14" />
+														</svg>
+													{/if}
 												</button>
 											</div>
 										</div>

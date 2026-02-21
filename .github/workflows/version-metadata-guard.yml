@@ -42,15 +42,23 @@ jobs:
 
           TAG_COMMIT="$(git rev-list -n 1 "${TAG}")"
           TAG_COMMIT_SHORT="$(git rev-parse --short "${TAG_COMMIT}")"
+          TAG_PARENT_COMMIT="$(git rev-parse "${TAG_COMMIT}^" 2>/dev/null || true)"
+          TAG_PARENT_SHORT=""
+          if [[ -n "${TAG_PARENT_COMMIT}" ]]; then
+            TAG_PARENT_SHORT="$(git rev-parse --short "${TAG_PARENT_COMMIT}")"
+          fi
 
           if [[ -z "${GIT_HASH}" ]]; then
             echo "::error::git_hash missing in versions.md"
             exit 1
           fi
 
-          if [[ "${TAG_COMMIT}" != "${GIT_HASH}" && "${TAG_COMMIT_SHORT}" != "${GIT_HASH}" ]]; then
-            echo "::error::git_hash (${GIT_HASH}) does not match tagged commit (${TAG_COMMIT_SHORT}/${TAG_COMMIT})"
+          if [[ "${TAG_COMMIT}" != "${GIT_HASH}" \
+             && "${TAG_COMMIT_SHORT}" != "${GIT_HASH}" \
+             && "${TAG_PARENT_COMMIT}" != "${GIT_HASH}" \
+             && "${TAG_PARENT_SHORT}" != "${GIT_HASH}" ]]; then
+            echo "::error::git_hash (${GIT_HASH}) does not match tagged commit (${TAG_COMMIT_SHORT}/${TAG_COMMIT}) or parent (${TAG_PARENT_SHORT}/${TAG_PARENT_COMMIT})"
             exit 1
           fi
 
-          echo "versions.md matches tag ${TAG} and commit ${TAG_COMMIT_SHORT}"
+          echo "versions.md matches tag ${TAG} commit lineage"

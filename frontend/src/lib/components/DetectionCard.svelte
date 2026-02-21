@@ -86,13 +86,20 @@
 					</span>
 					{#if allowDelete}
 						<button
-							class="btn-danger btn-sm"
+							class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
 							data-no-card-link
 							on:click={handleDeleteClick}
 							disabled={deleting}
-							title="Delete this detection and recording"
+							title="Delete detection and recording"
+							aria-label="Delete detection and recording"
 						>
-							{deleting ? '...' : 'Delete'}
+							{#if deleting}
+								<span class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+							{:else}
+								<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14" />
+								</svg>
+							{/if}
 						</button>
 					{/if}
 				</div>
