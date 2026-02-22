@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { species as speciesApi, type SpeciesSummary } from '$lib/api';
-	import { SpeciesImage } from '$lib/components';
+	import { integrations, species as speciesApi, type SpeciesExternalLinks, type SpeciesSummary } from '$lib/api';
+	import { ExternalLinks, SpeciesImage } from '$lib/components';
 	import { toasts } from '$lib/stores';
 
 	let speciesList: SpeciesSummary[] = [];
 	let loading = true;
 	let sortBy = 'count';
 	let searchTerm = '';
+	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
 
 	$: filteredSpecies = searchTerm
 		? speciesList.filter(
@@ -22,12 +23,36 @@
 		try {
 			const result = await speciesApi.list({ sort: sortBy });
 			speciesList = result.species;
+			await loadSpeciesLinks(result.species);
 		} catch (e) {
 			console.error('Failed to load species:', e);
 			toasts.show('Failed to load species', 'error');
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function loadSpeciesLinks(items: SpeciesSummary[]) {
+		const missing = items.filter((item) => !speciesLinksBySci[item.Sci_Name]);
+		if (missing.length === 0) return;
+
+		const loaded = await Promise.all(
+			missing.map(async (item) => {
+				try {
+					const links = await integrations.speciesLinks(item.Sci_Name, item.Com_Name);
+					return [item.Sci_Name, links] as const;
+				} catch {
+					return null;
+				}
+			})
+		);
+
+		const next = { ...speciesLinksBySci };
+		for (const item of loaded) {
+			if (!item) continue;
+			next[item[0]] = item[1];
+		}
+		speciesLinksBySci = next;
 	}
 
 	function handleSortChange() {
@@ -101,18 +126,20 @@
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 			{#each filteredSpecies as sp (sp.Sci_Name)}
-				<a
-					href="/species/{encodeURIComponent(sp.Sci_Name)}"
-					class="card p-4 flex gap-4 hover:shadow-lg transition-shadow"
-				>
+				<div class="card p-4 flex gap-4 hover:shadow-lg transition-shadow">
 					<SpeciesImage sciName={sp.Sci_Name} size="sm" />
 					<div class="flex-1 min-w-0">
-						<h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">
-							{sp.Com_Name}
-						</h3>
-						<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">
-							{sp.Sci_Name}
-						</p>
+						<a href="/species/{encodeURIComponent(sp.Sci_Name)}">
+							<h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate hover:underline">
+								{sp.Com_Name}
+							</h3>
+							<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">
+								{sp.Sci_Name}
+							</p>
+						</a>
+						<div class="mt-1">
+							<ExternalLinks links={speciesLinksBySci[sp.Sci_Name] || null} compact={true} />
+						</div>
 						<div class="mt-2 flex items-center gap-4 text-sm">
 							<span class="text-gray-600 dark:text-gray-400">
 								{sp.Count} detections
@@ -122,7 +149,7 @@
 							</span>
 						</div>
 					</div>
-				</a>
+				</div>
 			{/each}
 		</div>
 	{/if}

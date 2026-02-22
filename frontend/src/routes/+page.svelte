@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { detections, health, species as speciesApi, type Detection, type DetectionStats, type SpeciesSummary, type RangeChartData } from '$lib/api';
-	import { StatsCard, DetectionCard, SpeciesImage } from '$lib/components';
+	import { detections, health, integrations, species as speciesApi, type Detection, type DetectionStats, type SpeciesExternalLinks, type SpeciesSummary, type RangeChartData } from '$lib/api';
+	import { StatsCard, DetectionCard, ExternalLinks, SpeciesImage } from '$lib/components';
 	import { toasts } from '$lib/stores';
 
 	let ChartJS: typeof import('chart.js/auto').default;
@@ -26,6 +26,7 @@
 		detections: Detection[];
 	};
 	let groupedDetections: DetectionGroup[] = [];
+	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
 
 	function detectTheme() {
 		isDark = document.documentElement.classList.contains('dark');
@@ -66,6 +67,36 @@
 
 	$: displayedTopSpecies = topSpeciesMode === 'today' ? topSpeciesToday : topSpeciesAllTime;
 
+	async function loadSpeciesLinks(speciesItems: Array<{ sciName: string; comName?: string }>) {
+		const entries = Array.from(
+			new Map(
+				speciesItems
+					.filter((item) => item.sciName)
+					.map((item) => [item.sciName, item.comName || ''])
+			).entries()
+		);
+		const missing = entries.filter(([sciName]) => !speciesLinksBySci[sciName]);
+		if (missing.length === 0) return;
+
+		const loaded = await Promise.all(
+			missing.map(async ([sciName, comName]) => {
+				try {
+					const links = await integrations.speciesLinks(sciName, comName || undefined);
+					return [sciName, links] as const;
+				} catch {
+					return null;
+				}
+			})
+		);
+
+		const next = { ...speciesLinksBySci };
+		for (const item of loaded) {
+			if (!item) continue;
+			next[item[0]] = item[1];
+		}
+		speciesLinksBySci = next;
+	}
+
 	async function loadData() {
 		try {
 			const today = todayStr();
@@ -84,6 +115,11 @@
 				topSpeciesToday = speciesTodayData.species.slice(0, 6);
 				topSpeciesAllTime = speciesAllTimeData.species.slice(0, 6);
 				hourlyData = hourly;
+				await loadSpeciesLinks([
+					...detectionsData.detections.map((detection) => ({ sciName: detection.Sci_Name, comName: detection.Com_Name })),
+					...speciesTodayData.species.map((species) => ({ sciName: species.Sci_Name, comName: species.Com_Name })),
+					...speciesAllTimeData.species.map((species) => ({ sciName: species.Sci_Name, comName: species.Com_Name })),
+				]);
 		} catch (e) {
 			console.error('Failed to load data:', e);
 			toasts.show('Failed to load data', 'error');
@@ -322,7 +358,12 @@
 				<div class="grid gap-4 md:grid-cols-2">
 					{#each groupedDetections as group (group.sciName)}
 						<div class="min-w-0">
-							<DetectionCard detection={group.latest} showDate={false} href={detectionsHref(group.latest)} />
+							<DetectionCard
+								detection={group.latest}
+								showDate={false}
+								href={detectionsHref(group.latest)}
+								speciesLinks={speciesLinksBySci[group.sciName] || null}
+							/>
 							{#if group.count > 1}
 								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 break-words">
 									+{group.count - 1} more {group.comName} detections in recent activity
@@ -373,19 +414,24 @@
 				{:else}
 					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 divide-gray-200 dark:divide-dark-border">
 						{#each displayedTopSpecies as sp (sp.Sci_Name)}
-							<a href="/species/{encodeURIComponent(sp.Sci_Name)}" class="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
+							<div class="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
 								<div class="flex-shrink-0 rounded-full overflow-hidden">
 									<SpeciesImage sciName={sp.Sci_Name} size="xs" />
 								</div>
 								<div class="flex-1 min-w-0">
-									<p class="font-medium text-gray-900 dark:text-gray-100 truncate">{sp.Com_Name}</p>
-									<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">{sp.Sci_Name}</p>
+									<a href="/species/{encodeURIComponent(sp.Sci_Name)}" class="block">
+										<p class="font-medium text-gray-900 dark:text-gray-100 truncate hover:underline">{sp.Com_Name}</p>
+										<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">{sp.Sci_Name}</p>
+									</a>
+									<div class="mt-1">
+										<ExternalLinks links={speciesLinksBySci[sp.Sci_Name] || null} compact={true} />
+									</div>
 								</div>
 								<div class="flex-shrink-0 text-right">
 									<span class="text-lg font-semibold text-primary-600 dark:text-primary-400">{sp.Count}</span>
 									<p class="text-xs text-gray-500 dark:text-gray-400">{sp.Count === 1 ? 'detection' : 'detections'}</p>
 								</div>
-							</a>
+							</div>
 						{/each}
 					</div>
 				{/if}

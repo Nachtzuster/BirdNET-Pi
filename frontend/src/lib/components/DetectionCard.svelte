@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+import { goto } from '$app/navigation';
 	import { createEventDispatcher } from 'svelte';
-	import type { Detection } from '$lib/api';
+	import type { Detection, SpeciesExternalLinks } from '$lib/api';
 	import { media } from '$lib/api';
 	import AudioPlayer from './AudioPlayer.svelte';
+	import ExternalLinks from './ExternalLinks.svelte';
 	import SpeciesImage from './SpeciesImage.svelte';
 
 	export let detection: Detection;
@@ -12,6 +13,7 @@
 	export let href: string | null = null;
 	export let allowDelete: boolean = false;
 	export let deleting: boolean = false;
+	export let speciesLinks: SpeciesExternalLinks | null = null;
 
 	const dispatch = createEventDispatcher<{ delete: Detection }>();
 
@@ -81,6 +83,7 @@
 					</p>
 				</div>
 				<div class="flex items-center gap-2 flex-shrink-0" data-no-card-link>
+					<ExternalLinks links={speciesLinks} compact={true} />
 					<span class="badge-primary">
 						{formatConfidence(detection.Confidence)}
 					</span>

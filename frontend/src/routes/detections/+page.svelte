@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { detections, type Detection } from '$lib/api';
+	import { detections, integrations, type Detection, type SpeciesExternalLinks } from '$lib/api';
 	import { DetectionCard, Modal } from '$lib/components';
 	import { auth, toasts } from '$lib/stores';
 
@@ -14,6 +14,7 @@
 	let offset = 0;
 	let total = 0;
 	let hasMore = false;
+	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
 	let deletingFiles = new Set<string>();
 	let showLoginModal = false;
 	let passwordInput = '';
@@ -45,6 +46,32 @@
 			)
 		: allDetections;
 
+	async function loadSpeciesLinks(items: Detection[]) {
+		const entries = Array.from(
+			new Map(items.map((item) => [item.Sci_Name, item.Com_Name])).entries()
+		);
+		const missing = entries.filter(([sciName]) => !speciesLinksBySci[sciName]);
+		if (missing.length === 0) return;
+
+		const loaded = await Promise.all(
+			missing.map(async ([sciName, comName]) => {
+				try {
+					const links = await integrations.speciesLinks(sciName, comName);
+					return [sciName, links] as const;
+				} catch {
+					return null;
+				}
+			})
+		);
+
+		const next = { ...speciesLinksBySci };
+		for (const item of loaded) {
+			if (!item) continue;
+			next[item[0]] = item[1];
+		}
+		speciesLinksBySci = next;
+	}
+
 	async function loadDetections(reset = false) {
 		if (reset) {
 			offset = 0;
@@ -63,6 +90,7 @@
 			} else {
 				allDetections = [...allDetections, ...result.detections];
 			}
+			await loadSpeciesLinks(result.detections);
 			total = result.total;
 			hasMore = allDetections.length < total;
 		} catch (e) {
@@ -217,6 +245,7 @@
 					href={detectionRecordingsHref(detection)}
 					allowDelete={true}
 					deleting={deletingFiles.has(detection.File_Name)}
+					speciesLinks={speciesLinksBySci[detection.Sci_Name] || null}
 					on:delete={(event) => deleteDetectionFile(event.detail)}
 				/>
 			{/each}

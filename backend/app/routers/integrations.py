@@ -6,10 +6,11 @@ import sqlite3
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..config import get_settings, Settings
 from ..models.schemas import BirdImage
+from ..species_links import build_species_links
 
 logger = logging.getLogger(__name__)
 
@@ -285,6 +286,20 @@ async def get_birdweather_status(
         "station_id": station_id if station_id else None,
         "station_url": f"https://app.birdweather.com/stations/{station_id}" if station_id else None,
     }
+
+
+@router.get("/species-links/{sci_name}")
+async def get_species_links(
+    sci_name: str,
+    com_name: Optional[str] = Query(None),
+    settings: Settings = Depends(get_settings),
+):
+    """Get external species reference links (eBird and All About Birds)."""
+    return build_species_links(
+        sci_name=sci_name,
+        com_name=com_name,
+        language=settings.database_lang,
+    )
 
 
 @router.get("/labels")

@@ -223,6 +223,13 @@ export const integrations = {
 
 	labels: () => request<{ language: string; count: number; labels: Record<string, string> }>('/labels'),
 
+	speciesLinks: (sciName: string, comName?: string) => {
+		const searchParams = new URLSearchParams();
+		if (comName) searchParams.set('com_name', comName);
+		const query = searchParams.toString();
+		return request<SpeciesExternalLinks>(`/species-links/${encodeURIComponent(sciName)}${query ? `?${query}` : ''}`);
+	},
+
 	ebirdExport: (date: string, minConfidence = 0.75) =>
 		request<{ date: string; species_count: number; csv: string }>(`/ebird/export/${date}?min_confidence=${minConfidence}`),
 };
@@ -386,6 +393,22 @@ export interface BirdImage {
 	license: string | null;
 	license_url: string | null;
 	source: string;
+}
+
+export interface SpeciesExternalLinks {
+	sci_name: string;
+	com_name: string | null;
+	english_name: string;
+	ebird: {
+		available: boolean;
+		code: string | null;
+		url: string | null;
+	};
+	allaboutbirds: {
+		available: boolean;
+		slug: string | null;
+		url: string | null;
+	};
 }
 
 export { ApiError };

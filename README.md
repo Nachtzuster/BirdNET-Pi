@@ -180,6 +180,12 @@ Update metadata before a release/build:
 ./scripts/update_version_metadata.sh --service-version 0.14.0
 ```
 
+Use the guided release script to keep ordering correct (metadata -> commit -> tag -> push):
+
+```bash
+./scripts/release_flow.sh --tag v0.14.0-rc6
+```
+
 ### Project Structure
 
 ```

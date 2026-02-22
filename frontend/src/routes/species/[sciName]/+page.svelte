@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { species as speciesApi, type Detection, type SpeciesStats } from '$lib/api';
-	import { DetectionCard, SpeciesImage } from '$lib/components';
+	import { integrations, species as speciesApi, type Detection, type SpeciesExternalLinks, type SpeciesStats } from '$lib/api';
+	import { DetectionCard, ExternalLinks, SpeciesImage } from '$lib/components';
 	import { toasts } from '$lib/stores';
 
 	$: sciName = decodeURIComponent($page.params.sciName ?? '');
@@ -9,6 +9,7 @@
 	let stats: SpeciesStats | null = null;
 	let detectionsList: Detection[] = [];
 	let chartData: { date: string; count: number }[] = [];
+	let speciesLinks: SpeciesExternalLinks | null = null;
 	let loading = true;
 
 	async function loadData() {
@@ -24,6 +25,7 @@
 			stats = statsData;
 			detectionsList = detectionsData.detections;
 			chartData = chartResult.data;
+			speciesLinks = await integrations.speciesLinks(sciName, statsData.com_name);
 		} catch (e) {
 			console.error('Failed to load species data:', e);
 			toasts.show('Failed to load species data', 'error');
@@ -67,6 +69,7 @@
 					<p class="text-lg text-gray-500 dark:text-gray-400 italic">
 						{stats.sci_name}
 					</p>
+					<ExternalLinks links={speciesLinks} compact={false} />
 
 					<div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
 						<div>
@@ -130,7 +133,7 @@
 			{:else}
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{#each detectionsList as detection (detection.File_Name)}
-						<DetectionCard {detection} showImage={false} />
+						<DetectionCard {detection} showImage={false} speciesLinks={speciesLinks} />
 					{/each}
 				</div>
 			{/if}
