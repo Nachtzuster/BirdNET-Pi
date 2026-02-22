@@ -6,10 +6,10 @@
 	import ThemeToggle from './ThemeToggle.svelte';
 
 	const navItems = [
-		{ href: '/', label: 'Overview', icon: 'home' },
-		{ href: '/detections', label: 'Detections', icon: 'list' },
-		{ href: '/recordings', label: 'Recordings', icon: 'mic' },
-		{ href: '/history', label: 'History', icon: 'calendar' },
+		{ href: '/', label: 'Dashboard', icon: 'home' },
+		{ href: '/detections', label: 'Review', icon: 'list' },
+		{ href: '/recordings', label: 'Library', icon: 'mic' },
+		{ href: '/history', label: 'Insights', icon: 'calendar' },
 		{ href: '/species', label: 'Species', icon: 'bird' },
 	];
 

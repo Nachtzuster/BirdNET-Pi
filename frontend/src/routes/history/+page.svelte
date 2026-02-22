@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { detections, integrations, type RangeChartData } from '$lib/api';
+	import { detections, integrations, type RangeChartData, type SpeciesExternalLinks } from '$lib/api';
+	import { ExternalLinks } from '$lib/components';
 	import { toasts } from '$lib/stores';
 
 	let ChartJS: typeof import('chart.js/auto').default;
@@ -24,6 +25,7 @@
 
 	let selectedSpecies: Set<string> = new Set();
 	let isDark = false;
+	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
 
 	function detectTheme() {
 		isDark = document.documentElement.classList.contains('dark');
@@ -146,6 +148,7 @@
 				end,
 				group_by: groupByForMode(rangeMode),
 			});
+			await loadSpeciesLinks();
 		} catch (e) {
 			console.error('Failed to load chart data:', e);
 			toasts.show('Failed to load chart data', 'error');
@@ -155,6 +158,48 @@
 		}
 		await tick();
 		renderCharts();
+	}
+
+	async function loadSpeciesLinks() {
+		if (!chartData) return;
+		const missing = chartData.top_species.filter((sp) => !speciesLinksBySci[sp.sci_name]);
+		if (missing.length === 0) return;
+		const loaded = await Promise.all(
+			missing.map(async (sp) => {
+				try {
+					const links = await integrations.speciesLinks(sp.sci_name, sp.com_name);
+					return [sp.sci_name, links] as const;
+				} catch {
+					return null;
+				}
+			})
+		);
+		const next = { ...speciesLinksBySci };
+		for (const item of loaded) {
+			if (!item) continue;
+			next[item[0]] = item[1];
+		}
+		speciesLinksBySci = next;
+	}
+
+	function reviewDateForBucket(period: number | string): string {
+		if (rangeMode === 'day') return anchorDate;
+		if (rangeMode === 'week' || rangeMode === 'month') return period as string;
+		const value = String(period);
+		return `${value}-01`;
+	}
+
+	function openReviewFromBucket(bucketIndex: number) {
+		if (!chartData) return;
+		const bucket = chartData.buckets[bucketIndex];
+		if (!bucket) return;
+		const params = new URLSearchParams();
+		params.set('date', reviewDateForBucket(bucket.period));
+		if (selectedSpecies.size === 1) {
+			const sci = Array.from(selectedSpecies)[0];
+			params.set('species', sci);
+		}
+		window.location.href = `/detections?${params.toString()}`;
 	}
 
 	// ── Species toggle ────────────────────────────────────────────
@@ -364,6 +409,10 @@
 						},
 					},
 				},
+				onClick: (_event, elements) => {
+					if (!elements || elements.length === 0) return;
+					openReviewFromBucket(elements[0].index);
+				},
 			},
 		});
 	}
@@ -482,13 +531,13 @@
 </script>
 
 <svelte:head>
-	<title>History - BirdNET-Pi</title>
+	<title>Insights - BirdNET-Pi</title>
 </svelte:head>
 
 <div class="container mx-auto px-4 py-6">
 	<div class="mb-6">
-		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">History</h1>
-		<p class="text-gray-600 dark:text-gray-400 mt-1">Detection charts and species breakdown</p>
+		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Insights</h1>
+		<p class="text-gray-600 dark:text-gray-400 mt-1">Trends and pattern analysis</p>
 	</div>
 
 	<!-- Range Mode Tabs + Navigation -->
@@ -680,15 +729,18 @@
 										</div>
 									</div>
 								</button>
-								<a
-									href="/species/{encodeURIComponent(sp.sci_name)}"
-									class="px-4 py-3 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 transition-colors flex-shrink-0"
-									title="View {sp.com_name} details"
-								>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-									</svg>
-								</a>
+								<div class="px-3 py-3 flex items-center gap-2 flex-shrink-0">
+									<ExternalLinks links={speciesLinksBySci[sp.sci_name] || null} compact={true} />
+									<a
+										href="/species/{encodeURIComponent(sp.sci_name)}"
+										class="text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 transition-colors"
+										title="View {sp.com_name} details"
+									>
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+										</svg>
+									</a>
+								</div>
 							</div>
 						{/each}
 					</div>
@@ -703,7 +755,7 @@
 					href="/detections?date={anchorDate}"
 					class="text-primary-600 dark:text-primary-400 hover:underline"
 				>
-					View all detections for {anchorDate} →
+					Open Review for {anchorDate} →
 				</a>
 			</div>
 		{/if}

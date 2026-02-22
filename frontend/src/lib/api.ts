@@ -145,6 +145,11 @@ export const media = {
 			`/media/dates/${date}/${encodeURIComponent(species)}/files`
 		),
 
+	speciesMeta: (date: string, species: string) =>
+		request<{ date: string; species: string; sci_name: string; com_name: string }>(
+			`/media/dates/${date}/${encodeURIComponent(species)}/meta`
+		),
+
 	shiftedAudioUrl: (date: string, species: string, filename: string) =>
 		`${API_BASE}/media/shifted/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}`,
 

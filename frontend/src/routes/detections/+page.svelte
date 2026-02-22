@@ -1,6 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { detections, integrations, type Detection, type SpeciesExternalLinks } from '$lib/api';
+	import {
+		detections,
+		integrations,
+		media,
+		species as speciesApi,
+		speciesLists,
+		type Detection,
+		type SpeciesExternalLinks,
+		type SpeciesSummary,
+	} from '$lib/api';
 	import { DetectionCard, Modal } from '$lib/components';
 	import { auth, toasts } from '$lib/stores';
 
@@ -9,6 +18,7 @@
 	let searchTerm = '';
 	let selectedDate = '';
 	let selectedSpecies = '';
+	let speciesOptions: SpeciesSummary[] = [];
 	let availableDates: string[] = [];
 	let limit = 20;
 	let offset = 0;
@@ -16,6 +26,7 @@
 	let hasMore = false;
 	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
 	let deletingFiles = new Set<string>();
+	let shiftingFiles = new Set<string>();
 	let showLoginModal = false;
 	let passwordInput = '';
 
@@ -34,6 +45,8 @@
 		const params = new URLSearchParams({
 			date: detection.Date,
 			species: speciesFolderFromFilename(detection.File_Name),
+			sci: detection.Sci_Name,
+			com: detection.Com_Name,
 		});
 		return `/recordings?${params.toString()}`;
 	}
@@ -101,6 +114,18 @@
 		}
 	}
 
+	async function loadSpeciesOptions() {
+		try {
+			const result = await speciesApi.list({ sort: 'name', date: selectedDate || undefined });
+			speciesOptions = result.species;
+			if (selectedSpecies && !speciesOptions.some((item) => item.Sci_Name === selectedSpecies)) {
+				selectedSpecies = '';
+			}
+		} catch (e) {
+			console.error('Failed to load species options:', e);
+		}
+	}
+
 	async function loadDates() {
 		try {
 			const result = await detections.dates();
@@ -116,6 +141,11 @@
 	}
 
 	function handleDateChange() {
+		loadSpeciesOptions();
+		loadDetections(true);
+	}
+
+	function handleSpeciesChange() {
 		loadDetections(true);
 	}
 
@@ -156,6 +186,48 @@
 		}
 	}
 
+	async function shiftDetection(detection: Detection) {
+		shiftingFiles = new Set(shiftingFiles).add(detection.File_Name);
+		try {
+			await media.createShifted(detection.Date, detection.Sci_Name, detection.File_Name);
+			toasts.show('Shifted audio created', 'success');
+		} catch (e) {
+			console.error('Failed to shift detection:', e);
+			toasts.show('Failed to shift audio', 'error');
+		} finally {
+			const next = new Set(shiftingFiles);
+			next.delete(detection.File_Name);
+			shiftingFiles = next;
+		}
+	}
+
+	async function excludeSpecies(detection: Detection) {
+		if (!(await requireAuth())) return;
+		const removeExisting = confirm(
+			`Exclude ${detection.Com_Name} and remove existing detections/recordings now?`
+		);
+		try {
+			await speciesLists.update('exclude', detection.Sci_Name, 'add', auth.getCredentials());
+			if (removeExisting) {
+				await speciesApi.delete(detection.Sci_Name, auth.getCredentials());
+				allDetections = allDetections.filter((item) => item.Sci_Name !== detection.Sci_Name);
+				total = allDetections.length;
+				await loadSpeciesOptions();
+				toasts.show('Species excluded and existing data removed', 'success');
+			} else {
+				toasts.show('Species added to Exclude list', 'success');
+			}
+		} catch (e: any) {
+			if (e?.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				console.error('Failed to exclude species:', e);
+				toasts.show('Failed to exclude species', 'error');
+			}
+		}
+	}
+
 	function handleLogin() {
 		auth.login(passwordInput);
 		passwordInput = '';
@@ -168,18 +240,19 @@
 		selectedSpecies = query.get('species') || '';
 		searchTerm = query.get('search') || '';
 		loadDates();
+		loadSpeciesOptions();
 		loadDetections(true);
 	});
 </script>
 
 <svelte:head>
-	<title>Detections - BirdNET-Pi</title>
+	<title>Review - BirdNET-Pi</title>
 </svelte:head>
 
 <div class="container mx-auto px-4 py-6">
 	<div class="mb-6">
-		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Detections</h1>
-		<p class="text-gray-600 dark:text-gray-400 mt-1">Browse all bird detections</p>
+		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Review</h1>
+		<p class="text-gray-600 dark:text-gray-400 mt-1">Triage and clean up detections</p>
 	</div>
 
 	<!-- Filters -->
@@ -212,6 +285,21 @@
 					{/each}
 				</select>
 			</div>
+
+			<div class="w-full md:w-60">
+				<label for="speciesFilter" class="label">Species</label>
+				<select
+					id="speciesFilter"
+					bind:value={selectedSpecies}
+					on:change={handleSpeciesChange}
+					class="select"
+				>
+					<option value="">All species</option>
+					{#each speciesOptions as species}
+						<option value={species.Sci_Name}>{species.Com_Name}</option>
+					{/each}
+				</select>
+			</div>
 		</div>
 	</div>
 
@@ -220,12 +308,24 @@
 		<p class="text-sm text-gray-600 dark:text-gray-400">
 			Showing {filteredDetections.length} of {total} detections
 		</p>
-		{#if selectedSpecies}
-			<div class="inline-flex w-fit items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300">
-				<span>Species filter: {selectedSpecies}</span>
-				<button class="underline" on:click={clearSpeciesFilter}>Clear</button>
-			</div>
-		{/if}
+		<div class="flex flex-wrap gap-2">
+			{#if selectedDate}
+				<span class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300">
+					Date: {selectedDate}
+				</span>
+			{/if}
+			{#if selectedSpecies}
+				<div class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300">
+					<span>Species: {selectedSpecies}</span>
+					<button class="underline" on:click={clearSpeciesFilter}>Clear</button>
+				</div>
+			{/if}
+			{#if searchTerm}
+				<span class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300">
+					Search: {searchTerm}
+				</span>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Detections grid -->
@@ -240,14 +340,38 @@
 	{:else}
 		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 			{#each filteredDetections as detection (detection.File_Name)}
-				<DetectionCard
-					{detection}
-					href={detectionRecordingsHref(detection)}
-					allowDelete={true}
-					deleting={deletingFiles.has(detection.File_Name)}
-					speciesLinks={speciesLinksBySci[detection.Sci_Name] || null}
-					on:delete={(event) => deleteDetectionFile(event.detail)}
-				/>
+				<div class="space-y-2">
+					<DetectionCard
+						{detection}
+						href={detectionRecordingsHref(detection)}
+						allowDelete={true}
+						deleting={deletingFiles.has(detection.File_Name)}
+						speciesLinks={speciesLinksBySci[detection.Sci_Name] || null}
+						on:delete={(event) => deleteDetectionFile(event.detail)}
+					/>
+					<div class="card p-2 flex flex-wrap gap-2">
+						<button
+							class="btn-secondary btn-sm"
+							on:click={() => deleteDetectionFile(detection)}
+							disabled={deletingFiles.has(detection.File_Name)}
+						>
+							{deletingFiles.has(detection.File_Name) ? 'Deleting...' : 'Delete'}
+						</button>
+						<button
+							class="btn-secondary btn-sm"
+							on:click={() => shiftDetection(detection)}
+							disabled={shiftingFiles.has(detection.File_Name)}
+						>
+							{shiftingFiles.has(detection.File_Name) ? 'Shifting...' : 'Shift'}
+						</button>
+						<button class="btn-secondary btn-sm" on:click={() => excludeSpecies(detection)}>
+							Exclude
+						</button>
+						<a class="btn-secondary btn-sm" href={detectionRecordingsHref(detection)}>
+							Open in Library
+						</a>
+					</div>
+				</div>
 			{/each}
 		</div>
 

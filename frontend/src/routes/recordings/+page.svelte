@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { detections, media } from '$lib/api';
-	import { AudioPlayer, Modal } from '$lib/components';
+	import { detections, integrations, media, type SpeciesExternalLinks } from '$lib/api';
+	import { AudioPlayer, ExternalLinks, Modal } from '$lib/components';
 	import { auth, toasts } from '$lib/stores';
 	import { formatBirdName } from '$lib';
 
@@ -13,10 +13,15 @@
 	let loading = false;
 	let queryDate = '';
 	let querySpecies = '';
+	let querySci = '';
+	let queryCom = '';
 	let deletingFiles = new Set<string>();
 	let shiftingFiles = new Set<string>();
 	let deletingShiftedFiles = new Set<string>();
 	let shiftedAvailable: Record<string, boolean> = {};
+	let shiftedChecked: Record<string, boolean> = {};
+	let showShifted = false;
+	let speciesLinks: SpeciesExternalLinks | null = null;
 	let showLoginModal = false;
 	let passwordInput = '';
 
@@ -64,11 +69,27 @@
 			const result = await media.filesForSpecies(selectedDate, selectedSpecies);
 			files = result.files;
 			shiftedAvailable = {};
+			shiftedChecked = {};
+			await loadSpeciesLinks();
+			if (showShifted) await probeShiftedForAll();
 		} catch (e) {
 			console.error('Failed to load files:', e);
 			files = [];
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function loadSpeciesLinks() {
+		try {
+			if (querySci && selectedSpecies === querySpecies) {
+				speciesLinks = await integrations.speciesLinks(querySci, queryCom || undefined);
+				return;
+			}
+			const meta = await media.speciesMeta(selectedDate, selectedSpecies);
+			speciesLinks = await integrations.speciesLinks(meta.sci_name, meta.com_name);
+		} catch {
+			speciesLinks = null;
 		}
 	}
 
@@ -147,6 +168,30 @@
 		}
 	}
 
+	async function probeShifted(fileName: string) {
+		if (shiftedChecked[fileName]) return;
+		const url = media.shiftedAudioUrl(selectedDate, selectedSpecies, fileName);
+		try {
+			const response = await fetch(url, { method: 'HEAD' });
+			shiftedAvailable = { ...shiftedAvailable, [fileName]: response.ok };
+		} catch {
+			shiftedAvailable = { ...shiftedAvailable, [fileName]: false };
+		} finally {
+			shiftedChecked = { ...shiftedChecked, [fileName]: true };
+		}
+	}
+
+	async function probeShiftedForAll() {
+		await Promise.all(files.map((file) => probeShifted(file.name)));
+	}
+
+	async function handleShowShiftedToggle() {
+		showShifted = !showShifted;
+		if (showShifted) {
+			await probeShiftedForAll();
+		}
+	}
+
 	function handleLogin() {
 		auth.login(passwordInput);
 		passwordInput = '';
@@ -157,18 +202,20 @@
 		const query = new URLSearchParams(window.location.search);
 		queryDate = query.get('date') || '';
 		querySpecies = query.get('species') || '';
+		querySci = query.get('sci') || '';
+		queryCom = query.get('com') || '';
 		void loadDates();
 	});
 </script>
 
 <svelte:head>
-	<title>Recordings - BirdNET-Pi</title>
+	<title>Library - BirdNET-Pi</title>
 </svelte:head>
 
 <div class="container mx-auto px-4 py-6">
 	<div class="mb-6">
-		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Recordings</h1>
-		<p class="text-gray-600 dark:text-gray-400 mt-1">Browse audio files by date and species</p>
+		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Library</h1>
+		<p class="text-gray-600 dark:text-gray-400 mt-1">Historical file management</p>
 	</div>
 
 	<!-- Filters -->
@@ -238,15 +285,26 @@
 	{#if selectedSpecies}
 		<div>
 			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-					{formatBirdName(selectedSpecies)} - {selectedDate}
-				</h2>
+				<div>
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+						{formatBirdName(selectedSpecies)} - {selectedDate}
+					</h2>
+					<div class="mt-1">
+						<ExternalLinks links={speciesLinks} compact={true} />
+					</div>
+				</div>
+				<div class="flex items-center gap-3">
+					<label class="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+						<input type="checkbox" checked={showShifted} on:change={handleShowShiftedToggle} />
+						<span>Show shifted</span>
+					</label>
 				<button
 					on:click={() => { selectedSpecies = ''; files = []; }}
 					class="text-sm text-primary-600 dark:text-primary-400 hover:underline"
 				>
 					← Back to species
 				</button>
+				</div>
 			</div>
 
 			{#if loading}
@@ -322,7 +380,7 @@
 										<div class="mt-2">
 											<AudioPlayer src={audioUrl} compact />
 										</div>
-										{#if shiftedAvailable[file.name]}
+										{#if showShifted && shiftedAvailable[file.name]}
 											<div class="mt-2">
 												<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Shifted</p>
 												<AudioPlayer src={shiftedUrl} compact />

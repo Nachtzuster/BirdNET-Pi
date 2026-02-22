@@ -1,6 +1,7 @@
 """Media serving API endpoints."""
 import os
 import re
+import sqlite3
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -303,6 +304,43 @@ async def list_species_for_date(
 
     species.sort(key=lambda x: x['count'], reverse=True)
     return {"date": date, "species": species}
+
+
+@router.get("/media/dates/{date}/{species}/meta")
+async def get_species_meta_for_date(
+    date: str,
+    species: str,
+    settings: Settings = Depends(get_settings),
+):
+    """Resolve species metadata (scientific/common names) for a date folder species."""
+    species = species.replace(' ', '_')
+    like_pattern = f"{species}-%"
+
+    conn = sqlite3.connect(f"file:{settings.db_path}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        row = conn.execute(
+            """
+            SELECT Sci_Name, Com_Name
+            FROM detections
+            WHERE Date = ? AND File_Name LIKE ?
+            ORDER BY Time DESC
+            LIMIT 1
+            """,
+            (date, like_pattern),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Species metadata not found")
+
+    return {
+        "date": date,
+        "species": species,
+        "sci_name": row["Sci_Name"],
+        "com_name": row["Com_Name"],
+    }
 
 
 @router.get("/media/dates/{date}/{species}/files")

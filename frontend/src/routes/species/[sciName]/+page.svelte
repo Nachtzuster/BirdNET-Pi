@@ -94,6 +94,14 @@
 						<p>First seen: {stats.first_detection}</p>
 						<p>Last seen: {stats.last_detection}</p>
 					</div>
+					<div class="mt-4">
+						<a
+							href="/detections?species={encodeURIComponent(stats.sci_name)}"
+							class="btn-secondary btn-sm"
+						>
+							Open Review for this species
+						</a>
+					</div>
 				</div>
 			</div>
 		</div>

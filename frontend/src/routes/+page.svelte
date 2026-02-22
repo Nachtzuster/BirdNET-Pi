@@ -255,17 +255,20 @@
 </script>
 
 <svelte:head>
-	<title>{siteName} - Overview</title>
+	<title>{siteName} - Dashboard</title>
 </svelte:head>
 
 <div class="container mx-auto px-4 py-6 overflow-x-hidden">
 	<!-- Header -->
 	<div class="mb-8">
-		<h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
-			{siteName}
-		</h1>
+		<div class="flex flex-wrap items-center justify-between gap-3">
+			<h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+				{siteName}
+			</h1>
+			<a href="/detections" class="btn-primary">Review Detections</a>
+		</div>
 		<p class="text-gray-600 dark:text-gray-400 mt-1">
-			Real-time bird detection dashboard
+			What is happening now
 		</p>
 	</div>
 
@@ -314,7 +317,7 @@
 					<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Detections by hour</p>
 				</div>
 				<a href="/history" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
-					Full history →
+					Open Insights →
 				</a>
 			</div>
 			<div class="card-body">
@@ -330,55 +333,8 @@
 			</div>
 		</div>
 
-		<!-- Latest Detections -->
-		<div class="mb-8">
-			<div class="flex items-center justify-between mb-2">
-				<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-					Latest Detections
-				</h2>
-				<a href="/detections" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
-					View all →
-				</a>
-			</div>
-			<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-				Group view by species to reduce duplicate-card clutter. Open Detections for full timeline and recordings.
-			</p>
-
-			{#if groupedDetections.length === 0}
-				<div class="card p-8 text-center">
-					<svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-					</svg>
-					<p class="text-gray-600 dark:text-gray-400">No detections today yet</p>
-					<p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
-						Detections will appear here as birds are identified
-					</p>
-				</div>
-			{:else}
-				<div class="grid gap-4 md:grid-cols-2">
-					{#each groupedDetections as group (group.sciName)}
-						<div class="min-w-0">
-							<DetectionCard
-								detection={group.latest}
-								showDate={false}
-								href={detectionsHref(group.latest)}
-								speciesLinks={speciesLinksBySci[group.sciName] || null}
-							/>
-							{#if group.count > 1}
-								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 break-words">
-									+{group.count - 1} more {group.comName} detections in recent activity
-								</p>
-							{/if}
-						</div>
-					{/each}
-				</div>
-			{/if}
-		</div>
-
-		<!-- Bottom Section -->
-		<div class="grid md:grid-cols-1 gap-6">
-			<!-- Top Species -->
-			<div class="card">
+		<!-- Top Species -->
+		<div class="card mb-8">
 				<div class="card-header flex items-center justify-between">
 					<div class="flex items-center gap-3">
 						<h3 class="font-semibold text-gray-900 dark:text-gray-100">Top Species</h3>
@@ -435,6 +391,61 @@
 						{/each}
 					</div>
 				{/if}
+		</div>
+
+		<!-- Latest Detections -->
+		<div class="mb-8">
+			<div class="flex items-center justify-between mb-2">
+				<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+					Latest Detections
+				</h2>
+				<a href="/detections" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
+					Open Review →
+				</a>
+			</div>
+			<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+				Group view by species to reduce duplicate-card clutter. Open Detections for full timeline and recordings.
+			</p>
+
+			{#if groupedDetections.length === 0}
+				<div class="card p-8 text-center">
+					<svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+					</svg>
+					<p class="text-gray-600 dark:text-gray-400">No detections today yet</p>
+					<p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
+						Detections will appear here as birds are identified
+					</p>
+				</div>
+			{:else}
+				<div class="grid gap-4 md:grid-cols-2">
+					{#each groupedDetections as group (group.sciName)}
+						<div class="min-w-0">
+							<DetectionCard
+								detection={group.latest}
+								showDate={false}
+								href={detectionsHref(group.latest)}
+								speciesLinks={speciesLinksBySci[group.sciName] || null}
+							/>
+							{#if group.count > 1}
+								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 break-words">
+									+{group.count - 1} more {group.comName} detections in recent activity
+								</p>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<div class="card p-4 flex flex-wrap items-center justify-between gap-3">
+			<div>
+				<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Explore more</p>
+				<p class="text-xs text-gray-500 dark:text-gray-400">Open historical files or trend analysis</p>
+			</div>
+			<div class="flex items-center gap-2">
+				<a href="/recordings" class="btn-secondary btn-sm">Open Library</a>
+				<a href="/history" class="btn-secondary btn-sm">Open Insights</a>
 			</div>
 		</div>
 	{/if}
