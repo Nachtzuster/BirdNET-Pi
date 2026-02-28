@@ -1,8 +1,8 @@
 <?php
 
 /* Prevent XSS input */
-$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING);
-$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
 
 error_reporting(E_ERROR);
 ini_set('display_errors',1);
@@ -16,7 +16,8 @@ $db->busyTimeout(1000);
 
 if(isset($_GET['deletefile'])) {
   ensure_authenticated('You must be authenticated to delete files.');
-  if (preg_match('~^.*(\.\.\/).+$~', $_GET['deletefile'])) {
+  $deletefile = urldecode($_GET['deletefile']);
+  if ($deletefile === '' || str_contains($deletefile, "\0") || str_contains($deletefile, '..') || str_starts_with($deletefile, '/')) {
     echo "Error";
     die();
   }
@@ -24,9 +25,13 @@ if(isset($_GET['deletefile'])) {
   $db->busyTimeout(1000);
   $statement1 = $db_writable->prepare('DELETE FROM detections WHERE File_Name = :file_name LIMIT 1');
   ensure_db_ok($statement1);
-  $statement1->bindValue(':file_name', explode("/", $_GET['deletefile'])[2]);
-  $file_pointer = $home."/BirdSongs/Extracted/By_Date/".$_GET['deletefile'];
-  if (!exec("sudo rm $file_pointer 2>&1 && sudo rm $file_pointer.png 2>&1", $output)) {
+  $statement1->bindValue(':file_name', basename($deletefile));
+  $file_pointer = $home."/BirdSongs/Extracted/By_Date/".$deletefile;
+  $output = [];
+  $return_code = 0;
+  exec("sudo rm -f " . escapeshellarg($file_pointer) . " 2>&1", $output, $return_code);
+  exec("sudo rm -f " . escapeshellarg($file_pointer . '.png') . " 2>&1", $output, $return_code_png);
+  if ($return_code === 0 && $return_code_png === 0) {
     echo "OK";
   } else {
     echo "Error - file deletion failed : " . implode(", ", $output) . "<br>";
@@ -76,13 +81,20 @@ if(isset($_GET['getlabels'])) {
 
 if(isset($_GET['changefile']) && isset($_GET['newname'])) {
   ensure_authenticated('You must be authenticated to delete files.');
-  if (preg_match('~^.*(\.\.\/).+$~', $_GET['changefile'])) {
+  $changefile = urldecode($_GET['changefile']);
+  if ($changefile === '' || str_contains($changefile, "\0") || str_contains($changefile, '..') || str_starts_with($changefile, '/')) {
     echo "Error";
     die();
   }
-  $oldname = basename(urldecode($_GET['changefile']));
+  $oldname = basename($changefile);
   $newname = urldecode($_GET['newname']);
-  if (!exec("sudo -u ".$user." ".$home."/BirdNET-Pi/scripts/birdnet_changeidentification.sh \"$oldname\" \"$newname\" log_errors 2>&1", $output)) {
+  $output = [];
+  $return_code = 0;
+  $cmd = "sudo -u " . escapeshellarg($user) . " " .
+    escapeshellarg($home . "/BirdNET-Pi/scripts/birdnet_changeidentification.sh") . " " .
+    escapeshellarg($oldname) . " " . escapeshellarg($newname) . " log_errors 2>&1";
+  exec($cmd, $output, $return_code);
+  if ($return_code === 0) {
     echo "OK";
   } else {
     echo "Error : " . implode(", ", $output) . "<br>";
