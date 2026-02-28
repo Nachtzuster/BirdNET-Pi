@@ -73,17 +73,19 @@ import { goto } from '$app/navigation';
 
 		<!-- Detection Info -->
 		<div class="flex-1 min-w-0">
-			<div class="flex items-start justify-between gap-2">
-				<div>
+			<div class="flex items-start justify-between gap-3">
+				<div class="min-w-0 flex-1">
 					<h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">
 						{detection.Com_Name}
 					</h3>
-					<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">
-						{detection.Sci_Name}
-					</p>
+					<div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0" data-no-card-link>
+						<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate max-w-full">
+							{detection.Sci_Name}
+						</p>
+						<ExternalLinks links={speciesLinks} compact={true} />
+					</div>
 				</div>
 				<div class="flex items-center gap-2 flex-shrink-0" data-no-card-link>
-					<ExternalLinks links={speciesLinks} compact={true} />
 					<span class="badge-primary">
 						{formatConfidence(detection.Confidence)}
 					</span>

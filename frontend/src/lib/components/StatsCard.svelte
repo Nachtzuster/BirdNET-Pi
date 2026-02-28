@@ -22,8 +22,8 @@
 				<p class="stat-value">{value}</p>
 				<p class="stat-label">{label}</p>
 			</div>
-			<div class="p-2 bg-primary-100 dark:bg-primary-900 rounded-lg">
-				<svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<div class="flex-shrink-0 {compact ? 'p-1.5' : 'p-2'} bg-primary-100 dark:bg-primary-900 rounded-lg">
+				<svg class="{compact ? 'w-5 h-5' : 'w-6 h-6'} text-primary-600 dark:text-primary-400 overflow-visible" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={iconPaths[icon]} />
 				</svg>
 			</div>
@@ -49,8 +49,8 @@
 				<p class="stat-value">{value}</p>
 				<p class="stat-label">{label}</p>
 			</div>
-			<div class="p-2 bg-primary-100 dark:bg-primary-900 rounded-lg">
-				<svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<div class="flex-shrink-0 {compact ? 'p-1.5' : 'p-2'} bg-primary-100 dark:bg-primary-900 rounded-lg">
+				<svg class="{compact ? 'w-5 h-5' : 'w-6 h-6'} text-primary-600 dark:text-primary-400 overflow-visible" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={iconPaths[icon]} />
 				</svg>
 			</div>
