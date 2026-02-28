@@ -1,4 +1,7 @@
-import apprise
+try:
+    import apprise
+except ImportError:
+    apprise = None
 import os
 import socket
 import requests
@@ -19,6 +22,8 @@ species_last_notified = {}
 
 def notify(body, title, attached=""):
     global apobj
+    if apprise is None:
+        return
     if apobj is None:
         asset = apprise.AppriseAsset(
             plugin_paths=[
@@ -70,8 +75,8 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
 
     settings_dict = get_settings()
     title = html.unescape(settings_dict.get('APPRISE_NOTIFICATION_TITLE'))
-    f = open(APPRISE_BODY, 'r')
-    body = f.read()
+    with open(APPRISE_BODY, 'r') as f:
+        body = f.read()
 
     websiteurl = settings_dict.get('BIRDNETPI_URL')
     if websiteurl is None or len(websiteurl) == 0:
