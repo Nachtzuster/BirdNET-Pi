@@ -106,9 +106,9 @@ if(isset($_GET["latitude"])){
   if(isset($timezone) && in_array($timezone, DateTimeZone::listIdentifiers())) {
     # dpkg-reconfigure tzdata is a pain to run non-interactively, so we do it in two steps instead
     # tzlocal.get_localzone() will fail if the Debian specific /etc/timezone is not in sync
-    shell_exec("sudo timedatectl set-timezone ".$timezone);
+    shell_exec("sudo timedatectl set-timezone ".escapeshellarg($timezone));
     if (file_exists('/etc/timezone')) {
-        shell_exec("echo ".$timezone." | sudo tee /etc/timezone > /dev/null");
+        shell_exec("echo ".escapeshellarg($timezone)." | sudo tee /etc/timezone > /dev/null");
     }
     $_SESSION['my_timezone'] = $timezone;
     date_default_timezone_set($timezone);
@@ -128,7 +128,7 @@ if(isset($_GET["latitude"])){
     // check if valid date and time
     $datetime = DateTime::createFromFormat('Y-m-d H:i', $_GET['date'] . ' ' . $_GET['time']);
     if ($datetime && $datetime->format('Y-m-d H:i') === $_GET['date'] . ' ' . $_GET['time']) {
-      exec("sudo date -s '".$_GET['date']." ".$_GET['time']."'");
+      exec("sudo date -s ".escapeshellarg($_GET['date']." ".$_GET['time']));
     }
   } else {
     // user checked 'use time from internet if available,' so make sure that's on

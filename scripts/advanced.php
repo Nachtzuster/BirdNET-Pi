@@ -127,7 +127,7 @@ if(isset($_GET['submit'])) {
 
   if(isset($_GET["freqshift_reconnect_delay"]) && is_numeric($_GET['freqshift_reconnect_delay'])) {
     $freqshift_reconnect_delay = $_GET["freqshift_reconnect_delay"];
-    if(strcmp($freqshift_hi,$config['FREQSHIFT_RECONNECT_DELAY']) !== 0) {
+    if(strcmp($freqshift_reconnect_delay,$config['FREQSHIFT_RECONNECT_DELAY']) !== 0) {
       $contents = preg_replace("/FREQSHIFT_RECONNECT_DELAY=.*/", "FREQSHIFT_RECONNECT_DELAY=$freqshift_reconnect_delay", $contents);
     }
   }
@@ -214,7 +214,7 @@ if (isset($_GET["max_files_species"])) {
 
   if(isset($_GET["raw_spectrogram"])) {
     $raw_spectrogram = 1;
-    if(strcmp($RAW_SPECTROGRAM,$config['RAW_SPECTROGRAM']) !== 0) {
+    if(strcmp($raw_spectrogram,$config['RAW_SPECTROGRAM']) !== 0) {
       $contents = preg_replace("/RAW_SPECTROGRAM=.*/", "RAW_SPECTROGRAM=$raw_spectrogram", $contents);
     }
   } else {
