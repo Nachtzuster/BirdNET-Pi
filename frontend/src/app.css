@@ -118,6 +118,18 @@
 		@apply card p-6;
 	}
 
+	.stat-card-compact {
+		@apply p-3 sm:p-4;
+	}
+
+	.stat-card-compact .stat-value {
+		@apply text-2xl sm:text-3xl leading-tight;
+	}
+
+	.stat-card-compact .stat-label {
+		@apply text-xs sm:text-sm mt-0.5;
+	}
+
 	.stat-value {
 		@apply text-3xl font-bold text-gray-900 dark:text-gray-100;
 	}

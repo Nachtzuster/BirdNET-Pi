@@ -92,6 +92,22 @@
 		return 'month';
 	}
 
+	function parseRangeMode(value: string | null): RangeMode {
+		if (value === 'day' || value === 'week' || value === 'month' || value === 'year') return value;
+		return 'day';
+	}
+
+	function parseInitialStateFromUrl() {
+		if (typeof window === 'undefined') return;
+		const params = new URLSearchParams(window.location.search);
+		rangeMode = parseRangeMode(params.get('mode'));
+
+		const date = params.get('date');
+		if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+			anchorDate = date;
+		}
+	}
+
 	// ── Navigation ────────────────────────────────────────────────
 
 	function navigate(direction: -1 | 1) {
@@ -512,6 +528,7 @@
 		const module = await import('chart.js/auto');
 		ChartJS = module.default;
 
+		parseInitialStateFromUrl();
 		loadDates();
 
 		themeObserver = new MutationObserver(() => {

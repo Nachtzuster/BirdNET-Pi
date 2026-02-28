@@ -32,6 +32,7 @@ class DetectionSummary(BaseModel):
     total_count: int
     todays_count: int
     hour_count: int
+    new_species_today: int
     todays_species_tally: int
     species_tally: int
 

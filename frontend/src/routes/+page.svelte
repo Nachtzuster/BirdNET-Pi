@@ -65,6 +65,15 @@
 		return `/detections?${params.toString()}`;
 	}
 
+	function insightsHref(scope: string): string {
+		const params = new URLSearchParams({
+			mode: 'day',
+			date: todayStr(),
+			scope,
+		});
+		return `/history?${params.toString()}`;
+	}
+
 	$: displayedTopSpecies = topSpeciesMode === 'today' ? topSpeciesToday : topSpeciesAllTime;
 
 	async function loadSpeciesLinks(speciesItems: Array<{ sciName: string; comName?: string }>) {
@@ -278,26 +287,48 @@
 		</div>
 	{:else}
 		<!-- Stats Grid -->
-		<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+		<div class="grid grid-cols-3 md:grid-cols-6 gap-3 mb-8">
 			<StatsCard
 				value={stats?.total_count || 0}
-				label="Total Detections"
+				label="Total"
 				icon="total"
+				href={insightsHref('total')}
+				compact={true}
 			/>
 			<StatsCard
 				value={stats?.todays_count || 0}
 				label="Today"
 				icon="today"
+				href={insightsHref('today')}
+				compact={true}
 			/>
 			<StatsCard
 				value={stats?.hour_count || 0}
 				label="Last Hour"
 				icon="hour"
+				href={insightsHref('hour')}
+				compact={true}
+			/>
+			<StatsCard
+				value={stats?.new_species_today || 0}
+				label="New Species"
+				icon="new"
+				href={insightsHref('new_species_today')}
+				compact={true}
+			/>
+			<StatsCard
+				value={stats?.todays_species_tally || 0}
+				label="Species Today"
+				icon="species"
+				href={insightsHref('species_today')}
+				compact={true}
 			/>
 			<StatsCard
 				value={stats?.species_tally || 0}
-				label="Species"
+				label="All Species"
 				icon="species"
+				href={insightsHref('all_species')}
+				compact={true}
 			/>
 		</div>
 
@@ -316,7 +347,7 @@
 					<h3 class="font-semibold text-gray-900 dark:text-gray-100">Today's Activity</h3>
 					<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Detections by hour</p>
 				</div>
-				<a href="/history" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
+				<a href={insightsHref('today')} class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
 					Open Insights →
 				</a>
 			</div>

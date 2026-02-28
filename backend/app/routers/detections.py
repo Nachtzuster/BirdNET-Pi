@@ -156,6 +156,21 @@ async def get_detection_stats(
     todays_species = db.execute(
         "SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date = DATE('now', 'localtime')"
     ).fetchone()[0]
+
+    # New species first detected today
+    new_species_today = db.execute(
+        """
+        SELECT COUNT(DISTINCT d.Sci_Name)
+        FROM detections d
+        WHERE d.Date = DATE('now', 'localtime')
+          AND NOT EXISTS (
+              SELECT 1
+              FROM detections prev
+              WHERE prev.Sci_Name = d.Sci_Name
+                AND prev.Date < DATE('now', 'localtime')
+          )
+        """
+    ).fetchone()[0]
     
     # Total species count
     total_species = db.execute(
@@ -166,6 +181,7 @@ async def get_detection_stats(
         total_count=total,
         todays_count=todays,
         hour_count=hour,
+        new_species_today=new_species_today,
         todays_species_tally=todays_species,
         species_tally=total_species,
     )

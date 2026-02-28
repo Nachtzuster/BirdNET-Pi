@@ -272,6 +272,7 @@ export interface DetectionStats {
 	total_count: number;
 	todays_count: number;
 	hour_count: number;
+	new_species_today: number;
 	todays_species_tally: number;
 	species_tally: number;
 }
