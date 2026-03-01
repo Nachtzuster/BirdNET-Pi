@@ -1,6 +1,6 @@
 """Detection API endpoints."""
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -21,7 +21,7 @@ async def get_detections(
     db: sqlite3.Connection = Depends(get_db),
 ):
     """Get paginated list of detections.
-    
+
     Args:
         limit: Maximum number of results
         offset: Number of results to skip
@@ -31,23 +31,23 @@ async def get_detections(
     # Build WHERE clause
     conditions = []
     params = []
-    
+
     if date:
         conditions.append("Date = ?")
         params.append(date)
     if species:
         conditions.append("Sci_Name = ?")
         params.append(species)
-    
+
     where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
-    
+
     # Get total count
     count_sql = f"SELECT COUNT(*) FROM detections{where_clause}"
     total = db.execute(count_sql, params).fetchone()[0]
-    
+
     # Get detections
     select_sql = f"""
-        SELECT Date, Time, Sci_Name, Com_Name, Confidence, Lat, Lon, 
+        SELECT Date, Time, Sci_Name, Com_Name, Confidence, Lat, Lon,
                Cutoff, Week, Sens, Overlap, File_Name
         FROM detections
         {where_clause}
@@ -55,12 +55,12 @@ async def get_detections(
         LIMIT ? OFFSET ?
     """
     params.extend([limit, offset])
-    
+
     cursor = db.execute(select_sql, params)
     rows = cursor.fetchall()
-    
+
     detections = [Detection.model_validate(dict(row)) for row in rows]
-    
+
     return DetectionList(
         detections=detections,
         total=total,
@@ -76,22 +76,22 @@ async def get_todays_detections(
     db: sqlite3.Connection = Depends(get_db),
 ):
     """Get today's detections.
-    
+
     Args:
         limit: Maximum number of results
         search: Search term for species name
     """
     today = datetime.now().strftime("%Y-%m-%d")
-    
+
     conditions = ["Date = ?"]
     params = [today]
-    
+
     if search:
         conditions.append("(Com_Name LIKE ? OR Sci_Name LIKE ?)")
         params.extend([f"%{search}%", f"%{search}%"])
-    
+
     where_clause = " WHERE " + " AND ".join(conditions)
-    
+
     select_sql = f"""
         SELECT Date, Time, Sci_Name, Com_Name, Confidence, Lat, Lon,
                Cutoff, Week, Sens, Overlap, File_Name
@@ -101,10 +101,10 @@ async def get_todays_detections(
         LIMIT ?
     """
     params.append(limit)
-    
+
     cursor = db.execute(select_sql, params)
     rows = cursor.fetchall()
-    
+
     return {
         "detections": [dict(row) for row in rows],
         "date": today,
@@ -125,10 +125,10 @@ async def get_latest_detection(
     """
     cursor = db.execute(select_sql)
     row = cursor.fetchone()
-    
+
     if not row:
         return None
-    
+
     return dict(row)
 
 
@@ -139,19 +139,19 @@ async def get_detection_stats(
     """Get detection statistics."""
     # Total count
     total = db.execute("SELECT COUNT(*) FROM detections").fetchone()[0]
-    
+
     # Today's count
     todays = db.execute(
         "SELECT COUNT(*) FROM detections WHERE Date = DATE('now', 'localtime')"
     ).fetchone()[0]
-    
+
     # Last hour count
     hour = db.execute(
-        """SELECT COUNT(*) FROM detections 
-           WHERE Date = DATE('now', 'localtime') 
+        """SELECT COUNT(*) FROM detections
+           WHERE Date = DATE('now', 'localtime')
            AND Time >= TIME('now', 'localtime', '-1 hour')"""
     ).fetchone()[0]
-    
+
     # Today's species count
     todays_species = db.execute(
         "SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date = DATE('now', 'localtime')"
@@ -171,12 +171,12 @@ async def get_detection_stats(
           )
         """
     ).fetchone()[0]
-    
+
     # Total species count
     total_species = db.execute(
         "SELECT COUNT(DISTINCT Sci_Name) FROM detections"
     ).fetchone()[0]
-    
+
     return DetectionSummary(
         total_count=total,
         todays_count=todays,
@@ -205,9 +205,9 @@ async def get_chart_data(
     db: sqlite3.Connection = Depends(get_db),
 ):
     """Get hourly detection counts and species breakdown for a date.
-    
+
     Returns data suitable for rendering interactive charts.
-    
+
     Args:
         date: Date to get chart data for (YYYY-MM-DD)
     """
@@ -220,11 +220,11 @@ async def get_chart_data(
         ORDER BY hour
     """
     hourly_rows = db.execute(hourly_sql, (date,)).fetchall()
-    
+
     # Build full 24-hour array (fill gaps with 0)
     hourly_counts = {row[0]: row[1] for row in hourly_rows}
     hourly = [{"hour": h, "count": hourly_counts.get(h, 0)} for h in range(24)]
-    
+
     # Top species for the day
     species_sql = """
         SELECT Com_Name, Sci_Name, COUNT(*) as count, MAX(Confidence) as max_confidence
@@ -244,7 +244,7 @@ async def get_chart_data(
         }
         for row in species_rows
     ]
-    
+
     # Per-species hourly breakdown (for all species detected that day)
     species_hourly_sql = """
         SELECT Sci_Name, Com_Name,
@@ -256,7 +256,7 @@ async def get_chart_data(
         ORDER BY Sci_Name, hour
     """
     species_hourly_rows = db.execute(species_hourly_sql, (date,)).fetchall()
-    
+
     # Organize into { sci_name: { com_name, hourly: [24 counts] } }
     species_hourly_map: dict = {}
     for row in species_hourly_rows:
@@ -268,15 +268,15 @@ async def get_chart_data(
                 "hourly": [0] * 24,
             }
         species_hourly_map[sci_name]["hourly"][row[2]] = row[3]
-    
+
     species_hourly = list(species_hourly_map.values())
-    
+
     # Summary stats
     total = sum(h["count"] for h in hourly)
     species_count = db.execute(
         "SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date = ?", (date,)
     ).fetchone()[0]
-    
+
     return {
         "date": date,
         "total_detections": total,
@@ -441,10 +441,10 @@ async def get_detection_by_file(
         (filename,)
     )
     row = cursor.fetchone()
-    
+
     if not row:
         raise HTTPException(status_code=404, detail="Detection not found")
-    
+
     return dict(row)
 
 
@@ -456,32 +456,32 @@ async def delete_detection(
     settings: Settings = Depends(get_settings),
 ):
     """Delete a detection and its associated files.
-    
+
     Requires authentication.
     """
     import os
     import subprocess
-    
+
     # Get the detection to find the file path
     cursor = db.execute(
         "SELECT Date FROM detections WHERE File_Name = ?",
         (filename,)
     )
     row = cursor.fetchone()
-    
+
     if not row:
         raise HTTPException(status_code=404, detail="Detection not found")
-    
+
     detection_date = row[0]
-    
+
     # Extract species folder from filename (files are stored by common name, not scientific name)
     species_folder = extract_species_from_filename(filename)
-    
+
     # Build file paths
     base_path = os.path.join(settings.by_date_dir, detection_date, species_folder)
     audio_path = os.path.join(base_path, filename)
     spectrogram_path = audio_path + '.png'
-    
+
     # Delete from database (using a new writable connection)
     write_db = sqlite3.connect(settings.db_path)
     try:
@@ -489,7 +489,7 @@ async def delete_detection(
         write_db.commit()
     finally:
         write_db.close()
-    
+
     # Delete files
     deleted_files = []
     for path in [audio_path, spectrogram_path]:
@@ -501,7 +501,7 @@ async def delete_detection(
                 # Try with sudo
                 subprocess.run(['sudo', 'rm', path], check=True)
                 deleted_files.append(path)
-    
+
     return {
         "message": "Detection deleted",
         "filename": filename,

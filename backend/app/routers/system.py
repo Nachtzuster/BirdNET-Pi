@@ -64,7 +64,7 @@ def get_service_status(service_name: str) -> ServiceStatus:
             text=True,
         )
         is_active = active_result.returncode == 0
-        
+
         # Check if enabled
         enabled_result = subprocess.run(
             ['systemctl', 'is-enabled', service_name],
@@ -72,10 +72,10 @@ def get_service_status(service_name: str) -> ServiceStatus:
             text=True,
         )
         is_enabled = enabled_result.returncode == 0
-        
+
         # Get status text
         status = active_result.stdout.strip()
-        
+
         return ServiceStatus(
             name=service_name,
             active=is_active,
@@ -128,7 +128,7 @@ async def list_services(
     user: str = Depends(verify_credentials),
 ):
     """Get status of all BirdNET-Pi services.
-    
+
     Requires authentication.
     """
     services = [get_service_status(name) for name in SERVICES]
@@ -141,12 +141,12 @@ async def get_service(
     user: str = Depends(verify_credentials),
 ):
     """Get status of a specific service.
-    
+
     Requires authentication.
     """
     if service_name not in SERVICES:
         raise HTTPException(status_code=404, detail=f"Unknown service: {service_name}")
-    
+
     return get_service_status(service_name)
 
 
@@ -157,23 +157,23 @@ async def control_service(
     user: str = Depends(verify_credentials),
 ):
     """Control a systemd service.
-    
+
     Requires authentication.
-    
+
     Args:
         service_name: Name of the service
         action: One of start, stop, restart, enable, disable
     """
     if service_name not in SERVICES:
         raise HTTPException(status_code=404, detail=f"Unknown service: {service_name}")
-    
+
     valid_actions = ['start', 'stop', 'restart', 'enable', 'disable']
     if action not in valid_actions:
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail=f"Invalid action: {action}. Must be one of {valid_actions}"
         )
-    
+
     try:
         result = subprocess.run(
             ['sudo', 'systemctl', action, service_name],
@@ -181,7 +181,7 @@ async def control_service(
             text=True,
             timeout=30,
         )
-        
+
         if result.returncode == 0:
             return {
                 "message": f"Service {service_name} {action} successful",
@@ -193,7 +193,7 @@ async def control_service(
                 detail=f"Failed to {action} {service_name}: {result.stderr}",
             )
     except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=500, detail=f"Operation timed out")
+        raise HTTPException(status_code=500, detail="Operation timed out")
 
 
 @router.post("/system/restart-services")
@@ -202,11 +202,11 @@ async def restart_all_services(
     settings: Settings = Depends(get_settings),
 ):
     """Restart all BirdNET-Pi services.
-    
+
     Requires authentication.
     """
     script_path = os.path.join(settings.base_path, 'scripts', 'restart_services.sh')
-    
+
     try:
         result = subprocess.run(
             ['sudo', script_path],
@@ -214,7 +214,7 @@ async def restart_all_services(
             text=True,
             timeout=60,
         )
-        
+
         return {
             "message": "Services restart initiated",
             "output": result.stdout,
@@ -230,7 +230,7 @@ async def reboot_system(
     user: str = Depends(verify_credentials),
 ):
     """Reboot the system.
-    
+
     Requires authentication.
     """
     try:
@@ -245,7 +245,7 @@ async def shutdown_system(
     user: str = Depends(verify_credentials),
 ):
     """Shutdown the system.
-    
+
     Requires authentication.
     """
     try:
@@ -261,14 +261,13 @@ async def download_backup(
     settings: Settings = Depends(get_settings),
 ):
     """Download a backup of BirdNET-Pi data.
-    
+
     Requires authentication.
     """
-    import tempfile
     from datetime import datetime
-    
+
     script_path = os.path.join(settings.base_path, 'scripts', 'backup_data.sh')
-    
+
     # Create backup
     try:
         result = subprocess.run(
@@ -276,13 +275,13 @@ async def download_backup(
             capture_output=True,
             timeout=300,  # 5 minute timeout
         )
-        
+
         if result.returncode != 0:
             raise HTTPException(status_code=500, detail=f"Backup failed: {result.stderr.decode()}")
-        
+
         # Return the backup data as a streaming response
         filename = f"birdnet-backup-{datetime.now().strftime('%Y%m%d-%H%M%S')}.tar.gz"
-        
+
         return StreamingResponse(
             iter([result.stdout]),
             media_type="application/gzip",
@@ -301,19 +300,19 @@ async def restore_backup(
     settings: Settings = Depends(get_settings),
 ):
     """Restore BirdNET-Pi data from a backup.
-    
+
     Requires authentication.
     """
     import tempfile
-    
+
     script_path = os.path.join(settings.base_path, 'scripts', 'backup_data.sh')
-    
+
     # Save uploaded file temporarily
     with tempfile.NamedTemporaryFile(delete=False, suffix='.tar.gz') as tmp:
         contents = await file.read()
         tmp.write(contents)
         tmp_path = tmp.name
-    
+
     try:
         # Run restore
         result = subprocess.run(
@@ -322,7 +321,7 @@ async def restore_backup(
             text=True,
             timeout=300,
         )
-        
+
         if result.returncode == 0:
             return {"message": "Restore completed successfully", "output": result.stdout}
         else:
@@ -339,11 +338,11 @@ async def get_system_info(
     settings: Settings = Depends(get_settings),
 ):
     """Get system information.
-    
+
     Requires authentication.
     """
     version = read_version(settings)
-    
+
     # Get disk usage
     disk_usage = None
     try:
@@ -365,12 +364,12 @@ async def get_system_info(
                     }
     except Exception:
         pass
-    
+
     uptime = format_uptime()
-    
+
     # Get service statuses
     services = [get_service_status(name) for name in SERVICES]
-    
+
     return SystemInfo(
         version=version,
         uptime=uptime,
@@ -386,12 +385,12 @@ async def get_service_logs(
     user: str = Depends(verify_credentials),
 ):
     """Get recent logs for a service.
-    
+
     Requires authentication.
     """
     if service_name not in SERVICES:
         raise HTTPException(status_code=404, detail=f"Unknown service: {service_name}")
-    
+
     try:
         result = subprocess.run(
             ['journalctl', '-u', service_name, '-n', str(lines), '--no-pager'],
@@ -399,7 +398,7 @@ async def get_service_logs(
             text=True,
             timeout=10,
         )
-        
+
         return {
             "service": service_name,
             "lines": lines,
@@ -415,11 +414,11 @@ async def clear_all_data(
     settings: Settings = Depends(get_settings),
 ):
     """Clear all detection data.
-    
+
     Requires authentication. WARNING: This is destructive!
     """
     script_path = os.path.join(settings.base_path, 'scripts', 'clear_all_data.sh')
-    
+
     try:
         result = subprocess.run(
             ['sudo', script_path],
@@ -427,7 +426,7 @@ async def clear_all_data(
             text=True,
             timeout=120,
         )
-        
+
         if result.returncode == 0:
             return {"message": "All data cleared successfully"}
         else:
@@ -448,7 +447,7 @@ async def get_update_status(
             capture_output=True,
             timeout=30,
         )
-        
+
         # Check commits behind
         result = subprocess.run(
             ['git', '-C', settings.base_path, 'rev-list', '--count', 'HEAD..origin/main'],
@@ -456,9 +455,9 @@ async def get_update_status(
             text=True,
             timeout=10,
         )
-        
+
         commits_behind = int(result.stdout.strip()) if result.returncode == 0 else 0
-        
+
         # Get current commit
         current = subprocess.run(
             ['git', '-C', settings.base_path, 'rev-parse', '--short', 'HEAD'],
@@ -467,7 +466,7 @@ async def get_update_status(
             timeout=10,
         )
         current_commit = current.stdout.strip() if current.returncode == 0 else "unknown"
-        
+
         return {
             "commits_behind": commits_behind,
             "update_available": commits_behind > 0,

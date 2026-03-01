@@ -5,7 +5,6 @@ Reuses the existing config parsing from scripts/utils/helpers.py
 import os
 import sys
 from functools import lru_cache
-from typing import Optional
 
 # Add scripts to path to reuse existing utilities
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -13,7 +12,7 @@ BASE_DIR = os.path.dirname(BACKEND_DIR)
 SCRIPTS_DIR = os.path.join(BASE_DIR, 'scripts')
 sys.path.insert(0, SCRIPTS_DIR)
 
-from utils.helpers import get_settings as _get_settings, BASE_PATH, DB_PATH, MODEL_PATH
+from utils.helpers import get_settings as _get_settings, BASE_PATH, DB_PATH, MODEL_PATH  # noqa: E402
 
 
 class Settings:

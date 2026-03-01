@@ -18,23 +18,23 @@ security = HTTPBasic()
 
 def get_db_connection(readonly: bool = True) -> Generator[sqlite3.Connection, None, None]:
     """Get a database connection.
-    
+
     Args:
         readonly: If True, open database in read-only mode
-        
+
     Yields:
         SQLite connection with Row factory
     """
     settings = get_settings()
     db_path = settings.db_path
-    
+
     # check_same_thread=False is required for uvicorn workers
     if readonly:
         uri = f"file:{db_path}?mode=ro"
         conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
     else:
         conn = sqlite3.connect(db_path, check_same_thread=False)
-    
+
     conn.row_factory = sqlite3.Row
     try:
         yield conn
@@ -57,27 +57,27 @@ def verify_credentials(
     settings: Settings = Depends(get_settings)
 ) -> str:
     """Verify HTTP Basic Auth credentials.
-    
+
     Args:
         credentials: HTTP Basic credentials
         settings: Application settings
-        
+
     Returns:
         Username if authenticated
-        
+
     Raises:
         HTTPException: If credentials are invalid or password not configured
     """
     correct_username = "birdnet"
     correct_password = settings.caddy_password
-    
+
     # If no password is configured, deny access with helpful message
     if not correct_password:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Authentication not configured. Please set CADDY_PWD in /etc/birdnet/birdnet.conf",
         )
-    
+
     if credentials.username != correct_username or credentials.password != correct_password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -92,7 +92,7 @@ def optional_auth(
     settings: Settings = Depends(get_settings)
 ) -> str | None:
     """Optional authentication - doesn't raise if invalid.
-    
+
     Returns:
         Username if authenticated, None otherwise
     """
@@ -105,13 +105,13 @@ def optional_auth(
 # Species list file paths
 def get_species_list_path(list_type: str) -> str:
     """Get the path to a species list file.
-    
+
     Args:
         list_type: One of 'include', 'exclude', 'whitelist', 'confirmed'
-        
+
     Returns:
         Full path to the species list file
-        
+
     Raises:
         ValueError: If list_type is invalid
     """
@@ -122,19 +122,19 @@ def get_species_list_path(list_type: str) -> str:
         'whitelist': 'whitelist_species_list.txt',
         'confirmed': 'confirmed_species_list.txt',
     }
-    
+
     if list_type not in list_files:
         raise ValueError(f"Invalid list type: {list_type}. Must be one of {list(list_files.keys())}")
-    
+
     return os.path.join(settings.base_path, 'scripts', list_files[list_type])
 
 
 def read_species_list(list_type: str) -> list[str]:
     """Read a species list file.
-    
+
     Args:
         list_type: One of 'include', 'exclude', 'whitelist', 'confirmed'
-        
+
     Returns:
         List of species names (scientific names)
     """
@@ -148,7 +148,7 @@ def read_species_list(list_type: str) -> list[str]:
 
 def write_species_list(list_type: str, species: list[str]) -> None:
     """Write a species list file.
-    
+
     Args:
         list_type: One of 'include', 'exclude', 'whitelist', 'confirmed'
         species: List of species names to write
@@ -163,14 +163,14 @@ def write_species_list(list_type: str, species: list[str]) -> None:
 # Species name utilities for file system operations
 def extract_species_from_filename(filename: str) -> str:
     """Extract the species folder name from a BirdNET filename.
-    
+
     Filenames follow the pattern: CommonName-confidence-date-birdnet-time.ext
     Example: White-throated_Sparrow-70-2026-02-03-birdnet-17:53:14.mp3
              -> White-throated_Sparrow
-    
+
     Args:
         filename: The audio filename
-        
+
     Returns:
         The species folder name (common name with underscores)
     """
@@ -185,14 +185,14 @@ def extract_species_from_filename(filename: str) -> str:
 
 def common_name_to_folder(common_name: str) -> str:
     """Convert a common name to the folder name format.
-    
+
     Removes apostrophes and replaces spaces with underscores.
     Example: "Cooper's Hawk" -> "Coopers_Hawk"
              "Mourning Dove" -> "Mourning_Dove"
-    
+
     Args:
         common_name: The common name from the database
-        
+
     Returns:
         The folder-safe name
     """

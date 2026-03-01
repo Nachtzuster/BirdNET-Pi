@@ -11,6 +11,7 @@ from ..config import get_settings, Settings
 
 router = APIRouter()
 
+
 def extract_species_from_filename(filename: str) -> str:
     """Extract the species folder name from a BirdNET filename.
 
@@ -55,7 +56,7 @@ async def get_audio(
         species: Scientific name (with spaces replaced by underscores in URL)
         filename: Audio filename
     """
-        # Normalize species name: spaces to underscores (filesystem uses underscores)
+    # Normalize species name: spaces to underscores (filesystem uses underscores)
     species = species.replace(' ', '_')
 
     # Validate and build path
@@ -96,7 +97,7 @@ async def get_spectrogram(
         species: Scientific name
         filename: Base filename (will append .png if needed)
     """
-        # Normalize species name: spaces to underscores (filesystem uses underscores)
+    # Normalize species name: spaces to underscores (filesystem uses underscores)
     species = species.replace(' ', '_')
 
     # Ensure .png extension
@@ -145,7 +146,7 @@ async def get_shifted_audio(
         species: Scientific name
         filename: Audio filename
     """
-        # Normalize species name: spaces to underscores (filesystem uses underscores)
+    # Normalize species name: spaces to underscores (filesystem uses underscores)
     species = species.replace(' ', '_')
 
     shifted_dir = os.path.join(settings.by_date_dir, 'shifted')
@@ -179,7 +180,7 @@ async def create_shifted_audio(
     """
     import subprocess
 
-        # Normalize species name: spaces to underscores (filesystem uses underscores)
+    # Normalize species name: spaces to underscores (filesystem uses underscores)
     species = species.replace(' ', '_')
 
     # Source file
@@ -243,7 +244,7 @@ async def delete_shifted_audio(
     settings: Settings = Depends(get_settings),
 ):
     """Delete a frequency-shifted audio file."""
-        # Normalize species name: spaces to underscores (filesystem uses underscores)
+    # Normalize species name: spaces to underscores (filesystem uses underscores)
     species = species.replace(' ', '_')
 
     shifted_dir = os.path.join(settings.by_date_dir, 'shifted')
@@ -256,7 +257,6 @@ async def delete_shifted_audio(
     os.remove(file_path)
 
     return {"message": "Shifted audio deleted"}
-
 
 
 @router.get("/media/dates")
@@ -350,7 +350,7 @@ async def list_files_for_species(
     settings: Settings = Depends(get_settings),
 ):
     """List all files for a specific species on a date."""
-        # Normalize species name: spaces to underscores (filesystem uses underscores)
+    # Normalize species name: spaces to underscores (filesystem uses underscores)
     species = species.replace(' ', '_')
 
     species_dir = os.path.join(settings.by_date_dir, date, species)

@@ -65,4 +65,3 @@ def build_species_links(
             "url": f"https://allaboutbirds.org/guide/{quote(aab_slug)}" if aab_slug else None,
         },
     }
-

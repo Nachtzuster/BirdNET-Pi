@@ -1,7 +1,6 @@
 """Configuration API endpoints."""
 import os
 import re
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -18,7 +17,7 @@ async def get_config(
     settings: Settings = Depends(get_settings),
 ):
     """Get current configuration.
-    
+
     Requires authentication. Returns a safe subset of settings.
     """
     return ConfigResponse(
@@ -44,11 +43,11 @@ async def update_config(
     settings: Settings = Depends(get_settings),
 ):
     """Update configuration.
-    
+
     Requires authentication. Only updates fields that are provided.
     """
     config_path = '/etc/birdnet/birdnet.conf'
-    
+
     # Read current config file
     try:
         with open(config_path, 'r') as f:
@@ -57,7 +56,7 @@ async def update_config(
         raise HTTPException(status_code=500, detail="Configuration file not found")
     except PermissionError:
         raise HTTPException(status_code=500, detail="Cannot read configuration file")
-    
+
     # Map of field names to config keys
     field_map = {
         'site_name': 'SITE_NAME',
@@ -73,7 +72,7 @@ async def update_config(
         'flickr_api_key': 'FLICKR_API_KEY',
         'image_provider': 'IMAGE_PROVIDER',
     }
-    
+
     # Update config values
     updates = config_update.model_dump(exclude_unset=True)
     for field, value in updates.items():
@@ -84,14 +83,14 @@ async def update_config(
                 new_value = f'{key}="{value}"'
             else:
                 new_value = f'{key}={value}'
-            
+
             # Replace or add the setting
             pattern = rf'^{key}=.*$'
             if re.search(pattern, contents, re.MULTILINE):
                 contents = re.sub(pattern, new_value, contents, flags=re.MULTILINE)
             else:
                 contents += f'\n{new_value}'
-    
+
     # Write updated config
     try:
         with open(config_path, 'w') as f:
@@ -100,19 +99,19 @@ async def update_config(
         # Try with sudo
         import subprocess
         import tempfile
-        
+
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp:
             tmp.write(contents)
             tmp_path = tmp.name
-        
+
         try:
             subprocess.run(['sudo', 'cp', tmp_path, config_path], check=True)
         finally:
             os.unlink(tmp_path)
-    
+
     # Reload settings
     settings.reload()
-    
+
     return {
         "message": "Configuration updated",
         "updated_fields": list(updates.keys()),
@@ -126,29 +125,29 @@ async def test_notification(
     settings: Settings = Depends(get_settings),
 ):
     """Send a test notification.
-    
+
     Requires authentication.
     """
     import subprocess
-    
+
     # Use the existing send_test_notification.py script
     script_path = os.path.join(settings.base_path, 'scripts', 'send_test_notification.py')
     python_path = os.path.join(settings.base_path, 'birdnet', 'bin', 'python3')
-    
+
     if not os.path.exists(script_path):
         raise HTTPException(status_code=500, detail="Notification script not found")
-    
+
     # Build command
     cmd = [python_path, script_path]
-    
+
     if request.title:
         cmd.extend(['--title', request.title])
     if request.body:
         cmd.extend(['--body', request.body])
-    
+
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        
+
         if result.returncode == 0:
             return NotificationResponse(
                 success=True,
@@ -177,7 +176,7 @@ async def list_available_models(
 ):
     """List available BirdNET models."""
     model_dir = settings.model_path
-    
+
     models = []
     for filename in os.listdir(model_dir):
         if filename.endswith('.tflite'):
@@ -186,7 +185,7 @@ async def list_available_models(
                 "name": model_name,
                 "active": model_name == settings.model,
             })
-    
+
     return {"models": models, "current": settings.model}
 
 
@@ -196,7 +195,7 @@ async def list_available_languages(
 ):
     """List available display languages."""
     l18n_dir = os.path.join(settings.model_path, 'l18n')
-    
+
     languages = []
     for filename in os.listdir(l18n_dir):
         if filename.startswith('labels_') and filename.endswith('.json'):
@@ -205,9 +204,9 @@ async def list_available_languages(
                 "code": lang_code,
                 "active": lang_code == settings.database_lang,
             })
-    
+
     languages.sort(key=lambda x: x['code'])
-    
+
     return {"languages": languages, "current": settings.database_lang}
 
 
@@ -217,14 +216,14 @@ async def preview_species_list(
     settings: Settings = Depends(get_settings),
 ):
     """Preview species list for a given threshold.
-    
+
     Uses the species.py script to generate the list.
     """
     import subprocess
-    
+
     script_path = os.path.join(settings.base_path, 'scripts', 'species.py')
     python_path = os.path.join(settings.base_path, 'birdnet', 'bin', 'python3')
-    
+
     try:
         result = subprocess.run(
             [python_path, script_path, '--threshold', str(threshold)],
@@ -232,7 +231,7 @@ async def preview_species_list(
             text=True,
             timeout=60,
         )
-        
+
         if result.returncode == 0:
             # Parse output - each line is a species
             species = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]

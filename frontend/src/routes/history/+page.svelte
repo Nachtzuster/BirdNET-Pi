@@ -62,9 +62,10 @@
 			return { start: formatDate(mon), end: formatDate(sun) };
 		}
 		if (mode === 'month') {
-			const first = new Date(d.getFullYear(), d.getMonth(), 1);
-			const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-			return { start: formatDate(first), end: formatDate(last) };
+			const end = new Date(d);
+			const start = new Date(d);
+			start.setDate(end.getDate() - 29);
+			return { start: formatDate(start), end: formatDate(end) };
 		}
 		// year
 		return { start: `${d.getFullYear()}-01-01`, end: `${d.getFullYear()}-12-31` };
@@ -80,7 +81,8 @@
 			return `${start}  —  ${end}`;
 		}
 		if (mode === 'month') {
-			return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+			const { start, end } = getRange(anchor, 'month');
+			return `${start}  —  ${end}`;
 		}
 		return String(d.getFullYear());
 	}
@@ -89,7 +91,7 @@
 		if (mode === 'day') return 'hour';
 		if (mode === 'week') return 'day';
 		if (mode === 'month') return 'day';
-		return 'month';
+		return 'day';
 	}
 
 	function parseRangeMode(value: string | null): RangeMode {
@@ -117,7 +119,7 @@
 		} else if (rangeMode === 'week') {
 			d.setDate(d.getDate() + direction * 7);
 		} else if (rangeMode === 'month') {
-			d.setMonth(d.getMonth() + direction);
+			d.setDate(d.getDate() + direction * 30);
 		} else {
 			d.setFullYear(d.getFullYear() + direction);
 		}
@@ -221,6 +223,7 @@
 	// ── Species toggle ────────────────────────────────────────────
 
 	function toggleSpecies(sciName: string) {
+		if (rangeMode === 'year') return;
 		if (selectedSpecies.has(sciName)) {
 			selectedSpecies.delete(sciName);
 		} else {
@@ -277,14 +280,14 @@
 	function getBucketLabel(period: number | string, mode: RangeMode): string {
 		if (mode === 'day') return getHourLabel(period as number);
 		if (mode === 'week' || mode === 'month') {
-			// period is YYYY-MM-DD — show short day label
+			// period is YYYY-MM-DD
 			const d = dateFromStr(period as string);
 			if (mode === 'week') {
 				return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 			}
-			return String(d.getDate());
+			return d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
 		}
-		// year: period is YYYY-MM
+		// fallback
 		const [y, m] = (period as string).split('-');
 		const d = new Date(Number(y), Number(m) - 1, 1);
 		return d.toLocaleDateString('en-US', { month: 'short' });
@@ -293,8 +296,52 @@
 	function getXTickSkip(): number {
 		if (rangeMode === 'day') return 3;   // show every 3rd hour
 		if (rangeMode === 'week') return 1;  // show every day
-		if (rangeMode === 'month') return 3; // show every 3rd day
-		return 1; // every month for year
+		if (rangeMode === 'month') return 4; // show every 4th day
+		return 1;
+	}
+
+	const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+	const YEAR_WEEK_COLORS = [
+		'rgba(22, 163, 74, 0.95)',
+		'rgba(34, 197, 94, 0.85)',
+		'rgba(74, 222, 128, 0.8)',
+		'rgba(134, 239, 172, 0.75)',
+		'rgba(187, 247, 208, 0.7)',
+		'rgba(220, 252, 231, 0.65)',
+	];
+
+	function weekOfMonth(date: Date): number {
+		const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+		const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
+		return Math.floor((mondayOffset + date.getDate() - 1) / 7) + 1;
+	}
+
+	function buildYearWeekBreakdown(
+		buckets: { period: number | string; count: number }[]
+	): { labels: string[]; totalsByWeek: number[][]; weekCount: number } {
+		const totalsByWeek = Array.from({ length: 12 }, () => new Array(6).fill(0));
+		let maxWeek = 0;
+		for (const bucket of buckets) {
+			const period = String(bucket.period);
+			if (!/^\d{4}-\d{2}-\d{2}$/.test(period)) continue;
+			const d = dateFromStr(period);
+			const monthIndex = d.getMonth();
+			const weekIndex = weekOfMonth(d) - 1;
+			totalsByWeek[monthIndex][weekIndex] += bucket.count;
+			maxWeek = Math.max(maxWeek, weekIndex + 1);
+		}
+		return {
+			labels: MONTH_LABELS,
+			totalsByWeek,
+			weekCount: Math.max(1, maxWeek),
+		};
+	}
+
+	function openReviewForMonth(monthIndex: number) {
+		const params = new URLSearchParams();
+		const year = dateFromStr(anchorDate).getFullYear();
+		params.set('date', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`);
+		window.location.href = `/detections?${params.toString()}`;
 	}
 
 	// ── Chart rendering ───────────────────────────────────────────
@@ -311,12 +358,23 @@
 		if (!chartData || !mainCanvas) return;
 		if (mainChart) mainChart.destroy();
 
-		const labels = chartData.buckets.map(b => getBucketLabel(b.period, rangeMode));
-		const totalCounts = chartData.buckets.map(b => b.count);
-
+		let labels: string[] = chartData.buckets.map(b => getBucketLabel(b.period, rangeMode));
+		let totalCounts = chartData.buckets.map(b => b.count);
 		let datasets: any[];
 
-		if (selectedSpecies.size === 0) {
+		if (rangeMode === 'year') {
+			const breakdown = buildYearWeekBreakdown(chartData.buckets);
+			labels = breakdown.labels;
+			totalCounts = breakdown.totalsByWeek.map((month) => month.reduce((sum, count) => sum + count, 0));
+			datasets = Array.from({ length: breakdown.weekCount }, (_v, weekIndex) => ({
+				label: `Week ${weekIndex + 1}`,
+				data: breakdown.totalsByWeek.map((month) => month[weekIndex] ?? 0),
+				backgroundColor: YEAR_WEEK_COLORS[weekIndex % YEAR_WEEK_COLORS.length],
+				borderColor: colors.barBorder,
+				borderWidth: 1,
+				borderRadius: 2,
+			}));
+		} else if (selectedSpecies.size === 0) {
 			datasets = [{
 				label: 'Detections',
 				data: totalCounts,
@@ -363,6 +421,7 @@
 		}
 
 		const tickSkip = getXTickSkip();
+		const isStacked = rangeMode === 'year' || selectedSpecies.size > 0;
 
 		mainChart = new ChartJS(mainCanvas, {
 			type: 'bar',
@@ -374,7 +433,7 @@
 				interaction: { mode: 'index', intersect: false },
 				plugins: {
 					legend: {
-						display: selectedSpecies.size > 0,
+						display: rangeMode === 'year' || selectedSpecies.size > 0,
 						position: 'top',
 						labels: {
 							color: colors.text,
@@ -403,7 +462,7 @@
 				},
 				scales: {
 					x: {
-						stacked: selectedSpecies.size > 0,
+						stacked: isStacked,
 						grid: { display: false },
 						ticks: {
 							color: colors.textMuted,
@@ -415,7 +474,7 @@
 						},
 					},
 					y: {
-						stacked: selectedSpecies.size > 0,
+						stacked: isStacked,
 						beginAtZero: true,
 						grid: { color: colors.grid },
 						ticks: {
@@ -427,6 +486,10 @@
 				},
 				onClick: (_event, elements) => {
 					if (!elements || elements.length === 0) return;
+					if (rangeMode === 'year') {
+						openReviewForMonth(elements[0].index);
+						return;
+					}
 					openReviewFromBucket(elements[0].index);
 				},
 			},
@@ -506,6 +569,14 @@
 
 	function peakLabel(): string {
 		if (!chartData || chartData.buckets.length === 0) return '—';
+		if (rangeMode === 'year') {
+			const breakdown = buildYearWeekBreakdown(chartData.buckets);
+			const monthlyTotals = breakdown.totalsByWeek.map((month) => month.reduce((sum, count) => sum + count, 0));
+			const max = Math.max(...monthlyTotals);
+			if (max === 0) return '—';
+			const peakMonth = monthlyTotals.findIndex((count) => count === max);
+			return MONTH_LABELS[peakMonth] ?? '—';
+		}
 		const max = Math.max(...chartData.buckets.map(b => b.count));
 		const bucket = chartData.buckets.find(b => b.count === max);
 		if (!bucket || max === 0) return '—';
@@ -649,8 +720,8 @@
 					<h2 class="font-semibold text-gray-900 dark:text-gray-100">
 						{rangeMode === 'day' ? 'Detections by Hour' :
 						 rangeMode === 'week' ? 'Detections by Day' :
-						 rangeMode === 'month' ? 'Daily Detections' :
-						 'Monthly Detections'}
+						 rangeMode === 'month' ? 'Last 30 Days' :
+						 'Monthly Detections (Weekly Breakdown)'}
 					</h2>
 					{#if selectedSpecies.size > 0}
 						<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -708,7 +779,7 @@
 							Top Species
 						</h2>
 						<div class="flex items-center gap-2">
-							{#if selectedSpecies.size > 0}
+							{#if selectedSpecies.size > 0 && rangeMode !== 'year'}
 								<button
 									on:click={clearSelectedSpecies}
 									class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
@@ -716,7 +787,9 @@
 									Clear selections
 								</button>
 							{/if}
-							<span class="text-xs text-gray-400 dark:text-gray-500">Click to show on chart</span>
+							<span class="text-xs text-gray-400 dark:text-gray-500">
+								{rangeMode === 'year' ? 'Selection unavailable in Year view' : 'Click to show on chart'}
+							</span>
 						</div>
 					</div>
 					<div class="divide-y divide-gray-200 dark:divide-dark-border">
@@ -724,10 +797,12 @@
 							<div class="flex items-center gap-0">
 								<button
 									on:click={() => toggleSpecies(sp.sci_name)}
+									disabled={rangeMode === 'year'}
 									class="flex items-center gap-4 flex-1 min-w-0 px-6 py-3 transition-colors
 										{selectedSpecies.has(sp.sci_name)
 											? 'bg-gray-100 dark:bg-dark-border'
-											: 'hover:bg-gray-50 dark:hover:bg-dark-border/50'}"
+											: 'hover:bg-gray-50 dark:hover:bg-dark-border/50'}
+										disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
 									title="Toggle {sp.com_name} on chart"
 								>
 									<span

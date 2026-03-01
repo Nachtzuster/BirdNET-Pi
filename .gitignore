@@ -46,6 +46,7 @@ __pycache__/
 
 # Virtual environment (main BirdNET venv)
 birdnet/
+.venv/
 
 # Datasets and generated model files
 datasets/

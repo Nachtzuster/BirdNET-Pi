@@ -68,7 +68,7 @@ async def app_info():
     """Application information."""
     settings = get_settings()
     metadata = read_version_metadata(settings.base_path)
-    
+
     return {
         "name": "BirdNET-Pi",
         "version": normalized_service_version(metadata),
@@ -91,7 +91,7 @@ if os.path.exists(frontend_build_path):
     app_assets_path = os.path.join(frontend_build_path, '_app')
     if os.path.exists(app_assets_path):
         app.mount("/_app", StaticFiles(directory=app_assets_path), name="app_assets")
-    
+
     # Serve favicon
     @app.get("/favicon.ico")
     async def favicon():
@@ -103,36 +103,36 @@ if os.path.exists(frontend_build_path):
         if os.path.exists(favicon_png):
             return FileResponse(favicon_png, media_type="image/png")
         return FileResponse(favicon_path)  # Will 404 if neither exists
-    
+
     # SPA fallback: serve index.html for any non-API route
     @app.get("/{full_path:path}")
     async def serve_spa(request: Request, full_path: str):
         """Serve the SvelteKit SPA for any non-API route.
-        
+
         This handles client-side routing by serving index.html for all
         paths that don't match static files or API routes.
         """
         # Check if the path maps to an actual static file
         file_path = Path(frontend_build_path) / full_path
-        
+
         # If it's a file that exists, serve it
         if file_path.is_file():
             return FileResponse(file_path)
-        
+
         # Check for .html extension (pre-rendered pages)
         html_path = file_path.with_suffix('.html')
         if html_path.is_file():
             return FileResponse(html_path)
-        
+
         # Check for index.html in directory
         index_path = file_path / 'index.html'
         if index_path.is_file():
             return FileResponse(index_path)
-        
+
         # SPA fallback: serve the main index.html
         index_html = Path(frontend_build_path) / 'index.html'
         if index_html.is_file():
             return FileResponse(index_html)
-        
+
         # Last resort fallback (shouldn't happen)
         return FileResponse(os.path.join(frontend_build_path, 'index.html'))
