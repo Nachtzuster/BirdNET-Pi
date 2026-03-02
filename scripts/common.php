@@ -204,12 +204,19 @@ function get_summary() {
   $result6 = $statement6->execute();
   $totalspeciestally = $result6->fetchArray(SQLITE3_ASSOC);
 
+  $statement7 = $db->prepare('SELECT Com_Name, COUNT(*) as cnt FROM detections WHERE Date == Date(\'now\',\'localtime\') GROUP BY Sci_Name ORDER BY cnt DESC LIMIT 1');
+  ensure_db_ok($statement7);
+  $result7 = $statement7->execute();
+  $topspeciesrow = $result7->fetchArray(SQLITE3_ASSOC);
+
   $ret = [
     'totalcount' => $totalcount['COUNT(*)'],
     'todaycount' => $todaycount['COUNT(*)'],
     'hourcount' => $hourcount['COUNT(*)'],
     'speciestally' => $todayspeciestally['COUNT(DISTINCT(Sci_Name))'],
-    'totalspeciestally' => $totalspeciestally['COUNT(DISTINCT(Sci_Name))']
+    'totalspeciestally' => $totalspeciestally['COUNT(DISTINCT(Sci_Name))'],
+    'topspecies' => $topspeciesrow ? $topspeciesrow['Com_Name'] : '',
+    'topspeciescount' => $topspeciesrow ? $topspeciesrow['cnt'] : 0
   ];
   return $ret;
 }

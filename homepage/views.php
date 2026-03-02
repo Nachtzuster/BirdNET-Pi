@@ -60,16 +60,24 @@ elseif ($config["LONGITUDE"] == "0.000") {
 <body>
 <form action="views.php" method="GET" id="views">
 <div class="topnav" id="myTopnav">
-  <button type="submit" name="view" value="Overview" form="views">Overview</button>
-  <button type="submit" name="view" value="Todays Detections" form="views">Today's Detections</button>
-  <button type="submit" name="view" value="Spectrogram" form="views">Spectrogram</button>
-  <button type="submit" name="view" value="Species Stats" form="views">Best Recordings</button>
-  <button type="submit" name="view" value="Streamlit" form="views">Species Stats</button>
-  <button type="submit" name="view" value="Daily Charts" form="views">Daily Charts</button>
-  <button type="submit" name="view" value="Weekly Report" form="views">Weekly Report</button>
-  <button type="submit" name="view" value="Recordings" form="views">Recordings</button>
-  <button type="submit" name="view" value="View Log" form="views">View Log</button>
-  <button type="submit" name="view" value="Tools" form="views">Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
+  <div class="nav-group">
+    <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
+    <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
+  </div>
+  <span class="nav-sep"></span>
+  <div class="nav-group">
+    <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
+    <button type="submit" name="view" value="Species Stats" form="views">🏆 Best Recordings</button>
+    <button type="submit" name="view" value="Streamlit" form="views">📈 Species Stats</button>
+    <button type="submit" name="view" value="Daily Charts" form="views">📅 Daily Charts</button>
+    <button type="submit" name="view" value="Weekly Report" form="views">📰 Weekly Report</button>
+  </div>
+  <span class="nav-sep"></span>
+  <div class="nav-group">
+    <button type="submit" name="view" value="Recordings" form="views">🎵 Recordings</button>
+    <button type="submit" name="view" value="View Log" form="views">📝 Log</button>
+    <button type="submit" name="view" value="Tools" form="views">⚙️ Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
+  </div>
   <button type="button" href="javascript:void(0);" class="icon" onclick="myFunction()"><img src="images/menu.png"></button>
 </div>
 </form>
