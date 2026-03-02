@@ -396,7 +396,6 @@ button:hover {
 
 .overview-stats {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -405,7 +404,7 @@ button:hover {
 }
 
 .left-column {
-  flex: 10%;
+  flex: 0 0 90px;
   padding-left: 10px;
 }
 
