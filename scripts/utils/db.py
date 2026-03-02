@@ -16,10 +16,10 @@ def get_db():
     return _DB
 
 
-def get_records(select_sql):
+def get_records(select_sql, params=None):
     con = get_db()
     try:
-        cur = con.execute(select_sql)
+        cur = con.execute(select_sql, params or [])
         records = cur.fetchall()
     except sqlite3.Error as e:
         print(e)
@@ -28,8 +28,8 @@ def get_records(select_sql):
     return records
 
 
-def get_record(select_sql):
-    records = get_records(select_sql)
+def get_record(select_sql, params=None):
+    records = get_records(select_sql, params)
     return dict(records[0]) if records else None
 
 
@@ -40,15 +40,15 @@ def get_latest():
 
 def get_todays_count_for(sci_name):
     today = datetime.now().strftime("%Y-%m-%d")
-    select_sql = f"SELECT COUNT(*) FROM detections WHERE Date = DATE('{today}') AND Sci_Name = '{sci_name}'"
-    records = get_records(select_sql)
+    select_sql = "SELECT COUNT(*) FROM detections WHERE Date = DATE(?) AND Sci_Name = ?"
+    records = get_records(select_sql, [today, sci_name])
     return records[0][0] if records else 0
 
 
 def get_this_weeks_count_for(sci_name):
     today = datetime.now().strftime("%Y-%m-%d")
-    select_sql = f"SELECT COUNT(*) FROM detections WHERE Date >= DATE('{today}', '-7 day') AND Sci_Name = '{sci_name}'"
-    records = get_records(select_sql)
+    select_sql = "SELECT COUNT(*) FROM detections WHERE Date >= DATE(?, '-7 day') AND Sci_Name = ?"
+    records = get_records(select_sql, [today, sci_name])
     return records[0][0] if records else 0
 
 
@@ -65,7 +65,12 @@ def get_summary():
 
 
 def get_species_by(sort_by=None, date=None):
-    where = "" if date is None else f'WHERE Date == "{date}"'
+    params = []
+    if date is not None:
+        where = "WHERE Date == ?"
+        params.append(date)
+    else:
+        where = ""
     if sort_by == "occurrences":
         select_sql = (f"SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence "
                       f"FROM detections {where} GROUP BY Sci_Name ORDER BY COUNT(*) DESC;")
@@ -78,5 +83,5 @@ def get_species_by(sort_by=None, date=None):
     else:
         select_sql = (f"SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence "
                       f"FROM detections {where} GROUP BY Sci_Name ORDER BY Com_Name ASC;")
-    records = get_records(select_sql)
+    records = get_records(select_sql, params)
     return records

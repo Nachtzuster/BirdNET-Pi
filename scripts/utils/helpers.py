@@ -73,7 +73,6 @@ def get_wav_files():
     files = (glob.glob(os.path.join(conf['RECS_DIR'], '*/*/*.wav')) +
              glob.glob(os.path.join(conf['RECS_DIR'], 'StreamData/*.wav')))
     files.sort()
-    files = [os.path.join(conf['RECS_DIR'], file) for file in files]
     rec_dir = os.path.join(conf['RECS_DIR'], 'StreamData')
     open_recs = get_open_files_in_dir(rec_dir)
     files = [file for file in files if file not in open_recs]

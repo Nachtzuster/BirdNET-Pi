@@ -1,8 +1,8 @@
 <?php
 
 /* Prevent XSS input */
-$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING);
-$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 error_reporting(E_ERROR);
 ini_set('display_errors',1);
@@ -26,7 +26,7 @@ if(isset($_GET['deletefile'])) {
   ensure_db_ok($statement1);
   $statement1->bindValue(':file_name', explode("/", $_GET['deletefile'])[2]);
   $file_pointer = $home."/BirdSongs/Extracted/By_Date/".$_GET['deletefile'];
-  if (!exec("sudo rm $file_pointer 2>&1 && sudo rm $file_pointer.png 2>&1", $output)) {
+  if (!exec("sudo rm ".escapeshellarg($file_pointer)." 2>&1 && sudo rm ".escapeshellarg($file_pointer.".png")." 2>&1", $output)) {
     echo "OK";
   } else {
     echo "Error - file deletion failed : " . implode(", ", $output) . "<br>";
@@ -636,8 +636,9 @@ echo "<table>
 
   if(isset($_GET['filename'])){
     $name = $_GET['filename'];
-    $statement2 = $db->prepare("SELECT * FROM detections where File_name == \"$name\" ORDER BY Date DESC, Time DESC");
+    $statement2 = $db->prepare("SELECT * FROM detections where File_name == :file_name ORDER BY Date DESC, Time DESC");
     ensure_db_ok($statement2);
+    $statement2->bindValue(':file_name', $name, SQLITE3_TEXT);
     $result2 = $statement2->execute();
     $results = $result2->fetchArray(SQLITE3_ASSOC);
     $sciname = $results['Sci_Name'];
