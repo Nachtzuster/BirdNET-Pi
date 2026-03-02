@@ -1211,9 +1211,9 @@ pre#timer.bash {
 .kpi-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
-  padding: 8px;
+  padding: 4px;
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -1226,9 +1226,9 @@ pre#timer.bash {
 .kpi-card {
   background: var(--bg-card);
   border-radius: var(--radius);
-  padding: 10px 14px;
-  min-width: 110px;
-  flex: 1 1 110px;
+  padding: 6px 10px;
+  min-width: 70px;
+  flex: 1 1 70px;
   max-width: 160px;
   text-align: center;
   box-shadow: var(--shadow);
@@ -1256,7 +1256,7 @@ pre#timer.bash {
 }
 
 .kpi-icon {
-  margin-bottom: 6px;
+  margin-bottom: 3px;
   color: var(--accent);
   opacity: 0.8;
 }
