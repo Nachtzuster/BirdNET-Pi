@@ -8,24 +8,67 @@
     </div>
 </div>
 
+<style>
+/* Chart Container Styles */
+.chart-container-card {
+    flex: 1 1 400px; 
+    background: var(--bg-card, #fff); 
+    padding: 20px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+.chart-container-card h3 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+}
+/* Force constrained heights */
+.chart-wrapper.donut {
+    max-width: 350px;
+    height: 350px;
+}
+.chart-wrapper.bar {
+    height: 350px;
+}
+.chart-wrapper.line {
+    height: 400px;
+}
+.full-width-card {
+    flex: 1 1 100%;
+}
+</style>
+
 <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 20px; padding: 20px;">
     
     <!-- Top Species Chart -->
-    <div style="flex: 1 1 400px; background: var(--bg-card, #fff); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <h3 style="text-align: center;">Top 10 Species</h3>
-        <canvas id="topSpeciesChart"></canvas>
+    <div class="chart-container-card">
+        <h3>Top 10 Species</h3>
+        <div class="chart-wrapper donut">
+            <canvas id="topSpeciesChart"></canvas>
+        </div>
     </div>
 
     <!-- Activity by Hour Chart -->
-    <div style="flex: 1 1 400px; background: var(--bg-card, #fff); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <h3 style="text-align: center;">Activity by Hour</h3>
-        <canvas id="hourlyActivityChart"></canvas>
+    <div class="chart-container-card">
+        <h3>Activity by Hour</h3>
+        <div class="chart-wrapper bar">
+            <canvas id="hourlyActivityChart"></canvas>
+        </div>
     </div>
 
     <!-- 30-Day Trends Chart -->
-    <div style="flex: 1 1 100%; background: var(--bg-card, #fff); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <h3 style="text-align: center;">30-Day Detections (Top 5 Species)</h3>
-        <canvas id="trendsChart" style="max-height: 400px;"></canvas>
+    <div class="chart-container-card full-width-card">
+        <h3>30-Day Detections (Top 5 Species)</h3>
+        <div class="chart-wrapper line">
+            <canvas id="trendsChart"></canvas>
+        </div>
     </div>
     
 </div>
