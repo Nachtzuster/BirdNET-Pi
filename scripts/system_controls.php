@@ -65,7 +65,7 @@ function update() {
   $curr_hash = shell_exec($cmd);
 ?>
   <p style="font-size:11px;text-align:center"></br></br>Running version: </p>
-  <a href="https://github.com/Nachtzuster/BirdNET-Pi/commit/<?php echo $curr_hash; ?>" target="_blank">
+  <a href="https://github.com/zach7036/BirdNET-Pi/commit/<?php echo $curr_hash; ?>" target="_blank">
     <p style="font-size:11px;text-align:center;box-sizing: border-box"><?php echo $curr_hash; ?></p>
   </a>
   <pre id="console" style="text-align:center"></pre>
