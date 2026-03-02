@@ -286,6 +286,9 @@
         });
     }
 
+    // Cache last data for resize re-render
+    var lastData = null;
+
     // Public API
     window.DashboardCharts = {
         refresh: function () {
@@ -295,6 +298,7 @@
             if (!barCanvas && !heatCanvas) return;
 
             fetchChartData(function (data) {
+                lastData = data;
                 if (barCanvas) {
                     renderBarChart(barCanvas, data.species);
                 }
@@ -309,5 +313,19 @@
             });
         }
     };
+
+    // Re-render heatmap on resize/zoom so it fits the new container width
+    var heatResizeTimer;
+    window.addEventListener('resize', function () {
+        clearTimeout(heatResizeTimer);
+        heatResizeTimer = setTimeout(function () {
+            if (lastData) {
+                var heatCanvas = document.getElementById('hourlyHeatmap');
+                if (heatCanvas) {
+                    renderHeatmap(heatCanvas, lastData.species, lastData.hourly, lastData.currentHour);
+                }
+            }
+        }, 300);
+    });
 
 })();
