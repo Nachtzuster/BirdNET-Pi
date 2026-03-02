@@ -111,6 +111,25 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
   header('Content-Type: application/json');
   echo json_encode(["dates" => $dates_array, "series" => $data]);
 
+} elseif (preg_match('#^/api/v1/detections/recent$#', $requestUri)) {
+  $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) ? intval($_GET['limit']) : 20;
+  if ($limit > 100) $limit = 100;
+  
+  $stmt = $db->prepare('SELECT Com_Name, Confidence, Time FROM detections WHERE Date = DATE("now", "localtime") ORDER BY Time DESC LIMIT '.$limit);
+  $result = $stmt->execute();
+  $data = [];
+  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $data[] = [
+      "species" => $row['Com_Name'],
+      "confidence" => round((float)$row['Confidence'], 2),
+      "time" => $row['Time']
+    ];
+  }
+
+  http_response_code(200);
+  header('Content-Type: application/json');
+  echo json_encode($data);
+
 } else {
   http_response_code(404);
   echo json_encode(["status" => "error", "message" => "Error 404! No route found!"]);

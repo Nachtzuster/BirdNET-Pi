@@ -489,6 +489,108 @@ if($dividedrefresh < 1) {
 ?>
 
 <div id="most_recent_detection"></div>
+
+<style>
+.activity-feed {
+  background: var(--bg-card, #fff);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 16px 20px;
+  margin: 20px auto;
+  max-width: 600px;
+}
+.activity-feed h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.activity-feed h3 .live-dot {
+  width: 8px; height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.feed-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.feed-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.feed-item:last-child { border-bottom: none; }
+.feed-species {
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  flex: 1;
+}
+.feed-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 700;
+  margin: 0 12px;
+  min-width: 42px;
+  text-align: center;
+}
+.feed-badge.high { background: #dcfce7; color: #166534; }
+.feed-badge.med  { background: #fef9c3; color: #854d0e; }
+.feed-badge.low  { background: #fee2e2; color: #991b1b; }
+.feed-time {
+  font-size: 0.85em;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+}
+</style>
+
+<div class="activity-feed">
+  <h3><span class="live-dot"></span> Live Activity</h3>
+  <ul class="feed-list" id="liveFeedList">
+    <li style="padding:12px 0; text-align:center; color: var(--text-secondary, #6b7280);">Loading...</li>
+  </ul>
+</div>
+
+<script>
+function refreshLiveFeed() {
+  fetch('api/v1/detections/recent?limit=20')
+    .then(r => r.json())
+    .then(data => {
+      const list = document.getElementById('liveFeedList');
+      if (!data || data.length === 0) {
+        list.innerHTML = '<li style="padding:12px 0; text-align:center; color: var(--text-secondary, #6b7280);">No detections today yet.</li>';
+        return;
+      }
+      list.innerHTML = data.map(d => {
+        const pct = Math.round(d.confidence * 100);
+        let cls = 'low';
+        if (pct >= 90) cls = 'high';
+        else if (pct >= 75) cls = 'med';
+        return `<li class="feed-item">
+          <span class="feed-species">${d.species}</span>
+          <span class="feed-badge ${cls}">${pct}%</span>
+          <span class="feed-time">${d.time}</span>
+        </li>`;
+      }).join('');
+    })
+    .catch(() => {});
+}
+refreshLiveFeed();
+setInterval(refreshLiveFeed, 30000);
+</script>
+
 <h3>5 Most Recent Detections</h3>
 <div style="padding-bottom:8px;" id="detections_table"><h3>Loading...</h3></div>
 
