@@ -178,20 +178,49 @@ button:hover {
   line-height: 1;
 }
 
+.banner .stream {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
 .banner audio,
 .banner form {
-  float: right;
-  width: 120px;
-  margin-left: -120px;
-  margin-right: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.banner audio {
+  max-width: 250px;
+}
+
+@media (max-width: 600px) {
+  .banner audio {
+    max-width: 130px;
+  }
 }
 
 .banner button {
-  padding-top: 4px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-  font-size: 0.8em;
+  padding: 6px 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85em;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.banner button:hover {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
 }
 
 .banner a {
