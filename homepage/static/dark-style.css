@@ -1,5 +1,6 @@
 /* BirdNET-Pi Dark Theme */
-/* Overrides CSS custom properties from style.css */
+/* Import base styles, then override CSS custom properties */
+@import url('../style.css');
 
 :root {
   --bg-primary: #0f1419;
@@ -40,200 +41,12 @@
   --danger: #f87171;
 }
 
-/* ===== Global ===== */
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-a {
-  color: var(--link);
-}
-
-a:hover {
-  color: var(--link-hover);
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: var(--text-heading);
-}
-
-hr {
-  border-color: var(--border);
-}
-
-/* ===== Banner ===== */
-.banner {
-  background-color: var(--bg-banner);
-}
-
-.banner h1 {
-  color: var(--text-on-dark);
-}
-
-.banner a {
-  color: var(--text-on-dark);
-}
-
-.banner button {
-  color: var(--text-on-dark-muted);
-}
-
-/* ===== Navigation ===== */
-.topnav {
-  background-color: var(--bg-nav);
-  box-shadow: var(--shadow-md) !important;
-}
-
-.topnav button {
-  color: var(--text-on-dark-muted);
-}
-
-.topnav button:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-  color: var(--text-on-dark);
-  border-bottom-color: var(--accent);
-}
-
-.topnav button.active {
-  background-color: rgba(45, 212, 191, 0.12);
-  color: var(--text-on-dark);
-  border-bottom-color: var(--accent);
-}
-
-.topnav .button-hover {
-  background-color: rgba(255, 255, 255, 0.06) !important;
-  color: var(--text-on-dark);
-  border-bottom-color: var(--accent) !important;
-}
-
-.nav-sep {
-  background-color: rgba(255, 255, 255, 0.08);
-}
+/* ===== Dark-specific overrides ===== */
+/* These handle cases where the base styles use hardcoded colors
+   that don't go through CSS variables */
 
 .topnav .icon img {
   filter: invert(1);
-}
-
-/* ===== Tables ===== */
-table {
-  background-color: var(--bg-card);
-  box-shadow: var(--shadow);
-}
-
-td {
-  background-color: var(--bg-table-row);
-  color: var(--text-primary);
-  border-bottom-color: var(--border);
-}
-
-th {
-  background-color: var(--bg-table-header);
-  color: var(--text-on-dark);
-}
-
-tr {
-  background-color: var(--bg-table-row);
-}
-
-.overview th {
-  background-color: var(--bg-table-header);
-  color: var(--text-on-dark);
-}
-
-/* ===== Buttons ===== */
-button {
-  color: var(--text-primary);
-}
-
-button:hover {
-  color: var(--accent);
-}
-
-.views .centered button {
-  background-color: var(--bg-card);
-  border-color: var(--border);
-  color: var(--text-primary);
-  box-shadow: var(--shadow);
-}
-
-.views .centered button:hover {
-  background-color: var(--bg-button-hover);
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.settings button {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  border-color: var(--border);
-}
-
-.settings button:hover {
-  background-color: var(--bg-button-hover);
-  color: var(--accent);
-}
-
-.systemcontrols button,
-.servicecontrols button {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  border-color: var(--border);
-}
-
-.sortbutton {
-  background: var(--accent);
-  color: #0f1419;
-}
-
-.sortbutton:hover,
-.sortbutton.active {
-  background-color: var(--accent-hover);
-  color: #0f1419;
-}
-
-button.loadmore {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border-color: var(--border);
-}
-
-button.legacyview {
-  background: var(--bg-card);
-  color: var(--text-muted);
-  border-color: var(--border);
-}
-
-.customlabels button,
-.customlabels2 button {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  border-color: var(--border);
-}
-
-.overview button,
-.center button {
-  color: var(--accent);
-}
-
-.stats button:hover {
-  color: var(--accent);
-}
-
-/* ===== KPI Cards ===== */
-.kpi-card {
-  background: var(--bg-card);
-  border-color: var(--border);
-  box-shadow: var(--shadow);
-}
-
-.kpi-card:hover {
-  box-shadow: var(--shadow-md);
 }
 
 .kpi-card-highlight {
@@ -241,57 +54,23 @@ button.legacyview {
   border-color: rgba(217, 119, 6, 0.3);
 }
 
-.kpi-icon {
-  color: var(--accent);
-}
-
-.kpi-icon-today {
-  color: #60a5fa;
-}
-
-.kpi-icon-hour {
-  color: #a78bfa;
-}
-
-.kpi-icon-species {
-  color: #fb923c;
-}
-
-.kpi-icon-total-species {
-  color: var(--accent);
-}
-
-.kpi-icon-top {
-  color: #fbbf24;
-}
-
-.kpi-value {
-  color: var(--text-heading);
-}
-
 .kpi-card-highlight .kpi-value {
   color: #fbbf24;
 }
 
-.kpi-label {
-  color: var(--text-muted);
+.sortbutton {
+  color: #0f1419;
 }
 
-.kpi-link {
-  color: var(--accent);
+.sortbutton:hover,
+.sortbutton.active {
+  color: #0f1419;
 }
 
-.kpi-link:hover {
-  color: var(--accent-hover);
+.brbanner {
+  color: #0f1419;
 }
 
-/* ===== Chart Container ===== */
-.chart-canvas-wrapper {
-  background: var(--bg-card);
-  box-shadow: var(--shadow);
-}
-
-/* ===== Form Elements ===== */
 input,
 textarea {
   background-color: var(--bg-card);
@@ -304,48 +83,13 @@ select {
   color: var(--text-primary);
 }
 
-label {
-  color: var(--text-primary);
-}
-
-dt {
-  color: var(--text-primary);
-}
-
-/* ===== Misc Components ===== */
-.brbanner {
-  background-color: var(--accent);
-  color: #0f1419;
-}
-
-.modal-content {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  border-color: var(--border);
-}
-
 dialog {
   background-color: var(--bg-card);
   color: var(--text-primary);
 }
 
-.centered h3 {
-  color: var(--text-heading);
-}
-
 pre.bash {
   background-color: #0d1117;
-  color: var(--text-primary);
-  font-family: Consolas, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
-}
-
-pre#timer.bash {
-  display: unset;
-  width: unset;
-}
-
-#toolsbtn {
-  min-width: max-content;
   color: var(--text-primary);
 }
 
@@ -360,51 +104,7 @@ pre#timer.bash {
   background-color: var(--accent-light);
 }
 
-.updatenumber {
-  background-color: var(--danger);
-}
-
-.settings h2,
-.settings h3 {
-  color: var(--text-heading);
-}
-
-.settings p {
-  color: var(--text-primary);
-}
-
-/* History */
-.history.centered input {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-}
-
-.centered form#views button {
-  box-shadow: var(--shadow);
-  color: var(--text-primary);
-}
-
-.centered form#views button:hover {
-  box-shadow: var(--shadow-md);
-  color: var(--accent);
-}
-
-.settingstable td,
-.plaintable,
-.plaintable td {
-  color: var(--text-primary);
-}
-
 .testbtn {
   background: var(--bg-card) !important;
   color: var(--text-primary);
-}
-
-/* ===== Responsive ===== */
-@media screen and (max-width: 1000px) {
-
-  .systemcontrols button,
-  .servicecontrols button {
-    background-color: var(--bg-card);
-  }
 }
