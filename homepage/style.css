@@ -16,9 +16,9 @@
   --bg-button: #ffffff;
   --bg-button-hover: #f0fdfa;
 
-  --text-primary: #1a1a2e;
-  --text-secondary: #4a5568;
-  --text-muted: #718096;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
   --text-on-dark: #e2e8f0;
   --text-on-dark-muted: #94a3b8;
   --text-heading: #0f172a;
@@ -70,7 +70,7 @@ h3 {
 
 iframe {
   border: none;
-  height: 90%;
+  height: 93%;
   width: 100%;
   position: fixed;
 }
@@ -159,15 +159,22 @@ button:hover {
 }
 
 .banner {
-  height: 7%;
+  height: auto;
   text-align: center;
   background-color: var(--bg-banner);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  position: relative;
 }
 
 .banner h1 {
-  padding: .5em;
+  padding: 0;
+  margin: 0;
   letter-spacing: 5px;
   color: var(--text-on-dark);
+  line-height: 1;
 }
 
 .banner audio,
@@ -179,10 +186,11 @@ button:hover {
 }
 
 .banner button {
-  padding-top: 8px;
+  padding-top: 4px;
   font-weight: bold;
   letter-spacing: 1px;
-  color: var(--text-on-dark);
+  color: var(--text-on-dark-muted);
+  font-size: 0.8em;
 }
 
 .banner a {
@@ -208,7 +216,7 @@ button:hover {
   position: absolute;
   top: 0;
   left: 0;
-  padding: 10px;
+  padding: 6px;
 }
 
 .modal {
@@ -255,7 +263,7 @@ button:hover {
   align-items: center;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 15px;
+  margin-bottom: 8px;
   box-shadow: var(--shadow-md) !important;
   border-radius: var(--radius);
   gap: 0;
@@ -276,7 +284,7 @@ button:hover {
 }
 
 .topimage {
-  width: 175px;
+  width: 120px;
   display: initial !important;
 }
 
@@ -288,12 +296,12 @@ button:hover {
 .topnav button {
   background-color: transparent;
   text-align: center;
-  padding: 12px 14px;
+  padding: 8px 10px;
   width: auto;
   vertical-align: middle;
   border-bottom: 3px solid transparent;
   transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-  font-size: 0.88em;
+  font-size: 0.82em;
   color: var(--text-on-dark-muted);
 }
 
@@ -1173,24 +1181,25 @@ pre#timer.bash {
 .kpi-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   justify-content: center;
-  padding: 10px 0;
+  padding: 8px;
   max-width: 1100px;
   margin: 0 auto;
 }
 
 .kpi-cards-compact {
-  gap: 8px;
+  gap: 6px;
+  padding: 4px;
 }
 
 .kpi-card {
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 16px 20px;
-  min-width: 140px;
-  flex: 1 1 140px;
-  max-width: 200px;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  min-width: 110px;
+  flex: 1 1 110px;
+  max-width: 160px;
   text-align: center;
   box-shadow: var(--shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1200,15 +1209,15 @@ pre#timer.bash {
 }
 
 .kpi-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
 .kpi-card-sm {
-  padding: 10px 14px;
-  min-width: 100px;
-  max-width: 160px;
-  flex: 1 1 100px;
+  padding: 6px 10px;
+  min-width: 80px;
+  max-width: 130px;
+  flex: 1 1 80px;
 }
 
 .kpi-card-highlight {
@@ -1243,15 +1252,15 @@ pre#timer.bash {
 }
 
 .kpi-value {
-  font-size: 1.6em;
+  font-size: 1.3em;
   font-weight: bold;
   color: var(--text-heading);
   line-height: 1.2;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .kpi-card-sm .kpi-value {
-  font-size: 1.3em;
+  font-size: 1.1em;
 }
 
 .kpi-card-highlight .kpi-value {
@@ -1260,7 +1269,7 @@ pre#timer.bash {
 }
 
 .kpi-label {
-  font-size: 0.78em;
+  font-size: 0.7em;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;

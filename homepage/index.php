@@ -31,12 +31,11 @@ set_timezone();
 <div class="banner">
   <div class="logo">
 <?php if(isset($_GET['logo'])) {
-echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:60;height:60;\" src=\"images/bird.png\"></a>";
+echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:40px;height:40px;\" src=\"images/bird.png\"></a>";
 } else {
-echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><img src=\"images/bird.png\"></a>";
+echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:40px;height:40px;\" src=\"images/bird.png\"></a>";
 }?>
   </div>
-
 
   <div class="stream">
 <?php
@@ -46,7 +45,7 @@ if(isset($_GET['stream'])){
   <audio controls autoplay><source src=\"/stream\"></audio>
   </div>
   <h1><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
-  </div><div class=\"centered\"><h3>$site_name</h3></div>";
+  </div>";
 } else {
     echo "
   <form action=\"index.php\" method=\"GET\">
@@ -54,7 +53,7 @@ if(isset($_GET['stream'])){
   </form>
   </div>
   <h1><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
-</div><div class=\"centered\"><h3>$site_name</h3></div>";
+</div>";
 }
 if(isset($_GET['filename'])) {
   $filename = $_GET['filename'];

@@ -13,20 +13,20 @@
   --bg-button: #1e2433;
   --bg-button-hover: #243044;
 
-  --text-primary: #e2e8f0;
-  --text-secondary: #a0aec0;
-  --text-muted: #718096;
-  --text-on-dark: #e2e8f0;
-  --text-on-dark-muted: #94a3b8;
-  --text-heading: #f1f5f9;
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --text-on-dark: #c9d1d9;
+  --text-on-dark-muted: #8b949e;
+  --text-heading: #e6edf3;
 
   --accent: #2dd4bf;
   --accent-hover: #5eead4;
   --accent-light: rgba(45, 212, 191, 0.1);
   --accent-subtle: rgba(45, 212, 191, 0.06);
 
-  --border: #2d3748;
-  --border-light: #1e2433;
+  --border: #30363d;
+  --border-light: #21262d;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.25);
@@ -40,7 +40,7 @@
   --danger: #f87171;
 }
 
-/* ===== Global Overrides ===== */
+/* ===== Global ===== */
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -67,27 +67,6 @@ hr {
   border-color: var(--border);
 }
 
-/* ===== Tables ===== */
-table {
-  background-color: var(--bg-card);
-  box-shadow: var(--shadow);
-}
-
-td {
-  background-color: var(--bg-table-row);
-  color: var(--text-primary);
-  border-bottom-color: var(--border);
-}
-
-th {
-  background-color: var(--bg-table-header);
-  color: var(--text-on-dark);
-}
-
-tr {
-  background-color: var(--bg-table-row);
-}
-
 /* ===== Banner ===== */
 .banner {
   background-color: var(--bg-banner);
@@ -102,12 +81,13 @@ tr {
 }
 
 .banner button {
-  color: var(--text-on-dark);
+  color: var(--text-on-dark-muted);
 }
 
 /* ===== Navigation ===== */
 .topnav {
   background-color: var(--bg-nav);
+  box-shadow: var(--shadow-md) !important;
 }
 
 .topnav button {
@@ -134,6 +114,36 @@ tr {
 
 .nav-sep {
   background-color: rgba(255, 255, 255, 0.08);
+}
+
+.topnav .icon img {
+  filter: invert(1);
+}
+
+/* ===== Tables ===== */
+table {
+  background-color: var(--bg-card);
+  box-shadow: var(--shadow);
+}
+
+td {
+  background-color: var(--bg-table-row);
+  color: var(--text-primary);
+  border-bottom-color: var(--border);
+}
+
+th {
+  background-color: var(--bg-table-header);
+  color: var(--text-on-dark);
+}
+
+tr {
+  background-color: var(--bg-table-row);
+}
+
+.overview th {
+  background-color: var(--bg-table-header);
+  color: var(--text-on-dark);
 }
 
 /* ===== Buttons ===== */
@@ -206,12 +216,6 @@ button.legacyview {
   border-color: var(--border);
 }
 
-/* ===== Stats & Overview ===== */
-.overview th {
-  background-color: var(--bg-table-header);
-  color: var(--text-on-dark);
-}
-
 .overview button,
 .center button {
   color: var(--accent);
@@ -282,30 +286,14 @@ button.legacyview {
 }
 
 /* ===== Chart Container ===== */
-.chart-container {
-  color: var(--text-primary);
-}
-
 .chart-canvas-wrapper {
   background: var(--bg-card);
   box-shadow: var(--shadow);
 }
 
-/* ===== Misc Components ===== */
-.brbanner {
-  background-color: var(--accent);
-  color: #0f1419;
-}
-
-.brbanner h1 {
-  color: #0f1419;
-}
-
-label {
-  color: var(--text-primary);
-}
-
-input {
+/* ===== Form Elements ===== */
+input,
+textarea {
   background-color: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border);
@@ -316,9 +304,18 @@ select {
   color: var(--text-primary);
 }
 
-dialog {
-  background-color: var(--bg-card);
+label {
   color: var(--text-primary);
+}
+
+dt {
+  color: var(--text-primary);
+}
+
+/* ===== Misc Components ===== */
+.brbanner {
+  background-color: var(--accent);
+  color: #0f1419;
 }
 
 .modal-content {
@@ -327,21 +324,29 @@ dialog {
   border-color: var(--border);
 }
 
+dialog {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.centered h3 {
+  color: var(--text-heading);
+}
+
 pre.bash {
   background-color: #0d1117;
   color: var(--text-primary);
+  font-family: Consolas, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
 }
 
-.centered_image_container * {
+pre#timer.bash {
+  display: unset;
+  width: unset;
+}
+
+#toolsbtn {
+  min-width: max-content;
   color: var(--text-primary);
-}
-
-dt {
-  color: var(--text-primary);
-}
-
-.updatenumber {
-  background-color: var(--danger);
 }
 
 #showpassword,
@@ -355,10 +360,11 @@ dt {
   background-color: var(--accent-light);
 }
 
-.settings h2 {
-  color: var(--text-heading);
+.updatenumber {
+  background-color: var(--danger);
 }
 
+.settings h2,
 .settings h3 {
   color: var(--text-heading);
 }
@@ -373,7 +379,6 @@ dt {
   color: var(--text-primary);
 }
 
-/* Centered form buttons */
 .centered form#views button {
   box-shadow: var(--shadow);
   color: var(--text-primary);
@@ -384,20 +389,9 @@ dt {
   color: var(--accent);
 }
 
-/* Settings table */
-.settingstable td {
-  color: var(--text-primary);
-}
-
-.plaintable {
-  color: var(--text-primary);
-}
-
+.settingstable td,
+.plaintable,
 .plaintable td {
-  color: var(--text-primary);
-}
-
-#toolsbtn {
   color: var(--text-primary);
 }
 
@@ -406,7 +400,7 @@ dt {
   color: var(--text-primary);
 }
 
-/* Responsive overrides */
+/* ===== Responsive ===== */
 @media screen and (max-width: 1000px) {
 
   .systemcontrols button,
