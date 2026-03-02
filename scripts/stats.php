@@ -149,6 +149,41 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
   $info_url = get_info_url($results['Sci_Name']);
   $url = $info_url['URL'];
   $url_title = $info_url['TITLE'];
+  
+  // Fetch Analytics for this species
+  $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
+  $db->busyTimeout(1000);
+  $stmt = $db->prepare('SELECT Confidence FROM detections WHERE Com_Name = :com_name');
+  $stmt->bindValue(':com_name', htmlspecialchars_decode($species, ENT_QUOTES));
+  $conf_result = $stmt->execute();
+  
+  $conf_bins = ["0.7-0.75" => 0, "0.75-0.8" => 0, "0.8-0.85" => 0, "0.85-0.9" => 0, "0.9-0.95" => 0, "0.95-1.0" => 0];
+  while ($row = $conf_result->fetchArray(SQLITE3_ASSOC)) {
+      $conf = $row['Confidence'];
+      if ($conf >= 0.95) $conf_bins["0.95-1.0"]++;
+      elseif ($conf >= 0.9) $conf_bins["0.9-0.95"]++;
+      elseif ($conf >= 0.85) $conf_bins["0.85-0.9"]++;
+      elseif ($conf >= 0.8) $conf_bins["0.8-0.85"]++;
+      elseif ($conf >= 0.75) $conf_bins["0.75-0.8"]++;
+      else $conf_bins["0.7-0.75"]++;
+  }
+  
+  $stmt = $db->prepare('SELECT strftime("%m", Date) as Month, COUNT(*) as Count FROM detections WHERE Com_Name = :com_name GROUP BY Month ORDER BY Month ASC');
+  $stmt->bindValue(':com_name', htmlspecialchars_decode($species, ENT_QUOTES));
+  $seasonal_result = $stmt->execute();
+  $seasonal_data = array_fill(1, 12, 0);
+  while ($row = $seasonal_result->fetchArray(SQLITE3_ASSOC)) {
+      $seasonal_data[intval($row['Month'])] = $row['Count'];
+  }
+  $db->close();
+  
+  $conf_labels = json_encode(array_keys($conf_bins));
+  $conf_values = json_encode(array_values($conf_bins));
+  
+  $months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  $seasonal_labels = json_encode($months);
+  $seasonal_values = json_encode(array_values($seasonal_data));
+
   echo str_pad("<h3>$species</h3>
     <table><tr>
   <td class=\"relative\"><a target=\"_blank\" href=\"index.php?filename=".$results['File_Name']."\"><img title=\"Open in new tab\" class=\"copyimage\" width=25 src=\"images/copy.png\"></a><i>$sciname</i>
@@ -159,7 +194,54 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
   Best Recording: $date $time<br><br>
   <video onplay='setLiveStreamVolume(0)' onended='setLiveStreamVolume(1)' onpause='setLiveStreamVolume(1)' controls poster=\"$filename.png\" title=\"$filename\"><source src=\"$filename\"></video></td>
   </tr>
-    </table>
+  </table>
+
+  <div style='display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 20px;'>
+      <div style='flex: 1 1 300px; background: var(--bg-card, #fff); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+          <h4 style='text-align:center; margin-top:0;'>Confidence Distribution</h4>
+          <canvas id='confChart'></canvas>
+      </div>
+      <div style='flex: 1 1 300px; background: var(--bg-card, #fff); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+          <h4 style='text-align:center; margin-top:0;'>Seasonal Presence</h4>
+          <canvas id='seasonalChart'></canvas>
+      </div>
+  </div>
+
+  <script src='static/Chart.bundle.js'></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const fontColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || (isDarkMode ? '#e0e0e0' : '#444');
+      Chart.defaults.global.defaultFontColor = fontColor;
+
+      new Chart(document.getElementById('confChart'), {
+          type: 'bar',
+          data: {
+              labels: $conf_labels,
+              datasets: [{
+                  label: 'Detections',
+                  data: $conf_values,
+                  backgroundColor: 'rgba(75, 192, 192, 0.7)'
+              }]
+          },
+          options: { responsive: true, legend: { display: false }, scales: { yAxes: [{ ticks: { beginAtZero: true, fontColor: fontColor } }], xAxes: [{ ticks: { fontColor: fontColor } }] } }
+      });
+
+      new Chart(document.getElementById('seasonalChart'), {
+          type: 'bar',
+          data: {
+              labels: $seasonal_labels,
+              datasets: [{
+                  label: 'Detections',
+                  data: $seasonal_values,
+                  backgroundColor: 'rgba(153, 102, 255, 0.7)'
+              }]
+          },
+          options: { responsive: true, legend: { display: false }, scales: { yAxes: [{ ticks: { beginAtZero: true, fontColor: fontColor } }], xAxes: [{ ticks: { fontColor: fontColor } }] } }
+      });
+  });
+  </script>
+
   <p>Loading Images from Flickr</p>", '6096');
   
   echo "<script>document.getElementsByTagName(\"h3\")[0].scrollIntoView();</script>";

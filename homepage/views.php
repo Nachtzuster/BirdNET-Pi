@@ -64,7 +64,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
   <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
   <button type="submit" name="view" value="Species Stats" form="views">🏆 Best</button>
-  <button type="submit" name="view" value="Streamlit" form="views">📈 Stats</button>
+  <button type="submit" name="view" value="Analytics" form="views">📈 Analytics</button>
   <button type="submit" name="view" value="Daily Charts" form="views">📅 Charts</button>
   <button type="submit" name="view" value="Weekly Report" form="views">📰 Report</button>
   <button type="submit" name="view" value="Recordings" form="views">🎵 Recordings</button>
@@ -156,7 +156,7 @@ if(isset($_GET['view'])){
   if($_GET['view'] == "Kiosk"){$kiosk = true;include('todays_detections.php');}
   if($_GET['view'] == "Species Stats"){include('stats.php');}
   if($_GET['view'] == "Weekly Report"){include('weekly_report.php');}
-  if($_GET['view'] == "Streamlit"){echo "<iframe src=\"stats\"></iframe>";}
+  if($_GET['view'] == "Analytics"){include('scripts/analytics.php');}
   if($_GET['view'] == "Daily Charts"){include('history.php');}
   if($_GET['view'] == "Tools"){
     ensure_authenticated();
