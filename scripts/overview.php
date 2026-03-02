@@ -473,10 +473,10 @@ display_species($new_species, 'New Species');
 display_species($rare_species, 'Rare Species', true);
 ?>
 <div class="chart-container">
-  <div class="chart-canvas-wrapper" style="height:340px;max-width:1100px;margin:0 auto;">
+  <div class="chart-canvas-wrapper" style="height:240px;max-width:1100px;margin:0 auto;">
     <canvas id="speciesBarChart"></canvas>
   </div>
-  <div class="chart-canvas-wrapper" style="max-width:1100px;margin:10px auto 0;">
+  <div class="chart-canvas-wrapper" style="max-width:1100px;margin:8px auto 0;">
     <canvas id="hourlyHeatmap"></canvas>
   </div>
 </div>
@@ -489,15 +489,14 @@ if($dividedrefresh < 1) {
 ?>
 
 <div id="most_recent_detection"></div>
-<br>
 <h3>5 Most Recent Detections</h3>
-<div style="padding-bottom:10px;" id="detections_table"><h3>Loading...</h3></div>
+<div style="padding-bottom:8px;" id="detections_table"><h3>Loading...</h3></div>
 
 <h3>Currently Analyzing</h3>
 <?php
 $refresh = $config['RECORDING_LENGTH'];
 $time = time();
-echo "<img id=\"spectrogramimage\" src=\"spectrogram.png?nocache=$time\">";
+echo "<img id=\"spectrogramimage\" style=\"max-height:200px;width:auto;\" src=\"spectrogram.png?nocache=$time\">";
 
 ?>
 

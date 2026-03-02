@@ -9,7 +9,7 @@
   --bg-secondary: #e4e7eb;
   --bg-card: #ffffff;
   --bg-nav: #1a2332;
-  --bg-banner: #1a2332;
+  --bg-banner: #ffffff;
   --bg-table-header: #1a2332;
   --bg-table-row: #ffffff;
   --bg-table-row-alt: #f8f9fa;
@@ -165,15 +165,16 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 16px;
+  padding: 4px 16px;
   position: relative;
+  border-bottom: 1px solid var(--border);
 }
 
 .banner h1 {
   padding: 0;
   margin: 0;
   letter-spacing: 5px;
-  color: var(--text-on-dark);
+  color: var(--text-primary);
   line-height: 1;
 }
 
@@ -189,13 +190,13 @@ button:hover {
   padding-top: 4px;
   font-weight: bold;
   letter-spacing: 1px;
-  color: var(--text-on-dark-muted);
+  color: var(--text-muted);
   font-size: 0.8em;
 }
 
 .banner a {
   text-decoration: none;
-  color: var(--text-on-dark);
+  color: var(--text-primary);
   font-size: x-large;
 }
 
@@ -284,7 +285,7 @@ button:hover {
 }
 
 .topimage {
-  width: 120px;
+  width: 100px;
   display: initial !important;
 }
 

@@ -7,7 +7,7 @@
   --bg-secondary: #1a1f2e;
   --bg-card: #1e2433;
   --bg-nav: #0d1117;
-  --bg-banner: #0d1117;
+  --bg-banner: #161b22;
   --bg-table-header: #151b28;
   --bg-table-row: #1e2433;
   --bg-table-row-alt: #232a3b;
@@ -47,6 +47,15 @@
 
 .topnav .icon img {
   filter: invert(1);
+}
+
+/* Banner dark overrides */
+.banner {
+  border-bottom-color: var(--border);
+}
+
+.topimage {
+  filter: brightness(0) invert(1) brightness(0.85);
 }
 
 .kpi-card-highlight {
