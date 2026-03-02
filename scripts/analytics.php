@@ -137,6 +137,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     legend: { display: false },
                     scales: {
                         yAxes: [{ ticks: { beginAtZero: true, fontColor: fontColor } }],
@@ -182,5 +183,16 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
         });
+});
+
+// Force all charts to resize correctly on browser zoom
+var resizeTimer;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+        Chart.helpers.each(Chart.instances, function(instance) {
+            instance.resize();
+        });
+    }, 250);
 });
 </script>
