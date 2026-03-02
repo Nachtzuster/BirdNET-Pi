@@ -44,13 +44,17 @@
             return;
         }
 
-        // Show top 15 species max, sorted by count descending (already sorted from PHP)
-        var displayed = species.slice(0, 15);
+        // Show all species, sorted by count descending (already sorted from PHP)
+        var displayed = species;
 
         var labels = displayed.map(function (s) { return s.name; });
         var counts = displayed.map(function (s) { return s.count; });
         var bgColors = displayed.map(function (s) { return getBarColor(s.maxConf); });
         var borderColors = displayed.map(function (s) { return getBarColor(s.maxConf, 1); });
+
+        // Dynamically size the chart container based on species count
+        var dynamicHeight = Math.max(200, displayed.length * 30 + 60);
+        canvas.parentElement.style.height = dynamicHeight + 'px';
 
         var ctx = canvas.getContext('2d');
 
@@ -124,7 +128,7 @@
             return;
         }
 
-        var displayed = species.slice(0, 15);
+        var displayed = species;
         var speciesNames = displayed.map(function (s) { return s.name; });
         var hours = [];
         for (var h = 0; h < 24; h++) hours.push(h);
@@ -249,7 +253,7 @@
         canvas.parentElement.style.position = 'relative';
         canvas.parentElement.appendChild(tooltip);
 
-        var displayed = species.slice(0, 15);
+        var displayed = species;
         var speciesNames = displayed.map(function (s) { return s.name; });
 
         canvas.addEventListener('mousemove', function (e) {
