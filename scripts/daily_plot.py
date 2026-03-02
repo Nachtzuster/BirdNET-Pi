@@ -85,7 +85,7 @@ def create_plot(df_plt_today, now, is_top=None):
     if conf['COLOR_SCHEME'] == "dark":
         facecolor = 'darkgrey'
     else:
-        facecolor = '#77C487'
+        facecolor = '#e8f4f2'
 
     f, axs = plt.subplots(1, 2, figsize=(10, height), gridspec_kw=dict(width_ratios=[3, 6]), facecolor=facecolor)
 
@@ -105,8 +105,8 @@ def create_plot(df_plt_today, now, is_top=None):
             pal = "Greys"
             colors = plt.cm.Greys(norm(confmax)).tolist()
         else:
-            pal = "Greens"
-            colors = plt.cm.Greens(norm(confmax)).tolist()
+            pal = "Blues_r"
+            colors = plt.cm.Blues_r(norm(confmax)).tolist()
         if is_top:
             plot_type = "Top"
         else:

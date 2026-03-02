@@ -60,24 +60,16 @@ elseif ($config["LONGITUDE"] == "0.000") {
 <body>
 <form action="views.php" method="GET" id="views">
 <div class="topnav" id="myTopnav">
-  <div class="nav-group">
-    <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
-    <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
-  </div>
-  <span class="nav-sep"></span>
-  <div class="nav-group">
-    <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
-    <button type="submit" name="view" value="Species Stats" form="views">🏆 Best Recordings</button>
-    <button type="submit" name="view" value="Streamlit" form="views">📈 Species Stats</button>
-    <button type="submit" name="view" value="Daily Charts" form="views">📅 Daily Charts</button>
-    <button type="submit" name="view" value="Weekly Report" form="views">📰 Weekly Report</button>
-  </div>
-  <span class="nav-sep"></span>
-  <div class="nav-group">
-    <button type="submit" name="view" value="Recordings" form="views">🎵 Recordings</button>
-    <button type="submit" name="view" value="View Log" form="views">📝 Log</button>
-    <button type="submit" name="view" value="Tools" form="views">⚙️ Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
-  </div>
+  <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
+  <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
+  <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
+  <button type="submit" name="view" value="Species Stats" form="views">🏆 Best</button>
+  <button type="submit" name="view" value="Streamlit" form="views">📈 Stats</button>
+  <button type="submit" name="view" value="Daily Charts" form="views">📅 Charts</button>
+  <button type="submit" name="view" value="Weekly Report" form="views">📰 Report</button>
+  <button type="submit" name="view" value="Recordings" form="views">🎵 Recordings</button>
+  <button type="submit" name="view" value="View Log" form="views">📝 Log</button>
+  <button type="submit" name="view" value="Tools" form="views">⚙️ Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
   <button type="button" href="javascript:void(0);" class="icon" onclick="myFunction()"><img src="images/menu.png"></button>
 </div>
 </form>
@@ -169,21 +161,38 @@ if(isset($_GET['view'])){
   if($_GET['view'] == "Tools"){
     ensure_authenticated();
     $url = $_SERVER['SERVER_NAME']."/scripts/adminer.php";
-    echo "<div class=\"centered\">
-      <form action=\"views.php\" method=\"GET\" id=\"views\">
-      <button type=\"submit\" name=\"view\" value=\"Settings\" form=\"views\">Settings</button>
-      <button type=\"submit\" name=\"view\" value=\"System Info\" form=\"views\">System Info</button>
-      <button type=\"submit\" name=\"view\" value=\"System Controls\" form=\"views\">System Controls".$updatediv."</button>
-      <button type=\"submit\" name=\"view\" value=\"Services\" form=\"views\">Services</button>
-      <button type=\"submit\" name=\"view\" value=\"File\" form=\"views\">File Manager</button>
-      <button type=\"submit\" name=\"view\" value=\"Adminer\" form=\"views\">Database Maintenance</button>
-      <button type=\"submit\" name=\"view\" value=\"Webterm\" form=\"views\">Web Terminal</button>
-      <button type=\"submit\" name=\"view\" value=\"Included\" form=\"views\">Custom Species List</button>
-      <button type=\"submit\" name=\"view\" value=\"Excluded\" form=\"views\">Excluded Species List</button>
-      <button type=\"submit\" name=\"view\" value=\"Whitelisted\" form=\"views\">Whitelist Species List</button>
-      <button type=\"submit\" name=\"view\" value=\"Species Management\" form=\"views\">Species Management</button>
-      </form>
-      </div>";
+    echo "<style>
+            .tools-grid { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; max-width: 900px; margin: 20px auto; }
+            .tools-group { background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); flex: 1 1 250px; text-align: left; }
+            .tools-group h3 { margin-top: 0; color: var(--text-primary); border-bottom: 2px solid var(--accent); padding-bottom: 8px; margin-bottom: 15px; font-size: 1.2em; }
+            .tools-group button { width: 100%; margin: 6px 0 !important; text-align: left; padding: 10px 15px; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center; }
+          </style>
+          <div class=\"centered\">
+          <form action=\"views.php\" method=\"GET\" id=\"views\">
+            <div class=\"tools-grid\">
+              <div class=\"tools-group\">
+                <h3>⚙️ System & Settings</h3>
+                <button type=\"submit\" name=\"view\" value=\"Settings\" form=\"views\">Settings</button>
+                <button type=\"submit\" name=\"view\" value=\"System Info\" form=\"views\">System Info</button>
+                <button type=\"submit\" name=\"view\" value=\"System Controls\" form=\"views\">System Controls".$updatediv."</button>
+                <button type=\"submit\" name=\"view\" value=\"Services\" form=\"views\">Services</button>
+              </div>
+              <div class=\"tools-group\">
+                <h3>📂 Data & Files</h3>
+                <button type=\"submit\" name=\"view\" value=\"File\" form=\"views\">File Manager</button>
+                <button type=\"submit\" name=\"view\" value=\"Adminer\" form=\"views\">Database Maintenance</button>
+                <button type=\"submit\" name=\"view\" value=\"Webterm\" form=\"views\">Web Terminal</button>
+              </div>
+              <div class=\"tools-group\">
+                <h3>🦜 Species Control</h3>
+                <button type=\"submit\" name=\"view\" value=\"Included\" form=\"views\">Custom Species List</button>
+                <button type=\"submit\" name=\"view\" value=\"Excluded\" form=\"views\">Excluded Species List</button>
+                <button type=\"submit\" name=\"view\" value=\"Whitelisted\" form=\"views\">Whitelist Species List</button>
+                <button type=\"submit\" name=\"view\" value=\"Species Management\" form=\"views\">Species Management</button>
+              </div>
+            </div>
+          </form>
+          </div>";
   }
   if($_GET['view'] == "Recordings"){include('play.php');}
   if($_GET['view'] == "Settings"){include('scripts/config.php');} 
@@ -398,7 +407,7 @@ function getTheDate(increment) {
 
 function installKeyAndSwipeEventHandler() {
   for (var i = 0; i < topbuttons.length; i++) {
-    if (topbuttons[i].textContent == "Daily Charts" && 
+    if (topbuttons[i].textContent == "📅 Charts" && 
         topbuttons[i].className == "button-hover") {
 
       document.onkeydown = function(event) {

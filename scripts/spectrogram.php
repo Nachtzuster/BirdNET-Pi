@@ -392,8 +392,9 @@ html, body {
 
 canvas {
   display: block;
-  height: 85%;
+  height: 70%;
   width: 100%;
+  max-height: 500px;
 }
 
 h1 {
