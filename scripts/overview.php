@@ -476,7 +476,7 @@ display_species($rare_species, 'Rare Species', true);
   <div class="chart-canvas-wrapper" style="height:240px;max-width:1100px;margin:0 auto;">
     <canvas id="speciesBarChart"></canvas>
   </div>
-  <div class="chart-canvas-wrapper" style="max-width:1100px;margin:8px auto 0;">
+  <div class="chart-canvas-wrapper" style="max-width:1100px;margin:8px auto 0;overflow:hidden;">
     <canvas id="hourlyHeatmap"></canvas>
   </div>
 </div>

@@ -136,7 +136,7 @@
         // Build datasets: one dataset per species (row), each containing 24 values
         // We'll use a simple grid rendered on canvas since Chart.js 2.x doesn't have a built-in heatmap
         var ctx = canvas.getContext('2d');
-        var width = canvas.parentElement.offsetWidth || canvas.width;
+        var width = canvas.parentElement.clientWidth || canvas.width;
         var cellHeight = 22;
         var labelWidth = Math.min(160, width * 0.25);
         var chartWidth = width - labelWidth - 10;
