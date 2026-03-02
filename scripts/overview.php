@@ -766,7 +766,7 @@ startAutoRefresh();
 </style>
 <script src="static/custom-audio-player.js"></script>
 <script src="static/generateMiniGraph.js"></script>
-<script src="static/dashboard-charts.js"></script>
+<script src="static/dashboard-charts.js?v=2"></script>
 <script>if(window.DashboardCharts){DashboardCharts.refresh();}</script>
 <script>
 // Listen for the scroll event on the window object
