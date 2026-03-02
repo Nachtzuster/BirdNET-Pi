@@ -12,10 +12,10 @@
 
     // Color palette for species bars (green shades by confidence)
     function getBarColor(confidence, alpha) {
-        // Map confidence 0..1 to a green hue intensity
-        var r = Math.round(30 + (1 - confidence) * 100);
-        var g = Math.round(120 + confidence * 135);
-        var b = Math.round(30 + (1 - confidence) * 60);
+        // Map confidence 0..1 to a teal intensity
+        var r = Math.round(13 + (1 - confidence) * 80);
+        var g = Math.round(130 + confidence * 82);
+        var b = Math.round(120 + confidence * 68);
         return 'rgba(' + r + ',' + g + ',' + b + ',' + (alpha || 0.85) + ')';
     }
 
@@ -156,8 +156,8 @@
         }
 
         var textColor = isDark ? '#e0e0e0' : '#333';
-        var emptyColor = isDark ? '#2b2b2b' : '#f5f5f5';
-        var borderColor = isDark ? '#555' : '#ddd';
+        var emptyColor = isDark ? '#1e2433' : '#f8f9fa';
+        var borderColor = isDark ? '#2d3748' : '#e2e8f0';
 
         // Find max value for color scaling
         var maxVal = 1;
@@ -210,13 +210,13 @@
                     var intensity = Math.min(val / maxVal, 1);
                     var r, g, b;
                     if (isDark) {
-                        r = Math.round(30 + intensity * 50);
-                        g = Math.round(60 + intensity * 140);
-                        b = Math.round(30 + intensity * 50);
+                        r = Math.round(13 + intensity * 40);
+                        g = Math.round(80 + intensity * 132);
+                        b = Math.round(80 + intensity * 111);
                     } else {
-                        r = Math.round(220 - intensity * 140);
-                        g = Math.round(255 - intensity * 40);
-                        b = Math.round(220 - intensity * 130);
+                        r = Math.round(230 - intensity * 180);
+                        g = Math.round(250 - intensity * 38);
+                        b = Math.round(245 - intensity * 109);
                     }
                     ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
                 } else {

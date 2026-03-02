@@ -19,11 +19,14 @@ set_timezone();
 ?>
 <!DOCTYPE html>
 <html lang="en">
+<head>
 <title><?php echo $site_name; ?></title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="BirdNET-Pi - Bird sound identification and monitoring dashboard">
 <link id="iconLink" rel="shortcut icon" sizes=85x85 href="images/bird.png" />
 <link rel="stylesheet" href="<?php echo $color_scheme . '?v=' . date('n.d.y', filemtime($color_scheme)); ?>">
 <link rel="stylesheet" type="text/css" href="static/dialog-polyfill.css" />
+</head>
 <body>
 <div class="banner">
   <div class="logo">
