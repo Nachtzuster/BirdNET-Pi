@@ -31,7 +31,6 @@
 }
 /* Force constrained heights */
 .chart-wrapper.donut {
-    max-width: 350px;
     height: 350px;
 }
 .chart-wrapper.bar {
@@ -113,6 +112,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     legend: { position: 'right', labels: { fontColor: fontColor } }
                 }
             });
