@@ -489,19 +489,41 @@ if($dividedrefresh < 1) {
 ?>
 
 <div id="most_recent_detection"></div>
+<h3>5 Most Recent Detections</h3>
+<div style="padding-bottom:8px;" id="detections_table"><h3>Loading...</h3></div>
 
+<h3>Currently Analyzing</h3>
+<?php
+$refresh = $config['RECORDING_LENGTH'];
+$time = time();
+echo "<img id=\"spectrogramimage\" style=\"max-height:200px;width:auto;\" src=\"spectrogram.png?nocache=$time\">";
+
+?>
+
+<div id="customimage"></div>
+<br>
+
+</div>
+
+<!-- Live Activity Feed (right sidebar) -->
+<div class="feed-column">
 <style>
+.feed-column {
+  flex: 0 0 280px;
+  padding: 0 10px;
+  position: sticky;
+  top: 60px;
+  align-self: flex-start;
+}
 .activity-feed {
   background: var(--bg-card, #fff);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  padding: 16px 20px;
-  margin: 20px auto;
-  max-width: 600px;
+  padding: 14px 16px;
 }
 .activity-feed h3 {
-  margin: 0 0 12px 0;
-  font-size: 1.1em;
+  margin: 0 0 10px 0;
+  font-size: 1em;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -520,39 +542,49 @@ if($dividedrefresh < 1) {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 420px;
+  max-height: 500px;
   overflow-y: auto;
 }
 .feed-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--border, #e5e7eb);
+  font-size: 0.9em;
 }
 .feed-item:last-child { border-bottom: none; }
 .feed-species {
   font-weight: 600;
   color: var(--text-primary, #1f2937);
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .feed-badge {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.8em;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75em;
   font-weight: 700;
-  margin: 0 12px;
-  min-width: 42px;
+  margin: 0 8px;
+  min-width: 36px;
   text-align: center;
 }
 .feed-badge.high { background: #dcfce7; color: #166534; }
 .feed-badge.med  { background: #fef9c3; color: #854d0e; }
 .feed-badge.low  { background: #fee2e2; color: #991b1b; }
 .feed-time {
-  font-size: 0.85em;
+  font-size: 0.8em;
   color: var(--text-secondary, #6b7280);
   white-space: nowrap;
+}
+@media screen and (max-width: 900px) {
+  .feed-column {
+    flex: 1 1 100%;
+    position: static;
+  }
 }
 </style>
 
@@ -590,22 +622,9 @@ function refreshLiveFeed() {
 refreshLiveFeed();
 setInterval(refreshLiveFeed, 30000);
 </script>
-
-<h3>5 Most Recent Detections</h3>
-<div style="padding-bottom:8px;" id="detections_table"><h3>Loading...</h3></div>
-
-<h3>Currently Analyzing</h3>
-<?php
-$refresh = $config['RECORDING_LENGTH'];
-$time = time();
-echo "<img id=\"spectrogramimage\" style=\"max-height:200px;width:auto;\" src=\"spectrogram.png?nocache=$time\">";
-
-?>
-
-<div id="customimage"></div>
-<br>
-
 </div>
+<!-- end feed-column -->
+
 </div>
 </div>
 <script>

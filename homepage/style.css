@@ -396,6 +396,7 @@ button:hover {
 
 .overview-stats {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -409,8 +410,8 @@ button:hover {
 }
 
 .right-column {
-  flex: 90%;
-  margin-right: 10%;
+  flex: 1;
+  min-width: 0;
 }
 
 .stats td {
