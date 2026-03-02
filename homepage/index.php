@@ -42,7 +42,12 @@ echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><
 if(isset($_GET['stream'])){
   ensure_authenticated('You cannot listen to the live audio stream');
       echo "
-  <audio controls autoplay><source src=\"/stream\"></audio>
+  <audio id=\"live-audio-player\" controls autoplay><source src=\"/stream\"></audio>
+  <script>
+    if (window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  </script>
   </div>
   <h1><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
   </div>";
