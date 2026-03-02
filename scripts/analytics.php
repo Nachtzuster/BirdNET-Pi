@@ -11,7 +11,8 @@
 <style>
 /* Chart Container Styles */
 .chart-container-card {
-    flex: 1 1 400px; 
+    flex: 1 1 45%; 
+    min-width: 0;
     background: var(--bg-card, #fff); 
     padding: 20px; 
     border-radius: 8px; 
