@@ -277,10 +277,16 @@
                 var tipX = e.clientX - rect.left + 12;
                 // Flip to left side if near right edge
                 if (tipX + 180 > canvas.parentElement.clientWidth) {
-                    tipX = e.clientX - rect.left - 190;
+                    tipX = e.clientX - rect.left - 12;
+                    // Measure actual tooltip width and shift left
+                    tooltip.style.left = 'auto';
+                    tooltip.style.right = (rect.right - e.clientX + 12) + 'px';
+                    tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
+                } else {
+                    tooltip.style.right = 'auto';
+                    tooltip.style.left = tipX + 'px';
+                    tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
                 }
-                tooltip.style.left = tipX + 'px';
-                tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
             } else {
                 tooltip.style.display = 'none';
             }
