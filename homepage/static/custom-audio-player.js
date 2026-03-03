@@ -44,7 +44,7 @@ function initCustomAudioPlayers() {
   const safeSet = (k, v) => {
     try {
       localStorage.setItem(k, v);
-    } catch {}
+    } catch { }
   };
 
   // Helper for readable/friendly display of numbers
@@ -240,6 +240,33 @@ function initCustomAudioPlayers() {
           borderRadius: "2px",
         });
         wrapper.appendChild(indicator);
+
+        // Detection highlight band — shows the 3-second window where BirdNET detected the call
+        const exLen = parseFloat(player.dataset.extractionLength);
+        if (exLen && exLen > 3) {
+          const spacer = (exLen - 3) / 2;
+          const startFrac = spacer / exLen;
+          const endFrac = (spacer + 3) / exLen;
+          // Map fractions to spectrogram area (accounting for Sox margins)
+          const usable = 100 - CONFIG.LEFT_MARGIN_PERCENT - CONFIG.RIGHT_MARGIN_PERCENT;
+          const highlightLeft = CONFIG.LEFT_MARGIN_PERCENT + startFrac * usable;
+          const highlightWidth = (endFrac - startFrac) * usable;
+
+          const highlight = document.createElement("div");
+          applyStyles(highlight, {
+            position: "absolute",
+            top: "0",
+            bottom: "0",
+            left: highlightLeft + "%",
+            width: highlightWidth + "%",
+            background: "rgba(0, 200, 180, 0.15)",
+            borderLeft: "2px solid rgba(0, 200, 180, 0.6)",
+            borderRight: "2px solid rgba(0, 200, 180, 0.6)",
+            pointerEvents: "none",
+            zIndex: "0",
+          });
+          wrapper.appendChild(highlight);
+        }
       });
     }
 
@@ -522,7 +549,7 @@ function initCustomAudioPlayers() {
             sampleRate = data.sampleRate;
             channels = data.channels;
           }
-        } catch {}
+        } catch { }
         const guessContentType = audioSrc.split(".").pop()?.toUpperCase() || "";
         if (guessContentType) enc = guessContentType;
         alert(

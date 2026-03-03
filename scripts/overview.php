@@ -163,7 +163,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
                   <a href="https://wikipedia.org/wiki/<?php echo $sciname;?>" target="_blank"><img style="width: unset !important; display: inline; height: 1em; cursor: pointer;" title="Wikipedia" src="images/wiki.png" width="25"></a>
                   <img style="width: unset !important;display: inline;height: 1em;cursor:pointer" title="View species stats" onclick="generateMiniGraph(this, '<?php echo $comnamegraph; ?>')" width=25 src="images/chart.svg">
                   <br>Confidence: <?php echo $percent = round((float)round($mostrecent['Confidence'],2) * 100 ) . '%';?><br></div><br>
-                  <div class='custom-audio-player' data-audio-src="<?php echo $filename; ?>" data-image-src="<?php echo $filename.".png";?>"></div>
+                  <div class='custom-audio-player' data-audio-src="<?php echo $filename; ?>" data-image-src="<?php echo $filename.".png";?>" data-extraction-length="<?php echo isset($config['EXTRACTION_LENGTH']) ? $config['EXTRACTION_LENGTH'] : 6; ?>"></div>
                   </td></form>
           </tr>
         </table> <?php break;
@@ -764,7 +764,7 @@ startAutoRefresh();
   transition: opacity 0.2s ease-in-out;
 }
 </style>
-<script src="static/custom-audio-player.js"></script>
+<script src="static/custom-audio-player.js?v=2"></script>
 <script src="static/generateMiniGraph.js"></script>
 <script src="static/dashboard-charts.js?v=5"></script>
 <script>if(window.DashboardCharts){DashboardCharts.refresh();}</script>
