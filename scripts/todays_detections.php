@@ -416,29 +416,12 @@ if (get_included_files()[0] === __FILE__) {
     </table></form></div>
 
 
-    <h3>Today's Detections <?php if($kiosk == false) { ?>— <input autocomplete="off" size="18" type="text" placeholder="Search..." id="searchterm" name="searchterm"><?php } ?></h3>
+    <h3>Today's Detections</h3>
 
-    <?php if($kiosk == false) { ?>
-    <div style="margin-bottom: 20px;" class="view-toggles" id="view_buttons">
-      <button id="btn_timeline" onclick="setViewMode('timeline');" class="view-toggle-btn">Timeline View</button>
-      <button id="btn_normal" onclick="setViewMode('normal');" class="view-toggle-btn">Normal View</button>
-      <button id="btn_legacy" onclick="setViewMode('legacy');" class="view-toggle-btn">Legacy View</button>
-    </div>
-    <?php } ?>
-
-    <div style="padding-bottom:10px" id="detections_table"><h3>Loading...</h3></div>
-    <div style="padding-bottom:10px; display:none;" id="timeline_container"></div>
+    <div style="padding-bottom:10px;" id="timeline_container"></div>
 
 </div>
 <script src="static/timeline-view.js?v=1"></script>
-<script>
-window.addEventListener('DOMContentLoaded', (event) => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const viewParam = urlParams.get('timeline') === '1' ? 'timeline' : urlParams.get('view_mode');
-  // Just parsing it here or relying on the main load listener below
-  // The bottom "load" listener will handle setting default view mode
-});
-</script>
 <?php if($kiosk == true) { ?>
   <script>
     const scrollToTop = () => {
@@ -454,108 +437,6 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
 <script>
 
-var timer = '';
-searchterm = "";
-
-<?php if($kiosk == false) { ?>
-document.getElementById("searchterm").onkeydown = (function(e) {
-  if (e.key === "Enter") {
-      clearTimeout(timer);
-      searchDetections(document.getElementById("searchterm").value);
-      document.getElementById("searchterm").blur();
-  } else {
-     /*
-     clearTimeout(timer);
-     timer = setTimeout(function() {
-        searchDetections(document.getElementById("searchterm").value);
-
-        setTimeout(function() {
-            // search auto submitted and now the user is probably scrolling, get the keyboard out of the way & prevent browser from jumping to the top when a video is played
-            document.getElementById("searchterm").blur();
-        }, 2000);
-     }, 1000);
-     */
-  }
-});
-<?php } ?>
-
-let currentViewMode = '';
-
-function setViewMode(mode) {
-  if (mode === currentViewMode) return;
-  currentViewMode = mode;
-
-  var table = document.getElementById("detections_table");
-  var timeline = document.getElementById("timeline_container");
-  var searchInput = document.getElementById("searchterm");
-
-  const btns = document.querySelectorAll('.view-toggle-btn');
-  btns.forEach(b => b.classList.remove('active'));
-  var activeBtn = document.getElementById('btn_' + mode);
-  if(activeBtn) activeBtn.classList.add('active');
-
-  if (mode === 'timeline') {
-    table.style.display = "none";
-    timeline.style.display = "block";
-    if (searchInput) searchInput.style.display = "none";
-    
-    if(!TimelineView.data) {
-      TimelineView.init("timeline_container", "<?php echo $config['LATITUDE'];?>", "<?php echo $config['LONGITUDE'];?>");
-    }
-  } else {
-    table.style.display = "block";
-    timeline.style.display = "none";
-    if (searchInput) searchInput.style.display = "inline-block";
-
-    if(searchterm == ""){
-      table.innerHTML = "<h3>Loading <?php echo $todaycount; ?> detections...</h3>";
-    } else {
-      table.innerHTML = "<h3>Loading...</h3>";
-    }
-    
-    if (mode === 'legacy') {
-      loadDetections(undefined);
-    } else if (mode === 'normal') {
-      loadDetections(40);
-    }
-  }
-}
-function searchDetections(searchvalue) {
-    document.getElementById("detections_table").innerHTML = "<h3>Loading...</h3>";
-    searchterm = searchvalue;
-    if(currentViewMode == "legacy") {
-      loadDetections(undefined,undefined);  
-    } else {
-      loadDetections(40,undefined);
-    }
-}
-function loadDetections(detections_limit, element=undefined) {
-  const xhttp = new XMLHttpRequest();
-  xhttp.onload = function() {
-    <?php if($kiosk == false) { ?>
-      document.getElementsByClassName("legacyview")[0].style.display="unset";
-    <?php } ?>
-    if(typeof element !== "undefined")
-    {
-     element.remove();
-     document.getElementById("detections_table").innerHTML+= this.responseText;
-    } else {
-     document.getElementById("detections_table").innerHTML= this.responseText;
-    }
-    // Reinitialize custom audio players for newly loaded elements
-    initCustomAudioPlayers();    
-  }
-  if(searchterm != ""){
-    xhttp.open("GET", "todays_detections.php?ajax_detections=true&display_limit="+detections_limit+"&searchterm="+searchterm, true);
-  } else {
-    <?php if($kiosk == true) { ?>
-      xhttp.open("GET", "todays_detections.php?ajax_detections=true&display_limit="+detections_limit+"&kiosk=true", true);
-    <?php } else { ?>
-      xhttp.open("GET", "todays_detections.php?ajax_detections=true&display_limit="+detections_limit, true);
-    <?php } ?>
-  }
-  xhttp.send();
-}
 function refreshTodayStats() {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
@@ -566,31 +447,23 @@ function refreshTodayStats() {
   xhttp.open("GET", "todays_detections.php?today_stats=true", true);
   xhttp.send();
 }
+
 window.addEventListener("load", function(){
   <?php if($kiosk == true) { ?>
     document.getElementById("myTopnav").remove();
-    loadDetections(undefined);
+  <?php } ?>
+
+  if(!TimelineView.data) {
+    TimelineView.init("timeline_container", "<?php echo $config['LATITUDE'];?>", "<?php echo $config['LONGITUDE'];?>");
+  }
+
+  <?php if($kiosk == true) { ?>
     refreshTodayStats();
     // refresh the kiosk detection list every minute
-    setTimeout(function() {
-        loadDetections(undefined);
+    setInterval(function() {
+        TimelineView.fetchData();
         refreshTodayStats();
     }, 60000);
-  <?php } else { ?>
-    const urlParams = new URLSearchParams(window.location.search);
-    const viewMode = urlParams.get('view_mode');
-    const isTimelineOldWay = urlParams.get('timeline') === '1';
-
-    if (viewMode === 'normal') {
-      setViewMode('normal');
-    } else if (viewMode === 'legacy') {
-      setViewMode('legacy');
-    } else if (viewMode === 'timeline' || isTimelineOldWay) {
-      setViewMode('timeline');
-    } else {
-      // Default to timeline
-      setViewMode('timeline');
-    }
   <?php } ?>
 });
 </script>
