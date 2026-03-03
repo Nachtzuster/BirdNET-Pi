@@ -418,13 +418,15 @@ if (get_included_files()[0] === __FILE__) {
 
     <h3>Today's Detections <?php if($kiosk == false) { ?>— <input autocomplete="off" size="18" type="text" placeholder="Search..." id="searchterm" name="searchterm"><?php } ?></h3>
 
+    <?php if($kiosk == false) { ?>
+    <div style="margin-bottom: 20px;">
+      <button onclick="switchViews(this);" class="legacyview">Legacy view</button>
+      <button onclick="toggleTimeline(this);" class="timelinebtn">Timeline View</button>
+    </div>
+    <?php } ?>
+
     <div style="padding-bottom:10px" id="detections_table"><h3>Loading...</h3></div>
     <div style="padding-bottom:10px; display:none;" id="timeline_container"></div>
-
-    <?php if($kiosk == false) { ?>
-    <button onclick="switchViews(this);" class="legacyview">Legacy view</button>
-    <button onclick="toggleTimeline(this);" class="timelinebtn">Timeline View</button>
-    <?php } ?>
 
 </div>
 <script src="static/timeline-view.js?v=1"></script>
