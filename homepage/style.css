@@ -1628,3 +1628,27 @@ pre#timer.bash {
     padding-left: 15px;
   }
 }
+/* ===== VIEW TOGGLE BUTTONS ===== */
+.view-toggles {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.view-toggle-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-button);
+  color: var(--text-primary);
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+.view-toggle-btn:hover {
+  background: var(--bg-button-hover);
+  color: var(--accent);
+}
+.view-toggle-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}

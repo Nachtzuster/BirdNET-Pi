@@ -419,9 +419,10 @@ if (get_included_files()[0] === __FILE__) {
     <h3>Today's Detections <?php if($kiosk == false) { ?>— <input autocomplete="off" size="18" type="text" placeholder="Search..." id="searchterm" name="searchterm"><?php } ?></h3>
 
     <?php if($kiosk == false) { ?>
-    <div style="margin-bottom: 20px;">
-      <button onclick="switchViews(this);" class="legacyview">Legacy view</button>
-      <button onclick="toggleTimeline(this);" class="timelinebtn">Timeline View</button>
+    <div style="margin-bottom: 20px;" class="view-toggles" id="view_buttons">
+      <button id="btn_timeline" onclick="setViewMode('timeline');" class="view-toggle-btn">Timeline View</button>
+      <button id="btn_normal" onclick="setViewMode('normal');" class="view-toggle-btn">Normal View</button>
+      <button id="btn_legacy" onclick="setViewMode('legacy');" class="view-toggle-btn">Legacy View</button>
     </div>
     <?php } ?>
 
@@ -433,10 +434,9 @@ if (get_included_files()[0] === __FILE__) {
 <script>
 window.addEventListener('DOMContentLoaded', (event) => {
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('timeline') === '1') {
-    const btn = document.querySelector('.timelinebtn');
-    if (btn) toggleTimeline(btn);
-  }
+  const viewParam = urlParams.get('timeline') === '1' ? 'timeline' : urlParams.get('view_mode');
+  // Just parsing it here or relying on the main load listener below
+  // The bottom "load" listener will handle setting default view mode
 });
 </script>
 <?php if($kiosk == true) { ?>
@@ -479,34 +479,25 @@ document.getElementById("searchterm").onkeydown = (function(e) {
 });
 <?php } ?>
 
-function switchViews(element) {
-  if(searchterm == ""){
-    document.getElementById("detections_table").innerHTML = "<h3>Loading <?php echo $todaycount; ?> detections...</h3>";
-  } else {
-    document.getElementById("detections_table").innerHTML = "<h3>Loading...</h3>";
-  }
-  if(element.innerHTML == "Legacy view") {
-    element.innerHTML = "Normal view";
-    loadDetections(undefined);
-  } else if(element.innerHTML == "Normal view") {
-    element.innerHTML = "Legacy view";
-    loadDetections(40);
-  }
-}
+let currentViewMode = '';
 
-function toggleTimeline(element) {
+function setViewMode(mode) {
+  if (mode === currentViewMode) return;
+  currentViewMode = mode;
+
   var table = document.getElementById("detections_table");
   var timeline = document.getElementById("timeline_container");
-  var legacyBtn = document.getElementsByClassName("legacyview")[0];
   var searchInput = document.getElementById("searchterm");
 
-  if(element.innerHTML == "Timeline View") {
+  const btns = document.querySelectorAll('.view-toggle-btn');
+  btns.forEach(b => b.classList.remove('active'));
+  var activeBtn = document.getElementById('btn_' + mode);
+  if(activeBtn) activeBtn.classList.add('active');
+
+  if (mode === 'timeline') {
     table.style.display = "none";
     timeline.style.display = "block";
-    if(legacyBtn) legacyBtn.style.display = "none";
-    // Timeline has its own search filter
-    if(searchInput) searchInput.style.display = "none";
-    element.innerHTML = "Exit Timeline";
+    if (searchInput) searchInput.style.display = "none";
     
     if(!TimelineView.data) {
       TimelineView.init("timeline_container", "<?php echo $config['LATITUDE'];?>", "<?php echo $config['LONGITUDE'];?>");
@@ -514,15 +505,25 @@ function toggleTimeline(element) {
   } else {
     table.style.display = "block";
     timeline.style.display = "none";
-    if(legacyBtn) legacyBtn.style.display = "inline-block";
-    if(searchInput) searchInput.style.display = "inline-block";
-    element.innerHTML = "Timeline View";
+    if (searchInput) searchInput.style.display = "inline-block";
+
+    if(searchterm == ""){
+      table.innerHTML = "<h3>Loading <?php echo $todaycount; ?> detections...</h3>";
+    } else {
+      table.innerHTML = "<h3>Loading...</h3>";
+    }
+    
+    if (mode === 'legacy') {
+      loadDetections(undefined);
+    } else if (mode === 'normal') {
+      loadDetections(40);
+    }
   }
 }
 function searchDetections(searchvalue) {
     document.getElementById("detections_table").innerHTML = "<h3>Loading...</h3>";
     searchterm = searchvalue;
-    if(document.getElementsByClassName('legacyview')[0].innerHTML == "Normal view") {
+    if(currentViewMode == "legacy") {
       loadDetections(undefined,undefined);  
     } else {
       loadDetections(40,undefined);
@@ -576,7 +577,20 @@ window.addEventListener("load", function(){
         refreshTodayStats();
     }, 60000);
   <?php } else { ?>
-    loadDetections(40);
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewMode = urlParams.get('view_mode');
+    const isTimelineOldWay = urlParams.get('timeline') === '1';
+
+    if (viewMode === 'normal') {
+      setViewMode('normal');
+    } else if (viewMode === 'legacy') {
+      setViewMode('legacy');
+    } else if (viewMode === 'timeline' || isTimelineOldWay) {
+      setViewMode('timeline');
+    } else {
+      // Default to timeline
+      setViewMode('timeline');
+    }
   <?php } ?>
 });
 </script>

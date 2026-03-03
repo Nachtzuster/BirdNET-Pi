@@ -109,7 +109,7 @@ const TimelineView = {
     const d = new Date(this.currentDate + "T12:00:00");
     d.setDate(d.getDate() + offsetDays);
     const newDate = this.formatDate(d);
-    window.location.href = `views.php?view=Todays+Detections&date=${newDate}&timeline=1`;
+    window.location.href = `views.php?view=Todays+Detections&date=${newDate}&view_mode=timeline`;
   },
 
   applyFilters: function () {
