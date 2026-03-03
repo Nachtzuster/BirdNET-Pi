@@ -130,9 +130,117 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
   header('Content-Type: application/json');
   echo json_encode($data);
 
+} elseif (preg_match('#^/api/v1/detections/timeline$#', $requestUri)) {
+  $date = isset($_GET['date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date']) ? $_GET['date'] : date('Y-m-d');
+
+  $stmt = $db->prepare('SELECT Com_Name, Sci_Name, Confidence, Time, File_Name FROM detections WHERE Date = :date ORDER BY Time ASC');
+  $stmt->bindValue(':date', $date, SQLITE3_TEXT);
+  $result = $stmt->execute();
+
+  $all = [];
+  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $all[] = $row;
+  }
+
+  // Group by hour
+  $hours_data = [];
+  $total_detections = 0;
+  $species_set = [];
+  $hour_counts = [];
+
+  foreach ($all as $det) {
+    $hour = intval(substr($det['Time'], 0, 2));
+    if (!isset($hours_data[$hour])) $hours_data[$hour] = [];
+    $hours_data[$hour][] = $det;
+    $total_detections++;
+    $species_set[$det['Sci_Name']] = true;
+    $hour_counts[$hour] = ($hour_counts[$hour] ?? 0) + 1;
+  }
+
+  // Find peak hour
+  $peak_hour = 0;
+  $peak_count = 0;
+  foreach ($hour_counts as $h => $c) {
+    if ($c > $peak_count) { $peak_count = $c; $peak_hour = $h; }
+  }
+
+  // Cluster same-species detections within 5-minute windows per hour
+  $hours_result = [];
+  for ($h = 0; $h < 24; $h++) {
+    $dets = $hours_data[$h] ?? [];
+    if (empty($dets)) continue;
+
+    $clusters = [];
+    $used = array_fill(0, count($dets), false);
+
+    for ($i = 0; $i < count($dets); $i++) {
+      if ($used[$i]) continue;
+      $used[$i] = true;
+
+      $cluster_dets = [$dets[$i]];
+      $sci = $dets[$i]['Sci_Name'];
+      $last_time_secs = _time_to_secs($dets[$i]['Time']);
+
+      for ($j = $i + 1; $j < count($dets); $j++) {
+        if ($used[$j]) continue;
+        if ($dets[$j]['Sci_Name'] !== $sci) continue;
+        $t = _time_to_secs($dets[$j]['Time']);
+        if ($t - $last_time_secs <= 300) { // 5 minutes
+          $used[$j] = true;
+          $cluster_dets[] = $dets[$j];
+          $last_time_secs = $t;
+        }
+      }
+
+      // Find best confidence in cluster
+      $best_conf = 0;
+      $det_list = [];
+      foreach ($cluster_dets as $cd) {
+        $conf = round((float)$cd['Confidence'], 4);
+        if ($conf > $best_conf) $best_conf = $conf;
+        $det_list[] = [
+          'time' => $cd['Time'],
+          'confidence' => $conf,
+          'file' => $cd['File_Name']
+        ];
+      }
+
+      $clusters[] = [
+        'species' => $cluster_dets[0]['Com_Name'],
+        'sci_name' => $sci,
+        'count' => count($cluster_dets),
+        'best_confidence' => $best_conf,
+        'first_time' => $cluster_dets[0]['Time'],
+        'last_time' => $cluster_dets[count($cluster_dets) - 1]['Time'],
+        'detections' => $det_list
+      ];
+    }
+
+    $hours_result[] = [
+      'hour' => $h,
+      'detection_count' => count($dets),
+      'clusters' => $clusters
+    ];
+  }
+
+  http_response_code(200);
+  header('Content-Type: application/json');
+  echo json_encode([
+    'date' => $date,
+    'total_detections' => $total_detections,
+    'total_species' => count($species_set),
+    'peak_hour' => $peak_hour,
+    'hours' => $hours_result
+  ]);
+
 } else {
   http_response_code(404);
   echo json_encode(["status" => "error", "message" => "Error 404! No route found!"]);
+}
+
+function _time_to_secs($time_str) {
+  $parts = explode(':', $time_str);
+  return intval($parts[0]) * 3600 + intval($parts[1]) * 60 + intval($parts[2] ?? 0);
 }
 
 function sendResponse405() {

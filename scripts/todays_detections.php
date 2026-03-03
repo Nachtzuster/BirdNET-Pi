@@ -419,13 +419,24 @@ if (get_included_files()[0] === __FILE__) {
     <h3>Today's Detections <?php if($kiosk == false) { ?>— <input autocomplete="off" size="18" type="text" placeholder="Search..." id="searchterm" name="searchterm"><?php } ?></h3>
 
     <div style="padding-bottom:10px" id="detections_table"><h3>Loading...</h3></div>
+    <div style="padding-bottom:10px; display:none;" id="timeline_container"></div>
 
     <?php if($kiosk == false) { ?>
     <button onclick="switchViews(this);" class="legacyview">Legacy view</button>
+    <button onclick="toggleTimeline(this);" class="timelinebtn">Timeline View</button>
     <?php } ?>
 
 </div>
-
+<script src="static/timeline-view.js?v=1"></script>
+<script>
+window.addEventListener('DOMContentLoaded', (event) => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('timeline') === '1') {
+    const btn = document.querySelector('.timelinebtn');
+    if (btn) toggleTimeline(btn);
+  }
+});
+</script>
 <?php if($kiosk == true) { ?>
   <script>
     const scrollToTop = () => {
@@ -478,6 +489,32 @@ function switchViews(element) {
   } else if(element.innerHTML == "Normal view") {
     element.innerHTML = "Legacy view";
     loadDetections(40);
+  }
+}
+
+function toggleTimeline(element) {
+  var table = document.getElementById("detections_table");
+  var timeline = document.getElementById("timeline_container");
+  var legacyBtn = document.getElementsByClassName("legacyview")[0];
+  var searchInput = document.getElementById("searchterm");
+
+  if(element.innerHTML == "Timeline View") {
+    table.style.display = "none";
+    timeline.style.display = "block";
+    if(legacyBtn) legacyBtn.style.display = "none";
+    // Timeline has its own search filter
+    if(searchInput) searchInput.style.display = "none";
+    element.innerHTML = "Exit Timeline";
+    
+    if(!TimelineView.data) {
+      TimelineView.init("timeline_container", "<?php echo $config['LATITUDE'];?>", "<?php echo $config['LONGITUDE'];?>");
+    }
+  } else {
+    table.style.display = "block";
+    timeline.style.display = "none";
+    if(legacyBtn) legacyBtn.style.display = "inline-block";
+    if(searchInput) searchInput.style.display = "inline-block";
+    element.innerHTML = "Timeline View";
   }
 }
 function searchDetections(searchvalue) {
