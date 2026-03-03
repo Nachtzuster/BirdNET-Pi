@@ -167,7 +167,7 @@ if (get_included_files()[0] === __FILE__) {
 }
 
 ?>
-<script src="static/custom-audio-player.js?v=2"></script>
+<script src="static/custom-audio-player.js"></script>
 <script>
 
 function deleteDetection(filename,copylink=false) {
@@ -574,7 +574,7 @@ echo "<table>
     }
 
     if($iter < 100){
-      $imageelem = "<div class='custom-audio-player' data-audio-src=\"$filename\" data-image-src=\"$filename_png\" data-extraction-length=\"".(isset($config['EXTRACTION_LENGTH']) ? $config['EXTRACTION_LENGTH'] : 6)."\"></div>";
+      $imageelem = "<div class='custom-audio-player' data-audio-src=\"$filename\" data-image-src=\"$filename_png\"></div>";
     } else {
       $imageelem = "<a href=\"$filename\"><img src=\"$filename_png\"></a>";
     }
@@ -702,7 +702,7 @@ echo "<table>
 <img style='cursor:pointer;right:45px' onclick='toggleLock(\"".$filename_formatted."\",\"".$type."\", this)' class=\"copyimage\" width=25 title=\"".$title."\" src=\"".$imageicon."\"> 
 <img style='cursor:pointer' onclick='toggleShiftFreq(\"".$filename_formatted."\",\"".$shiftAction."\", this)' class=\"copyimage\" width=25 title=\"".$shiftTitle."\" src=\"".$shiftImageIcon."\">$date $time<br>$values<br>
 
-<div class='custom-audio-player' data-audio-src='$filename' data-image-src='$filename_png' data-extraction-length='".(isset($config['EXTRACTION_LENGTH']) ? $config['EXTRACTION_LENGTH'] : 6)."'></div>
+<div class='custom-audio-player' data-audio-src='$filename' data-image-src='$filename_png'></div>
 </td></tr>";
 
       }echo "</table>";}
