@@ -274,7 +274,12 @@
                 var val = (hourly[name] && hourly[name][hour]) ? hourly[name][hour] : 0;
                 tooltip.innerHTML = '<strong>' + name + '</strong><br>' + hour + ':00 — ' + val + ' detection' + (val !== 1 ? 's' : '');
                 tooltip.style.display = 'block';
-                tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+                var tipX = e.clientX - rect.left + 12;
+                // Flip to left side if near right edge
+                if (tipX + 180 > canvas.parentElement.clientWidth) {
+                    tipX = e.clientX - rect.left - 190;
+                }
+                tooltip.style.left = tipX + 'px';
                 tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
             } else {
                 tooltip.style.display = 'none';
