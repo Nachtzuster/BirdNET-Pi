@@ -68,8 +68,7 @@ if ($contents !== false) {
   if ($json != null) {
     $datetime = DateTime::createFromFormat(DateTime::ISO8601, $json->{'timestamp'});
     $now = new DateTime();
-    $interval = $now->diff($datetime);
-    $json->delay = $interval->format('%s');
+    $json->delay = $now->getTimestamp() - $datetime->getTimestamp();
     echo json_encode($json);
   }
 }
@@ -192,6 +191,7 @@ function applyText(text,x,y,opacity) {
 
 var add=0;
 var newest_file;
+var pendingDetections = [];
 function loadDetectionIfNewExists() {
   const xhttp = new XMLHttpRequest();
   xhttp.onload = function() {
@@ -200,19 +200,20 @@ function loadDetectionIfNewExists() {
       const resp = JSON.parse(this.responseText);
       newest_file = resp.file_name;
       console.log("delay " + resp.delay);
+      let currentFps = (typeof avgfps !== 'undefined' && avgfps > 0) ? avgfps : 60;
       for (detection of resp.detections) {
         console.log("detection.start  " + detection.start);
-        secago = resp.delay - detection.start;
-        x = document.body.querySelector('canvas').width - (secago * avgfps);
-        y = (document.body.querySelector('canvas').height * 0.50) + add;
-        if(x > document.body.querySelector('canvas').width - (5*avgfps) && detection.common_name.length > 8) {
-          setTimeout(function (detection, x, y, x_org) {
-            console.log("originally at "+x_org+", now waiting 3 sec and at "+x);
-            applyText(detection.common_name, x, y, detection.confidence);
-          }, 3*1000, detection, x - (5*avgfps), y, x);
-        } else {
-          applyText(detection.common_name, x, y, detection.confidence);
-        }
+        let secago = resp.delay - detection.start;
+        let spawnX = document.body.querySelector('canvas').width - (secago * currentFps);
+        let spawnY = (document.body.querySelector('canvas').height * 0.50) + add;
+        
+        pendingDetections.push({
+            name: detection.common_name,
+            conf: detection.confidence,
+            x: spawnX,
+            y: spawnY
+        });
+
         // stagger Y placement
         add+= 15;
         if(add >= 60) {
@@ -379,6 +380,19 @@ function initialize() {
         CTX.moveTo(x, H - (i * h));
         CTX.lineTo(x, H - (i * h + h));
         CTX.stroke();
+      }
+
+      for (let i = pendingDetections.length - 1; i >= 0; i--) {
+        let pad = pendingDetections[i];
+        pad.x -= 1;
+        // Safely wait until it's 150 pixels from the right edge before rendering it into the scrolling canvas dataset
+        if (pad.x < W - 150) {
+            applyText(pad.name, pad.x, pad.y, pad.conf);
+            pendingDetections.splice(i, 1);
+        } else if (pad.x < -100) {
+            // Garbage collect if it's offscreen somehow
+            pendingDetections.splice(i, 1);
+        }
       }
     }
   }
