@@ -54,12 +54,10 @@
 			return { start: anchor, end: anchor };
 		}
 		if (mode === 'week') {
-			const day = d.getDay(); // 0=Sun
-			const mon = new Date(d);
-			mon.setDate(d.getDate() - ((day + 6) % 7)); // Monday
-			const sun = new Date(mon);
-			sun.setDate(mon.getDate() + 6);
-			return { start: formatDate(mon), end: formatDate(sun) };
+			const end = new Date(d);
+			const start = new Date(d);
+			start.setDate(end.getDate() - 6);
+			return { start: formatDate(start), end: formatDate(end) };
 		}
 		if (mode === 'month') {
 			const end = new Date(d);
@@ -719,7 +717,7 @@
 				<div>
 					<h2 class="font-semibold text-gray-900 dark:text-gray-100">
 						{rangeMode === 'day' ? 'Detections by Hour' :
-						 rangeMode === 'week' ? 'Detections by Day' :
+						 rangeMode === 'week' ? 'Last 7 Days' :
 						 rangeMode === 'month' ? 'Last 30 Days' :
 						 'Monthly Detections (Weekly Breakdown)'}
 					</h2>

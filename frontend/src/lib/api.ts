@@ -68,6 +68,8 @@ export const detections = {
 
 	stats: () => request<DetectionStats>('/detections/stats'),
 
+	newSpeciesToday: () => request<Detection[]>('/detections/new-species-today'),
+
 	dates: () => request<{ dates: string[] }>('/detections/dates'),
 
 	chartData: (date: string) => request<ChartData>(`/detections/chart-data/${date}`),

@@ -187,6 +187,39 @@ async def get_detection_stats(
     )
 
 
+@router.get("/detections/new-species-today", response_model=list[Detection])
+async def get_new_species_today(
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Get today's detections for species first-ever seen today (latest per species)."""
+    rows = db.execute(
+        """
+        SELECT Date, Time, Sci_Name, Com_Name, Confidence, Lat, Lon,
+               Cutoff, Week, Sens, Overlap, File_Name
+        FROM detections d
+        WHERE d.Date = DATE('now', 'localtime')
+          AND NOT EXISTS (
+              SELECT 1
+              FROM detections prev
+              WHERE prev.Sci_Name = d.Sci_Name
+                AND prev.Date < DATE('now', 'localtime')
+          )
+        ORDER BY d.Time DESC
+        """
+    ).fetchall()
+
+    latest_by_species: list[dict] = []
+    seen_species: set[str] = set()
+    for row in rows:
+        sci_name = row["Sci_Name"]
+        if sci_name in seen_species:
+            continue
+        seen_species.add(sci_name)
+        latest_by_species.append(dict(row))
+
+    return latest_by_species
+
+
 @router.get("/detections/dates")
 async def get_detection_dates(
     db: sqlite3.Connection = Depends(get_db),

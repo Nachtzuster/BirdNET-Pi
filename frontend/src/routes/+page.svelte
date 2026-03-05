@@ -26,6 +26,8 @@
 		detections: Detection[];
 	};
 	let groupedDetections: DetectionGroup[] = [];
+	let newSpeciesTodayDetections: Detection[] = [];
+	let newSpeciesTodaySet: Set<string> = new Set();
 	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
 
 	function detectTheme() {
@@ -55,6 +57,32 @@
 			}
 		}
 		return Array.from(grouped.values());
+	}
+
+	function detectionTimestamp(detection: Detection): number {
+		return new Date(`${detection.Date}T${detection.Time}`).getTime();
+	}
+
+	function sortDetectionGroups(groups: DetectionGroup[], pinnedSpecies: Set<string>): DetectionGroup[] {
+		return [...groups].sort((a, b) => {
+			const aPinned = pinnedSpecies.has(a.sciName);
+			const bPinned = pinnedSpecies.has(b.sciName);
+			if (aPinned !== bPinned) return aPinned ? -1 : 1;
+			return detectionTimestamp(b.latest) - detectionTimestamp(a.latest);
+		});
+	}
+
+	function uniqueDetections(items: Detection[]): Detection[] {
+		const byKey = new Map<string, Detection>();
+		for (const detection of items) {
+			const key = `${detection.Date}|${detection.Time}|${detection.Sci_Name}|${detection.File_Name}`;
+			if (!byKey.has(key)) byKey.set(key, detection);
+		}
+		return Array.from(byKey.values());
+	}
+
+	function isPinnedNewSpecies(sciName: string): boolean {
+		return newSpeciesTodaySet.has(sciName);
 	}
 
 	function detectionsHref(detection: Detection): string {
@@ -109,26 +137,33 @@
 	async function loadData() {
 		try {
 			const today = todayStr();
-				const [statsData, detectionsData, infoData, speciesTodayData, speciesAllTimeData, hourly] = await Promise.all([
-					detections.stats(),
-					detections.today({ limit: 12 }),
-					health.info(),
-					speciesApi.list({ sort: 'count', date: today }),
-					speciesApi.list({ sort: 'count' }),
-					detections.chartDataRange({ start: today, end: today, group_by: 'hour' }),
-				]);
-			
-				stats = statsData;
-				groupedDetections = groupLatest(detectionsData.detections);
-				siteName = infoData.site_name;
-				topSpeciesToday = speciesTodayData.species.slice(0, 6);
-				topSpeciesAllTime = speciesAllTimeData.species.slice(0, 6);
-				hourlyData = hourly;
-				await loadSpeciesLinks([
-					...detectionsData.detections.map((detection) => ({ sciName: detection.Sci_Name, comName: detection.Com_Name })),
-					...speciesTodayData.species.map((species) => ({ sciName: species.Sci_Name, comName: species.Com_Name })),
-					...speciesAllTimeData.species.map((species) => ({ sciName: species.Sci_Name, comName: species.Com_Name })),
-				]);
+			const [statsData, detectionsData, newSpeciesData, infoData, speciesTodayData, speciesAllTimeData, hourly] = await Promise.all([
+				detections.stats(),
+				detections.today({ limit: 24 }),
+				detections.newSpeciesToday(),
+				health.info(),
+				speciesApi.list({ sort: 'count', date: today }),
+				speciesApi.list({ sort: 'count' }),
+				detections.chartDataRange({ start: today, end: today, group_by: 'hour' }),
+			]);
+
+			const pinnedSpecies = new Set(newSpeciesData.map((detection) => detection.Sci_Name));
+			const mergedDetections = uniqueDetections([...newSpeciesData, ...detectionsData.detections]);
+
+			stats = statsData;
+			newSpeciesTodayDetections = newSpeciesData;
+			newSpeciesTodaySet = pinnedSpecies;
+			groupedDetections = sortDetectionGroups(groupLatest(mergedDetections), pinnedSpecies);
+			siteName = infoData.site_name;
+			topSpeciesToday = speciesTodayData.species.slice(0, 6);
+			topSpeciesAllTime = speciesAllTimeData.species.slice(0, 6);
+			hourlyData = hourly;
+			await loadSpeciesLinks([
+				...detectionsData.detections.map((detection) => ({ sciName: detection.Sci_Name, comName: detection.Com_Name })),
+				...newSpeciesData.map((detection) => ({ sciName: detection.Sci_Name, comName: detection.Com_Name })),
+				...speciesTodayData.species.map((species) => ({ sciName: species.Sci_Name, comName: species.Com_Name })),
+				...speciesAllTimeData.species.map((species) => ({ sciName: species.Sci_Name, comName: species.Com_Name })),
+			]);
 		} catch (e) {
 			console.error('Failed to load data:', e);
 			toasts.show('Failed to load data', 'error');
@@ -332,6 +367,32 @@
 			/>
 		</div>
 
+		{#if newSpeciesTodayDetections.length > 0}
+			<div class="card mb-6 border-l-4 border-emerald-500">
+				<div class="card-header flex items-center justify-between">
+					<h3 class="font-semibold text-gray-900 dark:text-gray-100">New Species Today</h3>
+					<span class="badge-primary">{newSpeciesTodayDetections.length}</span>
+				</div>
+				<div class="card-body">
+					<div class="grid gap-3 md:grid-cols-2">
+						{#each newSpeciesTodayDetections as detection (detection.Sci_Name)}
+							<div class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 dark:border-dark-border p-3">
+								<div class="min-w-0">
+									<a href="/species/{encodeURIComponent(detection.Sci_Name)}" class="font-medium text-gray-900 dark:text-gray-100 hover:underline truncate block">
+										{detection.Com_Name}
+									</a>
+									<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">{detection.Sci_Name}</p>
+								</div>
+								<a href={detectionsHref(detection)} class="text-xs text-primary-600 dark:text-primary-400 hover:underline whitespace-nowrap">
+									Open Review →
+								</a>
+							</div>
+						{/each}
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Live indicator -->
 		<div class="flex items-center gap-2 mb-4">
 			<span class="w-3 h-3 bg-green-500 rounded-full pulse-live"></span>
@@ -435,7 +496,7 @@
 				</a>
 			</div>
 			<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-				Group view by species to reduce duplicate-card clutter. Open Detections for full timeline and recordings.
+				Group view by species to reduce duplicate-card clutter. New species are pinned first.
 			</p>
 
 			{#if groupedDetections.length === 0}
@@ -452,6 +513,13 @@
 				<div class="grid gap-4 md:grid-cols-2">
 					{#each groupedDetections as group (group.sciName)}
 						<div class="min-w-0">
+							{#if isPinnedNewSpecies(group.sciName)}
+								<div class="mb-2">
+									<span class="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 px-2.5 py-0.5 text-xs font-medium">
+										New species today
+									</span>
+								</div>
+							{/if}
 							<DetectionCard
 								detection={group.latest}
 								showDate={false}
