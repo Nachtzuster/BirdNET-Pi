@@ -1215,7 +1215,7 @@ pre#timer.bash {
 .kpi-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   justify-content: center;
   padding: 4px;
   max-width: 1100px;
@@ -1223,14 +1223,14 @@ pre#timer.bash {
 }
 
 .kpi-cards-compact {
-  gap: 6px;
+  gap: 4px;
   padding: 4px;
 }
 
 .kpi-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
-  padding: 12px 16px;
+  padding: 8px 10px;
   min-width: 80px;
   flex: 1 1 80px;
   max-width: 170px;
@@ -1260,9 +1260,14 @@ pre#timer.bash {
 }
 
 .kpi-icon {
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   color: var(--accent);
   opacity: 0.8;
+}
+
+.kpi-icon svg {
+  width: 22px;
+  height: 22px;
 }
 
 .kpi-icon-today {
@@ -1286,10 +1291,10 @@ pre#timer.bash {
 }
 
 .kpi-value {
-  font-size: 1.3em;
+  font-size: 1.15em;
   font-weight: bold;
   color: var(--text-heading);
-  line-height: 1.2;
+  line-height: 1.1;
   margin-bottom: 2px;
 }
 
