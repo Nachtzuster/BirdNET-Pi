@@ -5,44 +5,44 @@
 
 /* ===== Design System: CSS Custom Properties ===== */
 :root {
-  --bg-primary: #f0f2f5;
-  --bg-secondary: #e4e7eb;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
   --bg-card: #ffffff;
-  --bg-nav: #1a2332;
+  --bg-nav: rgba(255, 255, 255, 0.85);
   --bg-banner: #ffffff;
-  --bg-table-header: #1a2332;
+  --bg-table-header: #f8fafc;
   --bg-table-row: #ffffff;
-  --bg-table-row-alt: #f8f9fa;
+  --bg-table-row-alt: #f8fafc;
   --bg-button: #ffffff;
-  --bg-button-hover: #f0fdfa;
+  --bg-button-hover: #f1f5f9;
 
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --text-on-dark: #e2e8f0;
-  --text-on-dark-muted: #94a3b8;
+  --text-primary: #334155;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-on-dark: #334155;
+  --text-on-dark-muted: #64748b;
   --text-heading: #0f172a;
 
-  --accent: #0d9488;
-  --accent-hover: #0f766e;
-  --accent-light: #ccfbf1;
-  --accent-subtle: rgba(13, 148, 136, 0.08);
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-light: #e0e7ff;
+  --accent-subtle: rgba(79, 70, 229, 0.08);
 
   --border: #e2e8f0;
   --border-light: #f1f5f9;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.05);
-  --radius: 8px;
-  --radius-lg: 12px;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --radius: 12px;
+  --radius-lg: 16px;
 
-  --link: #0d9488;
-  --link-hover: #0f766e;
+  --link: #4f46e5;
+  --link-hover: #4338ca;
 
-  --success: #059669;
-  --warning: #d97706;
-  --danger: #dc2626;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
 }
 
 * {
@@ -285,19 +285,25 @@ button:hover {
 
 .topnav {
   background-color: var(--bg-nav);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   flex: 65%;
-  width: 65%;
-  min-width: min-content;
+  width: max-content;
+  max-width: 95%;
+  padding: 6px 12px;
   justify-content: center;
   align-items: center;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 8px;
+  margin-top: 16px;
+  margin-bottom: 24px;
   box-shadow: var(--shadow-md) !important;
-  border-radius: var(--radius);
-  gap: 0;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  gap: 4px;
   flex-wrap: wrap;
+  z-index: 100;
 }
 
 .nav-group {
@@ -308,8 +314,8 @@ button:hover {
 .nav-sep {
   width: 1px;
   height: 24px;
-  background-color: rgba(255, 255, 255, 0.12);
-  margin: 0 2px;
+  background-color: var(--border);
+  margin: 0 6px;
   flex-shrink: 0;
 }
 
@@ -326,31 +332,28 @@ button:hover {
 .topnav button {
   background-color: transparent;
   text-align: center;
-  padding: 8px 10px;
+  padding: 10px 16px;
   width: auto;
   vertical-align: middle;
-  border-bottom: 3px solid transparent;
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-  font-size: 0.82em;
-  color: var(--text-on-dark-muted);
+  border-bottom: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.88em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 9999px;
 }
 
 .topnav button:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: var(--text-on-dark);
-  border-bottom-color: var(--accent);
+  background-color: var(--accent-subtle);
+  color: var(--accent);
+  transform: translateY(-1px);
 }
 
-.topnav button.active {
-  background-color: rgba(13, 148, 136, 0.15);
-  color: var(--text-on-dark);
-  border-bottom-color: var(--accent);
-}
-
+.topnav button.active,
 .topnav .button-hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  color: var(--text-on-dark);
-  border-bottom-color: var(--accent) !important;
+  background-color: var(--accent);
+  color: #ffffff !important;
+  box-shadow: var(--shadow-sm);
 }
 
 .topnav .icon {
@@ -1226,22 +1229,22 @@ pre#timer.bash {
 
 .kpi-card {
   background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 6px 10px;
-  min-width: 70px;
-  flex: 1 1 70px;
-  max-width: 160px;
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  min-width: 80px;
+  flex: 1 1 80px;
+  max-width: 170px;
   text-align: center;
   box-shadow: var(--shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border-light);
 }
 
 .kpi-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
 }
 
 .kpi-card-sm {
@@ -1354,12 +1357,15 @@ pre#timer.bash {
     max-width: 48%;
     flex: 1 1 42%;
   }
-}/* ===== TIMELINE VIEW ===== */
+}
+
+/* ===== TIMELINE VIEW ===== */
 .timeline-container {
   max-width: 800px;
   margin: 0 auto;
   padding: 10px;
 }
+
 .timeline-header {
   display: flex;
   justify-content: space-between;
@@ -1370,6 +1376,7 @@ pre#timer.bash {
   box-shadow: var(--shadow-sm);
   margin-bottom: 20px;
 }
+
 .tl-date-nav {
   display: flex;
   align-items: center;
@@ -1377,16 +1384,19 @@ pre#timer.bash {
   font-weight: bold;
   font-size: 1.1em;
 }
+
 .tl-date-nav button {
   padding: 6px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-button);
 }
+
 .tl-date-nav button:hover {
   background: var(--bg-button-hover);
   color: var(--accent);
 }
+
 .tl-filters input {
   padding: 8px 12px;
   border: 1px solid var(--border);
@@ -1394,6 +1404,7 @@ pre#timer.bash {
   background: var(--bg-primary);
   color: var(--text-primary);
 }
+
 .tl-sun-marker {
   display: flex;
   align-items: center;
@@ -1402,19 +1413,25 @@ pre#timer.bash {
   font-weight: bold;
   margin: 20px 0;
 }
-.tl-sun-marker::before, .tl-sun-marker::after {
+
+.tl-sun-marker::before,
+.tl-sun-marker::after {
   content: '';
   flex: 1;
   height: 1px;
   background: #db7a18;
   opacity: 0.3;
 }
+
 .tl-moon-marker {
   color: #5b21b6;
 }
-.tl-moon-marker::before, .tl-moon-marker::after {
+
+.tl-moon-marker::before,
+.tl-moon-marker::after {
   background: #5b21b6;
 }
+
 .tl-hour-block {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -1423,6 +1440,7 @@ pre#timer.bash {
   overflow: hidden;
   border: 1px solid var(--border);
 }
+
 .tl-hour-header {
   display: flex;
   justify-content: space-between;
@@ -1432,40 +1450,50 @@ pre#timer.bash {
   border-bottom: 1px solid var(--border);
   transition: background 0.2s;
 }
+
 .tl-hour-header:hover {
   background: var(--bg-button-hover);
 }
+
 .tl-hour-title {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 1.1em;
 }
+
 .tl-chevron {
   transition: transform 0.3s;
   font-size: 0.8em;
   color: var(--text-muted);
 }
+
 .tl-hour-stats {
   color: var(--text-muted);
   font-size: 0.9em;
 }
+
 .tl-hour-content {
   display: none;
   background: var(--bg-table-row-alt);
 }
+
 .tl-hour-block.expanded .tl-hour-content {
   display: block;
 }
+
 .tl-hour-block.expanded .tl-chevron {
   transform: rotate(90deg);
 }
+
 .tl-cluster {
   border-bottom: 1px solid var(--border-light);
 }
+
 .tl-cluster:last-child {
   border-bottom: none;
 }
+
 .tl-cluster-summary {
   display: flex;
   justify-content: space-between;
@@ -1473,53 +1501,75 @@ pre#timer.bash {
   padding: 12px 15px;
   cursor: pointer;
 }
+
 .tl-cluster-summary:hover {
-  background: rgba(0,0,0,0.02);
+  background: rgba(0, 0, 0, 0.02);
 }
+
 .tl-cluster-bird {
   display: flex;
   flex-direction: column;
 }
+
 .tl-bird-name {
   font-weight: bold;
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .tl-bird-name a {
   color: var(--text-heading);
 }
+
 .tl-bird-name a:hover {
   color: var(--link-hover);
 }
+
 .tl-inline-icon {
   height: 16px;
   width: auto;
   cursor: pointer;
   opacity: 0.6;
 }
+
 .tl-inline-icon:hover {
   opacity: 1;
 }
+
 .tl-bird-sci {
   font-style: italic;
   font-size: 0.85em;
   color: var(--text-secondary);
 }
+
 .tl-cluster-meta {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .tl-badge-conf {
   padding: 2px 6px;
   border-radius: 12px;
   font-size: 0.85em;
   font-weight: bold;
 }
-.tl-badge-conf.high { background: #dcfce7; color: #166534; }
-.tl-badge-conf.med  { background: #fef9c3; color: #854d0e; }
-.tl-badge-conf.low  { background: #fee2e2; color: #991b1b; }
+
+.tl-badge-conf.high {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tl-badge-conf.med {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.tl-badge-conf.low {
+  background: #fee2e2;
+  color: #991b1b;
+}
 
 .tl-badge-count {
   background: var(--bg-button);
@@ -1529,34 +1579,40 @@ pre#timer.bash {
   font-size: 0.85em;
   color: var(--text-secondary);
 }
+
 .tl-cluster-time {
   color: var(--text-muted);
   font-size: 0.9em;
   min-width: 65px;
   text-align: right;
 }
+
 .tl-cluster-details {
   display: none;
   padding: 0 15px 15px 40px;
   background: var(--bg-table-row);
 }
+
 .tl-cluster-details table {
   width: 100%;
   margin: 0;
   box-shadow: none;
   background: transparent;
 }
+
 .tl-cluster-details td {
   padding: 6px;
   border-bottom: 1px solid var(--border-light);
   text-align: left;
   background: transparent;
 }
+
 .tl-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
 }
+
 .tl-icon-btn {
   width: 20px;
   height: 20px;
@@ -1564,9 +1620,11 @@ pre#timer.bash {
   opacity: 0.7;
   transition: opacity 0.2s;
 }
+
 .tl-icon-btn:hover {
   opacity: 1;
 }
+
 .tl-quiet-block {
   text-align: center;
   padding: 10px;
@@ -1575,6 +1633,7 @@ pre#timer.bash {
   font-style: italic;
   margin: 10px 0;
 }
+
 .tl-empty {
   text-align: center;
   padding: 40px 20px;
@@ -1584,6 +1643,7 @@ pre#timer.bash {
   color: var(--text-secondary);
   margin-top: 20px;
 }
+
 .tl-summary-footer {
   text-align: center;
   padding: 20px;
@@ -1592,6 +1652,7 @@ pre#timer.bash {
   margin-top: 20px;
   border-top: 1px solid var(--border);
 }
+
 .tl-player-mount {
   margin-top: 10px;
 }
@@ -1601,39 +1662,48 @@ pre#timer.bash {
     flex-direction: column;
     gap: 10px;
   }
+
   .tl-date-nav {
     width: 100%;
     justify-content: space-between;
   }
+
   .tl-filters {
     width: 100%;
   }
+
   .tl-filters input {
     width: 100%;
     box-sizing: border-box;
   }
+
   .tl-cluster-summary {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
+
   .tl-cluster-meta {
     width: 100%;
     justify-content: flex-start;
   }
+
   .tl-cluster-time {
     margin-left: auto;
   }
+
   .tl-cluster-details {
     padding-left: 15px;
   }
 }
+
 /* ===== VIEW TOGGLE BUTTONS ===== */
 .view-toggles {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
+
 .view-toggle-btn {
   padding: 8px 16px;
   border: 1px solid var(--border);
@@ -1643,10 +1713,12 @@ pre#timer.bash {
   font-weight: bold;
   transition: all 0.2s ease;
 }
+
 .view-toggle-btn:hover {
   background: var(--bg-button-hover);
   color: var(--accent);
 }
+
 .view-toggle-btn.active {
   background: var(--accent);
   color: white;

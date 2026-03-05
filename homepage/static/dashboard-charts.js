@@ -10,13 +10,13 @@
     var barChart = null;
     var heatmapChart = null;
 
-    // Color palette for species bars (green shades by confidence)
+    // Premium color palette for species bars (indigo/teal gradient by confidence)
     function getBarColor(confidence, alpha) {
-        // Map confidence 0..1 to a teal intensity
-        var r = Math.round(13 + (1 - confidence) * 80);
-        var g = Math.round(130 + confidence * 82);
-        var b = Math.round(120 + confidence * 68);
-        return 'rgba(' + r + ',' + g + ',' + b + ',' + (alpha || 0.85) + ')';
+        // Map confidence 0..1 to a premium indigo to teal shift
+        var r = Math.round(14 + (1 - confidence) * 60);
+        var g = Math.round(165 - (1 - confidence) * 120);
+        var b = Math.round(233 + (1 - confidence) * 20);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + (alpha || 0.9) + ')';
     }
 
     function fetchChartData(callback) {
@@ -212,34 +212,47 @@
 
                 if (val > 0) {
                     var intensity = Math.min(val / maxVal, 1);
-                    var r, g, b;
+                    // Sleek GitHub-like indigo/blue contribution scale
+                    var r = Math.round(224 - intensity * 145);
+                    var g = Math.round(231 - intensity * 160);
+                    var b = Math.round(255 - intensity * 26);
                     if (isDark) {
-                        r = Math.round(13 + intensity * 40);
-                        g = Math.round(80 + intensity * 132);
-                        b = Math.round(80 + intensity * 111);
-                    } else {
-                        r = Math.round(230 - intensity * 180);
-                        g = Math.round(250 - intensity * 38);
-                        b = Math.round(245 - intensity * 109);
+                        r = Math.round(30 + intensity * 49);
+                        g = Math.round(41 + intensity * 29);
+                        b = Math.round(59 + intensity * 166);
                     }
                     ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
                 } else {
                     ctx.fillStyle = emptyColor;
                 }
 
-                ctx.fillRect(x + 0.5, y + 0.5, cellWidth - 1, cellHeight - 1);
+                // Rounded inner cells look much more premium
+                var radius = 3;
+                var rectX = x + 1.5;
+                var rectY = y + 1.5;
+                var rectW = cellWidth - 3;
+                var rectH = cellHeight - 3;
 
-                // Draw border
+                ctx.beginPath();
+                ctx.moveTo(rectX + radius, rectY);
+                ctx.arcTo(rectX + rectW, rectY, rectX + rectW, rectY + rectH, radius);
+                ctx.arcTo(rectX + rectW, rectY + rectH, rectX, rectY + rectH, radius);
+                ctx.arcTo(rectX, rectY + rectH, rectX, rectY, radius);
+                ctx.arcTo(rectX, rectY, rectX + rectW, rectY, radius);
+                ctx.fill();
+
+                // Draw border on the cell outside to give grid feel
                 ctx.strokeStyle = borderColor;
                 ctx.lineWidth = 0.5;
                 ctx.strokeRect(x + 0.5, y + 0.5, cellWidth - 1, cellHeight - 1);
 
                 // Show count in cells
                 if (val > 0) {
-                    ctx.fillStyle = intensity > 0.6 ? '#fff' : textColor;
+                    ctx.fillStyle = intensity > 0.4 ? '#fff' : textColor;
+                    if (isDark) ctx.fillStyle = intensity > 0.4 ? '#fff' : '#94a3b8';
                     ctx.textAlign = 'center';
-                    ctx.font = '9px Roboto Flex, sans-serif';
-                    ctx.fillText(val.toString(), x + cellWidth / 2, y + cellHeight / 2 + 3);
+                    ctx.font = '600 10px Roboto Flex, sans-serif'; // Bolder font
+                    ctx.fillText(val.toString(), x + cellWidth / 2, y + cellHeight / 2 + 3.5);
                 }
             });
         });

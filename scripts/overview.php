@@ -757,10 +757,14 @@ startAutoRefresh();
 
 <style>
   .tooltip {
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  padding: 10px;
+  background-color: rgba(15, 23, 42, 0.9);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 8px 12px;
+  font-size: 0.85em;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   transition: opacity 0.2s ease-in-out;
 }
 </style>
