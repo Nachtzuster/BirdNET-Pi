@@ -40,7 +40,9 @@ class PHPConfigParser(ConfigParser):
             return value.strip('"')
 
 
-def _load_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False):
+def _load_settings(settings_path=None, force_reload=False):
+    if settings_path is None:
+        settings_path = os.environ.get('BIRDNET_CONF', '/etc/birdnet/birdnet.conf')
     global _settings
     if _settings is None or force_reload:
         with open(settings_path) as f:
@@ -53,7 +55,9 @@ def _load_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False
     return _settings
 
 
-def get_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False):
+def get_settings(settings_path=None, force_reload=False):
+    if settings_path is None:
+        settings_path = os.environ.get('BIRDNET_CONF', '/etc/birdnet/birdnet.conf')
     settings = _load_settings(settings_path, force_reload)
     return settings
 
