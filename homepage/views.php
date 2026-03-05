@@ -61,7 +61,6 @@ elseif ($config["LONGITUDE"] == "0.000") {
 <div class="mobile-header">
   <div class="sidebar-logo">
     <img src="images/bnp.png" alt="Logo">
-    <span class="sidebar-title">BirdNET-Pi</span>
   </div>
   <button type="button" class="icon" onclick="myFunction()"><img src="images/menu.png"></button>
 </div>
@@ -70,7 +69,6 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <div class="sidebar-header">
     <div class="sidebar-logo">
       <img src="images/bnp.png" alt="Logo">
-      <span class="sidebar-title">BirdNET-Pi</span>
     </div>
     <button type="button" class="sidebar-toggle" onclick="myFunction()">«</button>
   </div>

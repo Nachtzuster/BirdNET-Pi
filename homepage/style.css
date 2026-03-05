@@ -1768,9 +1768,10 @@ pre#timer.bash {
 }
 
 .sidebar-logo img {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  max-width: 150px;
+  /* Let it wrap naturally based on its original aspect ratio */
+  height: auto;
+  border-radius: 4px;
 }
 
 .sidebar-title {
