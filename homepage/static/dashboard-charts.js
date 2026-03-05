@@ -7,17 +7,7 @@
 (function () {
     'use strict';
 
-    var barChart = null;
     var heatmapChart = null;
-
-    // Premium color palette for species bars (indigo/teal gradient by confidence)
-    function getBarColor(confidence, alpha) {
-        // Map confidence 0..1 to a premium indigo to teal shift
-        var r = Math.round(14 + (1 - confidence) * 60);
-        var g = Math.round(165 - (1 - confidence) * 120);
-        var b = Math.round(233 + (1 - confidence) * 20);
-        return 'rgba(' + r + ',' + g + ',' + b + ',' + (alpha || 0.9) + ')';
-    }
 
     function fetchChartData(callback) {
         var xhr = new XMLHttpRequest();
@@ -36,90 +26,6 @@
         };
         xhr.open('GET', 'overview.php?ajax_chart_data=true', true);
         xhr.send();
-    }
-
-    function renderBarChart(canvas, species) {
-        if (!species || species.length === 0) {
-            canvas.parentElement.innerHTML = '<p style="text-align:center;padding:20px;color:#888;">No detections yet today.</p>';
-            return;
-        }
-
-        // Show all species, sorted by count descending (already sorted from PHP)
-        var displayed = species;
-
-        var labels = displayed.map(function (s) { return s.name; });
-        var counts = displayed.map(function (s) { return s.count; });
-        var bgColors = displayed.map(function (s) { return getBarColor(s.maxConf); });
-        var borderColors = displayed.map(function (s) { return getBarColor(s.maxConf, 1); });
-
-        // Dynamically size the chart container based on species count
-        var dynamicHeight = Math.max(200, displayed.length * 30 + 60);
-        canvas.parentElement.style.height = dynamicHeight + 'px';
-
-        var ctx = canvas.getContext('2d');
-
-        if (barChart) {
-            barChart.destroy();
-        }
-
-        barChart = new Chart(ctx, {
-            type: 'horizontalBar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Detections',
-                    data: counts,
-                    backgroundColor: bgColors,
-                    borderColor: borderColors,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: { display: false },
-                title: {
-                    display: true,
-                    text: 'Species Detections Today',
-                    fontSize: 14,
-                    fontColor: getComputedStyle(document.body).color || '#333'
-                },
-                scales: {
-                    xAxes: [{
-                        ticks: {
-                            beginAtZero: true,
-                            precision: 0,
-                            fontColor: getComputedStyle(document.body).color || '#333'
-                        },
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Detections',
-                            fontColor: getComputedStyle(document.body).color || '#333'
-                        },
-                        gridLines: {
-                            color: 'rgba(128,128,128,0.15)'
-                        }
-                    }],
-                    yAxes: [{
-                        ticks: {
-                            fontColor: getComputedStyle(document.body).color || '#333',
-                            fontSize: 11
-                        },
-                        gridLines: {
-                            display: false
-                        }
-                    }]
-                },
-                tooltips: {
-                    callbacks: {
-                        afterLabel: function (tooltipItem) {
-                            var s = displayed[tooltipItem.index];
-                            return 'Max confidence: ' + Math.round(s.maxConf * 100) + '%\n' + s.sciName;
-                        }
-                    }
-                }
-            }
-        });
     }
 
     function renderHeatmap(canvas, species, hourly, currentHour, weather) {
@@ -351,16 +257,12 @@
     // Public API
     window.DashboardCharts = {
         refresh: function () {
-            var barCanvas = document.getElementById('speciesBarChart');
             var heatCanvas = document.getElementById('hourlyHeatmap');
 
-            if (!barCanvas && !heatCanvas) return;
+            if (!heatCanvas) return;
 
             fetchChartData(function (data) {
                 lastData = data;
-                if (barCanvas) {
-                    renderBarChart(barCanvas, data.species);
-                }
                 if (heatCanvas) {
                     renderHeatmap(heatCanvas, data.species, data.hourly, data.currentHour, data.weather);
                     // Only add tooltip once
