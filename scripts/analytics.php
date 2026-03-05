@@ -73,6 +73,8 @@
     
 </div>
 
+<?php include('history.php'); ?>
+
 <script src="static/Chart.bundle.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {

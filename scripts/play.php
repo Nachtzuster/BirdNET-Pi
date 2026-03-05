@@ -492,7 +492,8 @@ for ($row = 0; $row < $num_rows; $row++) {
   } else {
     echo "<td>
       <button action=\"submit\" name=\"byspecies\" value=\"byspecies\">By Species</button></td></tr>
-      <tr><td><button action=\"submit\" name=\"bydate\" value=\"bydate\">By Date</button></td>";
+      <tr><td><button action=\"submit\" name=\"bydate\" value=\"bydate\">By Date</button></td></tr>
+      <tr><td style=\"padding-top:20px;\"><button type=\"button\" onclick=\"window.parent.location.href='views.php?view=Species+Stats'\">Best Recordings</button></td>";
   } 
 
   echo "</table></form>";

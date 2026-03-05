@@ -76,9 +76,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
     <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
     <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
     <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
-    <button type="submit" name="view" value="Species Stats" form="views">🏆 Best</button>
     <button type="submit" name="view" value="Analytics" form="views">📈 Analytics</button>
-    <button type="submit" name="view" value="Daily Charts" form="views">📅 Charts</button>
     <button type="submit" name="view" value="Weekly Report" form="views">📰 Report</button>
     <button type="submit" name="view" value="Recordings" form="views">🎵 Recordings</button>
     <button type="submit" name="view" value="View Log" form="views">📝 Log</button>
