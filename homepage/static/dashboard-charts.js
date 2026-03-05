@@ -43,13 +43,13 @@
         // We'll use a simple grid rendered on canvas since Chart.js 2.x doesn't have a built-in heatmap
         var ctx = canvas.getContext('2d');
         var width = canvas.parentElement.clientWidth || canvas.width;
-        var cellHeight = 22;
-        var labelWidth = Math.min(160, width * 0.25);
+        var cellHeight = 32;
+        var labelWidth = Math.min(180, width * 0.25);
         var chartWidth = width - labelWidth - 10;
         var cellWidth = chartWidth / 24;
 
         // Make space for the weather row and the hour header
-        var headerHeight = weather ? 38 : 24;
+        var headerHeight = weather ? 48 : 30;
         var totalHeight = headerHeight + (speciesNames.length * cellHeight) + 4;
 
         canvas.width = width;
@@ -67,9 +67,9 @@
             }
         }
 
-        var textColor = isDark ? '#e0e0e0' : '#333';
-        var emptyColor = isDark ? '#1e2433' : '#f8f9fa';
-        var borderColor = isDark ? '#2d3748' : '#e2e8f0';
+        var textColor = isDark ? '#f1f5f9' : '#1e293b';
+        var emptyColor = isDark ? '#1e293b' : '#e2e8f0';
+        var borderColor = isDark ? '#334155' : '#cbd5e1';
 
         // Find max value for color scaling
         var maxVal = 1;
@@ -104,15 +104,15 @@
         ctx.textAlign = 'center';
         hours.forEach(function (h) {
             var x = labelWidth + (h * cellWidth) + (cellWidth / 2);
-            var label = h.toString();
-            var yHour = headerHeight - 6;
+            var label = h < 10 ? '0' + h : h.toString();
+            var yHour = headerHeight - 8;
 
             if (h === currentHour) {
                 ctx.fillStyle = isDark ? '#ffd54f' : '#e65100';
-                ctx.font = 'bold 10px Roboto Flex, sans-serif';
+                ctx.font = 'bold 12px Roboto Flex, sans-serif';
             } else {
                 ctx.fillStyle = textColor;
-                ctx.font = '10px Roboto Flex, sans-serif';
+                ctx.font = '12px Roboto Flex, sans-serif';
             }
             ctx.fillText(label, x, yHour);
 
@@ -120,11 +120,11 @@
             if (weather && weather[h]) {
                 var w = weather[h];
                 var emoji = getWeatherEmoji(w.code);
-                ctx.font = '10px sans-serif'; // Emoji font
-                ctx.fillText(emoji, x, yHour - 14);
-                ctx.font = '8px Roboto Flex, sans-serif';
+                ctx.font = '13px sans-serif'; // Emoji font
+                ctx.fillText(emoji, x, yHour - 16);
+                ctx.font = '10px Roboto Flex, sans-serif';
                 ctx.fillStyle = isDark ? '#aaaaaa' : '#666666';
-                ctx.fillText(w.temp + '°', x, yHour - 24);
+                ctx.fillText(w.temp + '°', x, yHour - 28);
             }
         });
 
@@ -135,9 +135,9 @@
             // Species label
             ctx.fillStyle = textColor;
             ctx.textAlign = 'right';
-            ctx.font = '10px Roboto Flex, sans-serif';
-            var displayName = name.length > 20 ? name.substring(0, 18) + '…' : name;
-            ctx.fillText(displayName, labelWidth - 6, y + cellHeight / 2 + 3);
+            ctx.font = '13px Roboto Flex, sans-serif';
+            var displayName = name.length > 25 ? name.substring(0, 23) + '…' : name;
+            ctx.fillText(displayName, labelWidth - 8, y + cellHeight / 2 + 4);
 
             // Hour cells
             hours.forEach(function (h) {
@@ -161,11 +161,11 @@
                 }
 
                 // Rounded inner cells look much more premium
-                var radius = 3;
-                var rectX = x + 1.5;
-                var rectY = y + 1.5;
-                var rectW = cellWidth - 3;
-                var rectH = cellHeight - 3;
+                var radius = 4;
+                var rectX = x + 2.5;
+                var rectY = y + 2.5;
+                var rectW = cellWidth - 5;
+                var rectH = cellHeight - 5;
 
                 ctx.beginPath();
                 ctx.moveTo(rectX + radius, rectY);
@@ -175,18 +175,13 @@
                 ctx.arcTo(rectX, rectY, rectX + rectW, rectY, radius);
                 ctx.fill();
 
-                // Draw border on the cell outside to give grid feel
-                ctx.strokeStyle = borderColor;
-                ctx.lineWidth = 0.5;
-                ctx.strokeRect(x + 0.5, y + 0.5, cellWidth - 1, cellHeight - 1);
-
                 // Show count in cells
                 if (val > 0) {
                     ctx.fillStyle = intensity > 0.4 ? '#fff' : textColor;
                     if (isDark) ctx.fillStyle = intensity > 0.4 ? '#fff' : '#94a3b8';
                     ctx.textAlign = 'center';
-                    ctx.font = '600 10px Roboto Flex, sans-serif'; // Bolder font
-                    ctx.fillText(val.toString(), x + cellWidth / 2, y + cellHeight / 2 + 3.5);
+                    ctx.font = '600 12px Roboto Flex, sans-serif'; // Bolder font
+                    ctx.fillText(val.toString(), x + cellWidth / 2, y + cellHeight / 2 + 4.5);
                 }
             });
         });
@@ -208,10 +203,10 @@
             var x = e.clientX - rect.left;
             var y = e.clientY - rect.top;
             var width = canvas.width;
-            var labelWidth = Math.min(160, width * 0.25);
+            var labelWidth = Math.min(180, width * 0.25);
             var cellWidth = (width - labelWidth - 10) / 24;
-            var headerHeight = 24;
-            var cellHeight = 22;
+            var headerHeight = weather ? 48 : 30;
+            var cellHeight = 32;
 
             var hour = Math.floor((x - labelWidth) / cellWidth);
             var row = Math.floor((y - headerHeight) / cellHeight);
