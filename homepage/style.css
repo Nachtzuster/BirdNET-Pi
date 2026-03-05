@@ -1729,3 +1729,145 @@ pre#timer.bash {
   color: white;
   border-color: var(--accent);
 }
+
+/* ===== Sidebar Menu Styles ===== */
+.sidebar {
+  width: 250px;
+  background-color: var(--bg-card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1000;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-logo img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.sidebar-title {
+  font-weight: 800;
+  font-size: 1.25em;
+  color: var(--text-heading);
+  letter-spacing: -0.5px;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.sidebar-toggle:hover {
+  color: var(--text-primary);
+}
+
+.sidebar-nav {
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-nav button {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 12px 24px;
+  text-align: left;
+  font-size: 0.95em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  width: 100%;
+}
+
+.sidebar-nav button:hover {
+  background-color: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-nav button.active,
+.sidebar-nav .button-hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-left: 3px solid #2563eb;
+  font-weight: 500;
+}
+
+.mobile-header {
+  display: none;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.mobile-header .icon img {
+  width: 24px;
+  height: 24px;
+}
+
+.views {
+  margin-left: 250px;
+  padding: 20px;
+  width: calc(100% - 250px);
+  min-height: 100vh;
+  transition: margin-left 0.3s;
+}
+
+ul.navbar-nav {
+  display: none;
+}
+
+.topnav {
+  display: none !important;
+}
+
+@media (max-width: 1000px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.responsive {
+    transform: translateX(0);
+  }
+
+  .mobile-header {
+    display: flex;
+  }
+
+  .views {
+    margin-left: 0;
+    width: 100%;
+  }
+}

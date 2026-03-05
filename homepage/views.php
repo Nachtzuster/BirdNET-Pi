@@ -58,19 +58,35 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <link rel="stylesheet" href="<?php echo $color_scheme . '?v=' . date('n.d.y', filemtime($color_scheme)); ?>">
 </head>
 <body>
+<div class="mobile-header">
+  <div class="sidebar-logo">
+    <img src="images/bnp.png" alt="Logo">
+    <span class="sidebar-title">BirdNET-Pi</span>
+  </div>
+  <button type="button" class="icon" onclick="myFunction()"><img src="images/menu.png"></button>
+</div>
 <form action="views.php" method="GET" id="views">
-<div class="topnav" id="myTopnav">
-  <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
-  <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
-  <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
-  <button type="submit" name="view" value="Species Stats" form="views">🏆 Best</button>
-  <button type="submit" name="view" value="Analytics" form="views">📈 Analytics</button>
-  <button type="submit" name="view" value="Daily Charts" form="views">📅 Charts</button>
-  <button type="submit" name="view" value="Weekly Report" form="views">📰 Report</button>
-  <button type="submit" name="view" value="Recordings" form="views">🎵 Recordings</button>
-  <button type="submit" name="view" value="View Log" form="views">📝 Log</button>
-  <button type="submit" name="view" value="Tools" form="views">⚙️ Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
-  <button type="button" href="javascript:void(0);" class="icon" onclick="myFunction()"><img src="images/menu.png"></button>
+<div class="sidebar" id="mySidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <img src="images/bnp.png" alt="Logo">
+      <span class="sidebar-title">BirdNET-Pi</span>
+    </div>
+    <button type="button" class="sidebar-toggle" onclick="myFunction()">«</button>
+  </div>
+  <div class="sidebar-nav">
+    <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
+    <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
+    <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
+    <button type="submit" name="view" value="Species Stats" form="views">🏆 Best</button>
+    <button type="submit" name="view" value="Analytics" form="views">📈 Analytics</button>
+    <button type="submit" name="view" value="Daily Charts" form="views">📅 Charts</button>
+    <button type="submit" name="view" value="Weekly Report" form="views">📰 Report</button>
+    <button type="submit" name="view" value="Recordings" form="views">🎵 Recordings</button>
+    <button type="submit" name="view" value="View Log" form="views">📝 Log</button>
+    <button type="submit" name="view" value="Tools" form="views">⚙️ Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
+    <button type="button" onclick="window.parent.location.href='index.php?stream=play'">🎙️ Live Audio</button>
+  </div>
 </div>
 </form>
 <script type="text/javascript" src="static/plupload.full.min.js"></script>
@@ -366,11 +382,11 @@ if(isset($_GET['view'])){
 ?>
 <script>
 function myFunction() {
-  var x = document.getElementById("myTopnav");
-  if (x.className === "topnav") {
+  var x = document.getElementById("mySidebar");
+  if (x.className === "sidebar") {
     x.className += " responsive";
   } else {
-    x.className = "topnav";
+    x.className = "sidebar";
   }
 }
 function setLiveStreamVolume(vol) {

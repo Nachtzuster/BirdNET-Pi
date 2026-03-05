@@ -45,7 +45,7 @@
 /* These handle cases where the base styles use hardcoded colors
    that don't go through CSS variables */
 
-.topnav .icon img {
+.mobile-header .icon img {
   filter: invert(1);
 }
 

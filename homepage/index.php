@@ -28,7 +28,7 @@ set_timezone();
 <link rel="stylesheet" type="text/css" href="static/dialog-polyfill.css" />
 </head>
 <body>
-<div class="banner">
+<div class="banner" style="display: none;">
   <div class="logo">
 <?php if(isset($_GET['logo'])) {
 echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:40px;height:40px;\" src=\"images/bird.png\"></a>";
