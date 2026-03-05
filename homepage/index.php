@@ -28,8 +28,8 @@ set_timezone();
 <link rel="stylesheet" type="text/css" href="static/dialog-polyfill.css" />
 </head>
 <body>
-<div class="banner" style="display: none;">
-  <div class="logo">
+<div class="banner">
+  <div class="logo" style="display: none;">
 <?php if(isset($_GET['logo'])) {
 echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:40px;height:40px;\" src=\"images/bird.png\"></a>";
 } else {
@@ -49,15 +49,16 @@ if(isset($_GET['stream'])){
     }
   </script>
   </div>
-  <h1><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
+  <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
   </div>";
 } else {
     echo "
   <form action=\"index.php\" method=\"GET\">
-    <button type=\"submit\" name=\"stream\" value=\"play\">Live Audio</button>
+    <!-- Live Audio button moved to sidebar, original form kept for logical routing if needed -->
+    <button type=\"submit\" name=\"stream\" value=\"play\" style=\"display: none;\">Live Audio</button>
   </form>
   </div>
-  <h1><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
+  <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
 </div>";
 }
 if(isset($_GET['filename'])) {

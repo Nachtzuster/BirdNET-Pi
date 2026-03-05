@@ -161,13 +161,23 @@ button:hover {
 .banner {
   height: auto;
   text-align: center;
-  background-color: var(--bg-banner);
+  background-color: transparent;
+  /* Changed from var(--bg-banner) */
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  /* Push stream to the right */
   padding: 4px 16px;
-  position: relative;
-  border-bottom: 1px solid var(--border);
+  position: absolute;
+  /* Float over the main view */
+  right: 0;
+  top: 0;
+  z-index: 1001;
+  /* Keep above sidebar/views */
+  border-bottom: none;
+  /* Remove border */
+  width: calc(100% - 250px);
+  /* Align with views width */
 }
 
 .banner h1 {
@@ -179,10 +189,7 @@ button:hover {
 }
 
 .banner .stream {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  /* Removed absolute positioning to allow flexbox justify-content to work */
   z-index: 10;
 }
 
@@ -1869,5 +1876,18 @@ ul.navbar-nav {
   .views {
     margin-left: 0;
     width: 100%;
+  }
+
+  /* Adjust floating audio player for mobile (full width instead of offset) */
+  .banner {
+    width: 100%;
+    justify-content: center;
+    /* Center stream controls on small screens */
+    top: 55px;
+    /* Push below mobile header */
+    padding-bottom: 8px;
+    background-color: var(--bg-primary);
+    /* Give background so it doesn't overlap text */
+    border-bottom: 1px solid var(--border);
   }
 }
