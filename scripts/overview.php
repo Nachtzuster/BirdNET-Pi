@@ -342,9 +342,8 @@ if (get_included_files()[0] === __FILE__) {
     showDialog();
   }
   </script>  
+<div class="left-column" style="margin-bottom: 5px;"></div>
 <div class="overview-stats">
-<div class="left-column">
-</div>
 <div class="right-column">
 <div class="center-column">
 </div>
@@ -487,8 +486,8 @@ function display_species($species_list, $title, $show_last_seen=false) {
 display_species($new_species, 'New Species');
 display_species($rare_species, 'Rare Species', true);
 ?>
-<div class="chart-container">
-  <div class="chart-canvas-wrapper" style="max-width:1100px;margin:8px auto 0;overflow:hidden;">
+<div class="chart-container" style="max-width: 100%;">
+  <div class="chart-canvas-wrapper" style="max-width: 100%; margin:8px auto 0;overflow:hidden;">
     <canvas id="hourlyHeatmap"></canvas>
   </div>
 </div>
