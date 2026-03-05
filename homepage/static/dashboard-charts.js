@@ -122,7 +122,7 @@
         });
     }
 
-    function renderHeatmap(canvas, species, hourly, currentHour) {
+    function renderHeatmap(canvas, species, hourly, currentHour, weather) {
         if (!species || species.length === 0) {
             canvas.parentElement.innerHTML = '<p style="text-align:center;padding:20px;color:#888;">No data available.</p>';
             return;
@@ -141,7 +141,9 @@
         var labelWidth = Math.min(160, width * 0.25);
         var chartWidth = width - labelWidth - 10;
         var cellWidth = chartWidth / 24;
-        var headerHeight = 24;
+
+        // Make space for the weather row and the hour header
+        var headerHeight = weather ? 38 : 24;
         var totalHeight = headerHeight + (speciesNames.length * cellHeight) + 4;
 
         canvas.width = width;
@@ -178,20 +180,46 @@
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw hour headers
-        ctx.font = '10px Roboto Flex, sans-serif';
+        function getWeatherEmoji(code) {
+            if (code === undefined || code === null) return '';
+            if (code === 0) return '☀️';
+            if (code >= 1 && code <= 3) return '⛅';
+            if (code === 45 || code === 48) return '🌫️';
+            if (code >= 51 && code <= 55) return '🌦️';
+            if (code >= 61 && code <= 65) return '🌧️';
+            if (code >= 71 && code <= 75) return '❄️';
+            if (code >= 80 && code <= 82) return '🌦️';
+            if (code >= 95) return '⛈️';
+            return '☁️';
+        }
+
+        // Draw hour headers and weather if available
         ctx.fillStyle = textColor;
         ctx.textAlign = 'center';
         hours.forEach(function (h) {
             var x = labelWidth + (h * cellWidth) + (cellWidth / 2);
             var label = h.toString();
+            var yHour = headerHeight - 6;
+
             if (h === currentHour) {
                 ctx.fillStyle = isDark ? '#ffd54f' : '#e65100';
                 ctx.font = 'bold 10px Roboto Flex, sans-serif';
+            } else {
+                ctx.fillStyle = textColor;
+                ctx.font = '10px Roboto Flex, sans-serif';
             }
-            ctx.fillText(label, x, headerHeight - 6);
-            ctx.fillStyle = textColor;
-            ctx.font = '10px Roboto Flex, sans-serif';
+            ctx.fillText(label, x, yHour);
+
+            // Draw Weather
+            if (weather && weather[h]) {
+                var w = weather[h];
+                var emoji = getWeatherEmoji(w.code);
+                ctx.font = '10px sans-serif'; // Emoji font
+                ctx.fillText(emoji, x, yHour - 14);
+                ctx.font = '8px Roboto Flex, sans-serif';
+                ctx.fillStyle = isDark ? '#aaaaaa' : '#666666';
+                ctx.fillText(w.temp + '°', x, yHour - 24);
+            }
         });
 
         // Draw grid
@@ -259,7 +287,7 @@
     }
 
     // Tooltip for heatmap canvas
-    function addHeatmapTooltip(canvas, species, hourly) {
+    function addHeatmapTooltip(canvas, species, hourly, weather) {
         var tooltip = document.createElement('div');
         tooltip.className = 'chart-tooltip';
         tooltip.style.cssText = 'display:none;position:absolute;background:rgba(0,0,0,0.8);color:#fff;padding:6px 10px;border-radius:4px;font-size:12px;pointer-events:none;z-index:100;white-space:nowrap;';
@@ -285,7 +313,14 @@
             if (hour >= 0 && hour < 24 && row >= 0 && row < speciesNames.length) {
                 var name = speciesNames[row];
                 var val = (hourly[name] && hourly[name][hour]) ? hourly[name][hour] : 0;
-                tooltip.innerHTML = '<strong>' + name + '</strong><br>' + hour + ':00 — ' + val + ' detection' + (val !== 1 ? 's' : '');
+                var weatherStr = "";
+                if (weather && weather[hour]) {
+                    var w = weather[hour];
+                    var codes = { 0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Fog', 51: 'Drizzle', 61: 'Rain', 71: 'Snow', 95: 'Thunderstorm' };
+                    var cond = codes[w.code] || 'Cloudy';
+                    weatherStr = '<br><span style="color:#aaa;font-size:10px;">' + w.temp + '°F • ' + cond + '</span>';
+                }
+                tooltip.innerHTML = '<strong>' + name + '</strong><br>' + hour + ':00 — ' + val + ' detection' + (val !== 1 ? 's' : '') + weatherStr;
                 tooltip.style.display = 'block';
                 var tipX = e.clientX - rect.left + 12;
                 // Flip to left side if near right edge
@@ -327,10 +362,10 @@
                     renderBarChart(barCanvas, data.species);
                 }
                 if (heatCanvas) {
-                    renderHeatmap(heatCanvas, data.species, data.hourly, data.currentHour);
+                    renderHeatmap(heatCanvas, data.species, data.hourly, data.currentHour, data.weather);
                     // Only add tooltip once
                     if (!heatCanvas.dataset.tooltipInit) {
-                        addHeatmapTooltip(heatCanvas, data.species, data.hourly);
+                        addHeatmapTooltip(heatCanvas, data.species, data.hourly, data.weather);
                         heatCanvas.dataset.tooltipInit = 'true';
                     }
                 }
@@ -346,7 +381,7 @@
             if (lastData) {
                 var heatCanvas = document.getElementById('hourlyHeatmap');
                 if (heatCanvas) {
-                    renderHeatmap(heatCanvas, lastData.species, lastData.hourly, lastData.currentHour);
+                    renderHeatmap(heatCanvas, lastData.species, lastData.hourly, lastData.currentHour, lastData.weather);
                 }
             }
         }, 300);

@@ -73,8 +73,23 @@ if(isset($_GET['ajax_chart_data']) && $_GET['ajax_chart_data'] == "true") {
     if (!isset($hourly[$name])) $hourly[$name] = [];
     $hourly[$name][(int)$row['hour']] = (int)$row['cnt'];
   }
+  // Weather breakdown per hour
+  $weather = [];
+  $check_table = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='weather'");
+  if ($check_table && $check_table->fetchArray()) {
+      $stmt3 = $db->prepare("SELECT Hour, Temp, ConditionCode FROM weather WHERE Date = DATE('now','localtime')");
+      if ($stmt3) {
+          $res3 = $stmt3->execute();
+          while ($row = $res3->fetchArray(SQLITE3_ASSOC)) {
+              $weather[(int)$row['Hour']] = [
+                  'temp' => round((float)$row['Temp']),
+                  'code' => (int)$row['ConditionCode']
+              ];
+          }
+      }
+  }
 
-  echo json_encode(['species' => $species, 'hourly' => $hourly, 'currentHour' => (int)date('G')]);
+  echo json_encode(['species' => $species, 'hourly' => $hourly, 'weather' => $weather, 'currentHour' => (int)date('G')]);
   die();
 }
 
@@ -589,7 +604,36 @@ echo "<img id=\"spectrogramimage\" style=\"max-height:200px;width:auto;\" src=\"
 </style>
 
 <div class="activity-feed">
-  <h3><span class="live-dot"></span> Live Activity</h3>
+<?php
+  // Fetch current weather for the Live Activity header
+  $current_weather_str = "";
+  $check_weather = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='weather'");
+  if ($check_weather && $check_weather->fetchArray()) {
+      $w_stmt = $db->prepare("SELECT Temp, ConditionCode FROM weather WHERE Date = DATE('now','localtime') AND Hour = ?");
+      if ($w_stmt) {
+          $w_stmt->bindValue(1, (int)date('G'), SQLITE3_INTEGER);
+          $w_res = $w_stmt->execute();
+          if ($w_row = $w_res->fetchArray(SQLITE3_ASSOC)) {
+              $temp = round((float)$w_row['Temp']);
+              $code = (int)$w_row['ConditionCode'];
+              
+              // Map WMO codes to clean Emojis
+              $emoji = '☁️';
+              if ($code === 0) $emoji = '☀️';
+              elseif ($code >= 1 && $code <= 3) $emoji = '⛅';
+              elseif ($code === 45 || $code === 48) $emoji = '🌫️';
+              elseif ($code >= 51 && $code <= 55) $emoji = '🌦️';
+              elseif ($code >= 61 && $code <= 65) $emoji = '🌧️';
+              elseif ($code >= 71 && $code <= 75) $emoji = '❄️';
+              elseif ($code >= 80 && $code <= 82) $emoji = '🌦️';
+              elseif ($code >= 95) $emoji = '⛈️';
+              
+              $current_weather_str = "<span style='margin-left:auto; font-size:0.9em; font-weight:normal; color:var(--text-secondary, #6b7280);'>{$temp}&deg;F {$emoji}</span>";
+          }
+      }
+  }
+?>
+  <h3 style="display:flex; align-items:center; width:100%;"><span class="live-dot"></span> Live Activity <?php echo $current_weather_str; ?></h3>
   <ul class="feed-list" id="liveFeedList">
     <li style="padding:12px 0; text-align:center; color: var(--text-secondary, #6b7280);">Loading...</li>
   </ul>
