@@ -55,7 +55,7 @@ if(isset($_GET['stream'])){
     echo "
   <form action=\"index.php\" method=\"GET\">
     <!-- Live Audio button moved to sidebar, original form kept for logical routing if needed -->
-    <button type=\"submit\" name=\"stream\" value=\"play\" style=\"display: none;\">Live Audio</button>
+    <button type=\"submit\" name=\"stream\" value=\"play\">🎙️ Live Audio</button>
   </form>
   </div>
   <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
