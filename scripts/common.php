@@ -333,7 +333,7 @@ class ImageProvider {
 
 class Flickr extends ImageProvider {
 
-  protected $db_path = __ROOT__ . '/scripts/flickr_v3.db';
+  protected $db_path = __ROOT__ . '/scripts/flickr_v4.db';
 
   private $flickr_api_key = null;
   private $args = "&license=2%2C3%2C4%2C5%2C6%2C9";
@@ -484,7 +484,7 @@ class Flickr extends ImageProvider {
 
 class Wikipedia extends ImageProvider {
 
-  protected $db_path = __ROOT__ . '/scripts/wikipedia_v3.db';
+  protected $db_path = __ROOT__ . '/scripts/wikipedia_v4.db';
 
   protected function get_from_source($sci_name) {
     $titles_to_try = [str_replace(' ', '_', $sci_name)];
@@ -504,23 +504,25 @@ class Wikipedia extends ImageProvider {
           $license_url = $this->get_external_link($image_url);
           $author = 'Wikipedia';
 
-          $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=File:" . urlencode($image_name) . "&prop=imageinfo&iiprop=extmetadata|size&format=json");
+          $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=File:" . urlencode($image_name) . "&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=1024&format=json");
           
           if ($metadata != false && isset($metadata['query']['pages'])) {
             foreach ($metadata['query']['pages'] as $page) {
               if (isset($page['imageinfo']['0'])) {
-                $details = $page['imageinfo']['0']['extmetadata'];
+                $info = $page['imageinfo']['0'];
+                
+                // Use the official thumbnail URL if provided
+                if (isset($info['thumburl'])) {
+                  $image_url = $info['thumburl'];
+                }
+
+                $details = $info['extmetadata'];
                 $author = isset($details['Artist']) ? strip_tags($details['Artist']['value']) : 'Unknown';
                 if (preg_match('/href="(http\S*)"/', (isset($details['Artist']) ? $details['Artist']['value'] : ''), $matches)) {
                   $author_url = $matches[1];
                 }
                 if (isset($details['LicenseUrl'])) {
                   $license_url = $details['LicenseUrl']['value'];
-                }
-
-                // Optimization: Use thumbnail if the original is too large
-                if (isset($page['imageinfo'][0]['width']) && $page['imageinfo'][0]['width'] > 1024) {
-                    $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-' . urlencode($image_name);
                 }
               }
             }
