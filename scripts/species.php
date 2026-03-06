@@ -256,23 +256,25 @@ if (!empty($config["FALLBACK_IMAGE_PROVIDER"])) {
             $sci_name = $bird['Sci_Name'];
             
             // Get image
-            $image_url = 'images/placeholder-bird.png';
+            $image_url = 'images/bird.png';
             if ($image_provider) {
                 // Check session cache first for speed in this view
-                if (isset($_SESSION['image_cache'][$com_name])) {
-                    $image_url = $_SESSION['image_cache'][$com_name];
+                if (isset($_SESSION['image_cache'][$sci_name])) {
+                    $image_url = $_SESSION['image_cache'][$sci_name];
                 } else {
-                    $image_data = $image_provider->get_image($com_name, $sci_name, $fallback_provider);
-                    if ($image_data && isset($image_data[1])) {
-                        $image_url = $image_data[1];
-                        $_SESSION['image_cache'][$com_name] = $image_url;
+                    // Corrected: get_image takes ($sci_name, $fallback_provider)
+                    $image_data = $image_provider->get_image($sci_name, $fallback_provider);
+                    // Corrected: image_data is an associative array with 'image_url'
+                    if ($image_data && isset($image_data['image_url']) && !empty($image_data['image_url'])) {
+                        $image_url = $image_data['image_url'];
+                        $_SESSION['image_cache'][$sci_name] = $image_url;
                     }
                 }
             }
         ?>
             <div class="bird-card">
                 <div class="bird-image-container">
-                    <img src="<?php echo $image_url; ?>" alt="<?php echo $com_name; ?>" class="bird-image" onerror="this.src='images/placeholder-bird.png'">
+                    <img src="<?php echo $image_url; ?>" alt="<?php echo $com_name; ?>" class="bird-image" onerror="this.onerror=null; this.src='images/bird.png'">
                 </div>
                 <div class="card-content">
                     <span class="bird-name"><?php echo $com_name; ?></span>
