@@ -130,33 +130,15 @@ function submitID() {
 
 </script>  
 
-<form action="views.php" method="GET">
+<form action="views.php" method="GET" style="display: inline-block;">
   <input type="date" name="date" value="<?php echo $theDate;?>">
   <button type="submit" name="view" value="Daily Charts">Submit Date</button>
 </form>
-<br>
-<table class="overview">
-  <tr>
-    <th>Total Detections For The Day</th>
-    <td><?php echo $totalcount['COUNT(*)']; ?></td>
-    <td style="padding:unset"><img src="images/spinner.gif" id="SwipeSpinner" hidden style="height:30px;"></td>
-  </tr>
-</table>
-    	<?php // <br><button type="button" onclick="showDialog()">Export as CSV for eBird</button><br><br> ?>
-<?php
-$time = time();
 
-if (file_exists('./Charts/'.$chart)) {
-  echo "<img src=\"/Charts/$chart?nocache=$time\" >";
-} else {
-  echo "<p>No Charts for $theDate</p>";
-}
-echo "<hr>";
-if (file_exists('./Charts/'.$chart2)) {
-  echo "<img src=\"/Charts/$chart2?nocache=$time\">";
-} else {
-  echo "<p>No Charts For $theDate</p>";
-}
+<button type="button" style="margin-left: 10px;" onclick="showDialog()">Export as CSV for eBird</button>
+<br><br>
+
+<?php
 echo "</div>";
 if (get_included_files()[0] === __FILE__) {
 	echo '</html>
