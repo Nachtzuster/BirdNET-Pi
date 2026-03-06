@@ -141,14 +141,26 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
           }
         }
 
-        // if we already searched for this species before, use the previous image rather than doing an unneccesary api call
-        $key = array_search($comname, array_column($_SESSION['images'], 0));
+        if (!isset($_SESSION['species_portal_v8_cache'])) {
+          $_SESSION['species_portal_v8_cache'] = [];
+        }
+        
+        $search_name = trim($mostrecent['Com_Name']);
+        $key = array_search($search_name, array_column($_SESSION['species_portal_v8_cache'], 0));
+        
         if ($key !== false) {
-          $image = $_SESSION['images'][$key];
+          $image = $_SESSION['species_portal_v8_cache'][$key];
         } else {
           $cached_image = $image_provider->get_image($mostrecent['Sci_Name'], $fallback_provider);
-          array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
-          $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+          if ($cached_image && !empty($cached_image["image_url"])) {
+            $image_data = array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]);
+            array_push($_SESSION["species_portal_v8_cache"], $image_data);
+            $image = $image_data;
+          } else {
+            $image_data = array($search_name, "", "Not Found", "", "", "");
+            array_push($_SESSION["species_portal_v8_cache"], $image_data);
+            $image = $image_data;
+          }
         }
       }
     ?>
@@ -175,8 +187,8 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
           <tr>
             <td class="relative"><a target="_blank" href="index.php?filename=<?php echo $mostrecent['File_Name']; ?>"><img class="copyimage" title="Open in new tab" width="25" height="25" src="images/copy.png"></a>
             <div class="centered_image_container" style="margin-bottom: 0px !important;">
-              <?php if(!empty($config["IMAGE_PROVIDER"]) && strlen($image[2]) > 0) { ?>
-                <img onerror="this.style.display='none'" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" class="img1">
+              <?php if(!empty($config["IMAGE_PROVIDER"]) && !empty($image[1])) { ?>
+                <img style="object-fit: contain; background: #f8fafc; border-radius: 8px;" onerror="this.style.display='none'" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" class="img1">
               <?php } ?>
               <form action="" method="GET">
                   <input type="hidden" name="view" value="Species Stats">
@@ -438,21 +450,28 @@ function display_species($species_list, $title, $show_last_seen=false) {
                             }
                           }
 
-                            // Check if the image has been cached in the session
-                            $key = array_search($comname, array_column($_SESSION['images'], 0));
+                            if (!isset($_SESSION['species_portal_v8_cache'])) {
+                                $_SESSION['species_portal_v8_cache'] = [];
+                            }
+                            
+                            $search_name = trim($todaytable['Com_Name']);
+                            $key = array_search($search_name, array_column($_SESSION['species_portal_v8_cache'], 0));
+                            
                             if ($key !== false) {
-                                $image = $_SESSION['images'][$key];
+                                $image = $_SESSION['species_portal_v8_cache'][$key];
                             } else {
-                                // Retrieve the image from the provider and cache it
                                 $cached_image = $image_provider->get_image($todaytable['Sci_Name'], $fallback_provider);
-                                if ($cached_image) {
-                                    array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
-                                    $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+                                if ($cached_image && !empty($cached_image["image_url"])) {
+                                    $image_data = array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]);
+                                    array_push($_SESSION["species_portal_v8_cache"], $image_data);
+                                    $image = $image_data;
                                 } else {
-                                    $image = false;
+                                    $image_data = array($search_name, "", "Not Found", "", "", "");
+                                    array_push($_SESSION["species_portal_v8_cache"], $image_data);
+                                    $image = $image_data;
                                 }
                             }
-                            $image_url = ($image && isset($image[1])) ? $image[1] : "";
+                            $image_url = ($image && !empty($image[1])) ? $image[1] : "";
                         }
 
                         $last_seen_text = "";
@@ -473,7 +492,7 @@ function display_species($species_list, $title, $show_last_seen=false) {
                     ?>
                     <tr class="relative" id="<?php echo $iterations; ?>">
                         <td><?php if (!empty($image_url)): ?>
-                          <img onerror="this.style.display='none'" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image_url; ?>" style="max-width: none; height: 50px; width: 50px; border-radius: 5px; cursor: pointer;" class="img1" title="Image from Provider" />
+                          <img onerror="this.style.display='none'" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image_url; ?>" style="max-width: none; height: 50px; width: 50px; border-radius: 5px; cursor: pointer; object-fit: contain; background: #f8fafc;" class="img1" title="Image from Provider" />
                         <?php endif; ?></td>
                         <td id="recent_detection_middle_td">
                             <div><form action="" method="GET">
