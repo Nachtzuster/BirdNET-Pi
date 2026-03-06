@@ -68,7 +68,7 @@ if (isset($config['IMAGE_PROVIDER']) && strtolower($config['IMAGE_PROVIDER']) ==
 }
 
 if ($image_provider && $image_provider->is_reset()) {
-    $_SESSION['species_portal_v5_cache'] = [];
+    $_SESSION['species_portal_v6_cache'] = [];
 }
 
 
@@ -157,6 +157,7 @@ if ($image_provider && $image_provider->is_reset()) {
     overflow: hidden;
     border: 1px solid var(--border-light, #f1f5f9);
     transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
     display: flex;
     flex-direction: column;
 }
@@ -264,28 +265,28 @@ if ($image_provider && $image_provider->is_reset()) {
             $debug_msg = "No Provider";
 
             if ($image_provider) {
-                if (!isset($_SESSION['species_portal_v5_cache'])) {
-                    $_SESSION['species_portal_v5_cache'] = [];
+                if (!isset($_SESSION['species_portal_v6_cache'])) {
+                    $_SESSION['species_portal_v6_cache'] = [];
                 }
                 
                 $search_name = trim($com_name);
-                $key = array_search($search_name, array_column($_SESSION['species_portal_v5_cache'], 0));
+                $key = array_search($search_name, array_column($_SESSION['species_portal_v6_cache'], 0));
                 
                 if ($key !== false) {
-                    $image = $_SESSION['species_portal_v5_cache'][$key];
+                    $image = $_SESSION['species_portal_v6_cache'][$key];
                     $debug_msg = "Session Match. URL: " . (empty($image[1]) ? "EMPTY" : "OK") . " | Source: " . ($image[1] ?? 'N/A');
                 } else {
                     $cached_image = $image_provider->get_image($sci_name, $fallback_provider);
                     if ($cached_image && !empty($cached_image["image_url"])) {
                         $debug_msg = "Fetched Fresh. URL: " . $cached_image["image_url"];
                         $image_data = array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]);
-                        array_push($_SESSION["species_portal_v5_cache"], $image_data);
+                        array_push($_SESSION["species_portal_v6_cache"], $image_data);
                         $image = $image_data;
                     } else {
                         $debug_msg = "Fetch Failed. Scientific name: " . $sci_name;
                         // Cache the failure with an empty URL so we don't retry every time
                         $image_data = array($search_name, "", "Not Found", "", "", "");
-                        array_push($_SESSION["species_portal_v5_cache"], $image_data);
+                        array_push($_SESSION["species_portal_v6_cache"], $image_data);
                         $image = $image_data;
                     }
                 }
