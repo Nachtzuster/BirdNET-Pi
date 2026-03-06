@@ -52,10 +52,13 @@
         var headerHeight = weather ? 48 : 30;
         var totalHeight = headerHeight + (speciesNames.length * cellHeight) + 4;
 
-        canvas.width = width;
-        canvas.height = totalHeight;
+        // Support High-DPI (Retina) displays for crystal clear text
+        var dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = totalHeight * dpr;
         canvas.style.width = width + 'px';
         canvas.style.height = totalHeight + 'px';
+        ctx.scale(dpr, dpr);
 
         // Detect dark mode
         var bodyBg = getComputedStyle(document.body).backgroundColor;
@@ -200,9 +203,10 @@
 
         canvas.addEventListener('mousemove', function (e) {
             var rect = canvas.getBoundingClientRect();
+            // Use client coordinates relative to the bounding box (CSS pixels)
             var x = e.clientX - rect.left;
             var y = e.clientY - rect.top;
-            var width = canvas.width;
+            var width = rect.width; // Use CSS width
             var labelWidth = Math.min(180, width * 0.25);
             var cellWidth = (width - labelWidth - 10) / 24;
             var headerHeight = weather ? 48 : 30;
