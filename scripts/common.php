@@ -210,12 +210,19 @@ function get_summary() {
   $result7 = $statement7->execute();
   $topspeciesrow = $result7->fetchArray(SQLITE3_ASSOC);
 
+  // New Species Today: Species detected today that have NO detections on any previous date
+  $statement8 = $db->prepare("SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date = DATE('now', 'localtime') AND Sci_Name NOT IN (SELECT DISTINCT Sci_Name FROM detections WHERE Date < DATE('now', 'localtime'))");
+  ensure_db_ok($statement8);
+  $result8 = $statement8->execute();
+  $newspeciestally = $result8->fetchArray(SQLITE3_ASSOC);
+
   $ret = [
     'totalcount' => $totalcount['COUNT(*)'],
     'todaycount' => $todaycount['COUNT(*)'],
     'hourcount' => $hourcount['COUNT(*)'],
     'speciestally' => $todayspeciestally['COUNT(DISTINCT(Sci_Name))'],
     'totalspeciestally' => $totalspeciestally['COUNT(DISTINCT(Sci_Name))'],
+    'newspeciestally' => $newspeciestally['COUNT(DISTINCT Sci_Name)'],
     'topspecies' => $topspeciesrow ? $topspeciesrow['Com_Name'] : '',
     'topspeciescount' => $topspeciesrow ? $topspeciesrow['cnt'] : 0
   ];
