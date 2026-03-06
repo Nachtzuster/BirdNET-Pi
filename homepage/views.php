@@ -209,7 +209,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
 
   <script>
   function refreshLiveFeed() {
-    fetch('api/v1/detections/recent?limit=6')
+    fetch('api/v1/detections/recent?limit=8')
       .then(r => r.json())
       .then(data => {
         const list = document.getElementById('liveFeedList');
