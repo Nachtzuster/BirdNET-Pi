@@ -94,7 +94,7 @@ function debug_log($message) {
 function get_com_en_name($sci_name) {
   static $_labels_flickr = null;
   if ($_labels_flickr === null) {
-    $_labels_flickr = json_decode(file_get_contents(get_home() . "/BirdNET-Pi/model/l18n/labels_en.json"), true);
+    $_labels_flickr = json_decode(file_get_contents(__ROOT__ . "/model/l18n/labels_en.json"), true);
   }
   $engname = isset($_labels_flickr[$sci_name]) ? $_labels_flickr[$sci_name] : "";
   return $engname;
