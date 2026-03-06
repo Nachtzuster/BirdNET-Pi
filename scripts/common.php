@@ -333,7 +333,7 @@ class ImageProvider {
 
 class Flickr extends ImageProvider {
 
-  protected $db_path = __ROOT__ . '/scripts/flickr_v2.db';
+  protected $db_path = __ROOT__ . '/scripts/flickr_v3.db';
 
   private $flickr_api_key = null;
   private $args = "&license=2%2C3%2C4%2C5%2C6%2C9";
