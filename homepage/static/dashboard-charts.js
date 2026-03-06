@@ -223,10 +223,10 @@
                 }
                 tooltip.innerHTML = '<strong>' + name + '</strong><br>' + hour + ':00 — ' + val + ' detection' + (val !== 1 ? 's' : '') + weatherStr;
                 tooltip.style.display = 'block';
-                var tipX = e.clientX - rect.left + 12;
+                var tipX = e.clientX - rect.left + 25;
                 // Flip to left side if near right edge
                 if (tipX + 180 > canvas.parentElement.clientWidth) {
-                    tipX = e.clientX - rect.left - 12;
+                    tipX = e.clientX - rect.left - 25;
                     // Measure actual tooltip width and shift left
                     tooltip.style.left = 'auto';
                     tooltip.style.right = (rect.right - e.clientX + 12) + 'px';
