@@ -1298,11 +1298,12 @@ pre#timer.bash {
 }
 
 .kpi-value {
-  font-size: 1.15em;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 800;
   color: var(--text-heading);
-  line-height: 1.1;
+  line-height: 1;
   margin-bottom: 2px;
+  display: block;
 }
 
 .kpi-card-sm .kpi-value {
@@ -1326,12 +1327,16 @@ pre#timer.bash {
   background: none;
   border: none;
   color: var(--accent);
-  font-size: inherit;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 800;
   cursor: pointer;
   padding: 0;
+  margin: 0;
   text-decoration: none;
   transition: color 0.15s ease;
+  line-height: inherit;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .kpi-link:hover {
