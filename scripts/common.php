@@ -516,9 +516,11 @@ class Wikipedia extends ImageProvider {
             } else {
               $license_url = $this->get_external_link($image_url);
             }
+            /* Disabling thumbnail logic temporarily to verify original image accessibility
             if ($page["imageinfo"][0]["width"] > 1024) {
-              $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-'. $image_name;
+              $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-'. urlencode($image_name);
             }
+            */
           }
 
           $this->set_image_in_db($sci_name, $engname ?: $sci_name, $image_url, $title, $sci_name, $author_url, $license_url);

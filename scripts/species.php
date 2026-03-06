@@ -267,26 +267,25 @@ if ($image_provider->is_reset()) {
                 }
                 
                 $search_name = trim($com_name);
-                $key = array_search($search_name, array_column($_SESSION['species_portal_v2_cache'], 0));
-                
                 $debug_msg = "";
                 if ($key !== false) {
                     $image = $_SESSION['species_portal_v2_cache'][$key];
-                    $debug_msg = "Session Match. URL: " . (empty($image[1]) ? "EMPTY" : "OK");
+                    $debug_msg = "Session Match. URL: " . (empty($image[1]) ? "EMPTY" : "OK") . " | Source: " . ($image[1] ?? 'N/A');
                 } else {
                     $cached_image = $image_provider->get_image($sci_name, $fallback_provider);
                     if ($cached_image && !empty($cached_image["image_url"])) {
-                        $debug_msg = "Fetched Fresh. URL: OK";
+                        $debug_msg = "Fetched Fresh. URL: " . $cached_image["image_url"];
                         array_push($_SESSION["species_portal_v2_cache"], array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
                         $image = $_SESSION['species_portal_v2_cache'][count($_SESSION['species_portal_v2_cache']) - 1];
                     } else {
-                        $debug_msg = "Fetch Failed. Fallback used.";
+                        $debug_msg = "Fetch Failed. Check scientific name: " . $sci_name;
                         $image = false;
                     }
                 }
                 $image_url = ($image && isset($image[1]) && !empty($image[1])) ? $image[1] : 'images/bird.png';
             }
         ?>
+            <!-- DEBUG: <?php echo $sci_name; ?> | <?php echo $debug_msg; ?> -->
             <div class="bird-card">
                 <div class="bird-name-debug" style="display:none"><?php echo $sci_name; ?> | <?php echo $debug_msg; ?></div>
                 <div class="bird-image-container">
