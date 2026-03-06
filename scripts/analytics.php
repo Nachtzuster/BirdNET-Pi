@@ -4,9 +4,11 @@
 <style>
 /* Layout */
 .analytics-dashboard {
-    padding: 20px;
-    max-width: 1600px;
-    margin: 0 auto;
+    padding: 20px 40px;
+    width: 100%;
+    max-width: none !important;
+    margin: 0;
+    box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 .dashboard-header { margin-bottom: 24px; }
@@ -17,7 +19,7 @@
 .kpi-grid {
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
-    gap: 12px !important;
+    gap: 15px !important;
     margin-bottom: 32px !important;
     width: 100% !important;
     justify-items: stretch !important;
@@ -30,15 +32,16 @@
 }
 .kpi-card {
     background: var(--bg-card);
-    padding: 16px 20px;
+    padding: 24px;
     border-radius: 16px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px;
     border: 1px solid var(--border-light, #f1f5f9);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     width: 100% !important;
+    max-width: none !important;
     min-width: 0;
     margin: 0 !important;
     box-sizing: border-box !important;
@@ -212,39 +215,38 @@
         <p>Comprehensive insights and detection patterns.</p>
     </div>
 
-    <!-- KPI Cards -->
     <div class="kpi-grid" id="stats-kpi">
         <div class="kpi-card">
-            <div class="kpi-icon total">🔭</div>
             <div class="kpi-info">
                 <span class="kpi-label">Total Detections</span>
                 <h2 class="kpi-value" id="kpi-total">-</h2>
                 <span class="kpi-period">Last 7 days</span>
             </div>
+            <div class="kpi-icon total">🔭</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-icon species">🐦</div>
             <div class="kpi-info">
                 <span class="kpi-label">Unique Species</span>
                 <h2 class="kpi-value" id="kpi-unique">-</h2>
                 <span class="kpi-period">Last 7 days</span>
             </div>
+            <div class="kpi-icon species">🐦</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-icon confidence">ℹ️</div>
             <div class="kpi-info">
                 <span class="kpi-label">Avg. Confidence</span>
                 <h2 class="kpi-value" id="kpi-conf">-</h2>
                 <span class="kpi-period">Last 7 days</span>
             </div>
+            <div class="kpi-icon confidence">ℹ️</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-icon common">⬆️</div>
             <div class="kpi-info" id="kpi-common-container">
                 <span class="kpi-label">Most Common</span>
                 <h2 class="kpi-value" id="kpi-common" style="font-size: 1.2rem;">-</h2>
                 <span class="kpi-period" id="kpi-common-sub">-</span>
             </div>
+            <div class="kpi-icon common">⬆️</div>
         </div>
     </div>
 
