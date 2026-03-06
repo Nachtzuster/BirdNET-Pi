@@ -162,7 +162,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
   </div>
   <div class="sidebar-nav">
     <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
-    <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
+
     <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
     <button type="submit" name="view" value="Analytics" form="views">📈 Analytics</button>
     <button type="submit" name="view" value="Weekly Report" form="views">📰 Report</button>
