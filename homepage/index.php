@@ -29,7 +29,7 @@ set_timezone();
 </head>
 <body>
 
-?>
+
 <style>
   #live-audio-panel {
     position: fixed;
@@ -95,8 +95,6 @@ set_timezone();
     clearTimeout(audioPanelTimer);
   }
 </script>
-<?php
-
 <?php
 if(isset($_GET['filename'])) {
   $filename = $_GET['filename'];
