@@ -379,7 +379,6 @@ if (get_included_files()[0] === __FILE__) {
 <div class="center-column">
 </div>
 <?php
-<?php
 // New/Rare species lists removed for KPI redesign
 ?>
 <div class="chart-container" style="max-width: 100%;">
