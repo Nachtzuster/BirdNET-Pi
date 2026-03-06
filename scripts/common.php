@@ -92,10 +92,11 @@ function debug_log($message) {
 }
 
 function get_com_en_name($sci_name) {
-  if (!isset($_labels_flickr)) {
+  static $_labels_flickr = null;
+  if ($_labels_flickr === null) {
     $_labels_flickr = json_decode(file_get_contents(get_home() . "/BirdNET-Pi/model/l18n/labels_en.json"), true);
   }
-  $engname = $_labels_flickr[$sci_name];
+  $engname = isset($_labels_flickr[$sci_name]) ? $_labels_flickr[$sci_name] : "";
   return $engname;
 }
 
@@ -241,26 +242,32 @@ class ImageProvider {
   }
 
   public function get_image($sci_name, $fallback_provider = null) {
+    @file_put_contents('/tmp/birdnet_img.log', "Fetching $sci_name\n", FILE_APPEND);
     $image = $this->get_image_from_db($sci_name);
     if ($image !== false) {
+      @file_put_contents('/tmp/birdnet_img.log', "  Found in DB: " . $image['image_url'] . "\n", FILE_APPEND);
       $now = new DateTime();
       $datetime = DateTime::createFromFormat("Y-m-d", $image['date_created']);
       $interval = $now->diff($datetime);
       $expire_days = rand(15, 25);
       if ($interval->days > $expire_days) {
         $image = false;
+        @file_put_contents('/tmp/birdnet_img.log', "  Expired. Re-fetching.\n", FILE_APPEND);
       }
     }
     if ($image === false) {
+      @file_put_contents('/tmp/birdnet_img.log', "  Not in DB, calling get_from_source\n", FILE_APPEND);
       $this->get_from_source($sci_name);
       $image = $this->get_image_from_db($sci_name);
     }
     
     // If we still don't have an image and a fallback provider was given, try it
     if (($image === false || empty($image['image_url'])) && $fallback_provider !== null) {
+      @file_put_contents('/tmp/birdnet_img.log', "  Wikipedia failed, falling back to Flickr\n", FILE_APPEND);
       return $fallback_provider->get_image($sci_name);
     }
 
+    @file_put_contents('/tmp/birdnet_img.log', "  Returning: " . ($image ? $image['image_url'] : "FALSE") . "\n", FILE_APPEND);
     return $image;
   }
 

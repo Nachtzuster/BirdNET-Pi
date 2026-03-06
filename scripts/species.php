@@ -259,22 +259,28 @@ if ($image_provider->is_reset()) {
             
             // Get image
             $image_url = 'images/bird.png';
+            // Get image
+            $image_url = 'images/bird.png';
             if ($image_provider) {
-                if (!isset($_SESSION['bird_images_portal_v1'])) {
-                    $_SESSION['bird_images_portal_v1'] = [];
+                if (!isset($_SESSION['species_portal_v2_cache'])) {
+                    $_SESSION['species_portal_v2_cache'] = [];
                 }
                 
                 $search_name = trim($com_name);
-                $key = array_search($search_name, array_column($_SESSION['bird_images_portal_v1'], 0));
+                $key = array_search($search_name, array_column($_SESSION['species_portal_v2_cache'], 0));
                 
+                $debug_msg = "";
                 if ($key !== false) {
-                    $image = $_SESSION['bird_images_portal_v1'][$key];
+                    $image = $_SESSION['species_portal_v2_cache'][$key];
+                    $debug_msg = "Session Match. URL: " . (empty($image[1]) ? "EMPTY" : "OK");
                 } else {
                     $cached_image = $image_provider->get_image($sci_name, $fallback_provider);
                     if ($cached_image && !empty($cached_image["image_url"])) {
-                        array_push($_SESSION["bird_images_portal_v1"], array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
-                        $image = $_SESSION['bird_images_portal_v1'][count($_SESSION['bird_images_portal_v1']) - 1];
+                        $debug_msg = "Fetched Fresh. URL: OK";
+                        array_push($_SESSION["species_portal_v2_cache"], array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
+                        $image = $_SESSION['species_portal_v2_cache'][count($_SESSION['species_portal_v2_cache']) - 1];
                     } else {
+                        $debug_msg = "Fetch Failed. Fallback used.";
                         $image = false;
                     }
                 }
@@ -282,6 +288,7 @@ if ($image_provider->is_reset()) {
             }
         ?>
             <div class="bird-card">
+                <div class="bird-name-debug" style="display:none"><?php echo $sci_name; ?> | <?php echo $debug_msg; ?></div>
                 <div class="bird-image-container">
                     <img src="<?php echo $image_url; ?>" alt="<?php echo $com_name; ?>" class="bird-image" onerror="this.onerror=null; this.src='images/bird.png'">
                 </div>
