@@ -223,13 +223,13 @@
                 }
                 tooltip.innerHTML = '<strong>' + name + '</strong><br>' + hour + ':00 — ' + val + ' detection' + (val !== 1 ? 's' : '') + weatherStr;
                 tooltip.style.display = 'block';
-                var tipX = e.clientX - rect.left + 25;
+                var tipX = e.clientX - rect.left + 30;
                 // Flip to left side if near right edge
                 if (tipX + 180 > canvas.parentElement.clientWidth) {
-                    tipX = e.clientX - rect.left - 25;
+                    tipX = e.clientX - rect.left - 12;
                     // Measure actual tooltip width and shift left
                     tooltip.style.left = 'auto';
-                    tooltip.style.right = (rect.right - e.clientX + 25) + 'px';
+                    tooltip.style.right = (rect.right - e.clientX + 12) + 'px';
                     tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
                 } else {
                     tooltip.style.right = 'auto';
