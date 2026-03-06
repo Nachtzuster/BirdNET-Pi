@@ -495,34 +495,30 @@ class Wikipedia extends ImageProvider {
 
     foreach ($titles_to_try as $page_title) {
       $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/" . urlencode($page_title));
-      if ($data != false && isset($data['originalimage'])) {
-        $image_name = urldecode(substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1));
-        $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=File:" . urlencode($image_name) . "&prop=imageinfo&iiprop=extmetadata|size&format=json");
-        
-        if ($metadata != false && isset($metadata['query']['pages'])) {
-          $image_url = $data['originalimage']['source'];
+        if ($data != false && isset($data['originalimage'])) {
+          $image_url = trim($data['originalimage']['source'], " \t\n\r\0\x0B\"");
           $title = $data['title'];
+          $image_name = urldecode(substr($image_url, strrpos($image_url, '/') + 1));
+          
+          $author_url = $this->get_external_link($image_url);
+          $license_url = $this->get_external_link($image_url);
+          $author = 'Wikipedia';
 
-          foreach ($metadata['query']['pages'] as $page) {
-            if (!isset($page['imageinfo']['0'])) continue;
-            $details = $page['imageinfo']['0']['extmetadata'];
-            $author = isset($details['Artist']) ? $details['Artist']['value'] : 'Unknown';
-            $matches = [];
-            if (preg_match('/href="(http\S*)"/', $author, $matches)) {
-              $author_url = $matches[1];
-            } else {
-              $author_url = $this->get_external_link($image_url);
+          $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=File:" . urlencode($image_name) . "&prop=imageinfo&iiprop=extmetadata|size&format=json");
+          
+          if ($metadata != false && isset($metadata['query']['pages'])) {
+            foreach ($metadata['query']['pages'] as $page) {
+              if (isset($page['imageinfo']['0'])) {
+                $details = $page['imageinfo']['0']['extmetadata'];
+                $author = isset($details['Artist']) ? strip_tags($details['Artist']['value']) : 'Unknown';
+                if (preg_match('/href="(http\S*)"/', (isset($details['Artist']) ? $details['Artist']['value'] : ''), $matches)) {
+                  $author_url = $matches[1];
+                }
+                if (isset($details['LicenseUrl'])) {
+                  $license_url = $details['LicenseUrl']['value'];
+                }
+              }
             }
-            if (isset($details['LicenseUrl'])) {
-              $license_url = $details['LicenseUrl']['value'];
-            } else {
-              $license_url = $this->get_external_link($image_url);
-            }
-            /* Disabling thumbnail logic temporarily to verify original image accessibility
-            if ($page["imageinfo"][0]["width"] > 1024) {
-              $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-'. urlencode($image_name);
-            }
-            */
           }
 
           $this->set_image_in_db($sci_name, $engname ?: $sci_name, $image_url, $title, $sci_name, $author_url, $license_url);
