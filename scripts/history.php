@@ -131,7 +131,7 @@ function submitID() {
 </script>  
 
 <div style="text-align: center; margin: 20px 0;">
-    <button type="button" class="btn-apply" onclick="showDialog()">Export as CSV for eBird</button>
+    <button type="button" id="ebird-export-btn" class="btn-apply" onclick="showDialog()">Export as CSV for eBird</button>
 </div>
 
 <?php
