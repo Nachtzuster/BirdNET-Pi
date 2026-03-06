@@ -2,6 +2,7 @@
 // scripts/species.php
 
 require_once 'scripts/common.php';
+$config = get_config();
 
 // Get filter parameters
 $time_period = isset($_GET['time_period']) ? $_GET['time_period'] : 'all';
@@ -258,18 +259,22 @@ if (!empty($config["FALLBACK_IMAGE_PROVIDER"])) {
             // Get image
             $image_url = 'images/bird.png';
             if ($image_provider) {
-                // Check session cache first for speed in this view
-                if (isset($_SESSION['image_cache'][$sci_name])) {
-                    $image_url = $_SESSION['image_cache'][$sci_name];
+                if (!isset($_SESSION['images'])) {
+                    $_SESSION['images'] = [];
+                }
+                $key = array_search($com_name, array_column($_SESSION['images'], 0));
+                if ($key !== false) {
+                    $image = $_SESSION['images'][$key];
                 } else {
-                    // Corrected: get_image takes ($sci_name, $fallback_provider)
-                    $image_data = $image_provider->get_image($sci_name, $fallback_provider);
-                    // Corrected: image_data is an associative array with 'image_url'
-                    if ($image_data && isset($image_data['image_url']) && !empty($image_data['image_url'])) {
-                        $image_url = $image_data['image_url'];
-                        $_SESSION['image_cache'][$sci_name] = $image_url;
+                    $cached_image = $image_provider->get_image($sci_name, $fallback_provider);
+                    if ($cached_image) {
+                        array_push($_SESSION["images"], array($com_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
+                        $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+                    } else {
+                        $image = false;
                     }
                 }
+                $image_url = ($image && isset($image[1]) && !empty($image[1])) ? $image[1] : 'images/bird.png';
             }
         ?>
             <div class="bird-card">
