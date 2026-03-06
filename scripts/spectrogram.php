@@ -154,13 +154,16 @@ window.onload = function(){
     initialize();
   } else {
     player = document.getElementById('player');
+    player.style.display = 'block'; // Unhide fallback player so user can click to start
     player.oncanplay = function() {
       if (started) return;
         started = true;
         initialize();
     };
   }
-  player.play();
+  player.play().catch(function(e) {
+    console.log("Autoplay blocked. Tap the player to listen:", e);
+  });
   
   }
 };

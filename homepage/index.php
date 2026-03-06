@@ -28,44 +28,33 @@ set_timezone();
 <link rel="stylesheet" type="text/css" href="static/dialog-polyfill.css" />
 </head>
 <body>
-<div class="banner">
-  <div class="logo" style="display: none;">
-<?php if(isset($_GET['logo'])) {
-echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:40px;height:40px;\" src=\"images/bird.png\"></a>";
-} else {
-echo "<a href=\"https://github.com/zach7036/BirdNET-Pi.git\" target=\"_blank\"><img style=\"width:40px;height:40px;\" src=\"images/bird.png\"></a>";
-}?>
-  </div>
 
-  <div class="stream">
 <?php
 if(isset($_GET['stream'])){
   ensure_authenticated('You cannot listen to the live audio stream');
-      echo "
-  <audio id=\"live-audio-player\" controls autoplay><source src=\"/stream\"></audio>
-  <script>
-    if (window.history.replaceState) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  </script>
-  </div>
-  <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
-  </div>";
+  echo "<div style=\"position: fixed; top: 12px; right: 20px; z-index: 999999;\">
+          <audio id=\"live-audio-player\" controls autoplay><source src=\"/stream\"></audio>
+        </div>";
+  echo "<script>
+          if (window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        </script>";
 } else {
-    echo "
-  <form action=\"index.php\" method=\"GET\">
-    <!-- Live Audio button moved to sidebar, original form kept for logical routing if needed -->
-    <button type=\"submit\" name=\"stream\" value=\"play\">🎙️ Live Audio</button>
-  </form>
-  </div>
-  <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
-</div>";
+  // Replaced the fragile .banner layout with a direct, viewport-anchored float
+  echo "<form action=\"index.php\" method=\"GET\" style=\"position: fixed; top: 12px; right: 20px; z-index: 999999; margin: 0; padding: 0;\">
+          <button type=\"submit\" name=\"stream\" value=\"play\" style=\"padding: 8px 16px; border-radius: 8px; background: var(--bg-card, #fff); color: var(--text-primary, #333); border: 1px solid var(--border, #ccc); box-shadow: 0 4px 6px rgba(0,0,0,0.15); font-weight: bold; cursor: pointer;\">🎙️ Live Audio</button>
+        </form>";
 }
+?>
+
+<?php
 if(isset($_GET['filename'])) {
   $filename = $_GET['filename'];
 echo "
-<iframe src=\"views.php?view=Recordings&filename=$filename\"></iframe>";
+<iframe src=\"views.php?view=Recordings&filename=$filename\" allow=\"autoplay\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 1;\"></iframe>";
 } else {
   echo "
-<iframe src=\"views.php\"></iframe>";
+<iframe src=\"views.php\" allow=\"autoplay\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 1;\"></iframe>";
 }
+?>
