@@ -53,6 +53,7 @@ if(isset($_GET['stream'])){
   </div>";
 } else {
     echo "
+  <div class=\"stream\">
   <form action=\"index.php\" method=\"GET\">
     <!-- Live Audio button moved to sidebar, original form kept for logical routing if needed -->
     <button type=\"submit\" name=\"stream\" value=\"play\">🎙️ Live Audio</button>
@@ -64,8 +65,8 @@ if(isset($_GET['stream'])){
 if(isset($_GET['filename'])) {
   $filename = $_GET['filename'];
 echo "
-<iframe src=\"views.php?view=Recordings&filename=$filename\"></iframe>";
+<iframe src=\"views.php?view=Recordings&filename=$filename\" allow=\"autoplay\"></iframe>";
 } else {
   echo "
-<iframe src=\"views.php\"></iframe>";
+<iframe src=\"views.php\" allow=\"autoplay\"></iframe>";
 }
