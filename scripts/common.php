@@ -484,7 +484,7 @@ class Flickr extends ImageProvider {
 
 class Wikipedia extends ImageProvider {
 
-  protected $db_path = __ROOT__ . '/scripts/wikipedia_v2.db';
+  protected $db_path = __ROOT__ . '/scripts/wikipedia_v3.db';
 
   protected function get_from_source($sci_name) {
     $titles_to_try = [str_replace(' ', '_', $sci_name)];
@@ -516,6 +516,11 @@ class Wikipedia extends ImageProvider {
                 }
                 if (isset($details['LicenseUrl'])) {
                   $license_url = $details['LicenseUrl']['value'];
+                }
+
+                // Optimization: Use thumbnail if the original is too large
+                if (isset($page['imageinfo'][0]['width']) && $page['imageinfo'][0]['width'] > 1024) {
+                    $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-' . urlencode($image_name);
                 }
               }
             }
