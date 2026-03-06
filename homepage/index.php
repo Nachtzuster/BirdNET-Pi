@@ -33,7 +33,7 @@ set_timezone();
 <style>
   #live-audio-panel {
     position: fixed;
-    top: 70px;
+    top: 0;
     right: 0;
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -43,28 +43,31 @@ set_timezone();
     background: var(--bg-card, #fff);
     border: 1px solid var(--border, #ccc);
     border-right: none;
-    border-radius: 8px 0 0 8px;
+    border-top: none;
+    border-radius: 0 0 0 8px;
     box-shadow: -4px 4px 12px rgba(0,0,0,0.15);
-    padding: 8px 12px;
+    padding: 2px 12px;
   }
   #live-audio-panel.open {
     transform: translateX(0);
   }
   #live-audio-tab {
     position: absolute;
-    left: -85px;
-    width: 85px;
-    top: -1px;
+    left: -75px;
+    width: 75px;
+    top: 0;
     bottom: -1px;
     background: var(--bg-card, #fff);
     border: 1px solid var(--border, #ccc);
     border-right: none;
-    border-radius: 8px 0 0 8px;
+    border-top: none;
+    border-radius: 0 0 0 8px;
     box-shadow: -4px 0px 8px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    font-size: 0.9em;
     font-weight: bold;
     color: var(--text-primary, #333);
     user-select: none;
