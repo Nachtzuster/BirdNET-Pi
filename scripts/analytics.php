@@ -15,16 +15,17 @@
 
 /* KPI Grid */
 .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
     gap: 16px;
     margin-bottom: 32px;
+    width: 100%;
 }
 @media (max-width: 1200px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .kpi-grid { flex-wrap: wrap; }
+    .kpi-grid > .kpi-card { flex: 1 1 calc(50% - 16px); }
 }
 @media (max-width: 768px) {
-    .kpi-grid { grid-template-columns: 1fr; }
+    .kpi-grid > .kpi-card { flex: 1 1 100%; }
 }
 .kpi-card {
     background: var(--bg-card);
@@ -36,7 +37,9 @@
     gap: 20px;
     border: 1px solid var(--border-light, #f1f5f9);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    width: 100%;
+    flex: 1 !important;
+    min-width: 0;
+    margin: 0 !important;
 }
 .kpi-card:hover { 
     transform: translateY(-4px); 
