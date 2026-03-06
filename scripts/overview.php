@@ -121,10 +121,14 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
 
       if (!empty($config["IMAGE_PROVIDER"])) {
         if ($image_provider === null) {
+          $flickr = new Flickr();
+          $wikipedia = new Wikipedia();
           if ($config["IMAGE_PROVIDER"] === 'FLICKR') {
-            $image_provider = new Flickr();
+              $image_provider = $flickr;
+              $fallback_provider = $wikipedia;
           } else {
-            $image_provider = new Wikipedia();
+              $image_provider = $wikipedia;
+              $fallback_provider = $flickr;
           }
           if ($image_provider->is_reset()) {
             $_SESSION['images'] = [];
@@ -136,7 +140,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
         if ($key !== false) {
           $image = $_SESSION['images'][$key];
         } else {
-          $cached_image = $image_provider->get_image($mostrecent['Sci_Name']);
+          $cached_image = $image_provider->get_image($mostrecent['Sci_Name'], $fallback_provider);
           array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
           $image = $_SESSION['images'][count($_SESSION['images']) - 1];
         }
@@ -166,7 +170,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
             <td class="relative"><a target="_blank" href="index.php?filename=<?php echo $mostrecent['File_Name']; ?>"><img class="copyimage" title="Open in new tab" width="25" height="25" src="images/copy.png"></a>
             <div class="centered_image_container" style="margin-bottom: 0px !important;">
               <?php if(!empty($config["IMAGE_PROVIDER"]) && strlen($image[2]) > 0) { ?>
-                <img onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" class="img1">
+                <img onerror="this.style.display='none'" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" class="img1">
               <?php } ?>
               <form action="" method="GET">
                   <input type="hidden" name="view" value="Species Stats">
@@ -200,6 +204,7 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
 
 if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
 
+  // Retrieve the cached data from session without regenerating
   $chart_data = get_summary();
   $_SESSION['chart_data'] = $chart_data;
 ?>
@@ -384,7 +389,7 @@ if (!isset($_SESSION['images'])) {
 }
 
 function display_species($species_list, $title, $show_last_seen=false) {
-    global $config, $_SESSION, $image_provider;
+    global $config, $_SESSION, $image_provider, $fallback_provider; // Added $fallback_provider
     $species_count = count($species_list);
     if ($species_count > 0): ?>
         <div class="<?php echo strtolower(str_replace(' ', '_', $title)); ?>">
@@ -413,10 +418,14 @@ function display_species($species_list, $title, $show_last_seen=false) {
                         
                         if (!empty($config["IMAGE_PROVIDER"])) {
                           if ($image_provider === null) {
+                            $flickr = new Flickr();
+                            $wikipedia = new Wikipedia();
                             if ($config["IMAGE_PROVIDER"] === 'FLICKR') {
-                              $image_provider = new Flickr();
+                                $image_provider = $flickr;
+                                $fallback_provider = $wikipedia;
                             } else {
-                              $image_provider = new Wikipedia();
+                                $image_provider = $wikipedia;
+                                $fallback_provider = $flickr;
                             }
                             if ($image_provider->is_reset()) {
                               $_SESSION['images'] = [];

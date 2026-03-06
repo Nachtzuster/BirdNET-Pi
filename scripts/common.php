@@ -234,7 +234,7 @@ class ImageProvider {
     $this->context = stream_context_create($opts);
   }
 
-  public function get_image($sci_name) {
+  public function get_image($sci_name, $fallback_provider = null) {
     $image = $this->get_image_from_db($sci_name);
     if ($image !== false) {
       $now = new DateTime();
@@ -249,6 +249,12 @@ class ImageProvider {
       $this->get_from_source($sci_name);
       $image = $this->get_image_from_db($sci_name);
     }
+    
+    // If we still don't have an image and a fallback provider was given, try it
+    if (($image === false || empty($image['image_url'])) && $fallback_provider !== null) {
+      return $fallback_provider->get_image($sci_name);
+    }
+
     return $image;
   }
 
@@ -352,7 +358,7 @@ class Flickr extends ImageProvider {
     }
   }
 
-  public function get_image($sci_name) {
+  public function get_image($sci_name, $fallback_provider = null) {
     $image = parent::get_image_from_db($sci_name);
     if ($image !== false && in_array($image['id'], $this->blacklisted_ids)) {
       $image = false;
@@ -362,6 +368,12 @@ class Flickr extends ImageProvider {
       $this->get_from_source($sci_name);
       $image = $this->get_image_from_db($sci_name);
     }
+
+    // Fallback logic
+    if (($image === false || empty($image['image_url'])) && $fallback_provider !== null) {
+      return $fallback_provider->get_image($sci_name);
+    }
+
     if ($image === false)
       return false;
     // external link to photo
@@ -372,9 +384,20 @@ class Flickr extends ImageProvider {
 
   private function get_from_source($sci_name) {
     $engname = get_com_en_name($sci_name);
+    if (empty($engname)) {
+        // Fallback to sci name if no english name found
+        $engname = $sci_name;
+    }
 
-    $flickrjson = json_decode(file_get_contents("https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=" . $this->flickr_api_key . "&text=" . str_replace(" ", "%20", $engname) . $this->comnameprefix . "&sort=relevance" . $this->args . "&per_page=5&media=photos&format=json&nojsoncallback=1"), true)["photos"]["photo"];
-    // could be null!!
+    $url = "https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=" . $this->flickr_api_key . "&text=" . urlencode($engname) . $this->comnameprefix . "&sort=relevance" . $this->args . "&per_page=5&media=photos&format=json&nojsoncallback=1";
+    $response = file_get_contents($url, false, $this->context);
+    if ($response === false) return;
+    
+    $data = json_decode($response, true);
+    if (!isset($data["photos"]["photo"])) return;
+    
+    $flickrjson = $data["photos"]["photo"];
+    
     // Find the first photo that is not blacklisted or is not the specific blacklisted id
     $photo = null;
     foreach ($flickrjson as $flickrphoto) {
@@ -387,7 +410,10 @@ class Flickr extends ImageProvider {
     if ($photo === null)
       return;
 
-    $license_response = $this->get_json("https://api.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=" . $this->flickr_api_key . "&photo_id=" . $photo["id"] . "&format=json&nojsoncallback=1");
+    $info_url = "https://api.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=" . $this->flickr_api_key . "&photo_id=" . $photo["id"] . "&format=json&nojsoncallback=1";
+    $license_response = $this->get_json($info_url);
+    if (!isset($license_response["photo"])) return;
+    
     $license_id = $license_response["photo"]["license"];
     $license_url = $this->get_license_url($license_id);
 
@@ -438,46 +464,51 @@ class Wikipedia extends ImageProvider {
   protected $db_path = __ROOT__ . '/scripts/wikipedia.db';
 
   protected function get_from_source($sci_name) {
-    $page_title = str_replace(' ', '_', $sci_name);
-    $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/$page_title");
-    if ($data == false or !isset($data['originalimage']))
-      return;
-
-    $image_name = substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1);
-    $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=File:$image_name&prop=imageinfo&iiprop=extmetadata|size&format=json");
-    if ($metadata == false or !isset($metadata['query']['pages']))
-      return;
-
-    $image_url = $data['originalimage']['source'];
-    $title = $data['title'];
-
-    foreach ($metadata['query']['pages'] as $page) {
-      $details = $page['imageinfo']['0']['extmetadata'];
-      $author = $details['Artist']['value'];
-      $matches = [];
-      if (preg_match('/href="(http\S*)"/', $author, $matches)) {
-        $author_url = $matches[1];
-      } else {
-        $author_url = $this->get_external_link($image_url);
-      }
-      if (isset($details['LicenseUrl'])) {
-        $license_url = $details['LicenseUrl']['value'];
-      } else {
-        $license_url = $this->get_external_link($image_url);
-      }
-      if ($page["imageinfo"][0]["width"] > 1024) {
-        $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-'. $image_name;
-      }
+    $titles_to_try = [str_replace(' ', '_', $sci_name)];
+    $engname = get_com_en_name($sci_name);
+    if (!empty($engname)) {
+      $titles_to_try[] = str_replace(' ', '_', $engname);
     }
 
-    $engname = get_com_en_name($sci_name);
+    foreach ($titles_to_try as $page_title) {
+      $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/" . urlencode($page_title));
+      if ($data != false && isset($data['originalimage'])) {
+        $image_name = substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1);
+        $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=File:" . urlencode($image_name) . "&prop=imageinfo&iiprop=extmetadata|size&format=json");
+        
+        if ($metadata != false && isset($metadata['query']['pages'])) {
+          $image_url = $data['originalimage']['source'];
+          $title = $data['title'];
 
-    //                     $sci_name, $com_en_name, $image_url, $title, $id, $author_url, $license_url
-    $this->set_image_in_db($sci_name, $engname, $image_url, $title, $sci_name, $author_url, $license_url);
+          foreach ($metadata['query']['pages'] as $page) {
+            if (!isset($page['imageinfo']['0'])) continue;
+            $details = $page['imageinfo']['0']['extmetadata'];
+            $author = isset($details['Artist']) ? $details['Artist']['value'] : 'Unknown';
+            $matches = [];
+            if (preg_match('/href="(http\S*)"/', $author, $matches)) {
+              $author_url = $matches[1];
+            } else {
+              $author_url = $this->get_external_link($image_url);
+            }
+            if (isset($details['LicenseUrl'])) {
+              $license_url = $details['LicenseUrl']['value'];
+            } else {
+              $license_url = $this->get_external_link($image_url);
+            }
+            if ($page["imageinfo"][0]["width"] > 1024) {
+              $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-'. $image_name;
+            }
+          }
+
+          $this->set_image_in_db($sci_name, $engname ?: $sci_name, $image_url, $title, $sci_name, $author_url, $license_url);
+          return; // Success
+        }
+      }
+    }
   }
 
-  public function get_image($sci_name) {
-    $image = parent::get_image($sci_name);
+  public function get_image($sci_name, $fallback_provider = null) {
+    $image = parent::get_image($sci_name, $fallback_provider);
     if ($image === false)
       return false;
 

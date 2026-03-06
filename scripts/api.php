@@ -15,13 +15,17 @@ $db = new SQLite3(__ROOT__ . '/scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
 
 if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
+  $flickr = new Flickr();
+  $wikipedia = new Wikipedia();
   if ($config["IMAGE_PROVIDER"] === 'FLICKR') {
-    $image_provider = new Flickr();
+    $image_provider = $flickr;
+    $fallback_provider = $wikipedia;
   } else {
-    $image_provider = new Wikipedia();
+    $image_provider = $wikipedia;
+    $fallback_provider = $flickr;
   }
   $sci_name = urldecode($matches[1]);
-  $result = $image_provider->get_image($sci_name);
+  $result = $image_provider->get_image($sci_name, $fallback_provider);
 
   if ($result == false) {
     http_response_code(404);
