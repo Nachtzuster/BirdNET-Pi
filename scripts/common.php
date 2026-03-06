@@ -486,7 +486,7 @@ class Wikipedia extends ImageProvider {
     foreach ($titles_to_try as $page_title) {
       $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/" . urlencode($page_title));
       if ($data != false && isset($data['originalimage'])) {
-        $image_name = substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1);
+        $image_name = urldecode(substr($data['originalimage']['source'], strrpos($data['originalimage']['source'], '/') + 1));
         $metadata = $this->get_json("https://commons.wikimedia.org/w/api.php?action=query&titles=File:" . urlencode($image_name) . "&prop=imageinfo&iiprop=extmetadata|size&format=json");
         
         if ($metadata != false && isset($metadata['query']['pages'])) {
