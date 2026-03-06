@@ -16,35 +16,41 @@
 /* KPI Grid */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+    justify-items: stretch;
 }
 .kpi-card {
     background: var(--bg-card);
-    padding: 20px;
-    border-radius: 12px;
+    padding: 24px;
+    border-radius: 16px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
     border: 1px solid var(--border-light, #f1f5f9);
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
 }
-.kpi-card:hover { transform: translateY(-2px); }
+.kpi-card:hover { 
+    transform: translateY(-4px); 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
 .kpi-icon {
-    width: 48px; height: 48px;
-    border-radius: 10px;
+    width: 56px; height: 56px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+    flex-shrink: 0;
 }
 .kpi-icon.total { background: #eff6ff; color: #3b82f6; }
-.kpi-icon.species { background: #f8fafc; color: #1e293b; }
-.kpi-icon.confidence { background: #f8fafc; color: #1e293b; }
-.kpi-icon.common { background: #f0fdf4; color: #22c55e; }
-.kpi-info { display: flex; flex-direction: column; }
+.kpi-icon.species { background: #f0fdf4; color: #22c55e; }
+.kpi-icon.confidence { background: #fff7ed; color: #f97316; }
+.kpi-icon.common { background: #faf5ff; color: #a855f7; }
+.kpi-info { display: flex; flex-direction: column; flex-grow: 1; }
 .kpi-label { font-size: 0.85rem; font-weight: 500; color: var(--text-muted, #64748b); }
 .kpi-value { font-size: 1.5rem; font-weight: 700; margin: 2px 0; color: var(--text-primary); }
 .kpi-period { font-size: 0.75rem; color: var(--text-muted, #94a3b8); }
