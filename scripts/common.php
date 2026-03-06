@@ -233,7 +233,8 @@ class ImageProvider {
     $opts = [
       'http' => [
         'method' => "GET",
-        'header' => "User-Agent: BirdNET-Pi/1.0 (https://github.com/mcguirepr89/BirdNET-Pi) PHP_Script\r\n"
+        'header' => "User-Agent: BirdNET-Pi/1.0 (https://github.com/mcguirepr89/BirdNET-Pi) PHP_Script",
+        'timeout' => 5
       ]
     ];
     $this->context = stream_context_create($opts);
