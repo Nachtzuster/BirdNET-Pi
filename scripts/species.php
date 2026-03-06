@@ -285,7 +285,7 @@ if ($image_provider && $image_provider->is_reset()) {
                         $debug_msg = "Fetch Failed. Scientific name: " . $sci_name;
                         // Cache the failure with an empty URL so we don't retry every time
                         $image_data = array($search_name, "", "Not Found", "", "", "");
-                        array_push($_SESSION["species_portal_v3_cache"], $image_data);
+                        array_push($_SESSION["species_portal_v5_cache"], $image_data);
                         $image = $image_data;
                     }
                 }

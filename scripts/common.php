@@ -525,7 +525,6 @@ class Wikipedia extends ImageProvider {
           return; // Success
         }
       }
-    }
   }
 
   public function get_image($sci_name, $fallback_provider = null) {
