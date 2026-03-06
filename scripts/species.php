@@ -8,7 +8,6 @@ $config = get_config();
 $time_period = isset($_GET['time_period']) ? $_GET['time_period'] : 'all';
 $sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'detections';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$debug_mode = isset($_GET['debug']) && $_GET['debug'] == '1';
 
 $db = get_db();
 
@@ -293,14 +292,7 @@ if ($image_provider && $image_provider->is_reset()) {
                 $image_url = ($image && !empty($image[1])) ? $image[1] : 'images/bird.png';
             }
         ?>
-            <!-- DEBUG: <?php echo $sci_name; ?> | <?php echo $debug_msg; ?> -->
             <div class="bird-card">
-                <?php if ($debug_mode): ?>
-                    <div style="font-size: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; word-break: break-all; max-height: 60px; overflow: auto; position: absolute; z-index: 10; width: 100%;">
-                        <?php echo $debug_msg; ?>
-                    </div>
-                <?php endif; ?>
-                <div class="bird-name-debug" style="display:none"><?php echo $sci_name; ?> | <?php echo $debug_msg; ?></div>
                 <div class="bird-image-container">
                     <img src="<?php echo $image_url; ?>" alt="<?php echo $com_name; ?>" class="bird-image" onerror="this.onerror=null; this.src='images/bird.png'">
                 </div>
