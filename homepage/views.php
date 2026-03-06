@@ -73,6 +73,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
     <button type="button" class="sidebar-toggle" onclick="myFunction()">«</button>
   </div>
   <div class="sidebar-nav">
+    <button type="button" onclick="window.top.location.href='index.php?stream=play'">🎙️ Live Audio</button>
     <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
     <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
     <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>

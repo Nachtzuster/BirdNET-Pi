@@ -143,7 +143,16 @@ window.onload = function(){
   } else {
     document.getElementById("spectrogramimage").remove();
 
-  var audioelement =  window.parent.document.getElementsByTagName("audio")[0];
+  var audioelement = undefined;
+  if (window.parent !== window) {
+    try {
+      var parentAudios = window.parent.document.getElementsByTagName("audio");
+      if (parentAudios.length > 0 && parentAudios[0].id !== "player") {
+        audioelement = parentAudios[0];
+      }
+    } catch(e) {}
+  }
+
   if (typeof(audioelement) != 'undefined') {
 
     document.getElementById('player').remove();
