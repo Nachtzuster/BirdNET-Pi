@@ -130,13 +130,9 @@ function submitID() {
 
 </script>  
 
-<form action="views.php" method="GET" style="display: inline-block;">
-  <input type="date" name="date" value="<?php echo $theDate;?>">
-  <button type="submit" name="view" value="Daily Charts">Submit Date</button>
-</form>
-
-<button type="button" style="margin-left: 10px;" onclick="showDialog()">Export as CSV for eBird</button>
-<br><br>
+<div style="text-align: center; margin: 20px 0;">
+    <button type="button" class="btn-apply" onclick="showDialog()">Export as CSV for eBird</button>
+</div>
 
 <?php
 echo "</div>";
