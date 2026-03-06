@@ -204,6 +204,34 @@ async def cache_remote_image_asset(
         return None
 
 
+async def ensure_local_image_asset(
+    sci_name: str,
+    provider: str,
+    settings: Settings,
+) -> Optional[str]:
+    """Ensure a local cached asset exists for a cached remote image."""
+    cached_meta = get_cached_fetch_meta(sci_name, provider, settings)
+    local_path = cached_meta.get('local_path') if cached_meta else None
+    if local_path and os.path.exists(os.path.join(settings.base_path, local_path)):
+        return local_path
+
+    cached_image = get_cached_image(sci_name, provider, settings)
+    if not cached_image or not cached_image.get('image_url'):
+        return None
+
+    remote_url = cached_image['image_url']
+    local_path = await cache_remote_image_asset(sci_name, provider, remote_url, settings)
+    if local_path:
+        cache_fetch_meta(
+            sci_name,
+            has_image=True,
+            provider=provider,
+            settings=settings,
+            local_path=local_path,
+        )
+    return local_path
+
+
 def build_local_asset_url(provider: str, sci_name: str) -> str:
     """Build API URL for a cached local image asset."""
     return f"/api/image-asset/{provider}/{sci_name}"
@@ -283,11 +311,8 @@ async def get_bird_image(
         cached = get_cached_image(sci_name, provider, settings)
         if cached and cached.get('image_url'):
             logger.debug("Cache hit for '%s'", sci_name)
-            cached_meta = get_cached_fetch_meta(sci_name, provider, settings)
-            local_path = cached_meta.get('local_path') if cached_meta else None
-            local_asset_exists = local_path and os.path.exists(os.path.join(settings.base_path, local_path))
             return BirdImage(
-                url=build_local_asset_url(provider, sci_name) if local_asset_exists else cached['image_url'],
+                url=build_local_asset_url(provider, sci_name) if provider == 'wikipedia' else cached['image_url'],
                 title=cached.get('title'),
                 author_url=cached.get('author_url'),
                 license_url=cached.get('license_url'),
@@ -318,7 +343,9 @@ async def get_bird_image(
             'license_url': image.license_url,
         }, provider, settings)
         cache_fetch_meta(sci_name, has_image=True, provider=provider, settings=settings, local_path=local_path)
-        if local_path:
+        if provider == 'wikipedia':
+            image.url = build_local_asset_url(provider, sci_name)
+        elif local_path:
             image.url = build_local_asset_url(provider, sci_name)
         return image
 
@@ -434,11 +461,11 @@ async def fetch_wikipedia_image(sci_name: str) -> tuple[Optional[BirdImage], boo
 
             data = response.json()
 
-            # Get thumbnail or original image
+            # Prefer the summary thumbnail over the original to avoid oversized asset fetches.
             thumbnail = data.get('thumbnail', {})
             original = data.get('originalimage', {})
 
-            image_url = original.get('source') or thumbnail.get('source')
+            image_url = thumbnail.get('source') or original.get('source')
 
             if not image_url:
                 logger.debug("Wikipedia page for '%s' has no image", sci_name)
@@ -461,14 +488,11 @@ async def get_cached_image_asset(
     settings: Settings = Depends(get_settings),
 ):
     """Serve a locally cached bird image asset."""
-    cached_meta = get_cached_fetch_meta(sci_name, provider, settings)
-    if not cached_meta or not cached_meta.get('local_path'):
+    local_path = await ensure_local_image_asset(sci_name, provider, settings)
+    if not local_path:
         raise HTTPException(status_code=404, detail="Cached image asset not found")
 
-    file_path = os.path.join(settings.base_path, cached_meta['local_path'])
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Cached image asset not found")
-
+    file_path = os.path.join(settings.base_path, local_path)
     return FileResponse(file_path)
 
 

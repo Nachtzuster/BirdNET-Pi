@@ -101,6 +101,26 @@ class TestIntegrationsCache(unittest.IsolatedAsyncioTestCase):
             self.assertIsNotNone(image)
             self.assertEqual(image.url, '/api/image-asset/wikipedia/Corvus corax')
 
+    async def test_cached_wikipedia_image_uses_local_endpoint_without_local_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.makedirs(os.path.join(tmpdir, 'scripts'), exist_ok=True)
+            settings = DummySettings(base_path=tmpdir)
+            integrations.cache_image(
+                sci_name='Sitta pusilla',
+                image_data={'url': 'https://upload.wikimedia.org/example.jpg', 'title': 'Brown-headed Nuthatch'},
+                provider='wikipedia',
+                settings=settings,
+            )
+
+            image = await integrations.get_bird_image(
+                sci_name='Sitta pusilla',
+                force_refresh=False,
+                settings=settings,
+            )
+
+            self.assertIsNotNone(image)
+            self.assertEqual(image.url, '/api/image-asset/wikipedia/Sitta pusilla')
+
 
 if __name__ == '__main__':
     unittest.main()
