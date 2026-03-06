@@ -165,6 +165,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
 
     <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
     <button type="submit" name="view" value="Analytics" form="views">📈 Analytics</button>
+    <button type="submit" name="view" value="Species" form="views">🐧 Species</button>
     <button type="submit" name="view" value="Weekly Report" form="views">📰 Report</button>
     <button type="submit" name="view" value="Recordings" form="views">🎵 Recordings</button>
     <button type="submit" name="view" value="View Log" form="views">📝 Log</button>
@@ -408,6 +409,7 @@ if(isset($_GET['view'])){
   if($_GET['view'] == "Species Stats"){include('stats.php');}
   if($_GET['view'] == "Weekly Report"){include('weekly_report.php');}
   if($_GET['view'] == "Analytics"){include('scripts/analytics.php');}
+  if($_GET['view'] == "Species"){include('scripts/species.php');}
   if($_GET['view'] == "Daily Charts"){include('history.php');}
   if($_GET['view'] == "Tools"){
     ensure_authenticated();
