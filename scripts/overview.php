@@ -29,6 +29,12 @@ if(isset($_GET['custom_image'])){
   die();
 }
 
+if(isset($_GET['clearcache'])) {
+  unset($_SESSION['images']);
+  header("Location: overview.php");
+  die();
+}
+
 if(isset($_GET['blacklistimage'])) {
   ensure_authenticated('You must be authenticated.');
   $imageid = $_GET['blacklistimage'];
@@ -437,12 +443,16 @@ function display_species($species_list, $title, $show_last_seen=false) {
                             if ($key !== false) {
                                 $image = $_SESSION['images'][$key];
                             } else {
-                                // Retrieve the image from Flickr API and cache it
-                                $cached_image = $image_provider->get_image($todaytable['Sci_Name']);
-                                array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
-                                $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+                                // Retrieve the image from the provider and cache it
+                                $cached_image = $image_provider->get_image($todaytable['Sci_Name'], $fallback_provider);
+                                if ($cached_image) {
+                                    array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
+                                    $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+                                } else {
+                                    $image = false;
+                                }
                             }
-                            $image_url = $image[1] ?? ""; // Get the image URL if available
+                            $image_url = ($image && isset($image[1])) ? $image[1] : "";
                         }
 
                         $last_seen_text = "";
@@ -463,7 +473,7 @@ function display_species($species_list, $title, $show_last_seen=false) {
                     ?>
                     <tr class="relative" id="<?php echo $iterations; ?>">
                         <td><?php if (!empty($image_url)): ?>
-                          <img onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image_url; ?>" style="max-width: none; height: 50px; width: 50px; border-radius: 5px; cursor: pointer;" class="img1" title="Image from Flickr" />
+                          <img onerror="this.style.display='none'" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image_url; ?>" style="max-width: none; height: 50px; width: 50px; border-radius: 5px; cursor: pointer;" class="img1" title="Image from Provider" />
                         <?php endif; ?></td>
                         <td id="recent_detection_middle_td">
                             <div><form action="" method="GET">

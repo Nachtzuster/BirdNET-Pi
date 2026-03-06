@@ -183,10 +183,14 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
 
     if (!empty($config["IMAGE_PROVIDER"])) {
       if ($image_provider === null) {
+        $flickr = new Flickr();
+        $wikipedia = new Wikipedia();
         if ($config["IMAGE_PROVIDER"] === 'FLICKR') {
-          $image_provider = new Flickr();
+          $image_provider = $flickr;
+          $fallback_provider = $wikipedia;
         } else {
-          $image_provider = new Wikipedia();
+          $image_provider = $wikipedia;
+          $fallback_provider = $flickr;
         }
         if ($image_provider->is_reset()) {
           $_SESSION['images'] = [];
@@ -198,9 +202,13 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
       if ($key !== false) {
         $image = $_SESSION['images'][$key];
       } else {
-        $cached_image = $image_provider->get_image($todaytable['Sci_Name']);
-        array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
-        $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+        $cached_image = $image_provider->get_image($todaytable['Sci_Name'], $fallback_provider);
+        if ($cached_image) {
+          array_push($_SESSION["images"], array($comname, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
+          $image = $_SESSION['images'][count($_SESSION['images']) - 1];
+        } else {
+          $image = false;
+        }
       }
     }
   ?>
@@ -212,8 +220,8 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
         
             
           <div class="centered_image_container">
-            <?php if(!empty($config["IMAGE_PROVIDER"]) && strlen($image[2]) > 0) { ?>
-              <img onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" class="img1">
+            <?php if(!empty($config["IMAGE_PROVIDER"]) && (isset($image[1]) && strlen($image[1]) > 0)) { ?>
+              <img onerror="this.style.display='none'" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" class="img1">
             <?php } ?>
 
             <?php echo $todaytable['Time'];?><br>   
@@ -231,8 +239,8 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
           <td id="recent_detection_middle_td">
           <div>
             <div>
-            <?php if(!empty($config["IMAGE_PROVIDER"]) && (isset($_GET['hard_limit']) || $_GET['kiosk'] == true) && strlen($image[2]) > 0) { ?>
-              <img style="float:left;height:75px;" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" id="birdimage" class="img1">
+            <?php if(!empty($config["IMAGE_PROVIDER"]) && (isset($_GET['hard_limit']) || $_GET['kiosk'] == true) && (isset($image[1]) && strlen($image[1]) > 0)) { ?>
+              <img onerror="this.style.display='none'" style="float:left;height:75px;" onclick='setModalText(<?php echo $iterations; ?>,"<?php echo urlencode($image[2]); ?>", "<?php echo $image[3]; ?>", "<?php echo $image[4]; ?>", "<?php echo $image[1]; ?>", "<?php echo $image[5]; ?>")' src="<?php echo $image[1]; ?>" id="birdimage" class="img1">
             <?php } ?>
           </div>
             <div>
