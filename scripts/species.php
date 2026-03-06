@@ -168,11 +168,14 @@ if ($image_provider->is_reset()) {
     background: #f8fafc;
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .bird-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 .card-content { padding: 20px; }
 .bird-name { font-size: 1.1rem; font-weight: 700; color: var(--text-heading); margin-bottom: 2px; }

@@ -233,7 +233,7 @@ class ImageProvider {
     $opts = [
       'http' => [
         'method' => "GET",
-        'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36\r\n"
+        'header' => "User-Agent: BirdNET-Pi/1.0 (https://github.com/mcguirepr89/BirdNET-Pi) PHP_Script\r\n"
       ]
     ];
     $this->context = stream_context_create($opts);
@@ -326,7 +326,7 @@ class Flickr extends ImageProvider {
   protected $db_path = __ROOT__ . '/scripts/flickr.db';
 
   private $flickr_api_key = null;
-  private $args = "&license=2%2C3%2C4%2C5%2C6%2C9&orientation=square,portrait";
+  private $args = "&license=2%2C3%2C4%2C5%2C6%2C9";
   private $blacklisted_ids = [];
   private $licenses_urls = [];
   private $flickr_email = null;
