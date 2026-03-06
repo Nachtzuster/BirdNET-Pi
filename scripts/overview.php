@@ -59,15 +59,54 @@ if(isset($_GET['ajax_chart_data']) && $_GET['ajax_chart_data'] == "true") {
   $stmt1 = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*) as cnt, MAX(Confidence) as maxConf FROM detections WHERE Date = DATE('now','localtime') GROUP BY Sci_Name ORDER BY cnt DESC");
   ensure_db_ok($stmt1);
   $res1 = $stmt1->execute();
-  $species = [];
-  while ($row = $res1->fetchArray(SQLITE3_ASSOC)) {
-    $species[] = [
-      'name' => $row['Com_Name'],
-      'sciName' => $row['Sci_Name'],
-      'count' => (int)$row['cnt'],
-      'maxConf' => round((float)$row['maxConf'], 3)
-    ];
-  }
+    // For image fetching
+    $image_provider = null;
+    $fallback_provider = null;
+    if (!empty($config["IMAGE_PROVIDER"])) {
+      $flickr = new Flickr();
+      $wikipedia = new Wikipedia();
+      if ($config["IMAGE_PROVIDER"] === 'FLICKR') {
+          $image_provider = $flickr;
+          $fallback_provider = $wikipedia;
+      } else {
+          $image_provider = $wikipedia;
+          $fallback_provider = $flickr;
+      }
+    }
+
+    $species = [];
+    while ($row = $res1->fetchArray(SQLITE3_ASSOC)) {
+      $img_url = "";
+      if ($image_provider) {
+        if (!isset($_SESSION['species_portal_v8_cache'])) {
+          $_SESSION['species_portal_v8_cache'] = [];
+        }
+        $search_name = trim($row['Com_Name']);
+        $key = array_search($search_name, array_column($_SESSION['species_portal_v8_cache'], 0));
+        
+        if ($key !== false) {
+          $img_url = $_SESSION['species_portal_v8_cache'][$key][1];
+        } else {
+          $cached_image = $image_provider->get_image($row['Sci_Name'], $fallback_provider);
+          if ($cached_image && !empty($cached_image["image_url"])) {
+            $image_data = array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]);
+            array_push($_SESSION["species_portal_v8_cache"], $image_data);
+            $img_url = $cached_image["image_url"];
+          } else {
+            $image_data = array($search_name, "", "Not Found", "", "", "");
+            array_push($_SESSION["species_portal_v8_cache"], $image_data);
+          }
+        }
+      }
+
+      $species[] = [
+        'name' => $row['Com_Name'],
+        'sciName' => $row['Sci_Name'],
+        'count' => (int)$row['cnt'],
+        'maxConf' => round((float)$row['maxConf'], 3),
+        'image' => $img_url
+      ];
+    }
 
   // Hourly breakdown per species
   $stmt2 = $db->prepare("SELECT Com_Name, CAST(strftime('%H', Time) AS INTEGER) as hour, COUNT(*) as cnt FROM detections WHERE Date = DATE('now','localtime') GROUP BY Com_Name, hour");

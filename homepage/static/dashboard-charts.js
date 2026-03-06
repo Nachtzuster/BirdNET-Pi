@@ -8,6 +8,7 @@
     'use strict';
 
     var heatmapChart = null;
+    var imageCache = {};
 
     function fetchChartData(callback) {
         var xhr = new XMLHttpRequest();
@@ -44,7 +45,7 @@
         var ctx = canvas.getContext('2d');
         var width = canvas.parentElement.clientWidth || canvas.width;
         var cellHeight = 32;
-        var labelWidth = Math.min(180, width * 0.25);
+        var labelWidth = Math.min(220, width * 0.35);
         var chartWidth = width - labelWidth - 10;
         var cellWidth = chartWidth / 24;
 
@@ -132,14 +133,51 @@
         });
 
         // Draw grid
-        speciesNames.forEach(function (name, rowIdx) {
+        species.forEach(function (s, rowIdx) {
+            var name = s.name;
             var y = headerHeight + (rowIdx * cellHeight);
 
-            // Species label
+            // Species label & Thumbnail
             ctx.fillStyle = textColor;
             ctx.textAlign = 'right';
             ctx.font = '13px Roboto Flex, sans-serif';
+
+            // Thumbnail
+            if (s.image) {
+                var img = imageCache[s.image];
+                if (!img) {
+                    img = new Image();
+                    img.onload = function () {
+                        // Debounce re-render to avoid spamming
+                        clearTimeout(window._heatmapTimer);
+                        window._heatmapTimer = setTimeout(function () {
+                            renderHeatmap(canvas, species, hourly, currentHour, weather);
+                        }, 50);
+                    };
+                    img.src = s.image;
+                    imageCache[s.image] = img;
+                }
+                if (img.complete && img.naturalWidth > 0) {
+                    var imgSize = 24;
+                    var imgX = 10;
+                    var imgY = y + (cellHeight - imgSize) / 2;
+                    ctx.save();
+                    // Draw rounded thumbnail background
+                    ctx.fillStyle = isDark ? '#334155' : '#f1f5f9';
+                    ctx.beginPath();
+                    ctx.roundRect ? ctx.roundRect(imgX, imgY, imgSize, imgSize, 4) : ctx.rect(imgX, imgY, imgSize, imgSize);
+                    ctx.fill();
+                    // Clip for rounded image
+                    ctx.beginPath();
+                    ctx.roundRect ? ctx.roundRect(imgX, imgY, imgSize, imgSize, 4) : ctx.rect(imgX, imgY, imgSize, imgSize);
+                    ctx.clip();
+                    ctx.drawImage(img, imgX, imgY, imgSize, imgSize);
+                    ctx.restore();
+                }
+            }
+
             var displayName = name.length > 25 ? name.substring(0, 23) + '…' : name;
+            ctx.fillStyle = textColor;
             ctx.fillText(displayName, labelWidth - 8, y + cellHeight / 2 + 4);
 
             // Hour cells
