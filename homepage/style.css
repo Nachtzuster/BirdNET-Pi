@@ -176,7 +176,7 @@ button:hover {
   /* Keep above sidebar/views */
   border-bottom: none;
   /* Remove border */
-  width: calc(100% - 250px);
+  width: calc(100% - 280px);
   /* Align with views width */
 }
 
@@ -1739,7 +1739,7 @@ pre#timer.bash {
 
 /* ===== Sidebar Menu Styles ===== */
 .sidebar {
-  width: 250px;
+  width: 280px;
   background-color: var(--bg-card);
   border-right: 1px solid var(--border);
   display: flex;
@@ -1846,9 +1846,9 @@ pre#timer.bash {
 }
 
 .views {
-  margin-left: 250px;
+  margin-left: 280px;
   padding: 20px;
-  width: calc(100% - 250px);
+  width: calc(100% - 280px);
   min-height: 100vh;
   transition: margin-left 0.3s;
 }

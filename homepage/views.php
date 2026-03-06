@@ -82,6 +82,158 @@ elseif ($config["LONGITUDE"] == "0.000") {
     <button type="submit" name="view" value="View Log" form="views">📝 Log</button>
     <button type="submit" name="view" value="Tools" form="views">⚙️ Tools<?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
   </div>
+
+  <style>
+  .sidebar-feed {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 15px 20px;
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+  .sidebar-feed h3 {
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+    color: var(--text-heading);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidebar-feed h3 .live-dot {
+    width: 8px; height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .feed-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+    /* Custom scrollbar for a cleaner look */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .feed-list::-webkit-scrollbar {
+    width: 4px;
+  }
+  .feed-list::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 4px;
+  }
+  .feed-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-light, #f1f5f9);
+    font-size: 0.8em;
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-species {
+    font-weight: 600;
+    color: var(--text-primary, #1f2937);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .feed-badge {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 8px;
+    font-size: 0.7em;
+    font-weight: 700;
+    margin: 0 6px;
+    min-width: 32px;
+    text-align: center;
+  }
+  .feed-badge.high { background: #dcfce7; color: #166534; }
+  .feed-badge.med  { background: #fef9c3; color: #854d0e; }
+  .feed-badge.low  { background: #fee2e2; color: #991b1b; }
+  .feed-time {
+    font-size: 0.75em;
+    color: var(--text-secondary, #6b7280);
+    white-space: nowrap;
+  }
+  </style>
+
+  <div class="sidebar-feed">
+  <?php
+    $current_weather_str = "";
+    try {
+      $feed_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
+      $check_weather = $feed_db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='weather'");
+      if ($check_weather && $check_weather->fetchArray()) {
+          $w_stmt = $feed_db->prepare("SELECT Temp, ConditionCode FROM weather WHERE Date = DATE('now','localtime') AND Hour = ?");
+          if ($w_stmt) {
+              $w_stmt->bindValue(1, (int)date('G'), SQLITE3_INTEGER);
+              $w_res = $w_stmt->execute();
+              if ($w_row = $w_res->fetchArray(SQLITE3_ASSOC)) {
+                  $temp = round((float)$w_row['Temp']);
+                  $code = (int)$w_row['ConditionCode'];
+                  
+                  $emoji = '☁️';
+                  if ($code === 0) $emoji = '☀️';
+                  elseif ($code >= 1 && $code <= 3) $emoji = '⛅';
+                  elseif ($code === 45 || $code === 48) $emoji = '🌫️';
+                  elseif ($code >= 51 && $code <= 55) $emoji = '🌦️';
+                  elseif ($code >= 61 && $code <= 65) $emoji = '🌧️';
+                  elseif ($code >= 71 && $code <= 75) $emoji = '❄️';
+                  elseif ($code >= 80 && $code <= 82) $emoji = '🌦️';
+                  elseif ($code >= 95) $emoji = '⛈️';
+                  
+                  $current_weather_str = "<span style='margin-left:auto; font-size:0.9em; font-weight:normal; color:var(--text-secondary, #6b7280);'>{$temp}&deg;F {$emoji}</span>";
+              }
+          }
+      }
+      $feed_db->close();
+    } catch(Exception $e) {}
+  ?>
+    <h3 style="display:flex; align-items:center; width:100%;"><span class="live-dot"></span> Live Activity <?php echo $current_weather_str; ?></h3>
+    <ul class="feed-list" id="liveFeedList">
+      <li style="padding:12px 0; text-align:center; color: var(--text-secondary, #6b7280);">Loading...</li>
+    </ul>
+  </div>
+
+  <script>
+  function refreshLiveFeed() {
+    fetch('api/v1/detections/recent?limit=20')
+      .then(r => r.json())
+      .then(data => {
+        const list = document.getElementById('liveFeedList');
+        if (!list) return;
+        if (!data || data.length === 0) {
+          list.innerHTML = '<li style="padding:12px 0; text-align:center; color: var(--text-secondary, #6b7280);">No detections today yet.</li>';
+          return;
+        }
+        list.innerHTML = data.map(d => {
+          const pct = Math.round(d.confidence * 100);
+          let cls = 'low';
+          if (pct >= 90) cls = 'high';
+          else if (pct >= 75) cls = 'med';
+          return `<li class="feed-item">
+            <span class="feed-species">${d.species}</span>
+            <span class="feed-badge ${cls}">${pct}%</span>
+            <span class="feed-time">${d.time}</span>
+          </li>`;
+        }).join('');
+      })
+      .catch(() => {});
+  }
+  document.addEventListener("DOMContentLoaded", function() {
+    refreshLiveFeed();
+    setInterval(refreshLiveFeed, 30000);
+  });
+  </script>
+
 </div>
 </form>
 <script type="text/javascript" src="static/plupload.full.min.js"></script>
