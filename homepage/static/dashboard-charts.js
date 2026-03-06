@@ -239,7 +239,7 @@
         var imgPreview = document.createElement('div');
         imgPreview.className = 'heatmap-img-preview';
         imgPreview.style.cssText = 'display:none;position:absolute;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:var(--shadow-lg);z-index:1000;pointer-events:none;width:150px;height:150px;overflow:hidden;';
-        imgPreview.innerHTML = '<img style="width:100%;height:100%;object-fit:cover;border-radius:4px;">';
+        imgPreview.innerHTML = '<img style="width:100%;height:100%;object-fit:cover;border-radius:4px;image-rendering:-webkit-optimize-contrast;image-rendering:high-quality;">';
         canvas.parentElement.appendChild(imgPreview);
 
         var displayed = species;

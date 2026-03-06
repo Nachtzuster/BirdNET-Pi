@@ -78,23 +78,23 @@ if(isset($_GET['ajax_chart_data']) && $_GET['ajax_chart_data'] == "true") {
     while ($row = $res1->fetchArray(SQLITE3_ASSOC)) {
       $img_url = "";
       if ($image_provider) {
-        if (!isset($_SESSION['species_portal_v8_cache'])) {
-          $_SESSION['species_portal_v8_cache'] = [];
+        if (!isset($_SESSION['species_portal_v12_cache'])) {
+          $_SESSION['species_portal_v12_cache'] = [];
         }
         $search_name = trim($row['Com_Name']);
-        $key = array_search($search_name, array_column($_SESSION['species_portal_v8_cache'], 0));
+        $key = array_search($search_name, array_column($_SESSION['species_portal_v12_cache'], 0));
         
         if ($key !== false) {
-          $img_url = $_SESSION['species_portal_v8_cache'][$key][1];
+          $img_url = $_SESSION['species_portal_v12_cache'][$key][1];
         } else {
           $cached_image = $image_provider->get_image($row['Sci_Name'], $fallback_provider);
           if ($cached_image && !empty($cached_image["image_url"])) {
             $image_data = array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]);
-            array_push($_SESSION["species_portal_v8_cache"], $image_data);
+            array_push($_SESSION["species_portal_v12_cache"], $image_data);
             $img_url = $cached_image["image_url"];
           } else {
             $image_data = array($search_name, "", "Not Found", "", "", "");
-            array_push($_SESSION["species_portal_v8_cache"], $image_data);
+            array_push($_SESSION["species_portal_v12_cache"], $image_data);
           }
         }
       }
@@ -180,24 +180,24 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isse
           }
         }
 
-        if (!isset($_SESSION['species_portal_v8_cache'])) {
-          $_SESSION['species_portal_v8_cache'] = [];
+        if (!isset($_SESSION['species_portal_v12_cache'])) {
+          $_SESSION['species_portal_v12_cache'] = [];
         }
         
         $search_name = trim($mostrecent['Com_Name']);
-        $key = array_search($search_name, array_column($_SESSION['species_portal_v8_cache'], 0));
+        $key = array_search($search_name, array_column($_SESSION['species_portal_v12_cache'], 0));
         
         if ($key !== false) {
-          $image = $_SESSION['species_portal_v8_cache'][$key];
+          $image = $_SESSION['species_portal_v12_cache'][$key];
         } else {
           $cached_image = $image_provider->get_image($mostrecent['Sci_Name'], $fallback_provider);
           if ($cached_image && !empty($cached_image["image_url"])) {
             $image_data = array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]);
-            array_push($_SESSION["species_portal_v8_cache"], $image_data);
+            array_push($_SESSION["species_portal_v12_cache"], $image_data);
             $image = $image_data;
           } else {
             $image_data = array($search_name, "", "Not Found", "", "", "");
-            array_push($_SESSION["species_portal_v8_cache"], $image_data);
+            array_push($_SESSION["species_portal_v12_cache"], $image_data);
             $image = $image_data;
           }
         }

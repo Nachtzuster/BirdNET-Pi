@@ -442,7 +442,8 @@ class Flickr extends ImageProvider {
     $license_url = $this->get_license_url($license_id);
 
     $authorlink = "https://flickr.com/people/" . $photo["owner"];
-    $imageurl = 'https://farm' . $photo["farm"] . '.static.flickr.com/' . $photo["server"] . '/' . $photo["id"] . '_' . $photo["secret"] . '.jpg';
+    // Using _b suffix for 1024px resolution (was using default which is often ~500px)
+    $imageurl = 'https://farm' . $photo["farm"] . '.static.flickr.com/' . $photo["server"] . '/' . $photo["id"] . '_' . $photo["secret"] . '_b.jpg';
 
     $this->set_image_in_db($sci_name, $engname, $imageurl, $photo["title"], $photo["id"], $authorlink, $license_url);
   }
