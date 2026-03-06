@@ -34,55 +34,75 @@ set_timezone();
   #live-audio-panel {
     position: fixed;
     top: 0;
-    right: 0;
+    right: 18px; /* Offset to not cover the right-hand scrollbar */
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 999999;
     display: flex;
-    align-items: center;
-    background: var(--bg-card, #fff);
-    border: 1px solid var(--border, #ccc);
-    border-right: none;
-    border-top: none;
-    border-radius: 0 0 0 8px;
-    box-shadow: -4px 4px 12px rgba(0,0,0,0.15);
-    padding: 2px 12px;
+    align-items: flex-start;
+    pointer-events: none; /* Let clicks pass through when hidden */
   }
   #live-audio-panel.open {
     transform: translateX(0);
+    pointer-events: auto;
   }
   #live-audio-tab {
     position: absolute;
-    left: -75px;
-    width: 75px;
+    left: -65px;
+    width: 65px;
+    height: 30px; /* Force tab to be vertically smaller as requested */
     top: 0;
-    bottom: -1px;
     background: var(--bg-card, #fff);
     border: 1px solid var(--border, #ccc);
-    border-right: none;
     border-top: none;
+    border-right: none;
     border-radius: 0 0 0 8px;
-    box-shadow: -4px 0px 8px rgba(0,0,0,0.1);
+    box-shadow: -2px 2px 6px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: 0.85em;
     font-weight: bold;
     color: var(--text-primary, #333);
     user-select: none;
+    pointer-events: auto; /* Tab always clickable */
   }
   #live-audio-tab:hover {
     background: var(--bg-button-hover, #f1f5f9);
+  }
+  #live-audio-content {
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border, #ccc);
+    border-top: none;
+    border-right: none;
+    border-radius: 0 0 0 8px;
+    box-shadow: -4px 4px 12px rgba(0,0,0,0.15);
+    padding: 2px 10px;
+    display: flex;
+    align-items: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s;
+  }
+  #live-audio-panel.open #live-audio-content {
+    visibility: visible;
+    opacity: 1;
+  }
+  #live-audio-player {
+    height: 36px;
+    outline: none;
   }
 </style>
 <div id="live-audio-panel" onmouseleave="startCloseTimer()" onmouseenter="cancelCloseTimer()">
   <div id="live-audio-tab" onclick="toggleAudioPanel()">
     🎙️ Live
   </div>
-  <audio id="live-audio-player" controls preload="none">
-    <source src="/stream">
-  </audio>
+  <div id="live-audio-content">
+    <audio id="live-audio-player" controls preload="none">
+      <source src="/stream">
+    </audio>
+  </div>
 </div>
 <script>
   let audioPanelTimer;
