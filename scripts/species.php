@@ -55,23 +55,21 @@ while ($row = $list_res->fetchArray(SQLITE3_ASSOC)) {
 }
 
 // Image fetching logic
-$image_provider = null;
-if (!empty($config["IMAGE_PROVIDER"])) {
-    if ($config["IMAGE_PROVIDER"] == "flickr") {
-        $image_provider = new Flickr();
-    } elseif ($config["IMAGE_PROVIDER"] == "wikipedia") {
-        $image_provider = new Wikipedia();
-    }
+$flickr = new Flickr();
+$wikipedia = new Wikipedia();
+
+if (isset($config['IMAGE_PROVIDER']) && strtolower($config['IMAGE_PROVIDER']) == 'flickr') {
+    $image_provider = $flickr;
+    $fallback_provider = $wikipedia;
+} else {
+    $image_provider = $wikipedia;
+    $fallback_provider = $flickr;
 }
 
-$fallback_provider = null;
-if (!empty($config["FALLBACK_IMAGE_PROVIDER"])) {
-    if ($config["FALLBACK_IMAGE_PROVIDER"] == "flickr") {
-        $fallback_provider = new Flickr();
-    } elseif ($config["FALLBACK_IMAGE_PROVIDER"] == "wikipedia") {
-        $fallback_provider = new Wikipedia();
-    }
+if ($image_provider->is_reset()) {
+    $_SESSION['images'] = [];
 }
+
 
 ?>
 
