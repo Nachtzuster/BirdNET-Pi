@@ -242,32 +242,34 @@ class ImageProvider {
   }
 
   public function get_image($sci_name, $fallback_provider = null) {
-    @file_put_contents('/tmp/birdnet_img.log', "Fetching $sci_name\n", FILE_APPEND);
+    $log_path = __ROOT__ . '/scripts/birdnet_img.log';
+    @file_put_contents($log_path, "[" . date('Y-m-d H:i:s') . "] Fetching $sci_name\n", FILE_APPEND);
     $image = $this->get_image_from_db($sci_name);
     if ($image !== false) {
-      @file_put_contents('/tmp/birdnet_img.log', "  Found in DB: " . $image['image_url'] . "\n", FILE_APPEND);
+      @file_put_contents($log_path, "  Found in DB: " . $image['image_url'] . "\n", FILE_APPEND);
       $now = new DateTime();
       $datetime = DateTime::createFromFormat("Y-m-d", $image['date_created']);
       $interval = $now->diff($datetime);
       $expire_days = rand(15, 25);
       if ($interval->days > $expire_days) {
         $image = false;
-        @file_put_contents('/tmp/birdnet_img.log', "  Expired. Re-fetching.\n", FILE_APPEND);
+        @file_put_contents($log_path, "  Expired. Re-fetching.\n", FILE_APPEND);
       }
     }
     if ($image === false) {
-      @file_put_contents('/tmp/birdnet_img.log', "  Not in DB, calling get_from_source\n", FILE_APPEND);
+      @file_put_contents($log_path, "  Not in DB, calling get_from_source\n", FILE_APPEND);
       $this->get_from_source($sci_name);
       $image = $this->get_image_from_db($sci_name);
     }
     
     // If we still don't have an image and a fallback provider was given, try it
     if (($image === false || empty($image['image_url'])) && $fallback_provider !== null) {
-      @file_put_contents('/tmp/birdnet_img.log', "  Wikipedia failed, falling back to Flickr\n", FILE_APPEND);
+      @file_put_contents($log_path, "  Wikipedia failed, falling back to Flickr\n", FILE_APPEND);
       return $fallback_provider->get_image($sci_name);
     }
 
-    @file_put_contents('/tmp/birdnet_img.log', "  Returning: " . ($image ? $image['image_url'] : "FALSE") . "\n", FILE_APPEND);
+    $url_status = $image ? $image['image_url'] : "FAILED ALL";
+    @file_put_contents($log_path, "  Final Result: $url_status\n", FILE_APPEND);
     return $image;
   }
 

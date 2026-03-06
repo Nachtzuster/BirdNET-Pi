@@ -8,6 +8,7 @@ $config = get_config();
 $time_period = isset($_GET['time_period']) ? $_GET['time_period'] : 'all';
 $sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'detections';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
+$debug_mode = isset($_GET['debug']) && $_GET['debug'] == '1';
 
 $db = get_db();
 
@@ -277,18 +278,27 @@ if ($image_provider && $image_provider->is_reset()) {
                     $cached_image = $image_provider->get_image($sci_name, $fallback_provider);
                     if ($cached_image && !empty($cached_image["image_url"])) {
                         $debug_msg = "Fetched Fresh. URL: " . $cached_image["image_url"];
-                        array_push($_SESSION["species_portal_v3_cache"], array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]));
-                        $image = $_SESSION['species_portal_v3_cache'][count($_SESSION['species_portal_v3_cache']) - 1];
+                        $image_data = array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]);
+                        array_push($_SESSION["species_portal_v3_cache"], $image_data);
+                        $image = $image_data;
                     } else {
-                        $debug_msg = "Fetch Failed. Check scientific name: " . $sci_name;
-                        $image = false;
+                        $debug_msg = "Fetch Failed. Scientific name: " . $sci_name;
+                        // Cache the failure with an empty URL so we don't retry every time
+                        $image_data = array($search_name, "", "Not Found", "", "", "");
+                        array_push($_SESSION["species_portal_v3_cache"], $image_data);
+                        $image = $image_data;
                     }
                 }
-                $image_url = ($image && isset($image[1]) && !empty($image[1])) ? $image[1] : 'images/bird.png';
+                $image_url = ($image && !empty($image[1])) ? $image[1] : 'images/bird.png';
             }
         ?>
             <!-- DEBUG: <?php echo $sci_name; ?> | <?php echo $debug_msg; ?> -->
             <div class="bird-card">
+                <?php if ($debug_mode): ?>
+                    <div style="font-size: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; word-break: break-all; max-height: 60px; overflow: auto; position: absolute; z-index: 10; width: 100%;">
+                        <?php echo $debug_msg; ?>
+                    </div>
+                <?php endif; ?>
                 <div class="bird-name-debug" style="display:none"><?php echo $sci_name; ?> | <?php echo $debug_msg; ?></div>
                 <div class="bird-image-container">
                     <img src="<?php echo $image_url; ?>" alt="<?php echo $com_name; ?>" class="bird-image" onerror="this.onerror=null; this.src='images/bird.png'">
