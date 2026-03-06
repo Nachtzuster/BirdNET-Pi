@@ -15,17 +15,17 @@
 
 /* KPI Grid */
 .kpi-grid {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 32px;
-    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+    margin-bottom: 32px !important;
+    width: 100% !important;
 }
 @media (max-width: 1200px) {
-    .kpi-grid { flex-wrap: wrap; }
-    .kpi-grid > .kpi-card { flex: 1 1 calc(50% - 16px); }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 @media (max-width: 768px) {
-    .kpi-grid > .kpi-card { flex: 1 1 100%; }
+    .kpi-grid { grid-template-columns: 1fr !important; }
 }
 .kpi-card {
     background: var(--bg-card);
@@ -37,7 +37,7 @@
     gap: 20px;
     border: 1px solid var(--border-light, #f1f5f9);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    flex: 1 !important;
+    width: 100% !important;
     min-width: 0;
     margin: 0 !important;
 }
