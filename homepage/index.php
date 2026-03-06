@@ -34,10 +34,12 @@ set_timezone();
 <?php
 if(isset($_GET['filename'])) {
   $filename = $_GET['filename'];
+  $query = $_SERVER['QUERY_STRING'];
 echo "
-<iframe src=\"views.php?view=Recordings&filename=$filename\" allow=\"autoplay\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 1;\"></iframe>";
+<iframe src=\"views.php?$query\" allow=\"autoplay\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 1;\"></iframe>";
 } else {
+  $query = $_SERVER['QUERY_STRING'];
   echo "
-<iframe src=\"views.php\" allow=\"autoplay\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 1;\"></iframe>";
+<iframe src=\"views.php?$query\" allow=\"autoplay\" style=\"position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 1;\"></iframe>";
 }
 ?>
