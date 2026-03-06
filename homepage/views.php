@@ -115,22 +115,18 @@ elseif ($config["LONGITUDE"] == "0.000") {
     list-style: none;
     padding: 0;
     margin: 0;
-    overflow: hidden; /* Hide scrollbars on desktop */
+    overflow-y: auto;
     flex-grow: 1;
+    /* Custom scrollbar for a cleaner look */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
-  @media (max-width: 1000px) {
-    .feed-list {
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
-    }
-    .feed-list::-webkit-scrollbar {
-      width: 4px;
-    }
-    .feed-list::-webkit-scrollbar-thumb {
-      background-color: var(--border);
-      border-radius: 4px;
-    }
+  .feed-list::-webkit-scrollbar {
+    width: 4px;
+  }
+  .feed-list::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 4px;
   }
   .feed-item {
     display: flex;
@@ -209,7 +205,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
 
   <script>
   function refreshLiveFeed() {
-    fetch('api/v1/detections/recent?limit=8')
+    fetch('api/v1/detections/recent?limit=6')
       .then(r => r.json())
       .then(data => {
         const list = document.getElementById('liveFeedList');
