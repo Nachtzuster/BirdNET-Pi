@@ -36,7 +36,8 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
     ]);
   }
 } elseif (preg_match('#^/api/v1/analytics/activity$#', $requestUri)) {
-  $stmt = $db->prepare('SELECT strftime("%H", Time) as Hour, COUNT(*) as Count FROM detections WHERE Date >= DATE("now", "-30 days") GROUP BY Hour ORDER BY Hour ASC');
+  $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 30;
+  $stmt = $db->prepare('SELECT strftime("%H", Time) as Hour, COUNT(*) as Count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Hour ORDER BY Hour ASC');
   $result = $stmt->execute();
   $data = [];
   while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
@@ -53,6 +54,68 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
   http_response_code(200);
   header('Content-Type: application/json');
   echo json_encode($final_data);
+
+} elseif (preg_match('#^/api/v1/analytics/stats$#', $requestUri)) {
+  $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 7;
+  
+  // Total detections
+  $stmt = $db->prepare('SELECT COUNT(*) as total FROM detections WHERE Date >= DATE("now", "-'.$days.' days")');
+  $total = $stmt->execute()->fetchArray(SQLITE3_ASSOC)['total'];
+  
+  // Unique species
+  $stmt = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) as unique_species FROM detections WHERE Date >= DATE("now", "-'.$days.' days")');
+  $unique = $stmt->execute()->fetchArray(SQLITE3_ASSOC)['unique_species'];
+  
+  // Avg confidence
+  $stmt = $db->prepare('SELECT AVG(Confidence) as avg_conf FROM detections WHERE Date >= DATE("now", "-'.$days.' days")');
+  $avg_conf = $stmt->execute()->fetchArray(SQLITE3_ASSOC)['avg_conf'];
+  
+  // Most common
+  $stmt = $db->prepare('SELECT Com_Name, COUNT(*) as count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Sci_Name ORDER BY count DESC LIMIT 1');
+  $most_common = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+
+  http_response_code(200);
+  header('Content-Type: application/json');
+  echo json_encode([
+    "total_detections" => $total,
+    "unique_species" => $unique,
+    "avg_confidence" => round($avg_conf * 100, 1) . '%',
+    "most_common" => $most_common ? $most_common['Com_Name'] : 'None',
+    "most_common_count" => $most_common ? $most_common['count'] : 0,
+    "days" => $days
+  ]);
+
+} elseif (preg_match('#^/api/v1/analytics/new_species$#', $requestUri)) {
+  $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 7;
+  
+  // Find species whose FIRST detection was within the last N days
+  $stmt = $db->prepare('SELECT Com_Name, Sci_Name, MIN(Date) as first_date, MIN(Time) as first_time FROM detections GROUP BY Sci_Name HAVING first_date >= DATE("now", "-'.$days.' days") ORDER BY first_date DESC, first_time DESC');
+  $result = $stmt->execute();
+  $data = [];
+  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $data[] = $row;
+  }
+
+  http_response_code(200);
+  header('Content-Type: application/json');
+  echo json_encode($data);
+
+} elseif (preg_match('#^/api/v1/analytics/diversity$#', $requestUri)) {
+  $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 30;
+  
+  $stmt = $db->prepare('SELECT Date, COUNT(DISTINCT(Sci_Name)) as count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Date ORDER BY Date ASC');
+  $result = $stmt->execute();
+  
+  $dates = [];
+  $counts = [];
+  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $dates[] = $row['Date'];
+    $counts[] = $row['count'];
+  }
+
+  http_response_code(200);
+  header('Content-Type: application/json');
+  echo json_encode(["dates" => $dates, "counts" => $counts]);
 
 } elseif (preg_match('#^/api/v1/analytics/top_species$#', $requestUri)) {
   $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 30;
@@ -87,7 +150,7 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
     $dates_array[] = date('Y-m-d', strtotime("-$i days"));
   }
 
-  // For each top species, get daily counts
+  // Get daily counts for each top species
   foreach ($top_species as $species) {
     $stmt = $db->prepare('SELECT Date, COUNT(*) as Count FROM detections WHERE Com_Name = :com_name AND Date >= DATE("now", "-'.$days.' days") GROUP BY Date');
     $stmt->bindValue(':com_name', $species, SQLITE3_TEXT);
@@ -101,27 +164,59 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
     // Fill empty dates with 0
     $final_species_data = [];
     foreach ($dates_array as $dateStr) {
-      $final_species_data[$dateStr] = isset($species_data[$dateStr]) ? $species_data[$dateStr] : 0;
+      $final_species_data[] = isset($species_data[$dateStr]) ? $species_data[$dateStr] : 0;
     }
     
-    $data[$species] = array_values($final_species_data);
+    $data[$species] = $final_species_data;
   }
 
   http_response_code(200);
   header('Content-Type: application/json');
   echo json_encode(["dates" => $dates_array, "series" => $data]);
 
+} elseif (preg_match('#^/api/v1/analytics/patterns$#', $requestUri)) {
+  $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 30;
+  
+  // Get top 5 species first
+  $stmt = $db->prepare('SELECT Com_Name, COUNT(*) as Count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Com_Name ORDER BY Count DESC LIMIT 5');
+  $result = $stmt->execute();
+  $top_species = [];
+  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $top_species[] = $row['Com_Name'];
+  }
+  
+  $data = [];
+  foreach ($top_species as $species) {
+    $stmt = $db->prepare('SELECT strftime("%H", Time) as Hour, COUNT(*) as count FROM detections WHERE Com_Name = :com_name AND Date >= DATE("now", "-'.$days.' days") GROUP BY Hour ORDER BY Hour ASC');
+    $stmt->bindValue(':com_name', $species, SQLITE3_TEXT);
+    $result = $stmt->execute();
+    
+    $hourly_counts = array_fill(0, 24, 0);
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+      $hourly_counts[intval($row['Hour'])] = (float)$row['count'] / $days; // Average detections per hour
+    }
+    $data[$species] = $hourly_counts;
+  }
+
+  http_response_code(200);
+  header('Content-Type: application/json');
+  echo json_encode($data);
+
 } elseif (preg_match('#^/api/v1/detections/recent$#', $requestUri)) {
   $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) ? intval($_GET['limit']) : 20;
+  $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 0;
   if ($limit > 100) $limit = 100;
   
-  $stmt = $db->prepare('SELECT Com_Name, Confidence, Time FROM detections WHERE Date = DATE("now", "localtime") ORDER BY Time DESC LIMIT '.$limit);
+  $date_filter = $days > 0 ? 'Date >= DATE("now", "-'.$days.' days")' : 'Date = DATE("now", "localtime")';
+  $stmt = $db->prepare('SELECT Com_Name, Sci_Name, Confidence, Date, Time FROM detections WHERE '.$date_filter.' ORDER BY Date DESC, Time DESC LIMIT '.$limit);
   $result = $stmt->execute();
   $data = [];
   while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
     $data[] = [
       "species" => $row['Com_Name'],
-      "confidence" => round((float)$row['Confidence'], 2),
+      "sci_name" => $row['Sci_Name'],
+      "confidence" => round((float)$row['Confidence'], 4),
+      "date" => $row['Date'],
       "time" => $row['Time']
     ];
   }
