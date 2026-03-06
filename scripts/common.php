@@ -230,7 +230,12 @@ class ImageProvider {
 
   public function __construct() {
     $this->set_db();
-    $opts = ['http' => ['header' => "User-Agent: BirdNET-Pi"]];
+    $opts = [
+      'http' => [
+        'method' => "GET",
+        'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36\r\n"
+      ]
+    ];
     $this->context = stream_context_create($opts);
   }
 
@@ -263,7 +268,9 @@ class ImageProvider {
   }
 
   protected function get_json($url) {
-    return json_decode(file_get_contents($url, false, $this->context), true);
+    $resp = @file_get_contents($url, false, $this->context);
+    if ($resp === false) return false;
+    return json_decode($resp, true);
   }
 
   protected function set_db() {
@@ -326,7 +333,7 @@ class Flickr extends ImageProvider {
   private $comnameprefix = "%20bird";
 
   public function __construct() {
-    $this->set_db();
+    parent::__construct();
 
     $blacklisted = get_home() . "/BirdNET-Pi/scripts/blacklisted_images.txt";
     if (file_exists($blacklisted)) {
@@ -454,8 +461,14 @@ class Flickr extends ImageProvider {
   }
 
   private function get_uid_from_flickr() {
-    $uid = json_decode(file_get_contents("https://www.flickr.com/services/rest/?method=flickr.people.findByEmail&api_key=" . $this->flickr_api_key . "&find_email=" . $this->flickr_email . "&format=json&nojsoncallback=1"), true)["user"]["nsid"];
-    $this->set_uid_in_db($uid);
+    $url = "https://www.flickr.com/services/rest/?method=flickr.people.findByEmail&api_key=" . $this->flickr_api_key . "&find_email=" . $this->flickr_email . "&format=json&nojsoncallback=1";
+    $resp = @file_get_contents($url, false, $this->context);
+    if ($resp === false) return;
+    $data = json_decode($resp, true);
+    if (isset($data["user"]["nsid"])) {
+      $uid = $data["user"]["nsid"];
+      $this->set_uid_in_db($uid);
+    }
   }
 }
 
@@ -512,7 +525,14 @@ class Wikipedia extends ImageProvider {
     if ($image === false)
       return false;
 
-    $image['photos_url'] = $this->get_external_link($image['image_url']);
+    // Only use get_external_link if the image is actually from Wikipedia
+    if (strpos($image['image_url'], 'wikimedia.org') !== false) {
+      $image['photos_url'] = $this->get_external_link($image['image_url']);
+    } else {
+      // If it's a fallback (e.g. from Flickr), it should already have a photo_url,
+      // but we ensure it's set. ImageProvider doesn't set it by default.
+      // Flickr::get_image sets it, so if we got here from Flickr, it might already be there.
+    }
     return $image;
   }
 
