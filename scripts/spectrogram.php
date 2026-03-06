@@ -154,16 +154,13 @@ window.onload = function(){
     initialize();
   } else {
     player = document.getElementById('player');
-    player.style.display = 'block'; // Reveal so user can manually start audio context
     player.oncanplay = function() {
       if (started) return;
         started = true;
         initialize();
     };
   }
-  player.play().catch(function(error) {
-     console.log("Autoplay prevented. Please click play on the audio player manually.", error);
-  });
+  player.play();
   
   }
 };

@@ -50,24 +50,22 @@ if(isset($_GET['stream'])){
   </script>
   </div>
   <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
-</div>";
+  </div>";
 } else {
     echo "
-  <form action=\"index.php\" method=\"GET\" style=\"position: absolute; right: 20px; top: 15px; z-index: 999999;\">
+  <form action=\"index.php\" method=\"GET\">
     <!-- Live Audio button moved to sidebar, original form kept for logical routing if needed -->
-    <button type=\"submit\" name=\"stream\" value=\"play\" style=\"box-shadow: 0 4px 12px rgba(0,0,0,0.5);\">🎙️ Live Audio</button>
+    <button type=\"submit\" name=\"stream\" value=\"play\">🎙️ Live Audio</button>
   </form>
   </div>
   <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
 </div>";
 }
-?>
-<?php
 if(isset($_GET['filename'])) {
   $filename = $_GET['filename'];
 echo "
-<iframe src=\"views.php?view=Recordings&filename=$filename\" allow=\"autoplay\"></iframe>";
+<iframe src=\"views.php?view=Recordings&filename=$filename\"></iframe>";
 } else {
   echo "
-<iframe src=\"views.php\" allow=\"autoplay\"></iframe>";
+<iframe src=\"views.php\"></iframe>";
 }
