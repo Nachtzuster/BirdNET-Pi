@@ -45,6 +45,15 @@ class TestIntegrationsCache(unittest.IsolatedAsyncioTestCase):
             '/api/image-asset/wikipedia/Corvus corax',
         )
 
+    def test_rewrite_wikimedia_thumbnail_url(self):
+        original = (
+            'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/'
+            'Pine_warbler_%2890070%29.jpg/1024px-Pine_warbler_%2890070%29.jpg'
+        )
+        rewritten = integrations.rewrite_wikimedia_thumbnail_url(original)
+        self.assertIn('/640px-', rewritten)
+        self.assertNotIn('/1024px-', rewritten)
+
     async def test_negative_cache_skips_wikipedia_fetch(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             os.makedirs(os.path.join(tmpdir, 'scripts'), exist_ok=True)

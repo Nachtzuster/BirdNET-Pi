@@ -22,6 +22,7 @@ router = APIRouter()
 NEGATIVE_CACHE_TTL_SECONDS = 12 * 60 * 60
 WIKIMEDIA_MIN_REQUEST_INTERVAL_SECONDS = 0.5
 WIKIMEDIA_DEFAULT_RETRY_AFTER_SECONDS = 60
+WIKIMEDIA_LOCAL_CACHE_MAX_WIDTH = 640
 
 _wikimedia_request_lock: Optional[asyncio.Lock] = None
 _wikimedia_lock_loop_id: Optional[int] = None
@@ -179,6 +180,21 @@ def get_extension_from_url(url: str) -> str:
     return '.jpg'
 
 
+def get_wikimedia_headers() -> dict[str, str]:
+    """Headers for Wikimedia API and asset requests."""
+    return {
+        "User-Agent": "BirdNET-Pi/1.0 (https://github.com/tphakala/BirdNET-Pi; bird detection project)",
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+    }
+
+
+def rewrite_wikimedia_thumbnail_url(url: str, max_width: int = WIKIMEDIA_LOCAL_CACHE_MAX_WIDTH) -> str:
+    """Clamp Wikimedia thumbnail URLs to a smaller width to reduce upstream load."""
+    if "upload.wikimedia.org" not in url or "/thumb/" not in url:
+        return url
+    return re.sub(r'/\d+px-', f'/{max_width}px-', url, count=1)
+
+
 async def cache_remote_image_asset(
     sci_name: str,
     provider: str,
@@ -187,12 +203,16 @@ async def cache_remote_image_asset(
 ) -> Optional[str]:
     """Download and cache a remote image locally so the browser no longer fetches Wikimedia directly."""
     try:
+        remote_url = rewrite_wikimedia_thumbnail_url(remote_url)
         file_name = f"{sanitize_cache_key(sci_name)}{get_extension_from_url(remote_url)}"
         absolute_path = os.path.join(get_image_asset_dir(provider, settings), file_name)
         relative_path = os.path.relpath(absolute_path, settings.base_path)
 
         if not os.path.exists(absolute_path):
-            async with httpx.AsyncClient(follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                follow_redirects=True,
+                headers=get_wikimedia_headers(),
+            ) as client:
                 response = await client.get(remote_url, timeout=20)
                 response.raise_for_status()
                 with open(absolute_path, 'wb') as image_file:
@@ -455,9 +475,7 @@ async def fetch_wikipedia_image(sci_name: str) -> tuple[Optional[BirdImage], boo
 
     Returns (image, cacheable_miss).
     """
-    headers = {
-        "User-Agent": "BirdNET-Pi/1.0 (https://github.com/tphakala/BirdNET-Pi; bird detection project)",
-    }
+    headers = get_wikimedia_headers()
     async with httpx.AsyncClient(headers=headers) as client:
         # Use Wikipedia REST API to get page summary
         url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{sci_name.replace(' ', '_')}"
