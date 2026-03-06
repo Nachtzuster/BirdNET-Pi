@@ -1,11 +1,15 @@
 """External integration API endpoints (Flickr, Wikipedia, BirdWeather)."""
+import asyncio
 import logging
 import os
+import re
 import sqlite3
+import time
 from typing import Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 
 from ..config import get_settings, Settings
 from ..models.schemas import BirdImage
@@ -14,6 +18,15 @@ from ..species_links import build_species_links
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+NEGATIVE_CACHE_TTL_SECONDS = 12 * 60 * 60
+WIKIMEDIA_MIN_REQUEST_INTERVAL_SECONDS = 0.5
+WIKIMEDIA_DEFAULT_RETRY_AFTER_SECONDS = 60
+
+_wikimedia_request_lock: Optional[asyncio.Lock] = None
+_wikimedia_lock_loop_id: Optional[int] = None
+_wikimedia_next_request_at = 0.0
+_wikimedia_cooldown_until = 0.0
 
 
 # Image cache database
@@ -36,6 +49,14 @@ def get_image_cache_db(provider: str, settings: Settings) -> sqlite3.Connection:
             author_url TEXT,
             license_url TEXT,
             date_created TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS image_fetch_meta (
+            sci_name TEXT PRIMARY KEY,
+            has_image INTEGER NOT NULL,
+            local_path TEXT,
+            last_checked_epoch INTEGER NOT NULL
         )
     """)
     conn.commit()
@@ -84,6 +105,161 @@ def cache_image(sci_name: str, image_data: dict, provider: str, settings: Settin
         pass
 
 
+def get_cached_fetch_meta(sci_name: str, provider: str, settings: Settings) -> Optional[dict]:
+    """Get fetch metadata from database."""
+    try:
+        conn = get_image_cache_db(provider, settings)
+        cursor = conn.execute(
+            "SELECT has_image, local_path, last_checked_epoch FROM image_fetch_meta WHERE sci_name = ?",
+            (sci_name,),
+        )
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
+    except Exception:
+        return None
+
+
+def cache_fetch_meta(
+    sci_name: str,
+    has_image: bool,
+    provider: str,
+    settings: Settings,
+    local_path: Optional[str] = None,
+):
+    """Cache fetch result metadata without changing the legacy images table schema."""
+    try:
+        conn = get_image_cache_db(provider, settings)
+        conn.execute("""
+            INSERT OR REPLACE INTO image_fetch_meta
+            (sci_name, has_image, local_path, last_checked_epoch)
+            VALUES (?, ?, ?, ?)
+        """, (
+            sci_name,
+            1 if has_image else 0,
+            local_path,
+            int(time.time()),
+        ))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
+def is_negative_cache_fresh(cached_meta: Optional[dict], ttl_seconds: int = NEGATIVE_CACHE_TTL_SECONDS) -> bool:
+    """Return True when a no-image result was cached recently."""
+    if not cached_meta or cached_meta.get('has_image'):
+        return False
+    last_checked_epoch = cached_meta.get('last_checked_epoch')
+    if not last_checked_epoch:
+        return False
+    return (time.time() - int(last_checked_epoch)) < ttl_seconds
+
+
+def sanitize_cache_key(sci_name: str) -> str:
+    """Create a filesystem-safe cache key."""
+    normalized = sci_name.strip().replace(' ', '_')
+    return re.sub(r'[^A-Za-z0-9_.-]+', '_', normalized)
+
+
+def get_image_asset_dir(provider: str, settings: Settings) -> str:
+    """Return local asset cache directory."""
+    asset_dir = os.path.join(settings.base_path, 'scripts', 'image-cache', provider)
+    os.makedirs(asset_dir, exist_ok=True)
+    return asset_dir
+
+
+def get_extension_from_url(url: str) -> str:
+    """Extract a conservative extension from image URL."""
+    path = url.split('?', 1)[0]
+    _, ext = os.path.splitext(path)
+    ext = ext.lower()
+    if ext in {'.jpg', '.jpeg', '.png', '.webp', '.gif'}:
+        return ext
+    return '.jpg'
+
+
+async def cache_remote_image_asset(
+    sci_name: str,
+    provider: str,
+    remote_url: str,
+    settings: Settings,
+) -> Optional[str]:
+    """Download and cache a remote image locally so the browser no longer fetches Wikimedia directly."""
+    try:
+        file_name = f"{sanitize_cache_key(sci_name)}{get_extension_from_url(remote_url)}"
+        absolute_path = os.path.join(get_image_asset_dir(provider, settings), file_name)
+        relative_path = os.path.relpath(absolute_path, settings.base_path)
+
+        if not os.path.exists(absolute_path):
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(remote_url, timeout=20)
+                response.raise_for_status()
+                with open(absolute_path, 'wb') as image_file:
+                    image_file.write(response.content)
+
+        return relative_path
+    except Exception as e:
+        logger.warning("Failed to cache local image asset for '%s': %s", sci_name, e)
+        return None
+
+
+def build_local_asset_url(provider: str, sci_name: str) -> str:
+    """Build API URL for a cached local image asset."""
+    return f"/api/image-asset/{provider}/{sci_name}"
+
+
+def parse_retry_after_seconds(retry_after_header: Optional[str]) -> int:
+    """Parse Retry-After header as seconds."""
+    if not retry_after_header:
+        return WIKIMEDIA_DEFAULT_RETRY_AFTER_SECONDS
+    try:
+        return max(1, int(retry_after_header))
+    except ValueError:
+        return WIKIMEDIA_DEFAULT_RETRY_AFTER_SECONDS
+
+
+def get_wikimedia_request_lock() -> asyncio.Lock:
+    """Return a loop-local lock for Wikimedia request pacing."""
+    global _wikimedia_request_lock
+    global _wikimedia_lock_loop_id
+
+    running_loop = asyncio.get_running_loop()
+    running_loop_id = id(running_loop)
+    if _wikimedia_request_lock is None or _wikimedia_lock_loop_id != running_loop_id:
+        _wikimedia_request_lock = asyncio.Lock()
+        _wikimedia_lock_loop_id = running_loop_id
+    return _wikimedia_request_lock
+
+
+async def await_wikimedia_request_slot():
+    """Rate-limit outgoing Wikimedia requests inside the API process."""
+    global _wikimedia_next_request_at
+
+    lock = get_wikimedia_request_lock()
+    async with lock:
+        now = time.monotonic()
+        wait_seconds = max(0.0, _wikimedia_next_request_at - now, _wikimedia_cooldown_until - now)
+        if wait_seconds > 0:
+            await asyncio.sleep(wait_seconds)
+        _wikimedia_next_request_at = time.monotonic() + WIKIMEDIA_MIN_REQUEST_INTERVAL_SECONDS
+
+
+async def apply_wikimedia_backoff(cooldown_seconds: int):
+    """Honor Wikimedia retry windows after 429 responses."""
+    global _wikimedia_cooldown_until
+
+    if cooldown_seconds <= 0:
+        return
+
+    lock = get_wikimedia_request_lock()
+    async with lock:
+        _wikimedia_cooldown_until = max(
+            _wikimedia_cooldown_until,
+            time.monotonic() + cooldown_seconds,
+        )
+
+
 @router.get("/image/{sci_name}", response_model=Optional[BirdImage])
 async def get_bird_image(
     sci_name: str,
@@ -107,24 +283,33 @@ async def get_bird_image(
         cached = get_cached_image(sci_name, provider, settings)
         if cached and cached.get('image_url'):
             logger.debug("Cache hit for '%s'", sci_name)
+            cached_meta = get_cached_fetch_meta(sci_name, provider, settings)
+            local_path = cached_meta.get('local_path') if cached_meta else None
+            local_asset_exists = local_path and os.path.exists(os.path.join(settings.base_path, local_path))
             return BirdImage(
-                url=cached['image_url'],
+                url=build_local_asset_url(provider, sci_name) if local_asset_exists else cached['image_url'],
                 title=cached.get('title'),
                 author_url=cached.get('author_url'),
                 license_url=cached.get('license_url'),
                 source=provider,
             )
+        cached_meta = get_cached_fetch_meta(sci_name, provider, settings)
+        if provider == 'wikipedia' and is_negative_cache_fresh(cached_meta):
+            logger.debug("Negative image cache hit for '%s'", sci_name)
+            return None
 
     # Fetch from provider
+    cacheable_miss = True
     if provider == 'flickr':
         image = await fetch_flickr_image(sci_name, settings)
     elif provider == 'wikipedia':
-        image = await fetch_wikipedia_image(sci_name)
+        image, cacheable_miss = await fetch_wikipedia_image(sci_name)
     else:
         raise HTTPException(status_code=400, detail=f"Unknown image provider: {provider}")
 
     if image:
         logger.debug("Fetched image for '%s' from %s: %s", sci_name, provider, image.url)
+        local_path = await cache_remote_image_asset(sci_name, provider, image.url, settings)
         # Cache the result
         cache_image(sci_name, {
             'url': image.url,
@@ -132,9 +317,14 @@ async def get_bird_image(
             'author_url': image.author_url,
             'license_url': image.license_url,
         }, provider, settings)
+        cache_fetch_meta(sci_name, has_image=True, provider=provider, settings=settings, local_path=local_path)
+        if local_path:
+            image.url = build_local_asset_url(provider, sci_name)
         return image
 
     logger.warning("No image found for '%s' from provider '%s'", sci_name, provider)
+    if provider == 'wikipedia' and cacheable_miss:
+        cache_fetch_meta(sci_name, has_image=False, provider=provider, settings=settings)
     # Return null instead of 404 - let frontend handle gracefully
     return None
 
@@ -212,8 +402,11 @@ async def fetch_flickr_image(sci_name: str, settings: Settings) -> Optional[Bird
             return None
 
 
-async def fetch_wikipedia_image(sci_name: str) -> Optional[BirdImage]:
-    """Fetch bird image from Wikipedia API."""
+async def fetch_wikipedia_image(sci_name: str) -> tuple[Optional[BirdImage], bool]:
+    """Fetch bird image from Wikipedia API.
+
+    Returns (image, cacheable_miss).
+    """
     headers = {
         "User-Agent": "BirdNET-Pi/1.0 (https://github.com/tphakala/BirdNET-Pi; bird detection project)",
     }
@@ -222,11 +415,22 @@ async def fetch_wikipedia_image(sci_name: str) -> Optional[BirdImage]:
         url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{sci_name.replace(' ', '_')}"
 
         try:
+            await await_wikimedia_request_slot()
             response = await client.get(url, timeout=10)
+
+            if response.status_code == 429:
+                retry_after_seconds = parse_retry_after_seconds(response.headers.get('Retry-After'))
+                await apply_wikimedia_backoff(retry_after_seconds)
+                logger.warning(
+                    "Wikipedia rate limited '%s' (429), backing off for %ds",
+                    sci_name,
+                    retry_after_seconds,
+                )
+                return None, False
 
             if response.status_code != 200:
                 logger.warning("Wikipedia returned %d for '%s'", response.status_code, sci_name)
-                return None
+                return None, True
 
             data = response.json()
 
@@ -238,16 +442,34 @@ async def fetch_wikipedia_image(sci_name: str) -> Optional[BirdImage]:
 
             if not image_url:
                 logger.debug("Wikipedia page for '%s' has no image", sci_name)
-                return None
+                return None, True
 
             return BirdImage(
                 url=image_url,
                 title=data.get('title', sci_name),
                 source='wikipedia',
-            )
+            ), True
         except Exception as e:
             logger.error("Wikipedia fetch failed for '%s': %s", sci_name, e)
-            return None
+            return None, False
+
+
+@router.get("/image-asset/{provider}/{sci_name:path}")
+async def get_cached_image_asset(
+    provider: str,
+    sci_name: str,
+    settings: Settings = Depends(get_settings),
+):
+    """Serve a locally cached bird image asset."""
+    cached_meta = get_cached_fetch_meta(sci_name, provider, settings)
+    if not cached_meta or not cached_meta.get('local_path'):
+        raise HTTPException(status_code=404, detail="Cached image asset not found")
+
+    file_path = os.path.join(settings.base_path, cached_meta['local_path'])
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Cached image asset not found")
+
+    return FileResponse(file_path)
 
 
 @router.post("/image/{sci_name}/blacklist")
@@ -265,6 +487,7 @@ async def blacklist_image(
     try:
         conn = get_image_cache_db(provider, settings)
         conn.execute("DELETE FROM images WHERE sci_name = ?", (sci_name,))
+        conn.execute("DELETE FROM image_fetch_meta WHERE sci_name = ?", (sci_name,))
         conn.commit()
         conn.close()
     except Exception as e:
