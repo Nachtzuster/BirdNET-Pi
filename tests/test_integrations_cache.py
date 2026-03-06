@@ -121,6 +121,41 @@ class TestIntegrationsCache(unittest.IsolatedAsyncioTestCase):
             self.assertIsNotNone(image)
             self.assertEqual(image.url, '/api/image-asset/wikipedia/Sitta pusilla')
 
+    async def test_asset_endpoint_refetches_summary_when_cached_url_is_not_remote(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.makedirs(os.path.join(tmpdir, 'scripts'), exist_ok=True)
+            settings = DummySettings(base_path=tmpdir)
+            integrations.cache_image(
+                sci_name='Sitta pusilla',
+                image_data={'url': '/api/image-asset/wikipedia/Sitta pusilla', 'title': 'Brown-headed Nuthatch'},
+                provider='wikipedia',
+                settings=settings,
+            )
+
+            with patch(
+                'backend.app.routers.integrations.fetch_wikipedia_image',
+                new=AsyncMock(return_value=(
+                    integrations.BirdImage(
+                        url='https://upload.wikimedia.org/example.jpg',
+                        title='Brown-headed Nuthatch',
+                        source='wikipedia',
+                    ),
+                    True,
+                )),
+            ) as mock_fetch:
+                with patch(
+                    'backend.app.routers.integrations.cache_remote_image_asset',
+                    new=AsyncMock(return_value=os.path.join('scripts', 'image-cache', 'wikipedia', 'Sitta_pusilla.jpg')),
+                ):
+                    local_path = await integrations.ensure_local_image_asset(
+                        sci_name='Sitta pusilla',
+                        provider='wikipedia',
+                        settings=settings,
+                    )
+
+            self.assertEqual(local_path, os.path.join('scripts', 'image-cache', 'wikipedia', 'Sitta_pusilla.jpg'))
+            mock_fetch.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()

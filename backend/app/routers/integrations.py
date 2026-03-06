@@ -216,10 +216,31 @@ async def ensure_local_image_asset(
         return local_path
 
     cached_image = get_cached_image(sci_name, provider, settings)
-    if not cached_image or not cached_image.get('image_url'):
+    remote_url = None
+    if cached_image and cached_image.get('image_url'):
+        candidate_url = cached_image['image_url']
+        if isinstance(candidate_url, str) and candidate_url.startswith('http'):
+            remote_url = candidate_url
+
+    # If the cached row is missing or malformed, try a fresh Wikimedia summary lookup.
+    if not remote_url and provider == 'wikipedia':
+        image, cacheable_miss = await fetch_wikipedia_image(sci_name)
+        if image:
+            cache_image(sci_name, {
+                'url': image.url,
+                'title': image.title,
+                'author_url': image.author_url,
+                'license_url': image.license_url,
+            }, provider, settings)
+            remote_url = image.url
+        elif cacheable_miss:
+            cache_fetch_meta(sci_name, has_image=False, provider=provider, settings=settings)
+            return None
+
+    if not remote_url:
         return None
 
-    remote_url = cached_image['image_url']
+    logger.debug("Caching local image asset for '%s' from %s", sci_name, remote_url)
     local_path = await cache_remote_image_asset(sci_name, provider, remote_url, settings)
     if local_path:
         cache_fetch_meta(
