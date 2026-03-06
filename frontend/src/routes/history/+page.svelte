@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { detections, integrations, type RangeChartData, type SpeciesExternalLinks } from '$lib/api';
+	import { detections, integrations, type RangeChartData } from '$lib/api';
 	import { ExternalLinks } from '$lib/components';
 	import { toasts } from '$lib/stores';
 
@@ -25,7 +25,7 @@
 
 	let selectedSpecies: Set<string> = new Set();
 	let isDark = false;
-	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
+	let prefersReducedMotion = false;
 
 	function detectTheme() {
 		isDark = document.documentElement.classList.contains('dark');
@@ -164,7 +164,6 @@
 				end,
 				group_by: groupByForMode(rangeMode),
 			});
-			await loadSpeciesLinks();
 		} catch (e) {
 			console.error('Failed to load chart data:', e);
 			toasts.show('Failed to load chart data', 'error');
@@ -174,28 +173,6 @@
 		}
 		await tick();
 		renderCharts();
-	}
-
-	async function loadSpeciesLinks() {
-		if (!chartData) return;
-		const missing = chartData.top_species.filter((sp) => !speciesLinksBySci[sp.sci_name]);
-		if (missing.length === 0) return;
-		const loaded = await Promise.all(
-			missing.map(async (sp) => {
-				try {
-					const links = await integrations.speciesLinks(sp.sci_name, sp.com_name);
-					return [sp.sci_name, links] as const;
-				} catch {
-					return null;
-				}
-			})
-		);
-		const next = { ...speciesLinksBySci };
-		for (const item of loaded) {
-			if (!item) continue;
-			next[item[0]] = item[1];
-		}
-		speciesLinksBySci = next;
 	}
 
 	function reviewDateForBucket(period: number | string): string {
@@ -427,7 +404,7 @@
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
-				animation: { duration: 400, easing: 'easeOutQuart' },
+				animation: { duration: prefersReducedMotion ? 0 : 150, easing: 'linear' },
 				interaction: { mode: 'index', intersect: false },
 				plugins: {
 					legend: {
@@ -515,7 +492,7 @@
 				responsive: true,
 				maintainAspectRatio: false,
 				cutout: '55%',
-				animation: { duration: 600, easing: 'easeOutQuart' },
+				animation: { duration: prefersReducedMotion ? 0 : 180, easing: 'linear' },
 				plugins: {
 					legend: { display: false },
 					tooltip: {
@@ -596,6 +573,7 @@
 	onMount(async () => {
 		const module = await import('chart.js/auto');
 		ChartJS = module.default;
+		prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 		parseInitialStateFromUrl();
 		loadDates();
@@ -627,38 +605,43 @@
 	</div>
 
 	<!-- Range Mode Tabs + Navigation -->
-	<div class="card mb-6">
-		<!-- Mode tabs -->
-		<div class="flex border-b border-gray-200 dark:border-dark-border">
-			{#each /** @type {[RangeMode, string][]} */([['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']]) as [mode, label]}
-				<button
-					on:click={() => changeMode(mode as RangeMode)}
-					class="flex-1 py-3 text-sm font-medium text-center transition-colors
-						{rangeMode === mode
-							? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400 -mb-px'
-							: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
-				>
-					{label}
-				</button>
-			{/each}
-		</div>
+	<div class="card mb-6 overflow-hidden">
+			<!-- Mode tabs -->
+			<div class="overflow-x-auto border-b border-gray-200 px-3 py-3 dark:border-dark-border">
+				<div class="flex min-w-max gap-2">
+					{#each /** @type {[RangeMode, string][]} */([['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']]) as [mode, label]}
+						<button
+							on:click={() => changeMode(mode as RangeMode)}
+							class="rounded-xl px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors
+								{rangeMode === mode
+									? 'bg-primary-600 text-white shadow-sm'
+									: 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-dark-nav dark:text-gray-300 dark:hover:bg-dark-hover'}"
+						>
+							{label}
+						</button>
+					{/each}
+				</div>
+			</div>
 
-		<!-- Date navigation -->
-		<div class="flex items-center justify-between p-4">
-			<button on:click={() => navigate(-1)} class="btn-ghost">
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+			<!-- Date navigation -->
+			<div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+				<button on:click={() => navigate(-1)} class="btn-ghost">
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 				</svg>
 				<span class="sr-only sm:not-sr-only sm:ml-1">Previous</span>
 			</button>
 
-			<div class="flex items-center gap-3">
-				<span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-					{rangeLabel(anchorDate, rangeMode)}
-				</span>
-				{#if anchorDate !== todayStr()}
-					<button
-						on:click={goToToday}
+				<div class="flex flex-col items-center gap-1 text-center sm:flex-row sm:gap-3 sm:text-left">
+					<span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+						{rangeLabel(anchorDate, rangeMode)}
+					</span>
+					<span class="text-xs text-gray-500 dark:text-gray-400">
+						Tap or click a bar to open matching detections in Review
+					</span>
+					{#if anchorDate !== todayStr()}
+						<button
+							on:click={goToToday}
 						class="text-xs text-primary-600 dark:text-primary-400 hover:underline"
 					>
 						Today
@@ -690,16 +673,16 @@
 		{/if}
 	</div>
 
-	{#if loading}
+		{#if loading}
 		<div class="flex items-center justify-center py-12">
 			<div class="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
 		</div>
-	{:else if chartData}
-		<!-- Summary stats -->
-		<div class="grid grid-cols-3 gap-4 mb-6">
-			<div class="stat-card">
-				<p class="stat-value">{chartData.total_detections}</p>
-				<p class="stat-label">Total Detections</p>
+		{:else if chartData}
+			<!-- Summary stats -->
+			<div class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-3">
+				<div class="stat-card">
+					<p class="stat-value">{chartData.total_detections}</p>
+					<p class="stat-label">Total Detections</p>
 			</div>
 			<div class="stat-card">
 				<p class="stat-value">{chartData.species_count}</p>
@@ -711,19 +694,22 @@
 			</div>
 		</div>
 
-		<!-- Main chart -->
-		<div class="card mb-6">
-			<div class="card-header flex items-center justify-between">
-				<div>
-					<h2 class="font-semibold text-gray-900 dark:text-gray-100">
-						{rangeMode === 'day' ? 'Detections by Hour' :
-						 rangeMode === 'week' ? 'Last 7 Days' :
-						 rangeMode === 'month' ? 'Last 30 Days' :
-						 'Monthly Detections (Weekly Breakdown)'}
-					</h2>
-					{#if selectedSpecies.size > 0}
-						<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-							Showing {selectedSpecies.size} selected species
+			<!-- Main chart -->
+			<div class="card mb-6">
+				<div class="card-header flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<h2 class="font-semibold text-gray-900 dark:text-gray-100">
+							{rangeMode === 'day' ? 'Detections by Hour' :
+							 rangeMode === 'week' ? 'Last 7 Days' :
+							 rangeMode === 'month' ? 'Last 30 Days' :
+							 'Monthly Detections (Weekly Breakdown)'}
+						</h2>
+						<p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+							Select a chart bar to jump straight into the matching review queue.
+						</p>
+						{#if selectedSpecies.size > 0}
+							<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+								Showing {selectedSpecies.size} selected species
 						</p>
 					{/if}
 				</div>
@@ -820,7 +806,7 @@
 									</div>
 								</button>
 								<div class="px-3 py-3 flex items-center gap-2 flex-shrink-0">
-									<ExternalLinks links={speciesLinksBySci[sp.sci_name] || null} compact={true} />
+									<ExternalLinks sciName={sp.sci_name} comName={sp.com_name} compact={true} />
 									<a
 										href="/species/{encodeURIComponent(sp.sci_name)}"
 										class="text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 transition-colors"

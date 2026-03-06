@@ -1,13 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import {
 		detections,
-		integrations,
 		media,
 		species as speciesApi,
 		speciesLists,
 		type Detection,
-		type SpeciesExternalLinks,
 		type SpeciesSummary,
 	} from '$lib/api';
 	import { DetectionCard, Modal } from '$lib/components';
@@ -24,11 +22,11 @@
 	let offset = 0;
 	let total = 0;
 	let hasMore = false;
-	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
 	let deletingFiles = new Set<string>();
 	let shiftingFiles = new Set<string>();
 	let showLoginModal = false;
 	let passwordInput = '';
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
 	function todayStr(): string {
 		const d = new Date();
@@ -51,40 +49,6 @@
 		return `/recordings?${params.toString()}`;
 	}
 
-	$: filteredDetections = searchTerm
-		? allDetections.filter(
-				(d) =>
-					d.Com_Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					d.Sci_Name.toLowerCase().includes(searchTerm.toLowerCase())
-			)
-		: allDetections;
-
-	async function loadSpeciesLinks(items: Detection[]) {
-		const entries = Array.from(
-			new Map(items.map((item) => [item.Sci_Name, item.Com_Name])).entries()
-		);
-		const missing = entries.filter(([sciName]) => !speciesLinksBySci[sciName]);
-		if (missing.length === 0) return;
-
-		const loaded = await Promise.all(
-			missing.map(async ([sciName, comName]) => {
-				try {
-					const links = await integrations.speciesLinks(sciName, comName);
-					return [sciName, links] as const;
-				} catch {
-					return null;
-				}
-			})
-		);
-
-		const next = { ...speciesLinksBySci };
-		for (const item of loaded) {
-			if (!item) continue;
-			next[item[0]] = item[1];
-		}
-		speciesLinksBySci = next;
-	}
-
 	async function loadDetections(reset = false) {
 		if (reset) {
 			offset = 0;
@@ -93,9 +57,10 @@
 
 		loading = true;
 		try {
-			const params: { limit: number; offset: number; date?: string; species?: string } = { limit, offset };
+			const params: { limit: number; offset: number; date?: string; species?: string; search?: string } = { limit, offset };
 			if (selectedDate) params.date = selectedDate;
 			if (selectedSpecies) params.species = selectedSpecies;
+			if (searchTerm.trim()) params.search = searchTerm.trim();
 
 			const result = await detections.list(params);
 			if (reset) {
@@ -103,7 +68,6 @@
 			} else {
 				allDetections = [...allDetections, ...result.detections];
 			}
-			await loadSpeciesLinks(result.detections);
 			total = result.total;
 			hasMore = allDetections.length < total;
 		} catch (e) {
@@ -149,9 +113,37 @@
 		loadDetections(true);
 	}
 
+	function queueSearch() {
+		if (searchTimer) clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => {
+			void loadDetections(true);
+		}, 250);
+	}
+
+	function clearDateFilter() {
+		selectedDate = '';
+		void loadSpeciesOptions();
+		void loadDetections(true);
+	}
+
 	function clearSpeciesFilter() {
 		selectedSpecies = '';
-		loadDetections(true);
+		void loadDetections(true);
+	}
+
+	function clearSearchFilter() {
+		searchTerm = '';
+		if (searchTimer) clearTimeout(searchTimer);
+		void loadDetections(true);
+	}
+
+	function clearAllFilters() {
+		selectedDate = '';
+		selectedSpecies = '';
+		searchTerm = '';
+		if (searchTimer) clearTimeout(searchTimer);
+		void loadSpeciesOptions();
+		void loadDetections(true);
 	}
 
 	async function requireAuth(): Promise<boolean> {
@@ -243,6 +235,10 @@
 		loadSpeciesOptions();
 		loadDetections(true);
 	});
+
+	onDestroy(() => {
+		if (searchTimer) clearTimeout(searchTimer);
+	});
 </script>
 
 <svelte:head>
@@ -256,8 +252,8 @@
 	</div>
 
 	<!-- Filters -->
-	<div class="card p-4 mb-6">
-		<div class="flex flex-col md:flex-row gap-4">
+	<div class="sticky top-[4.5rem] md:top-20 z-20 mb-6 rounded-2xl border border-gray-200/80 bg-white/95 p-4 shadow-sm dark:border-dark-border/80 dark:bg-dark-card/95">
+		<div class="flex flex-col gap-4 lg:flex-row lg:items-end">
 			<!-- Search -->
 			<div class="flex-1">
 				<label for="search" class="label">Search</label>
@@ -265,6 +261,7 @@
 					id="search"
 					type="text"
 					bind:value={searchTerm}
+					on:input={queueSearch}
 					placeholder="Search by species name..."
 					class="input"
 				/>
@@ -300,31 +297,52 @@
 					{/each}
 				</select>
 			</div>
-		</div>
-	</div>
 
-	<!-- Results count -->
-	<div class="mb-4 flex flex-col gap-2">
-		<p class="text-sm text-gray-600 dark:text-gray-400">
-			Showing {filteredDetections.length} of {total} detections
-		</p>
-		<div class="flex flex-wrap gap-2">
-			{#if selectedDate}
-				<span class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300">
-					Date: {selectedDate}
-				</span>
-			{/if}
-			{#if selectedSpecies}
-				<div class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300">
-					<span>Species: {selectedSpecies}</span>
-					<button class="underline" on:click={clearSpeciesFilter}>Clear</button>
+			{#if selectedDate || selectedSpecies || searchTerm}
+				<div class="flex items-end">
+					<button class="btn-ghost w-full lg:w-auto" on:click={clearAllFilters}>
+						Clear all
+					</button>
 				</div>
 			{/if}
-			{#if searchTerm}
-				<span class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300">
-					Search: {searchTerm}
-				</span>
-			{/if}
+		</div>
+
+		<div class="mt-4 flex flex-col gap-2 border-t border-gray-200/80 pt-4 dark:border-dark-border/80">
+			<p class="text-sm text-gray-600 dark:text-gray-400">
+				Showing {allDetections.length} of {total} {searchTerm ? 'matching detections' : 'detections'}
+			</p>
+			<div class="flex flex-wrap gap-2">
+				{#if selectedDate}
+					<button
+						class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300"
+						on:click={clearDateFilter}
+					>
+						<span>Date: {selectedDate}</span>
+						<span aria-hidden="true">×</span>
+					</button>
+				{/if}
+				{#if selectedSpecies}
+					<button
+						class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300"
+						on:click={clearSpeciesFilter}
+					>
+						<span>Species: {selectedSpecies}</span>
+						<span aria-hidden="true">×</span>
+					</button>
+				{/if}
+				{#if searchTerm}
+					<button
+						class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300"
+						on:click={clearSearchFilter}
+					>
+						<span>Search: {searchTerm}</span>
+						<span aria-hidden="true">×</span>
+					</button>
+				{/if}
+			</div>
+			<p class="text-xs text-gray-500 dark:text-gray-400">
+				Open a recording for details, then use Shift or cleanup actions only when needed.
+			</p>
 		</div>
 	</div>
 
@@ -333,30 +351,29 @@
 		<div class="flex items-center justify-center py-12">
 			<div class="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
 		</div>
-	{:else if filteredDetections.length === 0}
+	{:else if allDetections.length === 0}
 		<div class="card p-8 text-center">
-			<p class="text-gray-600 dark:text-gray-400">No detections found</p>
+			<p class="text-gray-600 dark:text-gray-400">
+				{searchTerm ? 'No matching detections found' : 'No detections found'}
+			</p>
+			{#if searchTerm || selectedDate || selectedSpecies}
+				<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+					Try clearing one or more filters to widen the review queue.
+				</p>
+			{/if}
 		</div>
 	{:else}
 		<div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-			{#each filteredDetections as detection (detection.File_Name)}
+			{#each allDetections as detection (detection.File_Name)}
 				<div class="space-y-2 min-w-0">
 					<DetectionCard
 						{detection}
 						href={detectionRecordingsHref(detection)}
-						allowDelete={true}
-						deleting={deletingFiles.has(detection.File_Name)}
-						speciesLinks={speciesLinksBySci[detection.Sci_Name] || null}
-						on:delete={(event) => deleteDetectionFile(event.detail)}
 					/>
-					<div class="card p-2 flex flex-wrap gap-2">
-						<button
-							class="btn-secondary btn-sm"
-							on:click={() => deleteDetectionFile(detection)}
-							disabled={deletingFiles.has(detection.File_Name)}
-						>
-							{deletingFiles.has(detection.File_Name) ? 'Deleting...' : 'Delete'}
-						</button>
+					<div class="card p-3 flex flex-wrap items-center gap-2">
+						<a class="btn-primary btn-sm" href={detectionRecordingsHref(detection)}>
+							Open in Library
+						</a>
 						<button
 							class="btn-secondary btn-sm"
 							on:click={() => shiftDetection(detection)}
@@ -364,19 +381,26 @@
 						>
 							{shiftingFiles.has(detection.File_Name) ? 'Shifting...' : 'Shift'}
 						</button>
-						<button class="btn-secondary btn-sm" on:click={() => excludeSpecies(detection)}>
+						<button
+							class="inline-flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-900/70 dark:bg-amber-900/20 dark:text-amber-200 dark:hover:bg-amber-900/30"
+							on:click={() => excludeSpecies(detection)}
+						>
 							Exclude
 						</button>
-						<a class="btn-secondary btn-sm" href={detectionRecordingsHref(detection)}>
-							Open in Library
-						</a>
+						<button
+							class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/70 dark:bg-red-900/20 dark:text-red-200 dark:hover:bg-red-900/30"
+							on:click={() => deleteDetectionFile(detection)}
+							disabled={deletingFiles.has(detection.File_Name)}
+						>
+							{deletingFiles.has(detection.File_Name) ? 'Deleting...' : 'Delete'}
+						</button>
 					</div>
 				</div>
 			{/each}
 		</div>
 
 		<!-- Load more -->
-		{#if hasMore && !searchTerm}
+		{#if hasMore}
 			<div class="mt-6 text-center">
 				<button
 					on:click={loadMore}

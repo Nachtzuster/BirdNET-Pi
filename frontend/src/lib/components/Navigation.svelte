@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { system as systemApi } from '$lib/api';
 	import { page } from '$app/stores';
-	import { isMobileMenuOpen } from '$lib/stores';
 	import ThemeToggle from './ThemeToggle.svelte';
 
 	const navItems = [
@@ -16,14 +15,7 @@
 	let statusState: 'online' | 'degraded' | 'offline' = 'online';
 	let statusText = 'Checking';
 	let statusTimer: ReturnType<typeof setInterval> | undefined;
-
-	function toggleMobileMenu() {
-		isMobileMenuOpen.update((open) => !open);
-	}
-
-	function closeMobileMenu() {
-		isMobileMenuOpen.set(false);
-	}
+	let visibilityHandler: (() => void) | undefined;
 
 	$: currentPath = $page.url.pathname;
 
@@ -41,11 +33,18 @@
 	onMount(() => {
 		void refreshStatus();
 		statusTimer = setInterval(() => {
+			if (document.hidden) return;
 			void refreshStatus();
-		}, 30000);
+		}, 60000);
+
+		visibilityHandler = () => {
+			if (!document.hidden) void refreshStatus();
+		};
+		document.addEventListener('visibilitychange', visibilityHandler);
 
 		return () => {
 			if (statusTimer) clearInterval(statusTimer);
+			if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
 		};
 	});
 </script>
@@ -71,6 +70,7 @@
 			{#each navItems as item}
 				<a
 					href={item.href}
+					aria-current={currentPath === item.href ? 'page' : undefined}
 					class="px-4 py-2 rounded-lg transition-colors {currentPath === item.href
 						? 'bg-white/20 text-white'
 						: 'text-white/90 hover:text-white hover:bg-white/10'}"
@@ -81,6 +81,7 @@
 
 			<a
 				href="/status"
+				aria-current={currentPath === '/status' ? 'page' : undefined}
 				class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2 {currentPath === '/status'
 					? 'bg-white/20 text-white'
 					: 'text-white/90 hover:text-white hover:bg-white/10'}"
@@ -116,67 +117,24 @@
 		</a>
 
 		<div class="flex items-center gap-2">
-			<ThemeToggle />
-			<button
-				on:click={toggleMobileMenu}
-				class="p-2 text-white hover:bg-white/10 rounded-lg"
-				aria-label="Toggle menu"
+			<a
+				href="/status"
+				aria-current={currentPath === '/status' ? 'page' : undefined}
+				class="inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+				aria-label={`System status: ${statusText}`}
+				title={`System status: ${statusText}`}
 			>
-				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					{#if $isMobileMenuOpen}
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-					{:else}
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-					{/if}
-				</svg>
-			</button>
+				<span
+					class="h-2.5 w-2.5 rounded-full"
+					class:bg-green-400={statusState === 'online'}
+					class:bg-amber-400={statusState === 'degraded'}
+					class:bg-red-400={statusState === 'offline'}></span>
+				<span class="hidden sm:inline">Status</span>
+			</a>
+			<ThemeToggle />
 		</div>
 	</div>
 </nav>
-
-<!-- Mobile Menu Overlay -->
-{#if $isMobileMenuOpen}
-	<div
-		class="md:hidden fixed inset-0 bg-black/50 z-40"
-		on:click={closeMobileMenu}
-		on:keydown={(e) => e.key === 'Escape' && closeMobileMenu()}
-		role="button"
-		tabindex="0"
-	></div>
-
-	<div class="md:hidden fixed top-14 left-0 right-0 bottom-0 bg-white dark:bg-dark-body z-40 overflow-y-auto">
-		<div class="p-4 space-y-2">
-			{#each navItems as item}
-				<a
-					href={item.href}
-					on:click={closeMobileMenu}
-					class="block px-4 py-3 rounded-lg {currentPath === item.href
-						? 'bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200'
-						: 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-card'}"
-				>
-					{item.label}
-				</a>
-			{/each}
-
-			<div class="border-t border-gray-200 dark:border-dark-border my-4"></div>
-
-			<a
-				href="/status"
-				on:click={closeMobileMenu}
-				class="flex items-center gap-2 px-4 py-3 rounded-lg {currentPath === '/status'
-					? 'bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200'
-					: 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-card'}"
-			>
-				<span
-					class="w-2.5 h-2.5 rounded-full"
-					class:bg-green-500={statusState === 'online'}
-					class:bg-amber-500={statusState === 'degraded'}
-					class:bg-red-500={statusState === 'offline'}></span>
-				<span>Status ({statusText})</span>
-			</a>
-		</div>
-	</div>
-{/if}
 
 <!-- Mobile Bottom Navigation -->
 <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-dark-nav border-t border-gray-200 dark:border-dark-border z-30">
@@ -184,6 +142,7 @@
 		{#each navItems as item}
 			<a
 				href={item.href}
+				aria-current={currentPath === item.href ? 'page' : undefined}
 				class="flex flex-col items-center justify-center {currentPath === item.href
 					? 'text-primary-600 dark:text-primary-400'
 					: 'text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400'}"

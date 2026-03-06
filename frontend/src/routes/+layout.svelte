@@ -9,12 +9,12 @@
 	<Navigation />
 	
 	<!-- Main content with padding for fixed nav -->
-	<main class="pt-16 md:pt-16 pb-20 md:pb-6">
+	<main class="pt-14 md:pt-16 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6">
 		<slot />
 	</main>
 
 	<!-- Footer -->
-	<footer class="pb-20 md:pb-6 px-4">
+	<footer class="pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6 px-4">
 		<div class="flex items-center justify-center gap-1.5 text-xs text-gray-400 dark:text-gray-600">
 			<a
 				href="https://github.com/cpieper/BirdNET-Pibird"

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { detections, health, integrations, species as speciesApi, type Detection, type DetectionStats, type SpeciesExternalLinks, type SpeciesSummary, type RangeChartData } from '$lib/api';
+	import { detections, health, species as speciesApi, type Detection, type DetectionStats, type SpeciesSummary, type RangeChartData } from '$lib/api';
 	import { StatsCard, DetectionCard, ExternalLinks, SpeciesImage } from '$lib/components';
 	import { toasts } from '$lib/stores';
 
@@ -28,7 +28,7 @@
 	let groupedDetections: DetectionGroup[] = [];
 	let newSpeciesTodayDetections: Detection[] = [];
 	let newSpeciesTodaySet: Set<string> = new Set();
-	let speciesLinksBySci: Record<string, SpeciesExternalLinks> = {};
+	let prefersReducedMotion = false;
 
 	function detectTheme() {
 		isDark = document.documentElement.classList.contains('dark');
@@ -104,37 +104,9 @@
 
 	$: displayedTopSpecies = topSpeciesMode === 'today' ? topSpeciesToday : topSpeciesAllTime;
 
-	async function loadSpeciesLinks(speciesItems: Array<{ sciName: string; comName?: string }>) {
-		const entries = Array.from(
-			new Map(
-				speciesItems
-					.filter((item) => item.sciName)
-					.map((item) => [item.sciName, item.comName || ''])
-			).entries()
-		);
-		const missing = entries.filter(([sciName]) => !speciesLinksBySci[sciName]);
-		if (missing.length === 0) return;
-
-		const loaded = await Promise.all(
-			missing.map(async ([sciName, comName]) => {
-				try {
-					const links = await integrations.speciesLinks(sciName, comName || undefined);
-					return [sciName, links] as const;
-				} catch {
-					return null;
-				}
-			})
-		);
-
-		const next = { ...speciesLinksBySci };
-		for (const item of loaded) {
-			if (!item) continue;
-			next[item[0]] = item[1];
-		}
-		speciesLinksBySci = next;
-	}
-
 	async function loadData() {
+		if (typeof document !== 'undefined' && document.hidden) return;
+
 		try {
 			const today = todayStr();
 			const [statsData, detectionsData, newSpeciesData, infoData, speciesTodayData, speciesAllTimeData, hourly] = await Promise.all([
@@ -158,12 +130,6 @@
 			topSpeciesToday = speciesTodayData.species.slice(0, 6);
 			topSpeciesAllTime = speciesAllTimeData.species.slice(0, 6);
 			hourlyData = hourly;
-			await loadSpeciesLinks([
-				...detectionsData.detections.map((detection) => ({ sciName: detection.Sci_Name, comName: detection.Com_Name })),
-				...newSpeciesData.map((detection) => ({ sciName: detection.Sci_Name, comName: detection.Com_Name })),
-				...speciesTodayData.species.map((species) => ({ sciName: species.Sci_Name, comName: species.Com_Name })),
-				...speciesAllTimeData.species.map((species) => ({ sciName: species.Sci_Name, comName: species.Com_Name })),
-			]);
 		} catch (e) {
 			console.error('Failed to load data:', e);
 			toasts.show('Failed to load data', 'error');
@@ -221,7 +187,7 @@
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
-				animation: { duration: 400, easing: 'easeOutQuart' },
+				animation: { duration: prefersReducedMotion ? 0 : 120, easing: 'linear' },
 				plugins: {
 					legend: { display: false },
 					tooltip: {
@@ -274,13 +240,23 @@
 	}
 
 	let themeObserver: MutationObserver;
+	let visibilityHandler: (() => void) | undefined;
 
 	onMount(async () => {
 		const module = await import('chart.js/auto');
 		ChartJS = module.default;
+		prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-		loadData();
-		refreshInterval = setInterval(loadData, 30000);
+		void loadData();
+		refreshInterval = setInterval(() => {
+			if (document.hidden) return;
+			void loadData();
+		}, 60000);
+
+		visibilityHandler = () => {
+			if (!document.hidden) void loadData();
+		};
+		document.addEventListener('visibilitychange', visibilityHandler);
 
 		themeObserver = new MutationObserver(() => {
 			if (hourlyData) renderSparkline();
@@ -295,6 +271,7 @@
 		if (refreshInterval) clearInterval(refreshInterval);
 		if (sparkChart) sparkChart.destroy();
 		if (themeObserver) themeObserver.disconnect();
+		if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
 	});
 </script>
 
@@ -397,7 +374,7 @@
 		<div class="flex items-center gap-2 mb-4">
 			<span class="w-3 h-3 bg-green-500 rounded-full pulse-live"></span>
 			<span class="text-sm text-gray-600 dark:text-gray-400">
-				Live - Auto-refreshing every 30 seconds
+				Live - Refreshes every 60 seconds while this tab is visible
 			</span>
 		</div>
 
@@ -472,7 +449,7 @@
 										<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">{sp.Sci_Name}</p>
 									</a>
 									<div class="mt-1">
-										<ExternalLinks links={speciesLinksBySci[sp.Sci_Name] || null} compact={true} />
+										<ExternalLinks sciName={sp.Sci_Name} comName={sp.Com_Name} compact={true} />
 									</div>
 								</div>
 								<div class="flex-shrink-0 text-right">
@@ -524,7 +501,6 @@
 								detection={group.latest}
 								showDate={false}
 								href={detectionsHref(group.latest)}
-								speciesLinks={speciesLinksBySci[group.sciName] || null}
 							/>
 							{#if group.count > 1}
 								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 break-words">

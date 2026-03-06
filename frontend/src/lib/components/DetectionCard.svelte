@@ -41,15 +41,6 @@ import { goto } from '$app/navigation';
 		void goto(href);
 	}
 
-	function handleCardKeydown(event: KeyboardEvent) {
-		if (!href) return;
-		if (event.key !== 'Enter' && event.key !== ' ') return;
-		const target = event.target as HTMLElement;
-		if (shouldIgnoreCardNav(target)) return;
-		event.preventDefault();
-		void goto(href);
-	}
-
 	function handleDeleteClick(event: MouseEvent) {
 		event.preventDefault();
 		event.stopPropagation();
@@ -57,11 +48,10 @@ import { goto } from '$app/navigation';
 	}
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div
 	class="card w-full max-w-full p-4 fade-in {href ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}"
-	role={href ? 'link' : undefined}
 	on:click={handleCardClick}
-	on:keydown={handleCardKeydown}
 >
 	<div class="flex gap-4">
 		<!-- Bird Image -->
@@ -75,16 +65,30 @@ import { goto } from '$app/navigation';
 		<div class="flex-1 min-w-0">
 			<div class="flex items-start justify-between gap-3">
 				<div class="min-w-0 flex-1">
-					<h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">
-						{detection.Com_Name}
-					</h3>
-					<div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0" data-no-card-link>
-						<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate max-w-full">
-							{detection.Sci_Name}
-						</p>
-						<ExternalLinks links={speciesLinks} compact={true} />
+					{#if href}
+						<a
+							href={href}
+							class="block truncate font-semibold text-gray-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-gray-100 dark:focus-visible:ring-offset-dark-card"
+						>
+							{detection.Com_Name}
+						</a>
+					{:else}
+						<h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+							{detection.Com_Name}
+						</h3>
+						{/if}
+						<div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0" data-no-card-link>
+							<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate max-w-full">
+								{detection.Sci_Name}
+							</p>
+							<ExternalLinks
+								links={speciesLinks}
+								sciName={detection.Sci_Name}
+								comName={detection.Com_Name}
+								compact={true}
+							/>
+						</div>
 					</div>
-				</div>
 				<div class="flex items-center gap-2 flex-shrink-0" data-no-card-link>
 					<span class="badge-primary">
 						{formatConfidence(detection.Confidence)}

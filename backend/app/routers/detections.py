@@ -18,6 +18,7 @@ async def get_detections(
     offset: int = Query(0, ge=0),
     date: Optional[str] = None,
     species: Optional[str] = None,
+    search: Optional[str] = None,
     db: sqlite3.Connection = Depends(get_db),
 ):
     """Get paginated list of detections.
@@ -27,6 +28,7 @@ async def get_detections(
         offset: Number of results to skip
         date: Filter by date (YYYY-MM-DD)
         species: Filter by scientific name
+        search: Search term for common or scientific name
     """
     # Build WHERE clause
     conditions = []
@@ -38,6 +40,9 @@ async def get_detections(
     if species:
         conditions.append("Sci_Name = ?")
         params.append(species)
+    if search:
+        conditions.append("(Com_Name LIKE ? OR Sci_Name LIKE ?)")
+        params.extend([f"%{search}%", f"%{search}%"])
 
     where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 

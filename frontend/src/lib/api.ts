@@ -46,12 +46,13 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
 // Detection API
 export const detections = {
-	list: (params?: { limit?: number; offset?: number; date?: string; species?: string }) => {
+	list: (params?: { limit?: number; offset?: number; date?: string; species?: string; search?: string }) => {
 		const searchParams = new URLSearchParams();
 		if (params?.limit) searchParams.set('limit', String(params.limit));
 		if (params?.offset) searchParams.set('offset', String(params.offset));
 		if (params?.date) searchParams.set('date', params.date);
 		if (params?.species) searchParams.set('species', params.species);
+		if (params?.search) searchParams.set('search', params.search);
 		const query = searchParams.toString();
 		return request<DetectionList>(`/detections${query ? `?${query}` : ''}`);
 	},
