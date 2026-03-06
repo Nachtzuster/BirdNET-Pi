@@ -229,7 +229,7 @@
                     tipX = e.clientX - rect.left - 25;
                     // Measure actual tooltip width and shift left
                     tooltip.style.left = 'auto';
-                    tooltip.style.right = (rect.right - e.clientX + 12) + 'px';
+                    tooltip.style.right = (rect.right - e.clientX + 25) + 'px';
                     tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
                 } else {
                     tooltip.style.right = 'auto';
