@@ -236,6 +236,12 @@
         canvas.parentElement.style.position = 'relative';
         canvas.parentElement.appendChild(tooltip);
 
+        var imgPreview = document.createElement('div');
+        imgPreview.className = 'heatmap-img-preview';
+        imgPreview.style.cssText = 'display:none;position:absolute;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:var(--shadow-lg);z-index:1000;pointer-events:none;width:150px;height:150px;overflow:hidden;';
+        imgPreview.innerHTML = '<img style="width:100%;height:100%;object-fit:cover;border-radius:4px;">';
+        canvas.parentElement.appendChild(imgPreview);
+
         var displayed = species;
         var speciesNames = displayed.map(function (s) { return s.name; });
 
@@ -252,6 +258,21 @@
 
             var hour = Math.floor((x - labelWidth) / cellWidth);
             var row = Math.floor((y - headerHeight) / cellHeight);
+
+            // Thumbnail check (x: 10 to 34)
+            if (row >= 0 && row < species.length && x > 5 && x < 40) {
+                var s = species[row];
+                if (s.image) {
+                    var previewImg = imgPreview.querySelector('img');
+                    if (previewImg.src !== s.image) previewImg.src = s.image;
+                    imgPreview.style.display = 'block';
+                    imgPreview.style.left = (x + 20) + 'px';
+                    imgPreview.style.top = (y - 75) + 'px';
+                    tooltip.style.display = 'none';
+                    return;
+                }
+            }
+            imgPreview.style.display = 'none';
 
             if (hour >= 0 && hour < 24 && row >= 0 && row < speciesNames.length) {
                 var name = speciesNames[row];
@@ -285,6 +306,7 @@
 
         canvas.addEventListener('mouseleave', function () {
             tooltip.style.display = 'none';
+            imgPreview.style.display = 'none';
         });
     }
 
