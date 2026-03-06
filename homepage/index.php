@@ -48,7 +48,6 @@ if(isset($_GET['stream'])){
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   </script>
-  </div>
   <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
   </div>";
 } else {
@@ -58,10 +57,12 @@ if(isset($_GET['stream'])){
     <!-- Live Audio button moved to sidebar, original form kept for logical routing if needed -->
     <button type=\"submit\" name=\"stream\" value=\"play\">🎙️ Live Audio</button>
   </form>
-  </div>
   <h1 style=\"display: none;\"><a href=\"/\"><img class=\"topimage\" src=\"images/bnp.png\"></a></h1>
-</div>";
+  </div>";
 }
+?>
+</div>
+<?php
 if(isset($_GET['filename'])) {
   $filename = $_GET['filename'];
 echo "
