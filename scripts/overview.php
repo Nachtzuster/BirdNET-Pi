@@ -203,7 +203,7 @@ if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
   $chart_data = get_summary();
   $_SESSION['chart_data'] = $chart_data;
 ?>
-<div class="kpi-cards" style="justify-content: flex-start; margin: 0; max-width: 100%;">
+<div class="kpi-cards" style="justify-content: center; margin: 0; max-width: 100%;">
   <div class="kpi-card">
     <div class="kpi-icon">
       <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
@@ -258,7 +258,7 @@ if(isset($_GET['ajax_center_chart']) && $_GET['ajax_center_chart'] == "true") {
   // Retrieve the cached data from session without regenerating
   $chart_data = $_SESSION['chart_data'];
 ?>
-<div class="kpi-cards kpi-cards-compact" style="justify-content: flex-start; margin: 0; max-width: 100%;">
+<div class="kpi-cards kpi-cards-compact" style="justify-content: center; margin: 0; max-width: 100%;">
   <div class="kpi-card kpi-card-sm"><div class="kpi-value"><?php echo number_format($chart_data['totalcount']);?></div><div class="kpi-label">Total</div></div>
   <div class="kpi-card kpi-card-sm"><div class="kpi-value"><form action="" method="GET" style="display:inline"><button type="submit" name="view" value="Todays Detections" class="kpi-link"><?php echo number_format($chart_data['todaycount']);?></button></form></div><div class="kpi-label">Today</div></div>
   <div class="kpi-card kpi-card-sm"><div class="kpi-value"><?php echo number_format($chart_data['hourcount']);?></div><div class="kpi-label">Last Hour</div></div>
