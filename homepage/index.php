@@ -41,10 +41,7 @@ if(isset($_GET['stream'])){
           }
         </script>";
 } else {
-  // Replaced the fragile .banner layout with a direct, viewport-anchored float
-  echo "<form action=\"index.php\" method=\"GET\" style=\"position: fixed; top: 12px; right: 20px; z-index: 999999; margin: 0; padding: 0;\">
-          <button type=\"submit\" name=\"stream\" value=\"play\" style=\"padding: 8px 16px; border-radius: 8px; background: var(--bg-card, #fff); color: var(--text-primary, #333); border: 1px solid var(--border, #ccc); box-shadow: 0 4px 6px rgba(0,0,0,0.15); font-weight: bold; cursor: pointer;\">🎙️ Live Audio</button>
-        </form>";
+  // Live Audio button is now exclusively rendered globally in views.php to circumvent iframe boundary breakage
 }
 ?>
 

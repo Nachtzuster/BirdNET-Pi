@@ -58,6 +58,8 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <link rel="stylesheet" href="<?php echo $color_scheme . '?v=' . date('n.d.y', filemtime($color_scheme)); ?>">
 </head>
 <body>
+<!-- Floating top-right Live Audio button -->
+<button type="button" onclick="window.top.location.href='index.php?stream=play'" style="position: fixed; top: 12px; right: 20px; z-index: 999999; padding: 8px 16px; border-radius: 8px; background: var(--bg-card, #fff); color: var(--text-primary, #333); border: 1px solid var(--border, #ccc); box-shadow: 0 4px 6px rgba(0,0,0,0.15); font-weight: bold; cursor: pointer;">🎙️ Live Audio</button>
 <div class="mobile-header">
   <div class="sidebar-logo">
     <img src="images/bnp.png" alt="Logo">
@@ -73,7 +75,6 @@ elseif ($config["LONGITUDE"] == "0.000") {
     <button type="button" class="sidebar-toggle" onclick="myFunction()">«</button>
   </div>
   <div class="sidebar-nav">
-    <button type="button" onclick="window.top.location.href='index.php?stream=play'">🎙️ Live Audio</button>
     <button type="submit" name="view" value="Overview" form="views">🏠 Overview</button>
     <button type="submit" name="view" value="Todays Detections" form="views">📋 Today</button>
     <button type="submit" name="view" value="Spectrogram" form="views">📊 Spectrogram</button>
