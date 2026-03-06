@@ -34,7 +34,7 @@ set_timezone();
   #live-audio-panel {
     position: fixed;
     top: 0;
-    right: 18px; /* Offset to not cover the right-hand scrollbar */
+    right: calc(100vw - 100%); /* Dynamically sits flush with scrollbar if present, or right edge if not */
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 999999;
