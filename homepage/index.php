@@ -29,21 +29,73 @@ set_timezone();
 </head>
 <body>
 
-<?php
-if(isset($_GET['stream'])){
-  ensure_authenticated('You cannot listen to the live audio stream');
-  echo "<div style=\"position: fixed; top: 12px; right: 20px; z-index: 999999;\">
-          <audio id=\"live-audio-player\" controls autoplay><source src=\"/stream\"></audio>
-        </div>";
-  echo "<script>
-          if (window.history.replaceState) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        </script>";
-} else {
-  // Live Audio button is now exclusively rendered globally in views.php to circumvent iframe boundary breakage
-}
 ?>
+<style>
+  #live-audio-panel {
+    position: fixed;
+    top: 70px;
+    right: 0;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border, #ccc);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    box-shadow: -4px 4px 12px rgba(0,0,0,0.15);
+    padding: 8px 12px;
+  }
+  #live-audio-panel.open {
+    transform: translateX(0);
+  }
+  #live-audio-tab {
+    position: absolute;
+    left: -85px;
+    width: 85px;
+    top: -1px;
+    bottom: -1px;
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border, #ccc);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    box-shadow: -4px 0px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--text-primary, #333);
+    user-select: none;
+  }
+  #live-audio-tab:hover {
+    background: var(--bg-button-hover, #f1f5f9);
+  }
+</style>
+<div id="live-audio-panel" onmouseleave="startCloseTimer()" onmouseenter="cancelCloseTimer()">
+  <div id="live-audio-tab" onclick="toggleAudioPanel()">
+    🎙️ Live
+  </div>
+  <audio id="live-audio-player" controls preload="none">
+    <source src="/stream">
+  </audio>
+</div>
+<script>
+  let audioPanelTimer;
+  function toggleAudioPanel() {
+    document.getElementById('live-audio-panel').classList.toggle('open');
+  }
+  function startCloseTimer() {
+    audioPanelTimer = setTimeout(() => {
+      document.getElementById('live-audio-panel').classList.remove('open');
+    }, 2000);
+  }
+  function cancelCloseTimer() {
+    clearTimeout(audioPanelTimer);
+  }
+</script>
+<?php
 
 <?php
 if(isset($_GET['filename'])) {
