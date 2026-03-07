@@ -138,6 +138,62 @@ if(isset($_GET['ajax_chart_data']) && $_GET['ajax_chart_data'] == "true") {
   die();
 }
 
+if(isset($_GET['ajax_new_species_details']) && $_GET['ajax_new_species_details'] == "true") {
+  header('Content-Type: application/json');
+  
+  // Specific query for New Species Today
+  $stmt = $db->prepare("SELECT Com_Name, Sci_Name FROM detections WHERE Date = DATE('now', 'localtime') AND Sci_Name NOT IN (SELECT DISTINCT Sci_Name FROM detections WHERE Date < DATE('now', 'localtime')) GROUP BY Sci_Name ORDER BY Com_Name ASC");
+  ensure_db_ok($stmt);
+  $res = $stmt->execute();
+
+  $image_provider = null;
+  $fallback_provider = null;
+  if (!empty($config["IMAGE_PROVIDER"])) {
+    $flickr = new Flickr();
+    $wikipedia = new Wikipedia();
+    if ($config["IMAGE_PROVIDER"] === 'FLICKR') {
+        $image_provider = $flickr;
+        $fallback_provider = $wikipedia;
+    } else {
+        $image_provider = $wikipedia;
+        $fallback_provider = $flickr;
+    }
+  }
+
+  $details = [];
+  while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
+    $img_url = "";
+    if ($image_provider) {
+      if (!isset($_SESSION['species_portal_v12_cache'])) {
+        $_SESSION['species_portal_v12_cache'] = [];
+      }
+      $search_name = trim($row['Com_Name']);
+      $key = array_search($search_name, array_column($_SESSION['species_portal_v12_cache'], 0));
+      
+      if ($key !== false) {
+        $img_url = $_SESSION['species_portal_v12_cache'][$key][1];
+      } else {
+        $cached_image = $image_provider->get_image($row['Sci_Name'], $fallback_provider);
+        if ($cached_image && !empty($cached_image["image_url"])) {
+          $image_data = array($search_name, $cached_image["image_url"], $cached_image["title"], $cached_image["photos_url"], $cached_image["author_url"], $cached_image["license_url"]);
+          array_push($_SESSION["species_portal_v12_cache"], $image_data);
+          $img_url = $cached_image["image_url"];
+        } else {
+          $image_data = array($search_name, "", "Not Found", "", "", "");
+          array_push($_SESSION["species_portal_v12_cache"], $image_data);
+        }
+      }
+    }
+    $details[] = [
+      'name' => $row['Com_Name'],
+      'sciName' => $row['Sci_Name'],
+      'image' => $img_url
+    ];
+  }
+  echo json_encode($details);
+  die();
+}
+
 if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true" && isset($_GET['previous_detection_identifier'])) {
 
   $statement4 = $db->prepare('SELECT Com_Name, Sci_Name, Date, Time, Confidence, File_Name FROM detections ORDER BY Date DESC, Time DESC LIMIT 15');
@@ -305,7 +361,9 @@ if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
     <div class="kpi-icon" style="background: #fff7ed; color: #f97316;">
       ✨
     </div>
-    <div class="kpi-value"><?php echo $chart_data['newspeciestally'];?></div>
+    <div class="kpi-value">
+      <button class="kpi-link" onclick="showNewSpeciesPopup(); return false;"><?php echo $chart_data['newspeciestally'];?></button>
+    </div>
     <div class="kpi-label">New Species Today</div>
   </div>
   <?php if(!empty($chart_data['topspecies'])) { ?>
@@ -333,7 +391,7 @@ if(isset($_GET['ajax_center_chart']) && $_GET['ajax_center_chart'] == "true") {
   <div class="kpi-card kpi-card-sm"><div class="kpi-value"><?php echo number_format($chart_data['hourcount']);?></div><div class="kpi-label">Last Hour</div></div>
   <div class="kpi-card kpi-card-sm"><div class="kpi-value"><form action="" method="GET" style="display:inline"><button type="submit" name="view" value="Species Stats" class="kpi-link"><?php echo $chart_data['totalspeciestally'];?></button></form></div><div class="kpi-label">Species Total</div></div>
   <div class="kpi-card kpi-card-sm"><div class="kpi-value"><form action="" method="GET" style="display:inline"><input type="hidden" name="view" value="Recordings"><button type="submit" name="date" value="<?php echo date('Y-m-d');?>" class="kpi-link"><?php echo $chart_data['speciestally'];?></button></form></div><div class="kpi-label">Species Today</div></div>
-  <div class="kpi-card kpi-card-sm"><div class="kpi-value"><?php echo $chart_data['newspeciestally'];?></div><div class="kpi-label">New Today</div></div>
+  <div class="kpi-card kpi-card-sm"><div class="kpi-value"><button class="kpi-link" onclick="showNewSpeciesPopup(); return false;"><?php echo $chart_data['newspeciestally'];?></button></div><div class="kpi-label">New Today</div></div>
   <?php if(!empty($chart_data['topspecies'])) { ?>
   <div class="kpi-card kpi-card-sm kpi-card-highlight"><div class="kpi-value" style="font-size:0.95em"><?php echo htmlspecialchars($chart_data['topspecies']);?></div><div class="kpi-label">Top (<?php echo $chart_data['topspeciescount'];?>x)</div></div>
   <?php } ?>
@@ -411,7 +469,111 @@ if (get_included_files()[0] === __FILE__) {
     last_photo_link = text;
     showDialog();
   }
-  </script>  
+
+  function showNewSpeciesPopup() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onload = function() {
+      if(this.status == 200) {
+        const species = JSON.parse(this.responseText);
+        let html = '<div class="new-species-grid">';
+        if (species.length === 0) {
+          html = '<p style="text-align:center;padding:20px;color:#888;">No new species detected today.</p>';
+        } else {
+          species.forEach(s => {
+            html += `
+              <div class="new-species-item">
+                <div class="new-species-img">
+                  ${s.image ? `<img src="${s.image}" alt="${s.name}" style="image-rendering: high-quality;">` : '<div class="no-img">No Image</div>'}
+                </div>
+                <div class="new-species-info">
+                  <div class="new-species-name">${s.name}</div>
+                  <div class="new-species-sci"><i>${s.sciName}</i></div>
+                </div>
+              </div>
+            `;
+          });
+          html += '</div>';
+        }
+        document.getElementById('modalHeading').innerText = "New Species Today (" + species.length + ")";
+        document.getElementById('modalText').innerHTML = html;
+        showDialog();
+      }
+    }
+    xhttp.open("GET", "overview.php?ajax_new_species_details=true", true);
+    xhttp.send();
+  }
+  </script>
+  <style>
+    .new-species-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      padding: 8px 0;
+    }
+    .new-species-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: transform 0.2s ease;
+    }
+    .new-species-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .new-species-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .new-species-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .new-species-info {
+      flex-grow: 1;
+    }
+    .new-species-name {
+      font-weight: 700;
+      font-size: 1.1em;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    .new-species-sci {
+      font-size: 0.9em;
+      color: var(--text-secondary);
+      opacity: 0.8;
+    }
+    .no-img {
+      font-size: 10px;
+      color: #aaa;
+    }
+    #attribution-dialog {
+      border: none;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-xl);
+      max-width: 800px;
+      width: 90%;
+    }
+    #modalHeading {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 10px;
+    }
+  </style>  
 <div class="overview-stats">
 <div class="right-column">
 <div class="left-column" style="flex: unset; padding-left: 0; margin-bottom: 8px;"></div>
