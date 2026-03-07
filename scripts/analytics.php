@@ -142,72 +142,121 @@
     border-radius: 12px;
     border: 1px solid var(--border-light, #f1f5f9);
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: relative;
 }
-.viz-card h3 { margin: 0 0 8px 0; font-size: 1rem; font-weight: 600; }
-.chart-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; margin-top: 0; }
-.chart-container { position: relative; height: 300px; width: 100%; }
-.chart-container.tall { height: 400px; }
-
-/* Full Visualizations */
-.full-viz {
+.viz-card-header {
     display: flex;
-    flex-direction: column;
-    gap: 24px;
-    margin-bottom: 24px;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
 }
-
-/* New Species Display */
-.new-species-container {
-    height: 300px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.empty-state {
-    flex: 1;
+.viz-card h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+.btn-filter {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    font-style: italic;
-    font-size: 0.9rem;
+    gap: 4px;
+    transition: all 0.2s;
 }
-.new-species-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px;
+.btn-filter:hover { background: #e2e8f0; color: #1e293b; }
+.chart-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; margin-top: 4px; }
+
+/* Modal */
+.picker-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 500px;
+    z-index: 100000;
+    display: none;
+    flex-direction: column;
+    padding: 24px;
+}
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: none;
+}
+.picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.picker-header h4 { margin: 0; font-size: 1.2rem; }
+.picker-search { margin-bottom: 16px; }
+.picker-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
     border-radius: 8px;
-    background: var(--bg-page, #f8fafc);
+    background: var(--bg-page);
+    color: var(--text-primary);
+    outline: none;
 }
-.ns-icon { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid var(--border); }
-.ns-info { display: flex; flex-direction: column; }
-.ns-name { font-weight: 600; font-size: 0.95rem; }
-.ns-sci { font-size: 0.8rem; font-style: italic; color: var(--text-muted); }
-.ns-date { font-size: 0.75rem; color: #22c55e; font-weight: 600; }
-
-/* Table Section */
-.table-container { overflow-x: auto; margin-top: 16px; }
-.styled-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.styled-table th { text-align: left; padding: 12px 16px; border-bottom: 2px solid var(--border); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-.styled-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
-.styled-table tr:last-child td { border-bottom: none; }
-.species-details { display: flex; flex-direction: column; text-align: left; }
-.species-name { font-weight: 600; color: var(--text-primary); }
-.species-sci { font-size: 0.75rem; font-style: italic; color: var(--text-muted); }
-.td-species { display: flex; align-items: center; gap: 12px; }
-
-/* Confidence Bar */
-.conf-bar-container { display: flex; align-items: center; gap: 8px; }
-.conf-bar-bg { flex: 1; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; min-width: 60px; }
-.conf-bar-fill { height: 100%; border-radius: 3px; }
-.conf-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); min-width: 40px; }
-
-/* Time Badge */
-.badge-time { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: #f1f5f9; color: #64748b; }
+.picker-results {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: none;
+}
+.result-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+}
+.result-item:hover { background: var(--hover-color, #f8fafc); }
+.picker-selected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.selected-tag {
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.tag-remove { cursor: pointer; opacity: 0.6; }
+.tag-remove:hover { opacity: 1; }
+.picker-footer { display: flex; justify-content: flex-end; gap: 12px; }
 
 </style>
+<div class="modal-overlay" id="species-picker-overlay"></div>
+<div class="picker-modal" id="species-picker">
+    <div class="picker-header">
+        <h4 id="picker-title">Select Species</h4>
+        <button class="btn-reset" onclick="closePicker()">✕</button>
+    </div>
+    <div class="picker-search">
+        <input type="text" class="picker-input" id="species-search-input" placeholder="Search for a species...">
+    </div>
+    <div class="picker-results" id="search-results"></div>
+    <div class="picker-selected" id="selected-species-container"></div>
+    <div class="picker-footer">
+        <button class="btn-reset" onclick="closePicker()">Cancel</button>
+        <button class="btn-apply" onclick="saveSpeciesSelection()">Apply</button>
+    </div>
+</div>
 <div class="analytics-dashboard">
     <!-- Header -->
     <div class="dashboard-header">
@@ -302,15 +351,27 @@
     <!-- Full Width Visualizations -->
     <div class="full-viz">
         <div class="viz-card">
-            <h3>Detection Patterns by Time of Day</h3>
-            <p class="chart-sub">Shows average detection counts throughout the day for selected species</p>
+            <div class="viz-card-header">
+                <h3>Detection Patterns by Time of Day</h3>
+                <button class="btn-filter" onclick="openPicker('patterns')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                    Filter
+                </button>
+            </div>
+            <p class="chart-sub" id="patterns-sub">Showing average detection counts throughout the day for selected species</p>
             <div class="chart-container tall">
                 <canvas id="speciesPatternsChart"></canvas>
             </div>
         </div>
         <div class="viz-card">
-            <h3>Species Detection Trends</h3>
-            <p class="chart-sub">Shows detection trends over time for selected species</p>
+            <div class="viz-card-header">
+                <h3>Species Detection Trends</h3>
+                <button class="btn-filter" onclick="openPicker('trends')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                    Filter
+                </button>
+            </div>
+            <p class="chart-sub" id="trends-sub">Shows detection trends over time for selected species</p>
             <div class="chart-container tall">
                 <canvas id="speciesTrendsChart"></canvas>
             </div>
@@ -622,14 +683,137 @@ function str_pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-// Force all charts to resize correctly on browser zoom
-var resizeTimer;
-window.addEventListener('resize', function() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function() {
-        Chart.helpers.each(Chart.instances, function(instance) {
-            instance.resize();
+// Picker State
+let currentTarget = null; // 'patterns' or 'trends'
+let selectedSpecies = {
+    patterns: [],
+    trends: []
+};
+
+function openPicker(target) {
+    currentTarget = target;
+    document.getElementById('picker-title').innerText = target === 'patterns' ? 'Filter Detection Patterns' : 'Filter Detection Trends';
+    document.getElementById('species-picker-overlay').style.display = 'block';
+    document.getElementById('species-picker').style.display = 'flex';
+    document.getElementById('species-search-input').value = '';
+    document.getElementById('search-results').style.display = 'none';
+    renderSelectedTags();
+    document.getElementById('species-search-input').focus();
+}
+
+function closePicker() {
+    document.getElementById('species-picker-overlay').style.display = 'none';
+    document.getElementById('species-picker').style.display = 'none';
+}
+
+function renderSelectedTags() {
+    const container = document.getElementById('selected-species-container');
+    container.innerHTML = '';
+    selectedSpecies[currentTarget].forEach(s => {
+        const tag = document.createElement('div');
+        tag.className = 'selected-tag';
+        tag.innerHTML = `<span>${s}</span><span class="tag-remove" onclick="removeSpecies('${s}')">✕</span>`;
+        container.appendChild(tag);
+    });
+}
+
+function removeSpecies(name) {
+    selectedSpecies[currentTarget] = selectedSpecies[currentTarget].filter(s => s !== name);
+    renderSelectedTags();
+}
+
+function addSpecies(name) {
+    if (selectedSpecies[currentTarget].length >= 5) {
+        alert("You can only select up to 5 species.");
+        return;
+    }
+    if (!selectedSpecies[currentTarget].includes(name)) {
+        selectedSpecies[currentTarget].push(name);
+        renderSelectedTags();
+    }
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('species-search-input').value = '';
+}
+
+function saveSpeciesSelection() {
+    closePicker();
+    const days = document.getElementById('time-period').value;
+    if (currentTarget === 'patterns') {
+        loadPatternsData(days);
+    } else {
+        loadTrendsData(days);
+    }
+}
+
+// Search logic
+document.getElementById('species-search-input').addEventListener('input', function(e) {
+    const q = e.target.value;
+    if (q.length < 2) {
+        document.getElementById('search-results').style.display = 'none';
+        return;
+    }
+    fetch(`api/v1/species/search?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('search-results');
+            if (data.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            container.innerHTML = data.map(d => `<div class="result-item" onclick="addSpecies('${d.name}')">${d.name} <small>(${d.sciName})</small></div>`).join('');
+            container.style.display = 'block';
         });
-    }, 250);
 });
+
+function loadPatternsData(days) {
+    const species = selectedSpecies.patterns.join(',');
+    fetch(`api/v1/analytics/patterns?days=${days}&species=${encodeURIComponent(species)}`)
+        .then(r => r.json())
+        .then(data => {
+            charts.patterns.data.datasets = Object.entries(data).map(([species, series], i) => ({
+                label: species,
+                data: series,
+                borderColor: colorPalette[i % colorPalette.length],
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                pointRadius: 0
+            }));
+            charts.patterns.update();
+            const label = species ? `Showing patterns for: ${selectedSpecies.patterns.join(', ')}` : 'Showing average detection counts throughout the day for selected species';
+            document.getElementById('patterns-sub').textContent = label;
+        });
+}
+
+function loadTrendsData(days) {
+    const species = selectedSpecies.trends.join(',');
+    fetch(`api/v1/analytics/trends?days=${days}&species=${encodeURIComponent(species)}`)
+        .then(r => r.json())
+        .then(data => {
+            charts.speciesTrends.data.labels = data.dates.map(date => {
+                const d = new Date(date);
+                return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            });
+            charts.speciesTrends.data.datasets = Object.entries(data.series).map(([species, series], i) => ({
+                label: species,
+                data: series,
+                borderColor: colorPalette[i % colorPalette.length],
+                backgroundColor: colorPalette[i % colorPalette.length] + '11',
+                fill: true,
+                borderWidth: 2,
+                tension: 0.4
+            }));
+            charts.speciesTrends.update();
+            const label = species ? `Showing trends for: ${selectedSpecies.trends.join(', ')}` : 'Shows detection trends over time for selected species';
+            document.getElementById('trends-sub').textContent = label;
+        });
+}
+
+// Update existing loadAllData
+const originalLoadAllData = loadAllData;
+loadAllData = function() {
+    originalLoadAllData();
+    const days = document.getElementById('time-period').value;
+    loadPatternsData(days);
+    loadTrendsData(days);
+};
 </script>

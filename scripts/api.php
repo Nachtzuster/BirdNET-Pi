@@ -156,12 +156,20 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
 } elseif (preg_match('#^/api/v1/analytics/trends$#', $requestUri)) {
   $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 30;
   
-  // Get top 5 species first
-  $stmt = $db->prepare('SELECT Com_Name, COUNT(*) as Count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Com_Name ORDER BY Count DESC LIMIT 5');
-  $result = $stmt->execute();
-  $top_species = [];
-  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-    $top_species[] = $row['Com_Name'];
+  // Get target species: either from GET param or default to top 5
+  $target_species = [];
+  if (isset($_GET['species']) && !empty($_GET['species'])) {
+    $target_species = explode(',', $_GET['species']);
+    // Limit to 5 to prevent performance issues and chart clutter
+    if (count($target_species) > 5) {
+      $target_species = array_slice($target_species, 0, 5);
+    }
+  } else {
+    $stmt = $db->prepare('SELECT Com_Name, COUNT(*) as Count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Com_Name ORDER BY Count DESC LIMIT 5');
+    $result = $stmt->execute();
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+      $target_species[] = $row['Com_Name'];
+    }
   }
   
   $data = [];
@@ -171,8 +179,8 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
     $dates_array[] = date('Y-m-d', strtotime("-$i days"));
   }
 
-  // Get daily counts for each top species
-  foreach ($top_species as $species) {
+  // Get daily counts for each target species
+  foreach ($target_species as $species) {
     $stmt = $db->prepare('SELECT Date, COUNT(*) as Count FROM detections WHERE Com_Name = :com_name AND Date >= DATE("now", "-'.$days.' days") GROUP BY Date');
     $stmt->bindValue(':com_name', $species, SQLITE3_TEXT);
     $result = $stmt->execute();
@@ -198,16 +206,23 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
 } elseif (preg_match('#^/api/v1/analytics/patterns$#', $requestUri)) {
   $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 30;
   
-  // Get top 5 species first
-  $stmt = $db->prepare('SELECT Com_Name, COUNT(*) as Count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Com_Name ORDER BY Count DESC LIMIT 5');
-  $result = $stmt->execute();
-  $top_species = [];
-  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-    $top_species[] = $row['Com_Name'];
+  // Get target species: either from GET param or default to top 5
+  $target_species = [];
+  if (isset($_GET['species']) && !empty($_GET['species'])) {
+    $target_species = explode(',', $_GET['species']);
+    if (count($target_species) > 5) {
+      $target_species = array_slice($target_species, 0, 5);
+    }
+  } else {
+    $stmt = $db->prepare('SELECT Com_Name, COUNT(*) as Count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Com_Name ORDER BY Count DESC LIMIT 5');
+    $result = $stmt->execute();
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+      $target_species[] = $row['Com_Name'];
+    }
   }
   
   $data = [];
-  foreach ($top_species as $species) {
+  foreach ($target_species as $species) {
     $stmt = $db->prepare('SELECT strftime("%H", Time) as Hour, COUNT(*) as count FROM detections WHERE Com_Name = :com_name AND Date >= DATE("now", "-'.$days.' days") GROUP BY Hour ORDER BY Hour ASC');
     $stmt->bindValue(':com_name', $species, SQLITE3_TEXT);
     $result = $stmt->execute();
@@ -348,6 +363,28 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
     'peak_hour' => $peak_hour,
     'hours' => $hours_result
   ]);
+
+} elseif (preg_match('#^/api/v1/species/search$#', $requestUri)) {
+  $query = isset($_GET['q']) ? trim($_GET['q']) : '';
+  if (strlen($query) < 2) {
+    http_response_code(200);
+    header('Content-Type: application/json');
+    echo json_encode([]);
+    exit;
+  }
+  
+  $stmt = $db->prepare('SELECT DISTINCT Com_Name as name, Sci_Name as sciName FROM detections WHERE Com_Name LIKE :query OR Sci_Name LIKE :query ORDER BY Com_Name ASC LIMIT 20');
+  $stmt->bindValue(':query', '%' . $query . '%', SQLITE3_TEXT);
+  $result = $stmt->execute();
+  
+  $data = [];
+  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $data[] = $row;
+  }
+  
+  http_response_code(200);
+  header('Content-Type: application/json');
+  echo json_encode($data);
 
 } else {
   http_response_code(404);
