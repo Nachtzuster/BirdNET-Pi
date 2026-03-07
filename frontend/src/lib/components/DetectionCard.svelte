@@ -11,6 +11,7 @@ import { goto } from '$app/navigation';
 	export let showDate: boolean = true;
 	export let showImage: boolean = true;
 	export let href: string | null = null;
+	export let tagLabel: string | null = null;
 	export let allowDelete: boolean = false;
 	export let deleting: boolean = false;
 	export let speciesLinks: SpeciesExternalLinks | null = null;
@@ -65,6 +66,13 @@ import { goto } from '$app/navigation';
 		<div class="flex-1 min-w-0">
 			<div class="flex items-start justify-between gap-3">
 				<div class="min-w-0 flex-1">
+					{#if tagLabel}
+						<div class="mb-2">
+							<span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+								{tagLabel}
+							</span>
+						</div>
+					{/if}
 					{#if href}
 						<a
 							href={href}

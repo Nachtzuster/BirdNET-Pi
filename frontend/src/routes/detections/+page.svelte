@@ -16,6 +16,7 @@
 	let searchTerm = '';
 	let selectedDate = '';
 	let selectedSpecies = '';
+	let newOnDateOnly = false;
 	let speciesOptions: SpeciesSummary[] = [];
 	let availableDates: string[] = [];
 	let limit = 20;
@@ -57,10 +58,11 @@
 
 		loading = true;
 		try {
-			const params: { limit: number; offset: number; date?: string; species?: string; search?: string } = { limit, offset };
+			const params: { limit: number; offset: number; date?: string; species?: string; search?: string; new_on_date?: boolean } = { limit, offset };
 			if (selectedDate) params.date = selectedDate;
 			if (selectedSpecies) params.species = selectedSpecies;
 			if (searchTerm.trim()) params.search = searchTerm.trim();
+			if (newOnDateOnly && selectedDate) params.new_on_date = true;
 
 			const result = await detections.list(params);
 			if (reset) {
@@ -105,12 +107,23 @@
 	}
 
 	function handleDateChange() {
+		if (!selectedDate) {
+			newOnDateOnly = false;
+		}
 		loadSpeciesOptions();
 		loadDetections(true);
 	}
 
 	function handleSpeciesChange() {
 		loadDetections(true);
+	}
+
+	function handleNewOnDateToggle() {
+		if (!selectedDate) {
+			newOnDateOnly = false;
+			return;
+		}
+		void loadDetections(true);
 	}
 
 	function queueSearch() {
@@ -122,6 +135,7 @@
 
 	function clearDateFilter() {
 		selectedDate = '';
+		newOnDateOnly = false;
 		void loadSpeciesOptions();
 		void loadDetections(true);
 	}
@@ -141,6 +155,7 @@
 		selectedDate = '';
 		selectedSpecies = '';
 		searchTerm = '';
+		newOnDateOnly = false;
 		if (searchTimer) clearTimeout(searchTimer);
 		void loadSpeciesOptions();
 		void loadDetections(true);
@@ -231,6 +246,7 @@
 		selectedDate = query.get('date') || todayStr();
 		selectedSpecies = query.get('species') || '';
 		searchTerm = query.get('search') || '';
+		newOnDateOnly = query.get('new_on_date') === 'true';
 		loadDates();
 		loadSpeciesOptions();
 		loadDetections(true);
@@ -252,7 +268,7 @@
 	</div>
 
 	<!-- Filters -->
-	<div class="sticky top-[4.5rem] md:top-20 z-20 mb-6 rounded-2xl border border-gray-200/80 bg-white/95 p-4 shadow-sm dark:border-dark-border/80 dark:bg-dark-card/95">
+	<div class="mb-6 rounded-2xl border border-gray-200/80 bg-white/95 p-4 shadow-sm dark:border-dark-border/80 dark:bg-dark-card/95">
 		<div class="flex flex-col gap-4 lg:flex-row lg:items-end">
 			<!-- Search -->
 			<div class="flex-1">
@@ -298,7 +314,35 @@
 				</select>
 			</div>
 
-			{#if selectedDate || selectedSpecies || searchTerm}
+			<div class="w-full md:w-auto">
+				<label class="label" for="newOnDateOnly">New on date</label>
+				<button
+					id="newOnDateOnly"
+					type="button"
+					role="switch"
+					aria-checked={newOnDateOnly}
+					on:click={() => {
+						newOnDateOnly = !newOnDateOnly;
+						handleNewOnDateToggle();
+					}}
+					disabled={!selectedDate}
+					class="inline-flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-2 text-sm font-medium transition-colors md:min-w-44 {newOnDateOnly
+						? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200'
+						: 'border-gray-300 bg-white text-gray-600 dark:border-dark-border dark:bg-dark-card dark:text-gray-300'} disabled:cursor-not-allowed disabled:opacity-50"
+					title={selectedDate ? 'Show only species first detected on this date' : 'Select a date to enable this filter'}
+				>
+					<span>{newOnDateOnly ? 'New on date' : 'All species'}</span>
+					<span
+						class="inline-flex h-5 w-9 items-center rounded-full transition-colors {newOnDateOnly ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-dark-border'}"
+					>
+						<span
+							class="ml-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform {newOnDateOnly ? 'translate-x-4' : ''}"
+						></span>
+					</span>
+				</button>
+			</div>
+
+			{#if selectedDate || selectedSpecies || searchTerm || newOnDateOnly}
 				<div class="flex items-end">
 					<button class="btn-ghost w-full lg:w-auto" on:click={clearAllFilters}>
 						Clear all
@@ -330,18 +374,30 @@
 						<span aria-hidden="true">×</span>
 					</button>
 				{/if}
-				{#if searchTerm}
-					<button
-						class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300"
-						on:click={clearSearchFilter}
-					>
-						<span>Search: {searchTerm}</span>
-						<span aria-hidden="true">×</span>
-					</button>
-				{/if}
-			</div>
-			<p class="text-xs text-gray-500 dark:text-gray-400">
-				Open a recording for details, then use Shift or cleanup actions only when needed.
+					{#if searchTerm}
+						<button
+							class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs text-primary-700 dark:text-primary-300"
+							on:click={clearSearchFilter}
+						>
+							<span>Search: {searchTerm}</span>
+							<span aria-hidden="true">×</span>
+						</button>
+					{/if}
+					{#if newOnDateOnly}
+						<button
+							class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+							on:click={() => {
+								newOnDateOnly = false;
+								void loadDetections(true);
+							}}
+						>
+							<span>New on date</span>
+							<span aria-hidden="true">×</span>
+						</button>
+					{/if}
+				</div>
+				<p class="text-xs text-gray-500 dark:text-gray-400">
+					Open a recording for details, then use Shift or cleanup actions only when needed.
 			</p>
 		</div>
 	</div>

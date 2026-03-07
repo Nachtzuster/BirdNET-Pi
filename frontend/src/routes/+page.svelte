@@ -85,11 +85,12 @@
 		return newSpeciesTodaySet.has(sciName);
 	}
 
-	function detectionsHref(detection: Detection): string {
+	function detectionsHref(detection: Detection, options?: { newOnDate?: boolean }): string {
 		const params = new URLSearchParams({
 			date: detection.Date,
 			species: detection.Sci_Name,
 		});
+		if (options?.newOnDate) params.set('new_on_date', 'true');
 		return `/detections?${params.toString()}`;
 	}
 
@@ -360,7 +361,7 @@
 									</a>
 									<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">{detection.Sci_Name}</p>
 								</div>
-								<a href={detectionsHref(detection)} class="text-xs text-primary-600 dark:text-primary-400 hover:underline whitespace-nowrap">
+								<a href={detectionsHref(detection, { newOnDate: true })} class="text-xs text-primary-600 dark:text-primary-400 hover:underline whitespace-nowrap">
 									Open Review →
 								</a>
 							</div>
@@ -490,18 +491,12 @@
 				<div class="grid gap-4 md:grid-cols-2">
 					{#each groupedDetections as group (group.sciName)}
 						<div class="min-w-0">
-							{#if isPinnedNewSpecies(group.sciName)}
-								<div class="mb-2">
-									<span class="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 px-2.5 py-0.5 text-xs font-medium">
-										New species today
-									</span>
-								</div>
-							{/if}
-							<DetectionCard
-								detection={group.latest}
-								showDate={false}
-								href={detectionsHref(group.latest)}
-							/>
+								<DetectionCard
+									detection={group.latest}
+									showDate={false}
+									href={detectionsHref(group.latest, { newOnDate: isPinnedNewSpecies(group.sciName) })}
+									tagLabel={isPinnedNewSpecies(group.sciName) ? 'New species today' : null}
+								/>
 							{#if group.count > 1}
 								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 break-words">
 									+{group.count - 1} more {group.comName} detections in recent activity

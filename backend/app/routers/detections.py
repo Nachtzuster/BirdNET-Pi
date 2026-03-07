@@ -19,6 +19,7 @@ async def get_detections(
     date: Optional[str] = None,
     species: Optional[str] = None,
     search: Optional[str] = None,
+    new_on_date: bool = False,
     db: sqlite3.Connection = Depends(get_db),
 ):
     """Get paginated list of detections.
@@ -29,7 +30,11 @@ async def get_detections(
         date: Filter by date (YYYY-MM-DD)
         species: Filter by scientific name
         search: Search term for common or scientific name
+        new_on_date: Only include species whose first-ever detection was on the selected date
     """
+    if new_on_date and not date:
+        raise HTTPException(status_code=400, detail="new_on_date filter requires a date")
+
     # Build WHERE clause
     conditions = []
     params = []
@@ -43,6 +48,18 @@ async def get_detections(
     if search:
         conditions.append("(Com_Name LIKE ? OR Sci_Name LIKE ?)")
         params.extend([f"%{search}%", f"%{search}%"])
+    if new_on_date:
+        conditions.append(
+            """
+            NOT EXISTS (
+                SELECT 1
+                FROM detections prev
+                WHERE prev.Sci_Name = detections.Sci_Name
+                  AND prev.Date < ?
+            )
+            """
+        )
+        params.append(date)
 
     where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 
