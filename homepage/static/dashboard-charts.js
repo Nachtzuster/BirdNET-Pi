@@ -238,7 +238,7 @@
 
         var imgPreview = document.createElement('div');
         imgPreview.className = 'heatmap-img-preview';
-        imgPreview.style.cssText = 'display:none;position:absolute;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:var(--shadow-lg);z-index:1000;pointer-events:none;width:150px;height:150px;overflow:hidden;';
+        imgPreview.style.cssText = 'display:none;position:absolute;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:var(--shadow-lg);z-index:1000;pointer-events:none;width:250px;height:250px;overflow:hidden;';
         imgPreview.innerHTML = '<img style="width:100%;height:100%;object-fit:cover;border-radius:4px;image-rendering:-webkit-optimize-contrast;image-rendering:high-quality;">';
         canvas.parentElement.appendChild(imgPreview);
 
@@ -267,7 +267,7 @@
                     if (previewImg.src !== s.image) previewImg.src = s.image;
                     imgPreview.style.display = 'block';
                     imgPreview.style.left = (x + 20) + 'px';
-                    imgPreview.style.top = (y - 75) + 'px';
+                    imgPreview.style.top = (y - 125) + 'px';
                     tooltip.style.display = 'none';
                     return;
                 }
