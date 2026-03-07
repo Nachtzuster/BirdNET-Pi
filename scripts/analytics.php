@@ -166,6 +166,18 @@
     transition: all 0.2s;
 }
 .btn-filter:hover { background: #e2e8f0; color: #1e293b; }
+.btn-reset-chart {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-reset-chart:hover { background: var(--bg-page); color: var(--text-primary); }
 .chart-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; margin-top: 4px; }
 
 /* Modal */
@@ -440,10 +452,13 @@
         <div class="viz-card">
             <div class="viz-card-header">
                 <h3>Detection Patterns by Time of Day</h3>
-                <button class="btn-filter" onclick="openPicker('patterns')">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
-                    Filter
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-reset-chart" onclick="resetSpeciesFilter('patterns')">Reset</button>
+                    <button class="btn-filter" onclick="openPicker('patterns')">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                        Filter
+                    </button>
+                </div>
             </div>
             <p class="chart-sub" id="patterns-sub">Showing average detection counts throughout the day for selected species</p>
             <div class="chart-container tall">
@@ -453,10 +468,13 @@
         <div class="viz-card">
             <div class="viz-card-header">
                 <h3>Species Detection Trends</h3>
-                <button class="btn-filter" onclick="openPicker('trends')">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
-                    Filter
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-reset-chart" onclick="resetSpeciesFilter('trends')">Reset</button>
+                    <button class="btn-filter" onclick="openPicker('trends')">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                        Filter
+                    </button>
+                </div>
             </div>
             <p class="chart-sub" id="trends-sub">Shows detection trends over time for selected species</p>
             <div class="chart-container tall">
@@ -820,6 +838,16 @@ function addSpecies(name) {
     }
     document.getElementById('search-results').style.display = 'none';
     document.getElementById('species-search-input').value = '';
+}
+
+function resetSpeciesFilter(target) {
+    selectedSpecies[target] = [];
+    const days = document.getElementById('time-period').value;
+    if (target === 'patterns') {
+        loadPatternsData(days);
+    } else {
+        loadTrendsData(days);
+    }
 }
 
 function saveSpeciesSelection() {
