@@ -494,14 +494,19 @@ function loadAllData() {
             charts.activity.update();
         });
 
-    // Diversity / Main Stats
-    fetch(`api/v1/analytics/diversity?days=${days}`)
+    // Detection Trends
+    fetch(`api/v1/analytics/detections?days=${days}`)
         .then(r => r.json())
         .then(data => {
             charts.trends.data.labels = data.dates;
-            charts.trends.data.datasets[0].data = data.counts.map(c => c * 5); // Dummy scaling for "trends" visually
+            charts.trends.data.datasets[0].data = data.counts;
             charts.trends.update();
+        });
 
+    // Diversity
+    fetch(`api/v1/analytics/diversity?days=${days}`)
+        .then(r => r.json())
+        .then(data => {
             charts.diversity.data.labels = data.dates;
             charts.diversity.data.datasets[0].data = data.counts;
             charts.diversity.update();

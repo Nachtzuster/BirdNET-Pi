@@ -121,6 +121,23 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
   header('Content-Type: application/json');
   echo json_encode(["dates" => $dates, "counts" => $counts]);
 
+} elseif (preg_match('#^/api/v1/analytics/detections$#', $requestUri)) {
+  $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 30;
+  
+  $stmt = $db->prepare('SELECT Date, COUNT(*) as count FROM detections WHERE Date >= DATE("now", "-'.$days.' days") GROUP BY Date ORDER BY Date ASC');
+  $result = $stmt->execute();
+  
+  $dates = [];
+  $counts = [];
+  while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $dates[] = $row['Date'];
+    $counts[] = $row['count'];
+  }
+
+  http_response_code(200);
+  header('Content-Type: application/json');
+  echo json_encode(["dates" => $dates, "counts" => $counts]);
+
 } elseif (preg_match('#^/api/v1/analytics/top_species$#', $requestUri)) {
   $days = isset($_GET['days']) && is_numeric($_GET['days']) ? intval($_GET['days']) : 30;
   $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) ? intval($_GET['limit']) : 10;
