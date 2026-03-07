@@ -240,6 +240,93 @@
 .tag-remove:hover { opacity: 1; }
 .picker-footer { display: flex; justify-content: flex-end; gap: 12px; }
 
+/* Chart Sizing */
+.chart-container { position: relative; height: 300px; width: 100%; }
+.chart-container.tall { height: 400px; }
+
+/* Full Visualizations Layout */
+.full-viz {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+/* New Species List Styling */
+.new-species-container {
+    height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+.new-species-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--bg-page, #f8fafc);
+}
+.ns-icon { 
+    width: 40px; height: 40px; 
+    border-radius: 50%; 
+    background: #fff; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 1.2rem; 
+    border: 1px solid var(--border); 
+}
+.ns-info { display: flex; flex-direction: column; }
+.ns-name { font-weight: 600; font-size: 0.95rem; }
+.ns-sci { font-size: 0.8rem; font-style: italic; color: var(--text-muted); }
+.ns-date { font-size: 0.75rem; color: #22c55e; font-weight: 600; }
+
+/* Recent Detections Table Styling */
+.table-container { overflow-x: auto; margin-top: 16px; }
+.styled-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.styled-table th { 
+    text-align: left; 
+    padding: 12px 16px; 
+    border-bottom: 2px solid var(--border); 
+    color: var(--text-muted); 
+    font-size: 0.8rem; 
+    text-transform: uppercase; 
+    letter-spacing: 0.05em; 
+}
+.styled-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+.styled-table tr:last-child td { border-bottom: none; }
+.species-details { display: flex; flex-direction: column; text-align: left; }
+.species-name { font-weight: 600; color: var(--text-primary); }
+.species-sci { font-size: 0.75rem; font-style: italic; color: var(--text-muted); }
+.td-species { display: flex; align-items: center; gap: 12px; }
+
+/* Confidence Indicators */
+.conf-bar-container { display: flex; align-items: center; gap: 8px; }
+.conf-bar-bg { flex: 1; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; min-width: 60px; }
+.conf-bar-fill { height: 100%; border-radius: 3px; }
+.conf-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); min-width: 40px; }
+
+/* Time Badges */
+.badge-time { 
+    padding: 4px 8px; 
+    border-radius: 12px; 
+    font-size: 0.75rem; 
+    font-weight: 600; 
+    background: #f1f5f9; 
+    color: #64748b; 
+}
+
 </style>
 <div class="modal-overlay" id="species-picker-overlay"></div>
 <div class="picker-modal" id="species-picker">
@@ -816,4 +903,15 @@ loadAllData = function() {
     loadPatternsData(days);
     loadTrendsData(days);
 };
+
+// Force all charts to resize correctly on browser zoom
+var resizeTimer;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+        Chart.helpers.each(Chart.instances, function(instance) {
+            instance.resize();
+        });
+    }, 250);
+});
 </script>
