@@ -238,9 +238,9 @@
 
         var imgPreview = document.createElement('div');
         imgPreview.className = 'heatmap-img-preview';
-        imgPreview.style.cssText = 'display:none;position:absolute;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:var(--shadow-lg);z-index:1000;pointer-events:none;width:250px;height:250px;overflow:hidden;';
-        imgPreview.innerHTML = '<img style="width:100%;height:100%;object-fit:cover;border-radius:4px;image-rendering:-webkit-optimize-contrast;image-rendering:high-quality;">';
-        canvas.parentElement.appendChild(imgPreview);
+        imgPreview.style.cssText = 'display:none;position:fixed;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:6px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:99999;pointer-events:none;width:250px;height:250px;overflow:hidden;';
+        imgPreview.innerHTML = '<img style="width:100%;height:100%;object-fit:cover;border-radius:8px;image-rendering:-webkit-optimize-contrast;image-rendering:high-quality;">';
+        document.body.appendChild(imgPreview);
 
         var displayed = species;
         var speciesNames = displayed.map(function (s) { return s.name; });
@@ -266,8 +266,16 @@
                     var previewImg = imgPreview.querySelector('img');
                     if (previewImg.src !== s.image) previewImg.src = s.image;
                     imgPreview.style.display = 'block';
-                    imgPreview.style.left = (x + 20) + 'px';
-                    imgPreview.style.top = (y - 125) + 'px';
+
+                    var previewX = e.clientX + 30;
+                    var previewY = e.clientY - 125;
+
+                    // Prevent going off screen
+                    if (previewY < 10) previewY = 10;
+                    if (previewX + 260 > window.innerWidth) previewX = e.clientX - 280;
+
+                    imgPreview.style.left = previewX + 'px';
+                    imgPreview.style.top = previewY + 'px';
                     tooltip.style.display = 'none';
                     return;
                 }
