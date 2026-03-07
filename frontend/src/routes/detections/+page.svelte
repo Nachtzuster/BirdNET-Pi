@@ -28,6 +28,7 @@
 	let showLoginModal = false;
 	let passwordInput = '';
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+	let detectionsRequestId = 0;
 
 	function todayStr(): string {
 		const d = new Date();
@@ -51,6 +52,8 @@
 	}
 
 	async function loadDetections(reset = false) {
+		const requestId = ++detectionsRequestId;
+
 		if (reset) {
 			offset = 0;
 			allDetections = [];
@@ -65,6 +68,7 @@
 			if (newOnDateOnly && selectedDate) params.new_on_date = true;
 
 			const result = await detections.list(params);
+			if (requestId !== detectionsRequestId) return;
 			if (reset) {
 				allDetections = result.detections;
 			} else {
@@ -73,9 +77,11 @@
 			total = result.total;
 			hasMore = allDetections.length < total;
 		} catch (e) {
+			if (requestId !== detectionsRequestId) return;
 			console.error('Failed to load detections:', e);
 			toasts.show('Failed to load detections', 'error');
 		} finally {
+			if (requestId !== detectionsRequestId) return;
 			loading = false;
 		}
 	}
