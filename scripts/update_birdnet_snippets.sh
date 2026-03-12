@@ -106,6 +106,12 @@ if ! grep -E '^COLOR_SCHEME=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo "COLOR_SCHEME=\"light\"" >> /etc/birdnet/birdnet.conf
 fi
 
+if ! grep -E '^UPDATE_CHANNEL=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo '## UPDATE_CHANNEL controls which release train updater tooling should prefer' >> /etc/birdnet/birdnet.conf
+  echo '## stable, prerelease, or edge' >> /etc/birdnet/birdnet.conf
+  echo 'UPDATE_CHANNEL="stable"' >> /etc/birdnet/birdnet.conf
+fi
+
 if ! grep -E '^PURGE_THRESHOLD=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo "PURGE_THRESHOLD=95" >> /etc/birdnet/birdnet.conf
 fi

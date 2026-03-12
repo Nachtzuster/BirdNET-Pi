@@ -91,6 +91,17 @@ On a fresh Raspberry Pi with 64-bit RaspiOS:
 curl -s https://raw.githubusercontent.com/cpieper/BirdNET-Pibird/main/newinstaller.sh | bash
 ```
 
+You can also record an update preference during install:
+
+```bash
+RELEASE_CHANNEL=stable bash newinstaller.sh
+```
+
+Supported channels are `stable`, `prerelease`, and `edge`.
+- `stable` is the default and installs the latest stable release tag.
+- `prerelease` installs the latest prerelease or release tag, but requires explicit opt-in.
+- `edge` follows the selected `BRANCH`, and also requires explicit opt-in.
+
 This installs everything: BirdNET analysis pipeline, the new web interface, and all services.
 
 <details>
@@ -100,19 +111,19 @@ To install from a feature or development branch:
 
 ```bash
 # Replace BRANCH_NAME with the actual branch name
-curl -s https://raw.githubusercontent.com/cpieper/BirdNET-Pibird/BRANCH_NAME/newinstaller.sh | BRANCH=BRANCH_NAME bash
+curl -s https://raw.githubusercontent.com/cpieper/BirdNET-Pibird/main/newinstaller.sh | RELEASE_CHANNEL=edge BRANCH=BRANCH_NAME bash
 ```
 
 Example for the `fastapi-svelte-migration-mk1` branch:
 
 ```bash
-curl -s https://raw.githubusercontent.com/cpieper/BirdNET-Pibird/fastapi-svelte-migration-mk1/newinstaller.sh | BRANCH=fastapi-svelte-migration-mk1 bash
+curl -s https://raw.githubusercontent.com/cpieper/BirdNET-Pibird/main/newinstaller.sh | RELEASE_CHANNEL=edge BRANCH=fastapi-svelte-migration-mk1 bash
 ```
 
 You can also override the repository URL and install directory:
 
 ```bash
-REPO_URL=https://github.com/yourfork/BirdNET-Pibird.git BRANCH=your-branch bash newinstaller.sh
+REPO_URL=https://github.com/yourfork/BirdNET-Pibird.git RELEASE_CHANNEL=edge BRANCH=your-branch bash newinstaller.sh
 ```
 
 </details>

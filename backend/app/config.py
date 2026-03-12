@@ -40,6 +40,7 @@ class Settings:
             'CADDY_PWD': 'birdnet',
             'DATABASE_LANG': 'en',
             'COLOR_SCHEME': 'light',
+            'UPDATE_CHANNEL': 'stable',
             'MODEL': 'BirdNET_GLOBAL_6K_V2.4_Model_FP16',
             'CONFIDENCE': '0.7',
             'SENSITIVITY': '1.0',
@@ -85,6 +86,10 @@ class Settings:
     @property
     def color_scheme(self) -> str:
         return self.config.get('COLOR_SCHEME', 'light')
+
+    @property
+    def update_channel(self) -> str:
+        return self.config.get('UPDATE_CHANNEL', 'stable')
 
     # Model settings
     @property

@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 
 from ..config import get_settings, Settings
+from ..dependencies import verify_credentials
 from ..models.schemas import BirdImage
 from ..species_links import build_species_links
 
@@ -538,6 +539,7 @@ async def get_cached_image_asset(
 @router.post("/image/{sci_name}/blacklist")
 async def blacklist_image(
     sci_name: str,
+    user: str = Depends(verify_credentials),
     settings: Settings = Depends(get_settings),
 ):
     """Blacklist the current cached image for a species.

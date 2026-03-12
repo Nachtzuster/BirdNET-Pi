@@ -137,14 +137,21 @@
 	}
 
 	async function createShifted(fileName: string) {
+		if (!(await requireAuth())) return;
+
 		shiftingFiles = new Set(shiftingFiles).add(fileName);
 		try {
-			await media.createShifted(selectedDate, selectedSpecies, fileName);
+			await media.createShifted(selectedDate, selectedSpecies, fileName, auth.getCredentials());
 			shiftedAvailable = { ...shiftedAvailable, [fileName]: true };
 			toasts.show('Shifted audio created', 'success');
-		} catch (e) {
-			console.error('Failed to create shifted audio:', e);
-			toasts.show('Failed to create shifted audio', 'error');
+		} catch (e: any) {
+			if (e?.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				console.error('Failed to create shifted audio:', e);
+				toasts.show('Failed to create shifted audio', 'error');
+			}
 		} finally {
 			const next = new Set(shiftingFiles);
 			next.delete(fileName);
@@ -153,14 +160,21 @@
 	}
 
 	async function deleteShifted(fileName: string) {
+		if (!(await requireAuth())) return;
+
 		deletingShiftedFiles = new Set(deletingShiftedFiles).add(fileName);
 		try {
-			await media.deleteShifted(selectedDate, selectedSpecies, fileName);
+			await media.deleteShifted(selectedDate, selectedSpecies, fileName, auth.getCredentials());
 			shiftedAvailable = { ...shiftedAvailable, [fileName]: false };
 			toasts.show('Shifted audio removed', 'success');
-		} catch (e) {
-			console.error('Failed to delete shifted audio:', e);
-			toasts.show('Failed to remove shifted audio', 'error');
+		} catch (e: any) {
+			if (e?.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				console.error('Failed to delete shifted audio:', e);
+				toasts.show('Failed to remove shifted audio', 'error');
+			}
 		} finally {
 			const next = new Set(deletingShiftedFiles);
 			next.delete(fileName);

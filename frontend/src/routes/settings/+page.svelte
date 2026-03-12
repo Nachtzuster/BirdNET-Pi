@@ -16,6 +16,7 @@
 	let longitude = '';
 	let databaseLang = '';
 	let colorScheme = '';
+	let updateChannel: 'stable' | 'prerelease' | 'edge' = 'stable';
 	let model = '';
 	let confidence = '';
 	let sensitivity = '';
@@ -54,6 +55,7 @@
 			longitude = String(configData.longitude);
 			databaseLang = configData.database_lang;
 			colorScheme = configData.color_scheme;
+			updateChannel = configData.update_channel;
 			model = configData.model;
 			confidence = String(configData.confidence);
 			sensitivity = String(configData.sensitivity);
@@ -82,6 +84,7 @@
 					longitude: parseFloat(longitude),
 					database_lang: databaseLang,
 					color_scheme: colorScheme,
+					update_channel: updateChannel,
 					model,
 					confidence: parseFloat(confidence),
 					sensitivity: parseFloat(sensitivity),
@@ -207,6 +210,25 @@
 								<option value="dark">Dark</option>
 							</select>
 						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="card-header">
+					<h2 class="font-semibold text-gray-900 dark:text-gray-100">Software Updates</h2>
+				</div>
+				<div class="card-body space-y-4">
+					<div>
+						<label for="updateChannel" class="label">Release Channel</label>
+						<select id="updateChannel" bind:value={updateChannel} class="select">
+							<option value="stable">Stable</option>
+							<option value="prerelease">Pre-release</option>
+							<option value="edge">Edge</option>
+						</select>
+					</div>
+					<div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+						Stable is the safest default. Pre-release may include release candidates, and Edge is intended for latest branch builds where breakage risk is higher.
 					</div>
 				</div>
 			</div>

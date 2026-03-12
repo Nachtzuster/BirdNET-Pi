@@ -157,16 +157,27 @@ export const media = {
 	shiftedAudioUrl: (date: string, species: string, filename: string) =>
 		`${API_BASE}/media/shifted/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}`,
 
-	createShifted: (date: string, species: string, filename: string, pitch = -1000) =>
+	createShifted: (
+		date: string,
+		species: string,
+		filename: string,
+		auth: { username: string; password: string },
+		pitch = -1000
+	) =>
 		request<{ message: string; path: string }>(
 			`/media/shift/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}?pitch=${pitch}`,
-			{ method: 'POST' }
+			{ method: 'POST', auth }
 		),
 
-	deleteShifted: (date: string, species: string, filename: string) =>
+	deleteShifted: (
+		date: string,
+		species: string,
+		filename: string,
+		auth: { username: string; password: string }
+	) =>
 		request<{ message: string }>(
 			`/media/shift/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}`,
-			{ method: 'DELETE' }
+			{ method: 'DELETE', auth }
 		),
 };
 
@@ -212,7 +223,19 @@ export const system = {
 	logs: (service: string, lines: number, auth: { username: string; password: string }) =>
 		request<{ service: string; lines: number; logs: string }>(`/system/logs/${service}?lines=${lines}`, { auth }),
 
-	updateStatus: () => request<{ commits_behind: number; update_available: boolean; current_commit: string }>('/system/update-status'),
+	updateStatus: (auth: { username: string; password: string }, forceRefresh = false) =>
+		request<UpdateStatus>(
+			`/system/update-status${forceRefresh ? '?force_refresh=true' : ''}`,
+			{ auth }
+		),
+
+	updateLog: (auth: { username: string; password: string }, lines = 200) =>
+		request<{ lines: number; log: string }>(`/system/update-log?lines=${lines}`, { auth }),
+
+	applyUpdate: (
+		data: { channel?: 'stable' | 'prerelease' | 'edge'; target?: string; branch?: string; create_backup?: boolean },
+		auth: { username: string; password: string }
+	) => request<{ message: string; channel: string; target: string | null; create_backup: boolean }>('/system/apply-update', { method: 'POST', body: data, auth }),
 
 	restore: (file: File, auth: { username: string; password: string }) => {
 		const formData = new FormData();
@@ -225,8 +248,8 @@ export const system = {
 export const integrations = {
 	image: (sciName: string) => request<BirdImage>(`/image/${encodeURIComponent(sciName)}`),
 
-	blacklistImage: (sciName: string) =>
-		request(`/image/${encodeURIComponent(sciName)}/blacklist`, { method: 'POST' }),
+	blacklistImage: (sciName: string, auth: { username: string; password: string }) =>
+		request(`/image/${encodeURIComponent(sciName)}/blacklist`, { method: 'POST', auth }),
 
 	birdweatherStatus: () => request<{ enabled: boolean; station_id: string | null; station_url: string | null }>('/birdweather/status'),
 
@@ -333,6 +356,7 @@ export interface Config {
 	longitude: number;
 	database_lang: string;
 	color_scheme: string;
+	update_channel: 'stable' | 'prerelease' | 'edge';
 	model: string;
 	confidence: number;
 	sensitivity: number;
@@ -367,6 +391,76 @@ export interface PublicSystemStatus {
 		core_active: number;
 		inactive_core_services: string[];
 	};
+}
+
+export interface UpdateInstalledState {
+	service_version: string;
+	git_hash: string;
+	git_branch: string;
+	current_commit: string;
+	current_branch: string;
+	current_tag: string | null;
+}
+
+export interface UpdateReleaseState {
+	channel: 'stable' | 'prerelease';
+	tag: string | null;
+	installed_version: string;
+	update_available: boolean;
+}
+
+export interface UpdateEdgeState {
+	branch: string;
+	remote: string;
+	current_commit: string;
+	remote_commit: string | null;
+	commits_behind: number;
+	update_available: boolean;
+}
+
+export interface UpdateRecommendation {
+	channel: 'stable' | 'prerelease' | 'edge';
+	target: string | null;
+	target_type: 'tag' | 'branch' | string;
+	update_available: boolean;
+	summary: string;
+}
+
+export interface UpdateApplyState {
+	status: string;
+	stage: string;
+	channel: string;
+	target: string | null;
+	target_type: string | null;
+	message: string;
+	started_at: string | null;
+	updated_at: string | null;
+	pid: number | null;
+	previous_ref: string | null;
+	current_ref: string | null;
+	backup_created: boolean;
+	backup_path: string | null;
+	error: string | null;
+	running: boolean;
+}
+
+export interface UpdateStatus {
+	installed: UpdateInstalledState;
+	update_channel: 'stable' | 'prerelease' | 'edge';
+	available: {
+		stable: UpdateReleaseState;
+		prerelease: UpdateReleaseState;
+		edge: UpdateEdgeState;
+	};
+	recommended: UpdateRecommendation;
+	apply_state: UpdateApplyState | null;
+	current_commit: string;
+	commits_behind: number;
+	update_available: boolean;
+	checked_at: string;
+	cache_ttl_seconds: number;
+	cached: boolean;
+	error?: string;
 }
 
 export interface SpeciesHourly {

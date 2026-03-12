@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
 from ..config import get_settings, Settings
+from ..dependencies import verify_credentials
 
 router = APIRouter()
 
@@ -168,6 +169,7 @@ async def create_shifted_audio(
     species: str,
     filename: str,
     pitch: int = -1000,
+    user: str = Depends(verify_credentials),
     settings: Settings = Depends(get_settings),
 ):
     """Create a frequency-shifted version of an audio file.
@@ -241,6 +243,7 @@ async def delete_shifted_audio(
     date: str,
     species: str,
     filename: str,
+    user: str = Depends(verify_credentials),
     settings: Settings = Depends(get_settings),
 ):
     """Delete a frequency-shifted audio file."""

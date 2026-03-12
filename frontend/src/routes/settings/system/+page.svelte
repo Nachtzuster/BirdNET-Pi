@@ -1,17 +1,53 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { system as systemApi, type ServiceStatus, type SystemInfo } from '$lib/api';
+	import { system as systemApi, type ServiceStatus, type SystemInfo, type UpdateStatus } from '$lib/api';
 	import { auth, toasts } from '$lib/stores';
 	import { Modal } from '$lib/components';
 
 	let systemInfo: SystemInfo | null = null;
 	let services: ServiceStatus[] = [];
+	let updateStatus: UpdateStatus | null = null;
+	let updateLog = '';
 	let loading = true;
+	let updateLoading = false;
 	let showLoginModal = false;
 	let passwordInput = '';
 	let actionLoading: Record<string, boolean> = {};
 	let restoreFile: File | null = null;
 	let restoring = false;
+	let applyingUpdate = false;
+	let createBackup = true;
+	let updatePollHandle: ReturnType<typeof setInterval> | null = null;
+
+	async function loadUpdateData(forceRefresh = false, silent = false) {
+		if (!$auth.isAuthenticated) return;
+
+		if (!silent) {
+			updateLoading = true;
+		}
+
+		try {
+			const status = await systemApi.updateStatus(auth.getCredentials(), forceRefresh);
+			updateStatus = status;
+
+			if (status.apply_state) {
+				const logData = await systemApi.updateLog(auth.getCredentials(), 120);
+				updateLog = logData.log;
+			} else {
+				updateLog = '';
+			}
+		} catch (e: any) {
+			if (e.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else if (!silent) {
+				console.error('Failed to load update status:', e);
+				toasts.show('Failed to load software update status', 'error');
+			}
+		} finally {
+			updateLoading = false;
+		}
+	}
 
 	async function loadData() {
 		if (!$auth.isAuthenticated) {
@@ -28,6 +64,7 @@
 			]);
 			systemInfo = infoData;
 			services = servicesData.services;
+			await loadUpdateData(false, true);
 		} catch (e: any) {
 			if (e.status === 401) {
 				auth.logout();
@@ -41,6 +78,56 @@
 		}
 	}
 
+	async function refreshUpdateStatus() {
+		await loadUpdateData(true);
+		if (updateStatus && !updateStatus.error) {
+			toasts.show('Software update status refreshed', 'success');
+		}
+	}
+
+	async function applyRecommendedUpdate() {
+		if (!$auth.isAuthenticated) {
+			showLoginModal = true;
+			return;
+		}
+
+		if (!updateStatus?.recommended.target) {
+			toasts.show('No update target is available for the current channel', 'error');
+			return;
+		}
+
+		const warning =
+			updateStatus.update_channel === 'stable'
+				? `Apply the recommended stable update ${updateStatus.recommended.target}?`
+				: `Apply the recommended ${updateStatus.update_channel} update ${updateStatus.recommended.target}? Non-stable channels may include breaking changes.`;
+
+		if (!confirm(`${warning}\n\nA backup will ${createBackup ? '' : 'not '}be created before the update.`)) {
+			return;
+		}
+
+		applyingUpdate = true;
+		try {
+			await systemApi.applyUpdate(
+				{
+					channel: updateStatus.update_channel,
+					create_backup: createBackup,
+				},
+				auth.getCredentials()
+			);
+			toasts.show('Software update started', 'success');
+			await loadUpdateData(true);
+		} catch (e: any) {
+			if (e.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				toasts.show(e.message || 'Failed to start software update', 'error');
+			}
+		} finally {
+			applyingUpdate = false;
+		}
+	}
+
 	async function controlService(service: string, action: string) {
 		if (!$auth.isAuthenticated) {
 			showLoginModal = true;
@@ -51,7 +138,6 @@
 		try {
 			await systemApi.controlService(service, action, auth.getCredentials());
 			toasts.show(`Service ${service} ${action} successful`, 'success');
-			// Refresh services
 			const result = await systemApi.services(auth.getCredentials());
 			services = result.services;
 		} catch (e: any) {
@@ -76,7 +162,6 @@
 		try {
 			await systemApi.restartServices(auth.getCredentials());
 			toasts.show('Services restart initiated', 'success');
-			// Refresh after a delay
 			setTimeout(loadData, 3000);
 		} catch (e: any) {
 			if (e.status === 401) {
@@ -150,7 +235,20 @@
 		loadData();
 	}
 
-	onMount(loadData);
+	onMount(() => {
+		loadData();
+		updatePollHandle = setInterval(() => {
+			if ($auth.isAuthenticated) {
+				loadUpdateData(false, true);
+			}
+		}, 10000);
+
+		return () => {
+			if (updatePollHandle) {
+				clearInterval(updatePollHandle);
+			}
+		};
+	});
 </script>
 
 <svelte:head>
@@ -160,7 +258,7 @@
 <div class="container mx-auto px-4 py-6">
 	<div class="mb-6">
 		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">System</h1>
-		<p class="text-gray-600 dark:text-gray-400 mt-1">System information and service controls</p>
+		<p class="text-gray-600 dark:text-gray-400 mt-1">System information, services, backups, and software updates</p>
 	</div>
 
 	{#if loading}
@@ -170,12 +268,11 @@
 	{:else if !$auth.isAuthenticated}
 		<div class="card p-8 text-center">
 			<p class="text-gray-600 dark:text-gray-400 mb-4">Please log in to access system information</p>
-			<button on:click={() => showLoginModal = true} class="btn-primary">
+			<button on:click={() => (showLoginModal = true)} class="btn-primary">
 				Log in
 			</button>
 		</div>
 	{:else}
-		<!-- System Info -->
 		<div class="card mb-6">
 			<div class="card-header">
 				<h2 class="font-semibold text-gray-900 dark:text-gray-100">System Information</h2>
@@ -206,7 +303,142 @@
 			</div>
 		</div>
 
-		<!-- Services -->
+		<div class="card mb-6">
+			<div class="card-header flex items-center justify-between gap-3">
+				<div>
+					<h2 class="font-semibold text-gray-900 dark:text-gray-100">Software Updates</h2>
+					<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+						Current channel: <span class="font-medium text-gray-700 dark:text-gray-200">{updateStatus?.update_channel || 'Unknown'}</span>.
+						Change it on <a href="/settings" class="text-primary-600 hover:underline">Settings</a>.
+					</p>
+				</div>
+				<button on:click={refreshUpdateStatus} class="btn-secondary btn-sm" disabled={updateLoading}>
+					{#if updateLoading}
+						<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+					{/if}
+					Refresh
+				</button>
+			</div>
+			<div class="card-body space-y-4">
+				{#if updateStatus}
+					<div class="grid md:grid-cols-2 gap-4">
+						<div class="rounded-lg border border-gray-200 dark:border-dark-border p-4">
+							<p class="text-sm text-gray-500 dark:text-gray-400">Installed Version</p>
+							<p class="font-mono text-gray-900 dark:text-gray-100">{updateStatus.installed.service_version}</p>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Git Ref</p>
+							<p class="font-mono text-gray-900 dark:text-gray-100">
+								{updateStatus.installed.current_tag || updateStatus.installed.current_branch}
+							</p>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Commit</p>
+							<p class="font-mono text-gray-900 dark:text-gray-100">{updateStatus.installed.current_commit}</p>
+						</div>
+						<div class="rounded-lg border border-gray-200 dark:border-dark-border p-4">
+							<p class="text-sm text-gray-500 dark:text-gray-400">Recommendation</p>
+							<p class="text-gray-900 dark:text-gray-100 font-medium">{updateStatus.recommended.summary}</p>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Latest Stable</p>
+							<p class="font-mono text-gray-900 dark:text-gray-100">{updateStatus.available.stable.tag || 'Unavailable'}</p>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Latest Prerelease</p>
+							<p class="font-mono text-gray-900 dark:text-gray-100">{updateStatus.available.prerelease.tag || 'Unavailable'}</p>
+						</div>
+					</div>
+
+					<div class="rounded-lg border border-gray-200 dark:border-dark-border p-4">
+						<div class="grid md:grid-cols-3 gap-4">
+							<div>
+								<p class="text-sm text-gray-500 dark:text-gray-400">Stable Channel</p>
+								<p class="text-gray-900 dark:text-gray-100">
+									{updateStatus.available.stable.update_available ? 'Update available' : 'Up to date'}
+								</p>
+							</div>
+							<div>
+								<p class="text-sm text-gray-500 dark:text-gray-400">Prerelease Channel</p>
+								<p class="text-gray-900 dark:text-gray-100">
+									{updateStatus.available.prerelease.update_available ? 'Update available' : 'Up to date'}
+								</p>
+							</div>
+							<div>
+								<p class="text-sm text-gray-500 dark:text-gray-400">Edge Branch</p>
+								<p class="text-gray-900 dark:text-gray-100">
+									{updateStatus.available.edge.branch} • {updateStatus.available.edge.commits_behind} commit(s) behind
+								</p>
+							</div>
+						</div>
+						<p class="text-xs text-gray-500 dark:text-gray-400 mt-4">
+							Last remote check: {updateStatus.checked_at} {updateStatus.cached ? '(cached)' : '(fresh)'}
+						</p>
+						{#if updateStatus.error}
+							<p class="text-sm text-red-600 dark:text-red-400 mt-3">{updateStatus.error}</p>
+						{/if}
+					</div>
+
+					<div class="rounded-lg border border-gray-200 dark:border-dark-border p-4 space-y-3">
+						<label class="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+							<input type="checkbox" bind:checked={createBackup} />
+							Create backup before applying update
+						</label>
+						<button
+							on:click={applyRecommendedUpdate}
+							class="btn-primary"
+							disabled={
+								applyingUpdate ||
+								updateLoading ||
+								!updateStatus.recommended.target ||
+								!!updateStatus.apply_state?.running
+							}
+						>
+							{#if applyingUpdate}
+								<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+							{/if}
+							Apply Recommended Update
+						</button>
+						<p class="text-xs text-gray-500 dark:text-gray-400">
+							The updater applies the currently selected release channel. Use the main Settings page to switch between stable, prerelease, and edge.
+						</p>
+					</div>
+
+					{#if updateStatus.apply_state}
+						<div class="rounded-lg border border-gray-200 dark:border-dark-border p-4 space-y-3">
+							<div class="flex items-center justify-between gap-3">
+								<div>
+									<p class="text-sm text-gray-500 dark:text-gray-400">Updater Status</p>
+									<p class="font-medium text-gray-900 dark:text-gray-100">
+										{updateStatus.apply_state.status} • {updateStatus.apply_state.stage}
+									</p>
+								</div>
+								{#if updateStatus.apply_state.running}
+									<span class="text-xs font-medium text-amber-700 dark:text-amber-300">Running</span>
+								{/if}
+							</div>
+							<p class="text-sm text-gray-700 dark:text-gray-300">{updateStatus.apply_state.message}</p>
+							<div class="grid md:grid-cols-2 gap-4 text-sm">
+								<div>
+									<p class="text-gray-500 dark:text-gray-400">Target</p>
+									<p class="font-mono text-gray-900 dark:text-gray-100">
+										{updateStatus.apply_state.target || 'Automatic'}
+									</p>
+								</div>
+								<div>
+									<p class="text-gray-500 dark:text-gray-400">Updated</p>
+									<p class="text-gray-900 dark:text-gray-100">{updateStatus.apply_state.updated_at || 'Unknown'}</p>
+								</div>
+							</div>
+							{#if updateStatus.apply_state.error}
+								<p class="text-sm text-red-600 dark:text-red-400">{updateStatus.apply_state.error}</p>
+							{/if}
+							{#if updateLog}
+								<div>
+									<p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Recent Updater Log</p>
+									<pre class="bg-gray-900 text-gray-100 rounded-lg p-4 text-xs overflow-x-auto max-h-80">{updateLog}</pre>
+								</div>
+							{/if}
+						</div>
+					{/if}
+				{:else}
+					<p class="text-gray-600 dark:text-gray-400">Software update information is unavailable.</p>
+				{/if}
+			</div>
+		</div>
+
 		<div class="card mb-6">
 			<div class="card-header flex items-center justify-between">
 				<h2 class="font-semibold text-gray-900 dark:text-gray-100">Services</h2>
@@ -267,7 +499,6 @@
 			</div>
 		</div>
 
-		<!-- System Actions -->
 		<div class="card">
 			<div class="card-header">
 				<h2 class="font-semibold text-gray-900 dark:text-gray-100">System Actions</h2>
@@ -304,7 +535,6 @@
 	{/if}
 </div>
 
-<!-- Login Modal -->
 <Modal bind:open={showLoginModal} title="Authentication Required">
 	<form on:submit|preventDefault={handleLogin} class="space-y-4">
 		<div>
@@ -318,7 +548,7 @@
 			/>
 		</div>
 		<div class="flex justify-end gap-2">
-			<button type="button" on:click={() => showLoginModal = false} class="btn-secondary">
+			<button type="button" on:click={() => (showLoginModal = false)} class="btn-secondary">
 				Cancel
 			</button>
 			<button type="submit" class="btn-primary">

@@ -200,13 +200,25 @@
 	}
 
 	async function shiftDetection(detection: Detection) {
+		if (!(await requireAuth())) return;
+
 		shiftingFiles = new Set(shiftingFiles).add(detection.File_Name);
 		try {
-			await media.createShifted(detection.Date, detection.Sci_Name, detection.File_Name);
+			await media.createShifted(
+				detection.Date,
+				detection.Sci_Name,
+				detection.File_Name,
+				auth.getCredentials()
+			);
 			toasts.show('Shifted audio created', 'success');
-		} catch (e) {
-			console.error('Failed to shift detection:', e);
-			toasts.show('Failed to shift audio', 'error');
+		} catch (e: any) {
+			if (e?.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				console.error('Failed to shift detection:', e);
+				toasts.show('Failed to shift audio', 'error');
+			}
 		} finally {
 			const next = new Set(shiftingFiles);
 			next.delete(detection.File_Name);

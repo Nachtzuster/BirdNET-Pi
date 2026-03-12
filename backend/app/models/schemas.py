@@ -76,6 +76,7 @@ class ConfigBase(BaseModel):
     longitude: Optional[float] = None
     database_lang: Optional[str] = None
     color_scheme: Optional[str] = None
+    update_channel: Optional[str] = Field(None, pattern="^(stable|prerelease|edge)$")
 
 
 class ConfigUpdate(ConfigBase):
@@ -96,6 +97,7 @@ class ConfigResponse(BaseModel):
     longitude: float
     database_lang: str
     color_scheme: str
+    update_channel: str
     model: str
     confidence: float
     sensitivity: float
@@ -120,6 +122,86 @@ class SystemInfo(BaseModel):
     uptime: Optional[str] = None
     disk_usage: Optional[dict] = None
     services: list[ServiceStatus]
+
+
+class UpdateInstalledState(BaseModel):
+    """Installed application and git metadata."""
+    service_version: str
+    git_hash: str
+    git_branch: str
+    current_commit: str
+    current_branch: str
+    current_tag: Optional[str] = None
+
+
+class UpdateReleaseState(BaseModel):
+    """Availability of a tagged release target."""
+    channel: str
+    tag: Optional[str] = None
+    installed_version: str
+    update_available: bool
+
+
+class UpdateEdgeState(BaseModel):
+    """Availability of the tracked edge branch head."""
+    branch: str
+    remote: str
+    current_commit: str
+    remote_commit: Optional[str] = None
+    commits_behind: int
+    update_available: bool
+
+
+class UpdateRecommendation(BaseModel):
+    """Recommended update target for the configured channel."""
+    channel: str
+    target: Optional[str] = None
+    target_type: str
+    update_available: bool
+    summary: str
+
+
+class UpdateApplyState(BaseModel):
+    """State reported by the background updater script."""
+    status: str
+    stage: str
+    channel: str
+    target: Optional[str] = None
+    target_type: Optional[str] = None
+    message: str
+    started_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    pid: Optional[int] = None
+    previous_ref: Optional[str] = None
+    current_ref: Optional[str] = None
+    backup_created: bool = False
+    backup_path: Optional[str] = None
+    error: Optional[str] = None
+    running: bool = False
+
+
+class UpdateStatusResponse(BaseModel):
+    """Composite software update status."""
+    installed: UpdateInstalledState
+    update_channel: str
+    available: dict[str, UpdateReleaseState | UpdateEdgeState]
+    recommended: UpdateRecommendation
+    apply_state: Optional[UpdateApplyState] = None
+    current_commit: str
+    commits_behind: int
+    update_available: bool
+    checked_at: str
+    cache_ttl_seconds: int
+    cached: bool
+    error: Optional[str] = None
+
+
+class ApplyUpdateRequest(BaseModel):
+    """Request to apply an update."""
+    channel: Optional[str] = Field(None, pattern="^(stable|prerelease|edge)$")
+    target: Optional[str] = None
+    branch: Optional[str] = None
+    create_backup: bool = True
 
 
 # Species list schemas
