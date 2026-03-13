@@ -18,17 +18,25 @@
 	let colorScheme = '';
 	let updateChannel: 'stable' | 'prerelease' | 'edge' = 'stable';
 	let model = '';
+	let dataModelVersion = '1';
 	let confidence = '';
 	let sensitivity = '';
 	let overlap = '';
 	let birdweatherId = '';
 
-	let models: { name: string; active: boolean }[] = [];
+	let models: { name: string; active: boolean; supports_species_filter: boolean }[] = [];
 	let languages: { code: string; active: boolean }[] = [];
 	let previewThreshold = 0.03;
 	let previewLoading = false;
 	let previewCount: number | null = null;
 	let previewSpecies: string[] = [];
+	let modelSupportsSpeciesFilter = false;
+
+	$: modelSupportsSpeciesFilter = models.find((candidate) => candidate.name === model)?.supports_species_filter ?? false;
+	$: if (!modelSupportsSpeciesFilter) {
+		previewCount = null;
+		previewSpecies = [];
+	}
 
 	async function loadConfig() {
 		if (!$auth.isAuthenticated) {
@@ -57,11 +65,12 @@
 			colorScheme = configData.color_scheme;
 			updateChannel = configData.update_channel;
 			model = configData.model;
+			dataModelVersion = String(configData.data_model_version);
 			confidence = String(configData.confidence);
 			sensitivity = String(configData.sensitivity);
 			overlap = String(configData.overlap);
 			birdweatherId = configData.birdweather_id;
-			previewThreshold = Number(configData.confidence) || 0.03;
+			previewThreshold = configData.sf_thresh;
 		} catch (e: any) {
 			if (e.status === 401) {
 				auth.logout();
@@ -77,7 +86,7 @@
 	async function saveConfig() {
 		saving = true;
 		try {
-			await configApi.update(
+			const result = await configApi.update(
 				{
 					site_name: siteName,
 					latitude: parseFloat(latitude),
@@ -86,6 +95,8 @@
 					color_scheme: colorScheme,
 					update_channel: updateChannel,
 					model,
+					sf_thresh: Number(previewThreshold),
+					data_model_version: parseInt(dataModelVersion, 10),
 					confidence: parseFloat(confidence),
 					sensitivity: parseFloat(sensitivity),
 					overlap: parseFloat(overlap),
@@ -93,7 +104,8 @@
 				},
 				auth.getCredentials()
 			);
-			toasts.show('Configuration saved', 'success');
+			toasts.show(result.message, 'success');
+			await loadConfig();
 		} catch (e) {
 			console.error('Failed to save config:', e);
 			toasts.show('Failed to save configuration', 'error');
@@ -103,9 +115,13 @@
 	}
 
 	async function previewSpeciesList() {
+		if (!modelSupportsSpeciesFilter) {
+			return;
+		}
+
 		previewLoading = true;
 		try {
-			const result = await configApi.previewSpecies(previewThreshold);
+			const result = await configApi.previewSpecies(Number(previewThreshold), model, parseInt(dataModelVersion, 10));
 			previewCount = result.count;
 			previewSpecies = result.species;
 		} catch (e) {
@@ -239,17 +255,44 @@
 					<h2 class="font-semibold text-gray-900 dark:text-gray-100">Analysis</h2>
 				</div>
 				<div class="card-body space-y-4">
-					<div>
-						<label for="model" class="label">Model</label>
-						<select id="model" bind:value={model} class="select">
-							{#each models as m}
-								<option value={m.name}>{m.name}</option>
-							{/each}
-						</select>
-					</div>
-					<div class="grid md:grid-cols-3 gap-4">
 						<div>
-							<label for="confidence" class="label">Confidence Threshold</label>
+							<label for="model" class="label">Model</label>
+							<select id="model" bind:value={model} class="select">
+								{#each models as m}
+									<option value={m.name}>{m.name}</option>
+								{/each}
+							</select>
+						</div>
+						{#if modelSupportsSpeciesFilter}
+							<div class="grid md:grid-cols-2 gap-4">
+								<div>
+									<label for="dataModelVersion" class="label">Species Range Model</label>
+									<select id="dataModelVersion" bind:value={dataModelVersion} class="select">
+										<option value="1">Version 1</option>
+										<option value="2">Version 2</option>
+									</select>
+								</div>
+								<div>
+									<label for="previewThreshold" class="label">Occurrence Threshold</label>
+									<input
+										id="previewThreshold"
+										type="number"
+										step="0.0005"
+										min="0.0005"
+										max="0.99"
+										bind:value={previewThreshold}
+										class="input"
+									/>
+								</div>
+							</div>
+						{:else}
+							<p class="text-sm text-gray-600 dark:text-gray-400">
+								This model does not use the species range filter settings from the legacy interface.
+							</p>
+						{/if}
+						<div class="grid md:grid-cols-3 gap-4">
+							<div>
+								<label for="confidence" class="label">Confidence Threshold</label>
 							<input
 								id="confidence"
 								type="number"
@@ -290,46 +333,40 @@
 
 			<!-- Species Preview -->
 			<div class="card">
-				<div class="card-header">
-					<h2 class="font-semibold text-gray-900 dark:text-gray-100">Species Preview</h2>
-				</div>
-				<div class="card-body space-y-4">
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						Preview species list size at a threshold before applying model settings.
-					</p>
-					<div class="flex flex-wrap items-end gap-3">
-						<div>
-							<label for="previewThreshold" class="label">Threshold</label>
-							<input
-								id="previewThreshold"
-								type="number"
-								step="0.01"
-								min="0"
-								max="1"
-								bind:value={previewThreshold}
-								class="input w-36"
-							/>
-						</div>
-						<button type="button" class="btn-secondary" on:click={previewSpeciesList} disabled={previewLoading}>
-							{#if previewLoading}
-								<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
-							{/if}
-							Preview
-						</button>
+					<div class="card-header">
+						<h2 class="font-semibold text-gray-900 dark:text-gray-100">Species Preview</h2>
 					</div>
-					{#if previewCount !== null}
-						<p class="text-sm text-gray-700 dark:text-gray-300">Matching species: <strong>{previewCount}</strong></p>
-						{#if previewSpecies.length > 0}
-							<div class="max-h-44 overflow-auto rounded-lg border border-gray-200 dark:border-dark-border p-3 text-sm text-gray-700 dark:text-gray-300">
-								{previewSpecies.slice(0, 50).join(', ')}
-								{#if previewSpecies.length > 50}
-									…
-								{/if}
+					<div class="card-body space-y-4">
+						{#if modelSupportsSpeciesFilter}
+							<p class="text-sm text-gray-600 dark:text-gray-400">
+								Preview species list size at the current occurrence threshold before saving.
+							</p>
+							<div class="flex flex-wrap items-end gap-3">
+								<button type="button" class="btn-secondary" on:click={previewSpeciesList} disabled={previewLoading}>
+									{#if previewLoading}
+										<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+									{/if}
+									Preview
+								</button>
 							</div>
+							{#if previewCount !== null}
+								<p class="text-sm text-gray-700 dark:text-gray-300">Matching species: <strong>{previewCount}</strong></p>
+								{#if previewSpecies.length > 0}
+									<div class="max-h-44 overflow-auto rounded-lg border border-gray-200 dark:border-dark-border p-3 text-sm text-gray-700 dark:text-gray-300">
+										{previewSpecies.slice(0, 50).join(', ')}
+										{#if previewSpecies.length > 50}
+											…
+										{/if}
+									</div>
+								{/if}
+							{/if}
+						{:else}
+							<p class="text-sm text-gray-600 dark:text-gray-400">
+								Species preview is only available for models that support range-based filtering.
+							</p>
 						{/if}
-					{/if}
+					</div>
 				</div>
-			</div>
 
 			<!-- Integrations -->
 			<div class="card">

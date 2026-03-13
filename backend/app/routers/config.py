@@ -1,14 +1,59 @@
 """Configuration API endpoints."""
 import os
 import re
+import subprocess
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..config import get_settings, Settings
 from ..dependencies import verify_credentials
 from ..models.schemas import ConfigUpdate, ConfigResponse, TestNotificationRequest, NotificationResponse
+from utils.helpers import list_installed_selectable_models, model_supports_species_filter
 
 router = APIRouter()
+
+
+def configured_birdnet_user(settings: Settings) -> str:
+    return settings.config.get('BIRDNET_USER') or os.environ.get('USER', 'pi')
+
+
+def run_managed_script(args: list[str], timeout: int, failure_detail: str) -> subprocess.CompletedProcess:
+    try:
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail=f"{failure_detail}: operation timed out")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"{failure_detail}: {exc}")
+
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        raise HTTPException(status_code=500, detail=f"{failure_detail}: {detail}")
+
+    return result
+
+
+def sync_language_labels(settings: Settings) -> None:
+    script_path = os.path.join(settings.base_path, 'scripts', 'install_language_label.sh')
+    run_managed_script(
+        ['sudo', '-u', configured_birdnet_user(settings), script_path],
+        timeout=30,
+        failure_detail="Failed to update model labels",
+    )
+
+
+def restart_services(settings: Settings) -> None:
+    script_path = os.path.join(settings.base_path, 'scripts', 'restart_services.sh')
+    run_managed_script(
+        ['sudo', script_path],
+        timeout=60,
+        failure_detail="Failed to restart services",
+    )
 
 
 @router.get("/config", response_model=ConfigResponse)
@@ -28,6 +73,8 @@ async def get_config(
         color_scheme=settings.color_scheme,
         update_channel=settings.update_channel,
         model=settings.model,
+        sf_thresh=settings.sf_thresh,
+        data_model_version=settings.data_model_version,
         confidence=settings.confidence,
         sensitivity=settings.sensitivity,
         overlap=settings.overlap,
@@ -47,7 +94,19 @@ async def update_config(
 
     Requires authentication. Only updates fields that are provided.
     """
-    config_path = '/etc/birdnet/birdnet.conf'
+    config_path = settings.config_path
+    previous_model = settings.model
+    previous_language = settings.database_lang
+    installed_models = list_installed_selectable_models()
+
+    if config_update.model is not None and config_update.model not in installed_models:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": f"Unsupported model: {config_update.model}",
+                "available_models": installed_models,
+            },
+        )
 
     # Read current config file
     try:
@@ -67,6 +126,8 @@ async def update_config(
         'color_scheme': 'COLOR_SCHEME',
         'update_channel': 'UPDATE_CHANNEL',
         'model': 'MODEL',
+        'sf_thresh': 'SF_THRESH',
+        'data_model_version': 'DATA_MODEL_VERSION',
         'confidence': 'CONFIDENCE',
         'sensitivity': 'SENSITIVITY',
         'overlap': 'OVERLAP',
@@ -99,7 +160,6 @@ async def update_config(
             f.write(contents)
     except PermissionError:
         # Try with sudo
-        import subprocess
         import tempfile
 
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp:
@@ -113,10 +173,19 @@ async def update_config(
 
     # Reload settings
     settings.reload()
+    applied_actions = []
+
+    if settings.model != previous_model or settings.database_lang != previous_language:
+        sync_language_labels(settings)
+        applied_actions.append('labels_updated')
+
+    restart_services(settings)
+    applied_actions.append('services_restarted')
 
     return {
-        "message": "Configuration updated",
+        "message": "Configuration updated and services restarted",
         "updated_fields": list(updates.keys()),
+        "applied_actions": applied_actions,
     }
 
 
@@ -177,16 +246,14 @@ async def list_available_models(
     settings: Settings = Depends(get_settings),
 ):
     """List available BirdNET models."""
-    model_dir = settings.model_path
-
-    models = []
-    for filename in os.listdir(model_dir):
-        if filename.endswith('.tflite'):
-            model_name = filename.replace('.tflite', '')
-            models.append({
-                "name": model_name,
-                "active": model_name == settings.model,
-            })
+    models = [
+        {
+            "name": model_name,
+            "active": model_name == settings.model,
+            "supports_species_filter": model_supports_species_filter(model_name),
+        }
+        for model_name in list_installed_selectable_models()
+    ]
 
     return {"models": models, "current": settings.model}
 
@@ -214,21 +281,38 @@ async def list_available_languages(
 
 @router.get("/config/preview-species")
 async def preview_species_list(
-    threshold: float = 0.03,
+    threshold: float = Query(0.03, ge=0.0005, le=0.99),
+    model: str | None = None,
+    data_model_version: int | None = Query(None, ge=1, le=2),
     settings: Settings = Depends(get_settings),
 ):
     """Preview species list for a given threshold.
 
     Uses the species.py script to generate the list.
     """
-    import subprocess
-
     script_path = os.path.join(settings.base_path, 'scripts', 'species.py')
     python_path = os.path.join(settings.base_path, 'birdnet', 'bin', 'python3')
+    model_name = model or settings.model
+    model_version = data_model_version or settings.data_model_version
+
+    if not model_supports_species_filter(model_name):
+        raise HTTPException(status_code=400, detail=f"Model {model_name} does not support species range preview")
+
+    cmd = [
+        python_path,
+        script_path,
+        '--threshold',
+        str(threshold),
+        '--model',
+        model_name,
+        '--data-model-version',
+        str(model_version),
+        '--plain',
+    ]
 
     try:
         result = subprocess.run(
-            [python_path, script_path, '--threshold', str(threshold)],
+            cmd,
             capture_output=True,
             text=True,
             timeout=60,
@@ -239,6 +323,8 @@ async def preview_species_list(
             species = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
             return {
                 "threshold": threshold,
+                "model": model_name,
+                "data_model_version": model_version,
                 "count": len(species),
                 "species": species,
             }

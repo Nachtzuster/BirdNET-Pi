@@ -186,17 +186,24 @@ export const config = {
 	get: (auth: { username: string; password: string }) => request<Config>('/config', { auth }),
 
 	update: (data: Partial<Config>, auth: { username: string; password: string }) =>
-		request('/config', { method: 'PUT', body: data, auth }),
+		request<{ message: string; updated_fields: string[]; applied_actions: string[] }>('/config', {
+			method: 'PUT',
+			body: data,
+			auth,
+		}),
 
 	testNotification: (data: { title?: string; body?: string }, auth: { username: string; password: string }) =>
 		request<{ success: boolean; message: string }>('/config/test-notification', { method: 'POST', body: data, auth }),
 
-	models: () => request<{ models: { name: string; active: boolean }[]; current: string }>('/config/models'),
+	models: () =>
+		request<{ models: { name: string; active: boolean; supports_species_filter: boolean }[]; current: string }>('/config/models'),
 
 	languages: () => request<{ languages: { code: string; active: boolean }[]; current: string }>('/config/languages'),
 
-	previewSpecies: (threshold: number) =>
-		request<{ threshold: number; count: number; species: string[] }>(`/config/preview-species?threshold=${threshold}`),
+	previewSpecies: (threshold: number, model: string, dataModelVersion: number) =>
+		request<{ threshold: number; model: string; data_model_version: number; count: number; species: string[] }>(
+			`/config/preview-species?threshold=${threshold}&model=${encodeURIComponent(model)}&data_model_version=${dataModelVersion}`
+		),
 };
 
 // System API
@@ -358,6 +365,8 @@ export interface Config {
 	color_scheme: string;
 	update_channel: 'stable' | 'prerelease' | 'edge';
 	model: string;
+	sf_thresh: number;
+	data_model_version: number;
 	confidence: number;
 	sensitivity: number;
 	overlap: number;

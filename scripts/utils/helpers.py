@@ -15,6 +15,18 @@ MODEL_PATH = os.path.join(BASE_PATH, 'model')
 FONT_DIR = os.path.join(BASE_PATH, 'homepage/static')
 ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
 
+# User-selectable classifier models. This excludes auxiliary metadata models.
+USER_SELECTABLE_MODELS = (
+    'BirdNET_GLOBAL_6K_V2.4_Model_FP16',
+    'BirdNET_6K_GLOBAL_MODEL',
+    'Perch_v2',
+    'BirdNET-Go_classifier_20250916',
+)
+SPECIES_FILTER_MODELS = (
+    'BirdNET_GLOBAL_6K_V2.4_Model_FP16',
+    'BirdNET-Go_classifier_20250916',
+)
+
 
 def get_font():
     conf = get_settings()
@@ -114,3 +126,17 @@ def set_label_file():
         os.remove(file_name)
     with open(file_name, 'w') as f:
         f.writelines(labels)
+
+
+def list_installed_selectable_models():
+    models = []
+    for model_name in USER_SELECTABLE_MODELS:
+        model_path = os.path.join(MODEL_PATH, f'{model_name}.tflite')
+        labels_path = os.path.join(MODEL_PATH, f'{model_name}_Labels.txt')
+        if os.path.exists(model_path) and os.path.exists(labels_path):
+            models.append(model_name)
+    return models
+
+
+def model_supports_species_filter(model_name):
+    return model_name in SPECIES_FILTER_MODELS

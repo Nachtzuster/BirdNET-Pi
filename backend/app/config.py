@@ -42,6 +42,8 @@ class Settings:
             'COLOR_SCHEME': 'light',
             'UPDATE_CHANNEL': 'stable',
             'MODEL': 'BirdNET_GLOBAL_6K_V2.4_Model_FP16',
+            'SF_THRESH': '0.03',
+            'DATA_MODEL_VERSION': '1',
             'CONFIDENCE': '0.7',
             'SENSITIVITY': '1.0',
             'OVERLAP': '0.0',
@@ -59,6 +61,10 @@ class Settings:
     def reload(self):
         """Force reload configuration from file."""
         self._load_config(force_reload=True)
+
+    @property
+    def config_path(self) -> str:
+        return self._config_path
 
     # Site settings
     @property
@@ -95,6 +101,14 @@ class Settings:
     @property
     def model(self) -> str:
         return self.config.get('MODEL', 'BirdNET_GLOBAL_6K_V2.4_Model_FP16')
+
+    @property
+    def sf_thresh(self) -> float:
+        return float(self.config.get('SF_THRESH', 0.03))
+
+    @property
+    def data_model_version(self) -> int:
+        return int(self.config.get('DATA_MODEL_VERSION', 1))
 
     @property
     def confidence(self) -> float:

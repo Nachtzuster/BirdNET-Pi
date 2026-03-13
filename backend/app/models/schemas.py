@@ -82,6 +82,8 @@ class ConfigBase(BaseModel):
 class ConfigUpdate(ConfigBase):
     """Configuration update request."""
     model: Optional[str] = None
+    sf_thresh: Optional[float] = Field(None, ge=0.0005, le=0.99)
+    data_model_version: Optional[int] = Field(None, ge=1, le=2)
     confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
     sensitivity: Optional[float] = Field(None, ge=0.5, le=1.5)
     overlap: Optional[float] = Field(None, ge=0.0, le=2.9)
@@ -99,6 +101,8 @@ class ConfigResponse(BaseModel):
     color_scheme: str
     update_channel: str
     model: str
+    sf_thresh: float
+    data_model_version: int
     confidence: float
     sensitivity: float
     overlap: float
