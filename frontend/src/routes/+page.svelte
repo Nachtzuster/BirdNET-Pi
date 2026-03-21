@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { detections, health, species as speciesApi, type Detection, type DetectionStats, type SpeciesSummary, type RangeChartData } from '$lib/api';
-	import { StatsCard, DetectionCard, ExternalLinks, SpeciesImage } from '$lib/components';
-	import { toasts } from '$lib/stores';
+	import { detections, health, species as speciesApi, system as systemApi, type Detection, type DetectionStats, type SpeciesSummary, type RangeChartData } from '$lib/api';
+	import { StatsCard, DetectionCard, ExternalLinks, SpeciesImage, Modal } from '$lib/components';
+	import { auth, toasts } from '$lib/stores';
 
 	let ChartJS: typeof import('chart.js/auto').default;
 
@@ -29,6 +29,13 @@
 	let newSpeciesTodayDetections: Detection[] = [];
 	let newSpeciesTodaySet: Set<string> = new Set();
 	let prefersReducedMotion = false;
+	let liveAudioUrl = '';
+	let liveAudioExpiresAt = '';
+	let liveAudioLoading = false;
+	let liveAudioVisible = false;
+	let showLiveAudioLoginModal = false;
+	let liveAudioPassword = '';
+	let liveAudioElement: HTMLAudioElement | null = null;
 
 	function detectTheme() {
 		isDark = document.documentElement.classList.contains('dark');
@@ -237,7 +244,63 @@
 					},
 				},
 			},
-		});
+			});
+	}
+
+	function clearLiveAudio() {
+		liveAudioVisible = false;
+		liveAudioUrl = '';
+		liveAudioExpiresAt = '';
+		if (liveAudioElement) {
+			liveAudioElement.pause();
+			liveAudioElement.load();
+		}
+	}
+
+	async function requestLiveAudioUrl(): Promise<boolean> {
+		liveAudioLoading = true;
+		try {
+			const stream = await systemApi.liveStreamUrl(auth.getCredentials());
+			liveAudioUrl = stream.url;
+			liveAudioExpiresAt = stream.expires_at;
+			liveAudioVisible = true;
+			return true;
+		} catch (error: any) {
+			if (error?.status === 401) {
+				auth.logout();
+				showLiveAudioLoginModal = true;
+				toasts.show('Authentication required for live audio', 'warning');
+			} else {
+				console.error('Failed to prepare live audio:', error);
+				toasts.show('Live audio is unavailable', 'error');
+			}
+			return false;
+		} finally {
+			liveAudioLoading = false;
+		}
+	}
+
+	async function openLiveAudio() {
+		if (!$auth.isAuthenticated) {
+			showLiveAudioLoginModal = true;
+			return;
+		}
+
+		await requestLiveAudioUrl();
+	}
+
+	async function handleLiveAudioLogin() {
+		if (!liveAudioPassword.trim()) return;
+
+		auth.login(liveAudioPassword);
+		const ready = await requestLiveAudioUrl();
+		if (ready) {
+			showLiveAudioLoginModal = false;
+			liveAudioPassword = '';
+			toasts.show('Authenticated for live audio', 'success');
+		} else {
+			auth.logout();
+		}
 	}
 
 	let themeObserver: MutationObserver;
@@ -273,6 +336,9 @@
 		if (sparkChart) sparkChart.destroy();
 		if (themeObserver) themeObserver.disconnect();
 		if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
+		if (liveAudioElement) {
+			liveAudioElement.pause();
+		}
 	});
 </script>
 
@@ -508,15 +574,63 @@
 			{/if}
 		</div>
 
-		<div class="card p-4 flex flex-wrap items-center justify-between gap-3">
-			<div>
-				<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Explore more</p>
-				<p class="text-xs text-gray-500 dark:text-gray-400">Open historical files or trend analysis</p>
+		<div class="card p-4 space-y-4">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<div>
+					<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Explore more</p>
+					<p class="text-xs text-gray-500 dark:text-gray-400">Open historical files, trend analysis, or listen live</p>
+				</div>
+				<div class="flex flex-wrap items-center gap-2">
+					<a href="/recordings" class="btn-secondary btn-sm">Open Library</a>
+					<a href="/history" class="btn-secondary btn-sm">Open Insights</a>
+					<button class="btn-secondary btn-sm" on:click={openLiveAudio} disabled={liveAudioLoading}>
+						{#if liveAudioLoading}
+							<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+						{/if}
+						Listen Live
+					</button>
+				</div>
 			</div>
-			<div class="flex items-center gap-2">
-				<a href="/recordings" class="btn-secondary btn-sm">Open Library</a>
-				<a href="/history" class="btn-secondary btn-sm">Open Insights</a>
-			</div>
+			{#if liveAudioVisible && liveAudioUrl}
+				<div class="rounded-lg border border-gray-200 dark:border-dark-border p-3">
+					<div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+						<div>
+							<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Live Audio</p>
+							<p class="text-xs text-gray-500 dark:text-gray-400">
+								Access expires at {new Date(liveAudioExpiresAt).toLocaleTimeString()}
+							</p>
+						</div>
+						<button class="btn-secondary btn-sm" on:click={clearLiveAudio}>Hide</button>
+					</div>
+					<audio bind:this={liveAudioElement} class="w-full" controls preload="none" src={liveAudioUrl}></audio>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </div>
+
+<Modal bind:open={showLiveAudioLoginModal} title="Live Audio Authentication">
+	<form on:submit|preventDefault={handleLiveAudioLogin} class="space-y-4">
+		<div>
+			<label for="liveAudioPassword" class="label">Password</label>
+			<input
+				id="liveAudioPassword"
+				type="password"
+				bind:value={liveAudioPassword}
+				class="input"
+				placeholder="Enter password"
+			/>
+		</div>
+		<div class="flex justify-end gap-2">
+			<button type="button" on:click={() => (showLiveAudioLoginModal = false)} class="btn-secondary">
+				Cancel
+			</button>
+			<button type="submit" class="btn-primary" disabled={liveAudioLoading}>
+				{#if liveAudioLoading}
+					<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+				{/if}
+				Authenticate
+			</button>
+		</div>
+	</form>
+</Modal>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { system as systemApi, type ServiceStatus, type SystemInfo, type UpdateStatus } from '$lib/api';
+	import { system as systemApi, type ServiceStatus, type SystemInfo, type TimeConfig, type UpdateStatus } from '$lib/api';
 	import { auth, toasts } from '$lib/stores';
 	import { Modal } from '$lib/components';
 
@@ -18,6 +18,12 @@
 	let applyingUpdate = false;
 	let createBackup = true;
 	let updatePollHandle: ReturnType<typeof setInterval> | null = null;
+	let timeConfig: TimeConfig | null = null;
+	let timeTimezone = '';
+	let timeNtpEnabled = true;
+	let manualDate = '';
+	let manualTime = '';
+	let timeSaving = false;
 
 	async function loadUpdateData(forceRefresh = false, silent = false) {
 		if (!$auth.isAuthenticated) return;
@@ -58,12 +64,18 @@
 
 		loading = true;
 		try {
-			const [infoData, servicesData] = await Promise.all([
+			const [infoData, servicesData, timeData] = await Promise.all([
 				systemApi.info(auth.getCredentials()),
 				systemApi.services(auth.getCredentials()),
+				systemApi.timeConfig(auth.getCredentials()),
 			]);
 			systemInfo = infoData;
 			services = servicesData.services;
+			timeConfig = timeData;
+			timeTimezone = timeData.timezone;
+			timeNtpEnabled = timeData.ntp_enabled;
+			manualDate = timeData.current_date;
+			manualTime = timeData.current_time;
 			await loadUpdateData(false, true);
 		} catch (e: any) {
 			if (e.status === 401) {
@@ -75,6 +87,46 @@
 			}
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function saveTimeConfig() {
+		if (!$auth.isAuthenticated) {
+			showLoginModal = true;
+			return;
+		}
+
+		if (!timeNtpEnabled && (!manualDate || !manualTime)) {
+			toasts.show('Manual date and time are both required when NTP is disabled', 'error');
+			return;
+		}
+
+		timeSaving = true;
+		try {
+			const result = await systemApi.updateTimeConfig(
+				{
+					timezone: timeTimezone,
+					ntp_enabled: timeNtpEnabled,
+					date: timeNtpEnabled ? undefined : manualDate,
+					time: timeNtpEnabled ? undefined : manualTime,
+				},
+				auth.getCredentials()
+			);
+			timeConfig = result;
+			timeTimezone = result.timezone;
+			timeNtpEnabled = result.ntp_enabled;
+			manualDate = result.current_date;
+			manualTime = result.current_time;
+			toasts.show('Time settings updated', 'success');
+		} catch (e: any) {
+			if (e.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				toasts.show(e.message || 'Failed to update time settings', 'error');
+			}
+		} finally {
+			timeSaving = false;
 		}
 	}
 
@@ -299,6 +351,50 @@
 							<p class="text-gray-900 dark:text-gray-100">{systemInfo.disk_usage.available}</p>
 						</div>
 					{/if}
+				</div>
+			</div>
+		</div>
+
+		<div class="card mb-6">
+			<div class="card-header">
+				<h2 class="font-semibold text-gray-900 dark:text-gray-100">Time and Date</h2>
+			</div>
+			<div class="card-body space-y-4">
+				<div class="grid md:grid-cols-2 gap-4">
+					<div>
+						<label for="timeTimezone" class="label">Timezone</label>
+						<input id="timeTimezone" list="timezone-options" bind:value={timeTimezone} class="input" />
+						<datalist id="timezone-options">
+							{#each timeConfig?.available_timezones || [] as timezone}
+								<option value={timezone}></option>
+							{/each}
+						</datalist>
+					</div>
+					<label class="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-dark-border p-3 self-end">
+						<input type="checkbox" bind:checked={timeNtpEnabled} />
+						<span class="text-sm text-gray-700 dark:text-gray-300">Use automatic time from NTP</span>
+					</label>
+				</div>
+				<div class="grid md:grid-cols-2 gap-4">
+					<div>
+						<label for="manualDate" class="label">Manual Date</label>
+						<input id="manualDate" type="date" bind:value={manualDate} class="input" disabled={timeNtpEnabled} />
+					</div>
+					<div>
+						<label for="manualTime" class="label">Manual Time</label>
+						<input id="manualTime" type="time" bind:value={manualTime} class="input" disabled={timeNtpEnabled} />
+					</div>
+				</div>
+				<div class="flex items-center justify-between gap-3">
+					<p class="text-sm text-gray-500 dark:text-gray-400">
+						Current system value: {timeConfig?.current_date || 'Unknown'} {timeConfig?.current_time || ''}
+					</p>
+					<button on:click={saveTimeConfig} class="btn-secondary" disabled={timeSaving}>
+						{#if timeSaving}
+							<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+						{/if}
+						Save Time Settings
+					</button>
 				</div>
 			</div>
 		</div>

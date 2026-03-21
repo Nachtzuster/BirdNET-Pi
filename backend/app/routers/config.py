@@ -2,6 +2,7 @@
 import os
 import re
 import subprocess
+import tempfile
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -11,6 +12,8 @@ from ..models.schemas import ConfigUpdate, ConfigResponse, TestNotificationReque
 from utils.helpers import list_installed_selectable_models, model_supports_species_filter
 
 router = APIRouter()
+APPRISE_CONFIG_FILENAME = 'apprise.txt'
+APPRISE_BODY_FILENAME = 'body.txt'
 
 
 def configured_birdnet_user(settings: Settings) -> str:
@@ -56,6 +59,39 @@ def restart_services(settings: Settings) -> None:
     )
 
 
+def notification_file_path(settings: Settings, filename: str) -> str:
+    return os.path.join(settings.base_path, filename)
+
+
+def read_notification_file(settings: Settings, filename: str) -> str:
+    path = notification_file_path(settings, filename)
+    try:
+        with open(path, 'r', encoding='utf-8') as handle:
+            return handle.read()
+    except FileNotFoundError:
+        return ''
+
+
+def write_notification_file(settings: Settings, filename: str, contents: str) -> None:
+    path = notification_file_path(settings, filename)
+    with open(path, 'w', encoding='utf-8') as handle:
+        handle.write(contents)
+
+
+def serialize_config_value(field: str, key: str, value) -> str:
+    if field == 'activate_freqshift_in_livestream':
+        rendered = '"true"' if value else '"false"'
+    elif isinstance(value, bool):
+        rendered = '1' if value else '0'
+    elif isinstance(value, str):
+        rendered = f'{key}="{value}"'
+        return rendered
+    else:
+        rendered = str(value)
+
+    return f'{key}={rendered}'
+
+
 @router.get("/config", response_model=ConfigResponse)
 async def get_config(
     user: str = Depends(verify_credentials),
@@ -79,8 +115,47 @@ async def get_config(
         sensitivity=settings.sensitivity,
         overlap=settings.overlap,
         birdweather_id=settings.birdweather_id,
+        info_site=settings.info_site,
         image_provider=settings.image_provider,
         has_flickr_key=bool(settings.flickr_api_key),
+        password_configured=bool(settings.caddy_password),
+        birdnetpi_url=settings.birdnetpi_url,
+        rtsp_stream=settings.rtsp_stream,
+        rtsp_stream_to_livestream=settings.rtsp_stream_to_livestream,
+        activate_freqshift_in_livestream=settings.activate_freqshift_in_livestream,
+        apprise_config=read_notification_file(settings, APPRISE_CONFIG_FILENAME),
+        apprise_notification_title=settings.apprise_notification_title,
+        apprise_notification_body=read_notification_file(settings, APPRISE_BODY_FILENAME),
+        apprise_notify_each_detection=settings.apprise_notify_each_detection,
+        apprise_notify_new_species=settings.apprise_notify_new_species,
+        apprise_notify_new_species_each_day=settings.apprise_notify_new_species_each_day,
+        apprise_weekly_report=settings.apprise_weekly_report,
+        apprise_minimum_seconds_between_notifications_per_species=settings.apprise_minimum_seconds_between_notifications_per_species,
+        apprise_only_notify_species_names=settings.apprise_only_notify_species_names,
+        apprise_only_notify_species_names_2=settings.apprise_only_notify_species_names_2,
+        privacy_threshold=settings.privacy_threshold,
+        full_disk=settings.full_disk,
+        purge_threshold=settings.purge_threshold,
+        max_files_species=settings.max_files_species,
+        rec_card=settings.rec_card,
+        channels=settings.channels,
+        recording_length=settings.recording_length,
+        extraction_length=settings.extraction_length,
+        audiofmt=settings.audiofmt,
+        silence_update_indicator=settings.silence_update_indicator,
+        automatic_update=settings.automatic_update,
+        raw_spectrogram=settings.raw_spectrogram,
+        rare_species_threshold=settings.rare_species_threshold,
+        custom_image=settings.custom_image,
+        custom_image_title=settings.custom_image_title,
+        freqshift_tool=settings.freqshift_tool,
+        freqshift_hi=settings.freqshift_hi,
+        freqshift_lo=settings.freqshift_lo,
+        freqshift_reconnect_delay=settings.freqshift_reconnect_delay,
+        freqshift_pitch=settings.freqshift_pitch,
+        log_level_birdnet_recording_service=settings.log_level_birdnet_recording_service,
+        log_level_live_audio_stream_service=settings.log_level_live_audio_stream_service,
+        log_level_spectrogram_viewer_service=settings.log_level_spectrogram_viewer_service,
     )
 
 
@@ -125,6 +200,7 @@ async def update_config(
         'database_lang': 'DATABASE_LANG',
         'color_scheme': 'COLOR_SCHEME',
         'update_channel': 'UPDATE_CHANNEL',
+        'info_site': 'INFO_SITE',
         'model': 'MODEL',
         'sf_thresh': 'SF_THRESH',
         'data_model_version': 'DATA_MODEL_VERSION',
@@ -134,25 +210,65 @@ async def update_config(
         'birdweather_id': 'BIRDWEATHER_ID',
         'flickr_api_key': 'FLICKR_API_KEY',
         'image_provider': 'IMAGE_PROVIDER',
+        'caddy_password': 'CADDY_PWD',
+        'birdnetpi_url': 'BIRDNETPI_URL',
+        'rtsp_stream': 'RTSP_STREAM',
+        'rtsp_stream_to_livestream': 'RTSP_STREAM_TO_LIVESTREAM',
+        'activate_freqshift_in_livestream': 'ACTIVATE_FREQSHIFT_IN_LIVESTREAM',
+        'apprise_notification_title': 'APPRISE_NOTIFICATION_TITLE',
+        'apprise_notify_each_detection': 'APPRISE_NOTIFY_EACH_DETECTION',
+        'apprise_notify_new_species': 'APPRISE_NOTIFY_NEW_SPECIES',
+        'apprise_notify_new_species_each_day': 'APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY',
+        'apprise_weekly_report': 'APPRISE_WEEKLY_REPORT',
+        'apprise_minimum_seconds_between_notifications_per_species': 'APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES',
+        'apprise_only_notify_species_names': 'APPRISE_ONLY_NOTIFY_SPECIES_NAMES',
+        'apprise_only_notify_species_names_2': 'APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2',
+        'privacy_threshold': 'PRIVACY_THRESHOLD',
+        'full_disk': 'FULL_DISK',
+        'purge_threshold': 'PURGE_THRESHOLD',
+        'max_files_species': 'MAX_FILES_SPECIES',
+        'rec_card': 'REC_CARD',
+        'channels': 'CHANNELS',
+        'recording_length': 'RECORDING_LENGTH',
+        'extraction_length': 'EXTRACTION_LENGTH',
+        'audiofmt': 'AUDIOFMT',
+        'silence_update_indicator': 'SILENCE_UPDATE_INDICATOR',
+        'automatic_update': 'AUTOMATIC_UPDATE',
+        'raw_spectrogram': 'RAW_SPECTROGRAM',
+        'rare_species_threshold': 'RARE_SPECIES_THRESHOLD',
+        'custom_image': 'CUSTOM_IMAGE',
+        'custom_image_title': 'CUSTOM_IMAGE_TITLE',
+        'freqshift_tool': 'FREQSHIFT_TOOL',
+        'freqshift_hi': 'FREQSHIFT_HI',
+        'freqshift_lo': 'FREQSHIFT_LO',
+        'freqshift_reconnect_delay': 'FREQSHIFT_RECONNECT_DELAY',
+        'freqshift_pitch': 'FREQSHIFT_PITCH',
+        'log_level_birdnet_recording_service': 'LogLevel_BirdnetRecordingService',
+        'log_level_live_audio_stream_service': 'LogLevel_LiveAudioStreamService',
+        'log_level_spectrogram_viewer_service': 'LogLevel_SpectrogramViewerService',
     }
 
     # Update config values
     updates = config_update.model_dump(exclude_unset=True)
-    for field, value in updates.items():
-        if field in field_map and value is not None:
-            key = field_map[field]
-            # Handle string values that need quotes
-            if isinstance(value, str):
-                new_value = f'{key}="{value}"'
-            else:
-                new_value = f'{key}={value}'
+    file_updates: dict[str, str] = {}
+    if 'apprise_config' in updates:
+        file_updates[APPRISE_CONFIG_FILENAME] = updates.pop('apprise_config') or ''
+    if 'apprise_notification_body' in updates:
+        file_updates[APPRISE_BODY_FILENAME] = updates.pop('apprise_notification_body') or ''
 
-            # Replace or add the setting
-            pattern = rf'^{key}=.*$'
-            if re.search(pattern, contents, re.MULTILINE):
-                contents = re.sub(pattern, new_value, contents, flags=re.MULTILINE)
-            else:
-                contents += f'\n{new_value}'
+    for field, value in updates.items():
+        if field not in field_map or value is None:
+            continue
+
+        key = field_map[field]
+        new_value = serialize_config_value(field, key, value)
+
+        # Replace or add the setting
+        pattern = rf'^{re.escape(key)}=.*$'
+        if re.search(pattern, contents, re.MULTILINE):
+            contents = re.sub(pattern, new_value, contents, flags=re.MULTILINE)
+        else:
+            contents += f'\n{new_value}'
 
     # Write updated config
     try:
@@ -160,8 +276,6 @@ async def update_config(
             f.write(contents)
     except PermissionError:
         # Try with sudo
-        import tempfile
-
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp:
             tmp.write(contents)
             tmp_path = tmp.name
@@ -170,6 +284,9 @@ async def update_config(
             subprocess.run(['sudo', 'cp', tmp_path, config_path], check=True)
         finally:
             os.unlink(tmp_path)
+
+    for filename, file_contents in file_updates.items():
+        write_notification_file(settings, filename, file_contents)
 
     # Reload settings
     settings.reload()
@@ -199,8 +316,6 @@ async def test_notification(
 
     Requires authentication.
     """
-    import subprocess
-
     # Use the existing send_test_notification.py script
     script_path = os.path.join(settings.base_path, 'scripts', 'send_test_notification.py')
     python_path = os.path.join(settings.base_path, 'birdnet', 'bin', 'python3')
@@ -208,13 +323,19 @@ async def test_notification(
     if not os.path.exists(script_path):
         raise HTTPException(status_code=500, detail="Notification script not found")
 
-    # Build command
-    cmd = [python_path, script_path]
+    title = request.title or settings.apprise_notification_title
+    body_contents = request.body if request.body is not None else read_notification_file(settings, APPRISE_BODY_FILENAME)
+    config_contents = request.config if request.config is not None else read_notification_file(settings, APPRISE_CONFIG_FILENAME)
 
-    if request.title:
-        cmd.extend(['--title', request.title])
-    if request.body:
-        cmd.extend(['--body', request.body])
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding='utf-8') as body_file:
+        body_file.write(body_contents)
+        body_path = body_file.name
+
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding='utf-8') as config_file:
+        config_file.write(config_contents)
+        config_path = config_file.name
+
+    cmd = [python_path, script_path, '--config', config_path, '--title', title, '--body', body_path]
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
@@ -239,6 +360,12 @@ async def test_notification(
             success=False,
             message=f"Error sending notification: {str(e)}",
         )
+    finally:
+        for path in (body_path, config_path):
+            try:
+                os.unlink(path)
+            except FileNotFoundError:
+                pass
 
 
 @router.get("/config/models")

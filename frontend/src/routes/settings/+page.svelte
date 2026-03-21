@@ -23,6 +23,17 @@
 	let sensitivity = '';
 	let overlap = '';
 	let birdweatherId = '';
+	let appriseConfig = '';
+	let appriseNotificationTitle = '';
+	let appriseNotificationBody = '';
+	let appriseNotifyEachDetection = false;
+	let appriseNotifyNewSpecies = false;
+	let appriseNotifyNewSpeciesEachDay = false;
+	let appriseWeeklyReport = false;
+	let appriseMinSeconds = '';
+	let appriseOnlyNotifySpeciesNames = '';
+	let appriseOnlyNotifySpeciesNames2 = '';
+	let testingNotification = false;
 
 	let models: { name: string; active: boolean; supports_species_filter: boolean }[] = [];
 	let languages: { code: string; active: boolean }[] = [];
@@ -71,6 +82,16 @@
 			overlap = String(configData.overlap);
 			birdweatherId = configData.birdweather_id;
 			previewThreshold = configData.sf_thresh;
+			appriseConfig = configData.apprise_config;
+			appriseNotificationTitle = configData.apprise_notification_title;
+			appriseNotificationBody = configData.apprise_notification_body;
+			appriseNotifyEachDetection = configData.apprise_notify_each_detection;
+			appriseNotifyNewSpecies = configData.apprise_notify_new_species;
+			appriseNotifyNewSpeciesEachDay = configData.apprise_notify_new_species_each_day;
+			appriseWeeklyReport = configData.apprise_weekly_report;
+			appriseMinSeconds = String(configData.apprise_minimum_seconds_between_notifications_per_species);
+			appriseOnlyNotifySpeciesNames = configData.apprise_only_notify_species_names;
+			appriseOnlyNotifySpeciesNames2 = configData.apprise_only_notify_species_names_2;
 		} catch (e: any) {
 			if (e.status === 401) {
 				auth.logout();
@@ -101,6 +122,16 @@
 					sensitivity: parseFloat(sensitivity),
 					overlap: parseFloat(overlap),
 					birdweather_id: birdweatherId,
+					apprise_config: appriseConfig,
+					apprise_notification_title: appriseNotificationTitle,
+					apprise_notification_body: appriseNotificationBody,
+					apprise_notify_each_detection: appriseNotifyEachDetection,
+					apprise_notify_new_species: appriseNotifyNewSpecies,
+					apprise_notify_new_species_each_day: appriseNotifyNewSpeciesEachDay,
+					apprise_weekly_report: appriseWeeklyReport,
+					apprise_minimum_seconds_between_notifications_per_species: parseInt(appriseMinSeconds || '0', 10),
+					apprise_only_notify_species_names: appriseOnlyNotifySpeciesNames,
+					apprise_only_notify_species_names_2: appriseOnlyNotifySpeciesNames2,
 				},
 				auth.getCredentials()
 			);
@@ -132,6 +163,26 @@
 		}
 	}
 
+	async function sendTestNotification() {
+		testingNotification = true;
+		try {
+			const result = await configApi.testNotification(
+				{
+					title: appriseNotificationTitle,
+					body: appriseNotificationBody,
+					config: appriseConfig,
+				},
+				auth.getCredentials()
+			);
+			toasts.show(result.message, result.success ? 'success' : 'error');
+		} catch (e) {
+			console.error('Failed to send test notification:', e);
+			toasts.show('Failed to send test notification', 'error');
+		} finally {
+			testingNotification = false;
+		}
+	}
+
 	function handleLogin() {
 		auth.login(passwordInput);
 		showLoginModal = false;
@@ -146,9 +197,12 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-6">
-	<div class="mb-6">
-		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
-		<p class="text-gray-600 dark:text-gray-400 mt-1">Configure BirdNET-Pi</p>
+	<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+		<div>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+			<p class="text-gray-600 dark:text-gray-400 mt-1">Configure BirdNET-Pi</p>
+		</div>
+		<a href="/settings/advanced" class="btn-secondary">Advanced Settings</a>
 	</div>
 
 	{#if loading}
@@ -272,18 +326,6 @@
 										<option value="2">Version 2</option>
 									</select>
 								</div>
-								<div>
-									<label for="previewThreshold" class="label">Occurrence Threshold</label>
-									<input
-										id="previewThreshold"
-										type="number"
-										step="0.0005"
-										min="0.0005"
-										max="0.99"
-										bind:value={previewThreshold}
-										class="input"
-									/>
-								</div>
 							</div>
 						{:else}
 							<p class="text-sm text-gray-600 dark:text-gray-400">
@@ -342,6 +384,18 @@
 								Preview species list size at the current occurrence threshold before saving.
 							</p>
 							<div class="flex flex-wrap items-end gap-3">
+								<div class="min-w-[14rem]">
+									<label for="previewThreshold" class="label">Occurrence Threshold</label>
+									<input
+										id="previewThreshold"
+										type="number"
+										step="0.0005"
+										min="0.0005"
+										max="0.99"
+										bind:value={previewThreshold}
+										class="input"
+									/>
+								</div>
 								<button type="button" class="btn-secondary" on:click={previewSpeciesList} disabled={previewLoading}>
 									{#if previewLoading}
 										<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
@@ -386,6 +440,87 @@
 						<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
 							Get your station ID from <a href="https://birdweather.com" target="_blank" rel="noopener" class="text-primary-600 dark:text-primary-400 hover:underline">birdweather.com</a>
 						</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="card-header">
+					<h2 class="font-semibold text-gray-900 dark:text-gray-100">Notifications</h2>
+				</div>
+				<div class="card-body space-y-4">
+					<p class="text-sm text-gray-600 dark:text-gray-400">
+						Configure Apprise targets and choose which bird events generate alerts.
+					</p>
+					<div>
+						<label for="appriseConfig" class="label">Apprise Configuration</label>
+						<textarea
+							id="appriseConfig"
+							bind:value={appriseConfig}
+							class="input min-h-[140px] font-mono text-sm"
+							placeholder={`mailto://user:password@gmail.com\ntgram://bot_token/chat_id\nhttps://discordapp.com/api/webhooks/...`}></textarea>
+					</div>
+					<div>
+						<label for="appriseTitle" class="label">Notification Title</label>
+						<input id="appriseTitle" type="text" bind:value={appriseNotificationTitle} class="input" />
+					</div>
+					<div>
+						<label for="appriseBody" class="label">Notification Body</label>
+						<textarea
+							id="appriseBody"
+							bind:value={appriseNotificationBody}
+							class="input min-h-[120px]"
+							placeholder="$comname was detected with confidence $confidencepct"></textarea>
+					</div>
+					<div class="grid md:grid-cols-2 gap-4">
+						<label class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-dark-border p-3">
+							<input type="checkbox" bind:checked={appriseNotifyEachDetection} class="mt-1" />
+							<span class="text-sm text-gray-700 dark:text-gray-300">Notify on every detection</span>
+						</label>
+						<label class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-dark-border p-3">
+							<input type="checkbox" bind:checked={appriseNotifyNewSpecies} class="mt-1" />
+							<span class="text-sm text-gray-700 dark:text-gray-300">Notify on infrequent species detections</span>
+						</label>
+						<label class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-dark-border p-3">
+							<input type="checkbox" bind:checked={appriseNotifyNewSpeciesEachDay} class="mt-1" />
+							<span class="text-sm text-gray-700 dark:text-gray-300">Notify on first detection of each day</span>
+						</label>
+						<label class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-dark-border p-3">
+							<input type="checkbox" bind:checked={appriseWeeklyReport} class="mt-1" />
+							<span class="text-sm text-gray-700 dark:text-gray-300">Send weekly report notifications</span>
+						</label>
+					</div>
+					<div class="grid md:grid-cols-3 gap-4">
+						<div>
+							<label for="appriseMinSeconds" class="label">Minimum Seconds Between Species Alerts</label>
+							<input id="appriseMinSeconds" type="number" min="0" bind:value={appriseMinSeconds} class="input" />
+						</div>
+						<div class="md:col-span-2">
+							<label for="appriseExcludeSpecies" class="label">Exclude Species Names</label>
+							<input
+								id="appriseExcludeSpecies"
+								type="text"
+								bind:value={appriseOnlyNotifySpeciesNames}
+								class="input"
+								placeholder="Mourning Dove,American Crow" />
+						</div>
+					</div>
+					<div>
+						<label for="appriseIncludeSpecies" class="label">Only Notify For These Species</label>
+						<input
+							id="appriseIncludeSpecies"
+							type="text"
+							bind:value={appriseOnlyNotifySpeciesNames2}
+							class="input"
+							placeholder="Northern Cardinal,Carolina Chickadee" />
+					</div>
+					<div class="flex justify-end">
+						<button type="button" class="btn-secondary" on:click={sendTestNotification} disabled={testingNotification}>
+							{#if testingNotification}
+								<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+							{/if}
+							Send Test Notification
+						</button>
 					</div>
 				</div>
 			</div>

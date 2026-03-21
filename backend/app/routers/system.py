@@ -1,14 +1,19 @@
 """System control API endpoints."""
+import hashlib
+import hmac
 import os
 import re
 import sqlite3
 import subprocess
+import tempfile
 import time
+import urllib.request
 from datetime import datetime
 from threading import Lock
 from typing import Any, Optional
+from zoneinfo import available_timezones
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 
 from ..config import get_settings, Settings
@@ -17,6 +22,8 @@ from ..models.schemas import (
     ApplyUpdateRequest,
     ServiceStatus,
     SystemInfo,
+    TimeConfigResponse,
+    TimeConfigUpdate,
 )
 from ..version_metadata import (
     normalized_git_hash,
@@ -47,6 +54,8 @@ CORE_SERVICES = [
 
 UPDATE_STATUS_CACHE_TTL_SECONDS = 15 * 60
 UPDATE_REMOTE = 'origin'
+LIVE_STREAM_TOKEN_TTL_SECONDS = 10 * 60
+LIVE_STREAM_TOKEN_FALLBACK_SECRET = os.urandom(32)
 _update_status_cache_expires_at = 0.0
 _update_status_checked_at: Optional[str] = None
 _update_status_lock = Lock()
@@ -424,6 +433,76 @@ def invalidate_update_status_cache() -> None:
     _update_status_checked_at = None
 
 
+def sign_live_stream_token(settings: Settings, expires: int) -> str:
+    """Sign a short-lived dashboard live-stream token."""
+    payload = f"live-stream:{expires}".encode('utf-8')
+    secret = settings.caddy_password.encode('utf-8') or LIVE_STREAM_TOKEN_FALLBACK_SECRET
+    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+
+def validate_live_stream_token(settings: Settings, expires: int, signature: str) -> bool:
+    """Validate the short-lived dashboard live-stream token."""
+    if expires < int(time.time()) or not signature:
+        return False
+
+    expected = sign_live_stream_token(settings, expires)
+    return hmac.compare_digest(expected, signature)
+
+
+def read_timedatectl_property(name: str, fallback: str = '') -> str:
+    """Read a single timedatectl property value."""
+    try:
+        result = subprocess.run(
+            ['timedatectl', 'show', '--property', name, '--value'],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return fallback
+
+
+def parse_boolish(value: str, default: bool = False) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {'1', 'true', 'yes', 'on'}:
+        return True
+    if normalized in {'0', 'false', 'no', 'off'}:
+        return False
+    return default
+
+
+def build_time_config_response() -> TimeConfigResponse:
+    """Read the current system time configuration."""
+    now = datetime.now()
+    timezone = read_timedatectl_property('Timezone', 'UTC') or 'UTC'
+    ntp_enabled = parse_boolish(read_timedatectl_property('NTP', 'yes'), True)
+
+    return TimeConfigResponse(
+        timezone=timezone,
+        ntp_enabled=ntp_enabled,
+        current_date=now.strftime('%Y-%m-%d'),
+        current_time=now.strftime('%H:%M'),
+        available_timezones=sorted(available_timezones()),
+    )
+
+
+def set_timezone(timezone: str) -> None:
+    """Set the system timezone and keep /etc/timezone synchronized when present."""
+    subprocess.run(['sudo', 'timedatectl', 'set-timezone', timezone], check=True, timeout=30)
+
+    if os.path.exists('/etc/timezone'):
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding='utf-8') as tmp:
+            tmp.write(f'{timezone}\n')
+            tmp_path = tmp.name
+        try:
+            subprocess.run(['sudo', 'cp', tmp_path, '/etc/timezone'], check=True, timeout=30)
+        finally:
+            os.unlink(tmp_path)
+
+
 @router.get("/system/public-status")
 async def get_public_status(
     db: sqlite3.Connection = Depends(get_db),
@@ -454,6 +533,51 @@ async def get_public_status(
             "inactive_core_services": inactive_core_services,
         },
     }
+
+
+@router.post("/system/live-stream-url")
+async def create_live_stream_url(
+    user: str = Depends(verify_credentials),
+    settings: Settings = Depends(get_settings),
+):
+    """Create a short-lived dashboard live-stream URL."""
+    expires = int(time.time()) + LIVE_STREAM_TOKEN_TTL_SECONDS
+    signature = sign_live_stream_token(settings, expires)
+    return {
+        "url": f"/api/system/live-stream?expires={expires}&signature={signature}",
+        "expires_at": datetime.fromtimestamp(expires).isoformat(timespec="seconds"),
+        "ttl_seconds": LIVE_STREAM_TOKEN_TTL_SECONDS,
+    }
+
+
+@router.get("/system/live-stream")
+async def stream_live_audio(
+    expires: int = Query(..., ge=0),
+    signature: str = Query(..., min_length=1),
+    settings: Settings = Depends(get_settings),
+):
+    """Proxy the local Icecast stream behind a short-lived signed URL."""
+    if not validate_live_stream_token(settings, expires, signature):
+        raise HTTPException(status_code=401, detail="Invalid or expired live stream token")
+
+    try:
+        upstream = urllib.request.urlopen('http://127.0.0.1:8000/stream', timeout=10)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Live audio unavailable: {exc}")
+
+    media_type = upstream.headers.get_content_type() or 'audio/mpeg'
+
+    def iter_stream():
+        try:
+            while True:
+                chunk = upstream.read(8192)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            upstream.close()
+
+    return StreamingResponse(iter_stream(), media_type=media_type)
 
 
 @router.get("/system/services")
@@ -709,6 +833,56 @@ async def get_system_info(
         disk_usage=disk_usage,
         services=services,
     )
+
+
+@router.get("/system/time-config", response_model=TimeConfigResponse)
+async def get_time_config(
+    user: str = Depends(verify_credentials),
+):
+    """Get system timezone, current date/time, and NTP state."""
+    return build_time_config_response()
+
+
+@router.put("/system/time-config", response_model=TimeConfigResponse)
+async def update_time_config(
+    request: TimeConfigUpdate,
+    user: str = Depends(verify_credentials),
+):
+    """Update system timezone and automatic/manual time settings."""
+    if (request.date is None) ^ (request.time is None):
+        raise HTTPException(status_code=400, detail="Manual time updates require both date and time")
+
+    if request.timezone is not None:
+        if request.timezone not in available_timezones():
+            raise HTTPException(status_code=400, detail=f"Unknown timezone: {request.timezone}")
+        try:
+            set_timezone(request.timezone)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Failed to set timezone: {exc}")
+
+    if request.ntp_enabled is not None:
+        try:
+            subprocess.run(
+                ['sudo', 'timedatectl', 'set-ntp', 'true' if request.ntp_enabled else 'false'],
+                check=True,
+                timeout=30,
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Failed to update NTP setting: {exc}")
+
+    if request.date and request.time:
+        try:
+            datetime.strptime(f'{request.date} {request.time}', '%Y-%m-%d %H:%M')
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date/time value")
+
+        try:
+            subprocess.run(['sudo', 'timedatectl', 'set-ntp', 'false'], check=True, timeout=30)
+            subprocess.run(['sudo', 'date', '-s', f'{request.date} {request.time}'], check=True, timeout=30)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Failed to set manual date/time: {exc}")
+
+    return build_time_config_response()
 
 
 @router.get("/system/logs/{service_name}")

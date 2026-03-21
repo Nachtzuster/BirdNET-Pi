@@ -77,6 +77,7 @@ class ConfigBase(BaseModel):
     database_lang: Optional[str] = None
     color_scheme: Optional[str] = None
     update_channel: Optional[str] = Field(None, pattern="^(stable|prerelease|edge)$")
+    info_site: Optional[str] = Field(None, pattern="^(ALLABOUTBIRDS|EBIRD)$")
 
 
 class ConfigUpdate(ConfigBase):
@@ -90,6 +91,44 @@ class ConfigUpdate(ConfigBase):
     birdweather_id: Optional[str] = None
     flickr_api_key: Optional[str] = None
     image_provider: Optional[str] = None
+    caddy_password: Optional[str] = Field(None, min_length=1)
+    birdnetpi_url: Optional[str] = None
+    rtsp_stream: Optional[str] = None
+    rtsp_stream_to_livestream: Optional[int] = Field(None, ge=0)
+    activate_freqshift_in_livestream: Optional[bool] = None
+    apprise_config: Optional[str] = None
+    apprise_notification_title: Optional[str] = None
+    apprise_notification_body: Optional[str] = None
+    apprise_notify_each_detection: Optional[bool] = None
+    apprise_notify_new_species: Optional[bool] = None
+    apprise_notify_new_species_each_day: Optional[bool] = None
+    apprise_weekly_report: Optional[bool] = None
+    apprise_minimum_seconds_between_notifications_per_species: Optional[int] = Field(None, ge=0)
+    apprise_only_notify_species_names: Optional[str] = None
+    apprise_only_notify_species_names_2: Optional[str] = None
+    privacy_threshold: Optional[int] = Field(None, ge=0, le=3)
+    full_disk: Optional[str] = Field(None, pattern="^(purge|keep)$")
+    purge_threshold: Optional[int] = Field(None, ge=20, le=99)
+    max_files_species: Optional[int] = Field(None, ge=0)
+    rec_card: Optional[str] = None
+    channels: Optional[int] = Field(None, ge=1, le=32)
+    recording_length: Optional[int] = Field(None, ge=3, le=60)
+    extraction_length: Optional[int] = Field(None, ge=3, le=60)
+    audiofmt: Optional[str] = None
+    silence_update_indicator: Optional[bool] = None
+    automatic_update: Optional[bool] = None
+    raw_spectrogram: Optional[bool] = None
+    rare_species_threshold: Optional[int] = Field(None, ge=1)
+    custom_image: Optional[str] = None
+    custom_image_title: Optional[str] = None
+    freqshift_tool: Optional[str] = Field(None, pattern="^(sox|ffmpeg)$")
+    freqshift_hi: Optional[int] = Field(None, ge=0, le=20000)
+    freqshift_lo: Optional[int] = Field(None, ge=0, le=20000)
+    freqshift_reconnect_delay: Optional[int] = Field(None, ge=1000, le=10000)
+    freqshift_pitch: Optional[int] = Field(None, ge=-4000, le=4000)
+    log_level_birdnet_recording_service: Optional[str] = Field(None, pattern="^(error|warning|info|debug)$")
+    log_level_live_audio_stream_service: Optional[str] = Field(None, pattern="^(error|warning|info|debug)$")
+    log_level_spectrogram_viewer_service: Optional[str] = Field(None, pattern="^(error|warning|info|debug)$")
 
 
 class ConfigResponse(BaseModel):
@@ -107,8 +146,47 @@ class ConfigResponse(BaseModel):
     sensitivity: float
     overlap: float
     birdweather_id: str
+    info_site: str
     image_provider: str
     has_flickr_key: bool
+    password_configured: bool
+    birdnetpi_url: str
+    rtsp_stream: str
+    rtsp_stream_to_livestream: int
+    activate_freqshift_in_livestream: bool
+    apprise_config: str
+    apprise_notification_title: str
+    apprise_notification_body: str
+    apprise_notify_each_detection: bool
+    apprise_notify_new_species: bool
+    apprise_notify_new_species_each_day: bool
+    apprise_weekly_report: bool
+    apprise_minimum_seconds_between_notifications_per_species: int
+    apprise_only_notify_species_names: str
+    apprise_only_notify_species_names_2: str
+    privacy_threshold: int
+    full_disk: str
+    purge_threshold: int
+    max_files_species: int
+    rec_card: str
+    channels: int
+    recording_length: int
+    extraction_length: int | None
+    audiofmt: str
+    silence_update_indicator: bool
+    automatic_update: bool
+    raw_spectrogram: bool
+    rare_species_threshold: int
+    custom_image: str
+    custom_image_title: str
+    freqshift_tool: str
+    freqshift_hi: int
+    freqshift_lo: int
+    freqshift_reconnect_delay: int
+    freqshift_pitch: int
+    log_level_birdnet_recording_service: str
+    log_level_live_audio_stream_service: str
+    log_level_spectrogram_viewer_service: str
 
 
 # System schemas
@@ -126,6 +204,23 @@ class SystemInfo(BaseModel):
     uptime: Optional[str] = None
     disk_usage: Optional[dict] = None
     services: list[ServiceStatus]
+
+
+class TimeConfigResponse(BaseModel):
+    """System time and timezone settings."""
+    timezone: str
+    ntp_enabled: bool
+    current_date: str
+    current_time: str
+    available_timezones: list[str]
+
+
+class TimeConfigUpdate(BaseModel):
+    """Updates to system time and timezone settings."""
+    timezone: Optional[str] = None
+    ntp_enabled: Optional[bool] = None
+    date: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
 
 
 class UpdateInstalledState(BaseModel):
@@ -252,6 +347,7 @@ class TestNotificationRequest(BaseModel):
     """Request to send a test notification."""
     title: Optional[str] = None
     body: Optional[str] = None
+    config: Optional[str] = None
 
 
 class NotificationResponse(BaseModel):

@@ -192,9 +192,8 @@ export const config = {
 			auth,
 		}),
 
-	testNotification: (data: { title?: string; body?: string }, auth: { username: string; password: string }) =>
+	testNotification: (data: { title?: string; body?: string; config?: string }, auth: { username: string; password: string }) =>
 		request<{ success: boolean; message: string }>('/config/test-notification', { method: 'POST', body: data, auth }),
-
 	models: () =>
 		request<{ models: { name: string; active: boolean; supports_species_filter: boolean }[]; current: string }>('/config/models'),
 
@@ -249,6 +248,15 @@ export const system = {
 		formData.append('file', file);
 		return request<{ message: string; output?: string }>('/system/restore', { method: 'POST', body: formData, auth });
 	},
+
+	liveStreamUrl: (auth: { username: string; password: string }) =>
+		request<{ url: string; expires_at: string; ttl_seconds: number }>('/system/live-stream-url', { method: 'POST', auth }),
+
+	timeConfig: (auth: { username: string; password: string }) =>
+		request<TimeConfig>('/system/time-config', { auth }),
+
+	updateTimeConfig: (data: { timezone?: string; ntp_enabled?: boolean; date?: string; time?: string }, auth: { username: string; password: string }) =>
+		request<TimeConfig>('/system/time-config', { method: 'PUT', body: data, auth }),
 };
 
 // Integrations API
@@ -364,6 +372,7 @@ export interface Config {
 	database_lang: string;
 	color_scheme: string;
 	update_channel: 'stable' | 'prerelease' | 'edge';
+	info_site: 'ALLABOUTBIRDS' | 'EBIRD';
 	model: string;
 	sf_thresh: number;
 	data_model_version: number;
@@ -373,6 +382,44 @@ export interface Config {
 	birdweather_id: string;
 	image_provider: string;
 	has_flickr_key: boolean;
+	password_configured: boolean;
+	birdnetpi_url: string;
+	rtsp_stream: string;
+	rtsp_stream_to_livestream: number;
+	activate_freqshift_in_livestream: boolean;
+	apprise_config: string;
+	apprise_notification_title: string;
+	apprise_notification_body: string;
+	apprise_notify_each_detection: boolean;
+	apprise_notify_new_species: boolean;
+	apprise_notify_new_species_each_day: boolean;
+	apprise_weekly_report: boolean;
+	apprise_minimum_seconds_between_notifications_per_species: number;
+	apprise_only_notify_species_names: string;
+	apprise_only_notify_species_names_2: string;
+	privacy_threshold: number;
+	full_disk: 'purge' | 'keep';
+	purge_threshold: number;
+	max_files_species: number;
+	rec_card: string;
+	channels: number;
+	recording_length: number;
+	extraction_length: number | null;
+	audiofmt: string;
+	silence_update_indicator: boolean;
+	automatic_update: boolean;
+	raw_spectrogram: boolean;
+	rare_species_threshold: number;
+	custom_image: string;
+	custom_image_title: string;
+	freqshift_tool: 'sox' | 'ffmpeg';
+	freqshift_hi: number;
+	freqshift_lo: number;
+	freqshift_reconnect_delay: number;
+	freqshift_pitch: number;
+	log_level_birdnet_recording_service: 'error' | 'warning' | 'info' | 'debug';
+	log_level_live_audio_stream_service: 'error' | 'warning' | 'info' | 'debug';
+	log_level_spectrogram_viewer_service: 'error' | 'warning' | 'info' | 'debug';
 }
 
 export interface ServiceStatus {
@@ -387,6 +434,14 @@ export interface SystemInfo {
 	uptime: string | null;
 	disk_usage: { total: string; used: string; available: string; percent: string } | null;
 	services: ServiceStatus[];
+}
+
+export interface TimeConfig {
+	timezone: string;
+	ntp_enabled: boolean;
+	current_date: string;
+	current_time: string;
+	available_timezones: string[];
 }
 
 export interface PublicSystemStatus {
