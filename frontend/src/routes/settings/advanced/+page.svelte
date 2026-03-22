@@ -137,9 +137,8 @@
 				log_level_spectrogram_viewer_service: logLevelSpectrogramViewerService,
 			};
 
-			if (extractionLength.trim() !== '') {
-				payload.extraction_length = parseInt(extractionLength, 10);
-			}
+			payload.extraction_length =
+				extractionLength.trim() === '' ? null : parseInt(extractionLength, 10);
 			if (caddyPassword.trim() !== '') {
 				payload.caddy_password = caddyPassword;
 			}

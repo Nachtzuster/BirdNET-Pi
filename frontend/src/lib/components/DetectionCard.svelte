@@ -15,6 +15,7 @@ import { goto } from '$app/navigation';
 	export let allowDelete: boolean = false;
 	export let deleting: boolean = false;
 	export let speciesLinks: SpeciesExternalLinks | null = null;
+	let spectrogramExpanded = false;
 
 	const dispatch = createEventDispatcher<{ delete: Detection }>();
 
@@ -46,6 +47,12 @@ import { goto } from '$app/navigation';
 		event.preventDefault();
 		event.stopPropagation();
 		dispatch('delete', detection);
+	}
+
+	function toggleSpectrogram(event: MouseEvent) {
+		event.preventDefault();
+		event.stopPropagation();
+		spectrogramExpanded = !spectrogramExpanded;
 	}
 </script>
 
@@ -132,13 +139,30 @@ import { goto } from '$app/navigation';
 	</div>
 
 	<!-- Spectrogram -->
-	<div class="mt-3">
-		<img
-			src={spectrogramUrl}
-			alt="Spectrogram for {detection.Com_Name}"
-			class="w-full h-24 object-cover rounded-lg bg-gray-200 dark:bg-dark-border"
-			loading="lazy"
-		/>
+	<div class="mt-3 relative" data-no-card-link>
+		<button
+			type="button"
+			class="block w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-dark-card"
+			on:click={toggleSpectrogram}
+			aria-expanded={spectrogramExpanded}
+			aria-label={spectrogramExpanded ? `Collapse spectrogram for ${detection.Com_Name}` : `Expand spectrogram for ${detection.Com_Name}`}
+		>
+			<img
+				src={spectrogramUrl}
+				alt="Spectrogram for {detection.Com_Name}"
+				class="block w-full rounded-lg bg-gray-100 dark:bg-dark-border p-1 object-contain transition-[height] duration-200 ease-out cursor-zoom-in {spectrogramExpanded ? 'h-52 md:h-64' : 'h-32 md:h-36'}"
+				loading="lazy"
+			/>
+		</button>
+		<button
+			type="button"
+			class="absolute right-2 top-2 inline-flex items-center rounded-md bg-white/90 px-2 py-1 text-[11px] font-medium text-gray-700 shadow-sm ring-1 ring-gray-200 backdrop-blur hover:bg-white dark:bg-gray-900/85 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-900"
+			on:click={toggleSpectrogram}
+			aria-expanded={spectrogramExpanded}
+			title={spectrogramExpanded ? 'Collapse spectrogram' : 'Expand spectrogram'}
+		>
+			{spectrogramExpanded ? 'Collapse' : 'Expand'}
+		</button>
 	</div>
 
 	<!-- Audio Player -->

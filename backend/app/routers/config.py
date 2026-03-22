@@ -257,11 +257,16 @@ async def update_config(
         file_updates[APPRISE_BODY_FILENAME] = updates.pop('apprise_notification_body') or ''
 
     for field, value in updates.items():
-        if field not in field_map or value is None:
+        if field not in field_map:
             continue
 
         key = field_map[field]
-        new_value = serialize_config_value(field, key, value)
+        if field == 'extraction_length' and value is None:
+            new_value = f'{key}=""'
+        elif value is None:
+            continue
+        else:
+            new_value = serialize_config_value(field, key, value)
 
         # Replace or add the setting
         pattern = rf'^{re.escape(key)}=.*$'
