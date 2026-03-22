@@ -272,6 +272,9 @@
 					<div>
 						<label for="birdnetpiUrl" class="label">BirdNET-Pi URL</label>
 						<input id="birdnetpiUrl" type="url" bind:value={birdnetpiUrl} class="input" placeholder="https://birds.example.com" />
+						<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+							Set this only when BirdNET-Pi is serving the public hostname directly. Leave it blank when using Cloudflare Tunnel or another proxy/tunnel that already handles TLS and redirects.
+						</p>
 					</div>
 					<div class="md:col-span-2">
 						<label for="rtspStream" class="label">RTSP Streams</label>
