@@ -561,6 +561,7 @@
 									detection={group.latest}
 									showDate={false}
 									href={detectionsHref(group.latest, { newOnDate: isPinnedNewSpecies(group.sciName) })}
+									allowSpectrogramExpand={false}
 									tagLabel={isPinnedNewSpecies(group.sciName) ? 'New species today' : null}
 								/>
 							{#if group.count > 1}

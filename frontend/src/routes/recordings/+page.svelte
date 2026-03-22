@@ -24,6 +24,7 @@
 	let speciesLinks: SpeciesExternalLinks | null = null;
 	let showLoginModal = false;
 	let passwordInput = '';
+	let expandedSpectrogramFiles = new Set<string>();
 
 	async function loadDates() {
 		try {
@@ -206,6 +207,16 @@
 		}
 	}
 
+	function toggleSpectrogram(fileName: string) {
+		const next = new Set(expandedSpectrogramFiles);
+		if (next.has(fileName)) {
+			next.delete(fileName);
+		} else {
+			next.add(fileName);
+		}
+		expandedSpectrogramFiles = next;
+	}
+
 	function handleLogin() {
 		auth.login(passwordInput);
 		passwordInput = '';
@@ -335,16 +346,33 @@
 						{@const audioUrl = media.audioUrl(selectedDate, selectedSpecies, file.name)}
 						{@const spectrogramUrl = media.spectrogramUrl(selectedDate, selectedSpecies, file.name)}
 						{@const shiftedUrl = media.shiftedAudioUrl(selectedDate, selectedSpecies, file.name)}
+						{@const spectrogramExpanded = expandedSpectrogramFiles.has(file.name)}
 						<div class="card p-4">
 							<div class="flex items-start gap-4">
 								<!-- Spectrogram thumbnail -->
-								{#if file.has_spectrogram}
-									<img
-										src={spectrogramUrl}
-										alt="Spectrogram"
-										class="w-32 h-20 object-cover rounded-lg bg-gray-200 dark:bg-dark-border flex-shrink-0"
-										loading="lazy"
-									/>
+								{#if file.has_spectrogram && !spectrogramExpanded}
+									<button
+										type="button"
+										class="group relative block w-32 h-20 flex-shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-dark-card"
+										on:click={() => toggleSpectrogram(file.name)}
+										aria-expanded={spectrogramExpanded}
+										aria-label={`Expand spectrogram for ${file.name}`}
+										title="Expand spectrogram"
+									>
+										<img
+											src={spectrogramUrl}
+											alt="Spectrogram"
+											class="w-32 h-20 object-contain rounded-lg bg-gray-100 dark:bg-dark-border p-1"
+											loading="lazy"
+										/>
+										<span class="absolute right-1.5 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm ring-1 ring-gray-200 backdrop-blur transition-colors group-hover:bg-white dark:bg-gray-900/85 dark:text-gray-200 dark:ring-gray-700 dark:group-hover:bg-gray-900">
+											<svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+												<path fill-rule="evenodd" d="M5.22 7.47a.75.75 0 0 1 1.06 0L10 11.19l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+											</svg>
+										</span>
+									</button>
+								{:else if file.has_spectrogram}
+									<div class="w-32 h-20 flex-shrink-0"></div>
 								{:else}
 									<div class="w-32 h-20 bg-gray-200 dark:bg-dark-border rounded-lg flex items-center justify-center flex-shrink-0">
 										<span class="text-xs text-gray-500">No spectrogram</span>
@@ -402,6 +430,28 @@
 										{/if}
 									</div>
 							</div>
+							{#if file.has_spectrogram && spectrogramExpanded}
+								<button
+									type="button"
+									class="group relative mt-4 block w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-dark-card"
+									on:click={() => toggleSpectrogram(file.name)}
+									aria-expanded={spectrogramExpanded}
+									aria-label={`Collapse spectrogram for ${file.name}`}
+									title="Collapse spectrogram"
+								>
+									<img
+										src={spectrogramUrl}
+										alt="Spectrogram"
+										class="block w-full h-[68vh] md:h-[72vh] object-contain rounded-lg bg-gray-100 dark:bg-dark-border p-2"
+										loading="lazy"
+									/>
+									<span class="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm ring-1 ring-gray-200 backdrop-blur transition-colors group-hover:bg-white dark:bg-gray-900/85 dark:text-gray-200 dark:ring-gray-700 dark:group-hover:bg-gray-900">
+										<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+											<path fill-rule="evenodd" d="M14.78 12.53a.75.75 0 0 1-1.06 0L10 8.81l-3.72 3.72a.75.75 0 0 1-1.06-1.06l4.25-4.25a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+										</svg>
+									</span>
+								</button>
+							{/if}
 						</div>
 					{/each}
 				</div>

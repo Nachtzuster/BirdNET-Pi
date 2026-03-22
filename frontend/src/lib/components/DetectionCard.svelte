@@ -15,6 +15,8 @@ import { goto } from '$app/navigation';
 	export let allowDelete: boolean = false;
 	export let deleting: boolean = false;
 	export let speciesLinks: SpeciesExternalLinks | null = null;
+	export let allowSpectrogramExpand: boolean = true;
+	export let spectrogramExpandedHeightClass: string = 'h-[68vh] md:h-[72vh]';
 	let spectrogramExpanded = false;
 
 	const dispatch = createEventDispatcher<{ delete: Detection }>();
@@ -140,29 +142,41 @@ import { goto } from '$app/navigation';
 
 	<!-- Spectrogram -->
 	<div class="mt-3 relative" data-no-card-link>
-		<button
-			type="button"
-			class="block w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-dark-card"
-			on:click={toggleSpectrogram}
-			aria-expanded={spectrogramExpanded}
-			aria-label={spectrogramExpanded ? `Collapse spectrogram for ${detection.Com_Name}` : `Expand spectrogram for ${detection.Com_Name}`}
-		>
+		{#if allowSpectrogramExpand}
+			<button
+				type="button"
+				class="group block w-full rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-dark-card"
+				on:click={toggleSpectrogram}
+				aria-expanded={spectrogramExpanded}
+				aria-label={spectrogramExpanded ? `Collapse spectrogram for ${detection.Com_Name}` : `Expand spectrogram for ${detection.Com_Name}`}
+				title={spectrogramExpanded ? 'Collapse spectrogram' : 'Expand spectrogram'}
+			>
+				<img
+					src={spectrogramUrl}
+					alt="Spectrogram for {detection.Com_Name}"
+					class="block w-full rounded-lg bg-gray-100 dark:bg-dark-border p-1 object-contain transition-[height] duration-200 ease-out {spectrogramExpanded ? spectrogramExpandedHeightClass : 'h-32 md:h-36'} {spectrogramExpanded ? 'cursor-zoom-out' : 'cursor-zoom-in'}"
+					loading="lazy"
+				/>
+				<span class="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm ring-1 ring-gray-200 backdrop-blur transition-colors group-hover:bg-white dark:bg-gray-900/85 dark:text-gray-200 dark:ring-gray-700 dark:group-hover:bg-gray-900">
+					{#if spectrogramExpanded}
+						<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+							<path fill-rule="evenodd" d="M14.78 12.53a.75.75 0 0 1-1.06 0L10 8.81l-3.72 3.72a.75.75 0 0 1-1.06-1.06l4.25-4.25a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+						</svg>
+					{:else}
+						<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+							<path fill-rule="evenodd" d="M5.22 7.47a.75.75 0 0 1 1.06 0L10 11.19l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+						</svg>
+					{/if}
+				</span>
+			</button>
+		{:else}
 			<img
 				src={spectrogramUrl}
 				alt="Spectrogram for {detection.Com_Name}"
-				class="block w-full rounded-lg bg-gray-100 dark:bg-dark-border p-1 object-contain transition-[height] duration-200 ease-out cursor-zoom-in {spectrogramExpanded ? 'h-52 md:h-64' : 'h-32 md:h-36'}"
+				class="block w-full h-32 md:h-36 rounded-lg bg-gray-100 dark:bg-dark-border p-1 object-contain"
 				loading="lazy"
 			/>
-		</button>
-		<button
-			type="button"
-			class="absolute right-2 top-2 inline-flex items-center rounded-md bg-white/90 px-2 py-1 text-[11px] font-medium text-gray-700 shadow-sm ring-1 ring-gray-200 backdrop-blur hover:bg-white dark:bg-gray-900/85 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-900"
-			on:click={toggleSpectrogram}
-			aria-expanded={spectrogramExpanded}
-			title={spectrogramExpanded ? 'Collapse spectrogram' : 'Expand spectrogram'}
-		>
-			{spectrogramExpanded ? 'Collapse' : 'Expand'}
-		</button>
+		{/if}
 	</div>
 
 	<!-- Audio Player -->
