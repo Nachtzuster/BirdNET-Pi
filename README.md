@@ -58,6 +58,8 @@ This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET
 | **Full Species Charts** | Daily charts show *all* species, not just the top 10 |
 | **Faster Analysis** | Consolidated analysis pipeline + TFLite 2.17.1 |
 | **Backup & Restore** | Never lose your bird data again |
+| **Modern Admin UI** | Notifications, advanced settings, system controls, time/date, and updates in the new interface |
+| **Live Audio + Spectrogram UX** | Dashboard live audio plus compact/expandable spectrogram views where they are most useful |
 | **Modern Debian** | Bookworm + Trixie support |
 
 <details>
@@ -245,6 +247,7 @@ This project builds upon the incredible work of:
 ## Learn More
 
 - [Wiki](https://github.com/cpieper/BirdNET-Pibird/wiki) — Full documentation & troubleshooting
+- [Web UI Guide](docs/web-ui.md) — Settings surfaces, live audio, spectrogram behavior, and tunnel guidance
 - [Discussions](https://github.com/cpieper/BirdNET-Pibird/discussions) — Community Q&A
 - [BirdWeather](https://app.birdweather.com) — Share your birds with the world
 
