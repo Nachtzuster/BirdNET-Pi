@@ -362,7 +362,7 @@
 										<img
 											src={spectrogramUrl}
 											alt="Spectrogram"
-											class="w-32 h-20 object-contain rounded-lg bg-gray-100 dark:bg-dark-border p-1"
+											class="w-32 h-20 object-cover rounded-lg bg-gray-200 dark:bg-dark-border"
 											loading="lazy"
 										/>
 										<span class="absolute right-1.5 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm ring-1 ring-gray-200 backdrop-blur transition-colors group-hover:bg-white dark:bg-gray-900/85 dark:text-gray-200 dark:ring-gray-700 dark:group-hover:bg-gray-900">

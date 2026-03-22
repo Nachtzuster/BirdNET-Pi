@@ -154,7 +154,7 @@ import { goto } from '$app/navigation';
 				<img
 					src={spectrogramUrl}
 					alt="Spectrogram for {detection.Com_Name}"
-					class="block w-full rounded-lg bg-gray-100 dark:bg-dark-border p-1 object-contain transition-[height] duration-200 ease-out {spectrogramExpanded ? spectrogramExpandedHeightClass : 'h-32 md:h-36'} {spectrogramExpanded ? 'cursor-zoom-out' : 'cursor-zoom-in'}"
+					class="block w-full rounded-lg transition-[height] duration-200 ease-out {spectrogramExpanded ? `${spectrogramExpandedHeightClass} bg-gray-100 dark:bg-dark-border p-1 object-contain cursor-zoom-out` : 'h-24 object-cover bg-gray-200 dark:bg-dark-border cursor-zoom-in'}"
 					loading="lazy"
 				/>
 				<span class="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm ring-1 ring-gray-200 backdrop-blur transition-colors group-hover:bg-white dark:bg-gray-900/85 dark:text-gray-200 dark:ring-gray-700 dark:group-hover:bg-gray-900">
@@ -173,7 +173,7 @@ import { goto } from '$app/navigation';
 			<img
 				src={spectrogramUrl}
 				alt="Spectrogram for {detection.Com_Name}"
-				class="block w-full h-32 md:h-36 rounded-lg bg-gray-100 dark:bg-dark-border p-1 object-contain"
+				class="block w-full h-24 rounded-lg bg-gray-200 dark:bg-dark-border object-cover"
 				loading="lazy"
 			/>
 		{/if}
