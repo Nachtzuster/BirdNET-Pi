@@ -246,8 +246,13 @@
 
 <div class="container mx-auto px-4 py-6">
 	<div class="mb-6">
-		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Library</h1>
-		<p class="text-gray-600 dark:text-gray-400 mt-1">Historical file management</p>
+		<div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+			<div>
+				<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Library</h1>
+				<p class="mt-1 text-gray-600 dark:text-gray-400">Historical file management</p>
+			</div>
+			<a href="/files" class="btn-secondary">Open File Manager</a>
+		</div>
 	</div>
 
 	<!-- Filters -->

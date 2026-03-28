@@ -90,6 +90,7 @@ class ConfigUpdate(ConfigBase):
     overlap: Optional[float] = Field(None, ge=0.0, le=2.9)
     birdweather_id: Optional[str] = None
     flickr_api_key: Optional[str] = None
+    flickr_filter_email: Optional[str] = None
     image_provider: Optional[str] = None
     caddy_password: Optional[str] = Field(None, min_length=1)
     birdnetpi_url: Optional[str] = None
@@ -149,6 +150,7 @@ class ConfigResponse(BaseModel):
     info_site: str
     image_provider: str
     has_flickr_key: bool
+    flickr_filter_email: str
     password_configured: bool
     birdnetpi_url: str
     rtsp_stream: str
@@ -326,6 +328,43 @@ class BirdImage(BaseModel):
     license: Optional[str] = None
     license_url: Optional[str] = None
     source: str  # 'flickr', 'wikipedia', 'custom'
+
+
+class FileRoot(BaseModel):
+    """Logical file-manager root."""
+    id: str
+    label: str
+    description: str
+    available: bool
+
+
+class FileEntry(BaseModel):
+    """A file or directory entry within an allowed root."""
+    name: str
+    path: str
+    entry_type: str = Field(..., pattern="^(file|directory)$")
+    size: Optional[int] = None
+    modified_at: str
+
+
+class FileRootsResponse(BaseModel):
+    """Response listing available file-manager roots."""
+    roots: list[FileRoot]
+
+
+class FileListingResponse(BaseModel):
+    """Directory listing within a logical file-manager root."""
+    root: str
+    root_label: str
+    current_path: str
+    parent_path: Optional[str] = None
+    entries: list[FileEntry]
+
+
+class FileDeleteResponse(BaseModel):
+    """Response after deleting a file or empty directory."""
+    message: str
+    path: str
 
 
 # Chart data schemas

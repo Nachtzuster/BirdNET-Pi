@@ -58,7 +58,9 @@ This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET
 | **Full Species Charts** | Daily charts show *all* species, not just the top 10 |
 | **Faster Analysis** | Consolidated analysis pipeline + TFLite 2.17.1 |
 | **Backup & Restore** | Never lose your bird data again |
-| **Modern Admin UI** | Notifications, advanced settings, system controls, time/date, and updates in the new interface |
+| **Modern Admin UI** | Notifications, advanced settings, live logs, system controls, time/date, and updates in the new interface |
+| **Reports & Exports** | Weekly Report plus eBird export from the modern UI |
+| **Scoped File Manager** | Admin-only file management for BirdNET-owned media roots |
 | **Live Audio + Spectrogram UX** | Dashboard live audio plus compact/expandable spectrogram views where they are most useful |
 | **Modern Debian** | Bookworm + Trixie support |
 
@@ -80,6 +82,28 @@ This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET
 - Support for Species range model V2.4 - V2
 
 </details>
+
+---
+
+## Current Web UI Coverage
+
+The modern web app now covers the main day-to-day and admin workflows without relying on the old PHP tools:
+
+- Dashboard with current detections, live audio access, and public status
+- Review feed for recent detections and moderation actions
+- Library for historical recordings and spectrogram inspection
+- Species and Insights views for trends, charts, and exports
+- Weekly Report at `/reports/weekly`
+- Settings, Advanced Settings, and System administration
+- Live Logs for service log inspection
+- Admin-only File Manager at `/files`, linked from Library
+
+Intentional exclusions from the old PHP surface:
+
+- No Web Terminal
+- No Adminer
+
+The File Manager is intentionally scoped to BirdNET-owned directories rather than acting as a general server browser.
 
 ---
 
@@ -247,7 +271,7 @@ This project builds upon the incredible work of:
 ## Learn More
 
 - [Wiki](https://github.com/cpieper/BirdNET-Pibird/wiki) — Full documentation & troubleshooting
-- [Web UI Guide](docs/web-ui.md) — Settings surfaces, live audio, spectrogram behavior, and tunnel guidance
+- [Web UI Guide](docs/web-ui.md) — Settings surfaces, reports, file management, live audio, and tunnel guidance
 - [Discussions](https://github.com/cpieper/BirdNET-Pibird/discussions) — Community Q&A
 - [BirdWeather](https://app.birdweather.com) — Share your birds with the world
 

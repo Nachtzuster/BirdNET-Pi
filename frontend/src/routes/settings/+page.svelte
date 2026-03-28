@@ -24,6 +24,10 @@
 	let sensitivity = '';
 	let overlap = '';
 	let birdweatherId = '';
+	let infoSite: 'ALLABOUTBIRDS' | 'EBIRD' = 'ALLABOUTBIRDS';
+	let imageProvider = '';
+	let flickrApiKey = '';
+	let flickrFilterEmail = '';
 	let appriseConfig = '';
 	let appriseNotificationTitle = '';
 	let appriseNotificationBody = '';
@@ -82,6 +86,10 @@
 			sensitivity = String(configData.sensitivity);
 			overlap = String(configData.overlap);
 			birdweatherId = configData.birdweather_id;
+			infoSite = configData.info_site;
+			imageProvider = (configData.image_provider || '').toLowerCase();
+			flickrApiKey = '';
+			flickrFilterEmail = configData.flickr_filter_email;
 			previewThreshold = configData.sf_thresh;
 			appriseConfig = configData.apprise_config;
 			appriseNotificationTitle = configData.apprise_notification_title;
@@ -108,32 +116,39 @@
 	async function saveConfig() {
 		saving = true;
 		try {
+			const payload: Partial<Config> & Record<string, unknown> = {
+				site_name: siteName,
+				latitude: parseFloat(latitude),
+				longitude: parseFloat(longitude),
+				database_lang: databaseLang,
+				color_scheme: colorScheme,
+				update_channel: updateChannel,
+				info_site: infoSite,
+				model,
+				sf_thresh: Number(previewThreshold),
+				data_model_version: parseInt(dataModelVersion, 10),
+				confidence: parseFloat(confidence),
+				sensitivity: parseFloat(sensitivity),
+				overlap: parseFloat(overlap),
+				birdweather_id: birdweatherId,
+				image_provider: imageProvider,
+				flickr_filter_email: flickrFilterEmail,
+				apprise_config: appriseConfig,
+				apprise_notification_title: appriseNotificationTitle,
+				apprise_notification_body: appriseNotificationBody,
+				apprise_notify_each_detection: appriseNotifyEachDetection,
+				apprise_notify_new_species: appriseNotifyNewSpecies,
+				apprise_notify_new_species_each_day: appriseNotifyNewSpeciesEachDay,
+				apprise_weekly_report: appriseWeeklyReport,
+				apprise_minimum_seconds_between_notifications_per_species: parseInt(appriseMinSeconds || '0', 10),
+				apprise_only_notify_species_names: appriseOnlyNotifySpeciesNames,
+				apprise_only_notify_species_names_2: appriseOnlyNotifySpeciesNames2,
+			};
+			if (flickrApiKey.trim() !== '') {
+				payload.flickr_api_key = flickrApiKey;
+			}
 			const result = await configApi.update(
-				{
-					site_name: siteName,
-					latitude: parseFloat(latitude),
-					longitude: parseFloat(longitude),
-					database_lang: databaseLang,
-					color_scheme: colorScheme,
-					update_channel: updateChannel,
-					model,
-					sf_thresh: Number(previewThreshold),
-					data_model_version: parseInt(dataModelVersion, 10),
-					confidence: parseFloat(confidence),
-					sensitivity: parseFloat(sensitivity),
-					overlap: parseFloat(overlap),
-					birdweather_id: birdweatherId,
-					apprise_config: appriseConfig,
-					apprise_notification_title: appriseNotificationTitle,
-					apprise_notification_body: appriseNotificationBody,
-					apprise_notify_each_detection: appriseNotifyEachDetection,
-					apprise_notify_new_species: appriseNotifyNewSpecies,
-					apprise_notify_new_species_each_day: appriseNotifyNewSpeciesEachDay,
-					apprise_weekly_report: appriseWeeklyReport,
-					apprise_minimum_seconds_between_notifications_per_species: parseInt(appriseMinSeconds || '0', 10),
-					apprise_only_notify_species_names: appriseOnlyNotifySpeciesNames,
-					apprise_only_notify_species_names_2: appriseOnlyNotifySpeciesNames2,
-				},
+				payload,
 				auth.getCredentials()
 			);
 			toasts.show(result.message, 'success');
@@ -449,6 +464,54 @@
 							Get your station ID from <a href="https://birdweather.com" target="_blank" rel="noopener" class="text-primary-600 dark:text-primary-400 hover:underline">birdweather.com</a>
 						</p>
 					</div>
+					<div class="grid md:grid-cols-2 gap-4">
+						<div>
+							<label for="imageProvider" class="label">Bird Photo Source</label>
+							<select id="imageProvider" bind:value={imageProvider} class="select">
+								<option value="">None</option>
+								<option value="wikipedia">Wikipedia</option>
+								<option value="flickr">Flickr</option>
+							</select>
+						</div>
+						<div>
+							<label for="infoSite" class="label">Species Info Source</label>
+							<select id="infoSite" bind:value={infoSite} class="select">
+								<option value="ALLABOUTBIRDS">allaboutbirds.org</option>
+								<option value="EBIRD">ebird.org</option>
+							</select>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+								All About Birds is the default. eBird tends to have better coverage for some non-US species.
+							</p>
+						</div>
+					</div>
+					<div class="grid md:grid-cols-2 gap-4">
+						<div>
+							<label for="flickrApiKey" class="label">Flickr API Key</label>
+							<input
+								id="flickrApiKey"
+								type="password"
+								bind:value={flickrApiKey}
+								class="input"
+								placeholder={currentConfig?.has_flickr_key ? 'Leave blank to keep current key' : 'Enter Flickr API key'}
+							/>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+								Required only when using Flickr for bird images.
+							</p>
+						</div>
+						<div>
+							<label for="flickrFilterEmail" class="label">Preferred Flickr User Email</label>
+							<input
+								id="flickrFilterEmail"
+								type="email"
+								bind:value={flickrFilterEmail}
+								class="input"
+								placeholder="myflickraccount@gmail.com"
+							/>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+								Optional. Restricts Flickr image search to a preferred user account.
+							</p>
+						</div>
+					</div>
 				</div>
 			</div>
 
@@ -495,7 +558,10 @@
 						</label>
 						<label class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-dark-border p-3">
 							<input type="checkbox" bind:checked={appriseWeeklyReport} class="mt-1" />
-							<span class="text-sm text-gray-700 dark:text-gray-300">Send weekly report notifications</span>
+							<span class="text-sm text-gray-700 dark:text-gray-300">
+								Send weekly report notifications
+								<a href="/reports/weekly" class="ml-1 text-primary-600 dark:text-primary-400 hover:underline">View report</a>
+							</span>
 						</label>
 					</div>
 					<div class="grid md:grid-cols-3 gap-4">

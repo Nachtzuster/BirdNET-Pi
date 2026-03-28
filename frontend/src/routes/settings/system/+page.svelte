@@ -249,6 +249,53 @@
 		}
 	}
 
+	async function shutdownSystem() {
+		if (!$auth.isAuthenticated) {
+			showLoginModal = true;
+			return;
+		}
+
+		if (!confirm('Are you sure you want to shut down the system?')) return;
+
+		try {
+			await systemApi.shutdown(auth.getCredentials());
+			toasts.show('System shutdown initiated', 'info');
+		} catch (e: any) {
+			if (e.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				toasts.show('Failed to shut down the system', 'error');
+			}
+		}
+	}
+
+	async function clearAllData() {
+		if (!$auth.isAuthenticated) {
+			showLoginModal = true;
+			return;
+		}
+
+		const warning = 'Clear ALL detections, recordings, and derived data? This cannot be undone and may take up to a couple of minutes.';
+		if (!confirm(warning)) return;
+
+		actionLoading['clear-data'] = true;
+		try {
+			await systemApi.clearData(auth.getCredentials());
+			toasts.show('All data cleared successfully', 'success');
+			await loadData();
+		} catch (e: any) {
+			if (e.status === 401) {
+				auth.logout();
+				showLoginModal = true;
+			} else {
+				toasts.show(e.message || 'Failed to clear all data', 'error');
+			}
+		} finally {
+			actionLoading['clear-data'] = false;
+		}
+	}
+
 	async function restoreBackup() {
 		if (!$auth.isAuthenticated) {
 			showLoginModal = true;
@@ -573,6 +620,13 @@
 							</div>
 						</div>
 						<div class="flex gap-2">
+							<button
+								on:click={() => controlService(service.name, service.enabled ? 'disable' : 'enable')}
+								disabled={actionLoading[service.name]}
+								class="btn-secondary btn-sm"
+							>
+								{service.enabled ? 'Disable' : 'Enable'}
+							</button>
 							{#if service.active}
 								<button
 									on:click={() => controlService(service.name, 'restart')}
@@ -607,14 +661,17 @@
 			<div class="card-header">
 				<h2 class="font-semibold text-gray-900 dark:text-gray-100">System Actions</h2>
 			</div>
-			<div class="card-body">
-				<div class="flex flex-wrap gap-4">
-					<button on:click={rebootSystem} class="btn-danger">
-						Reboot System
-					</button>
-					<a href="/api/system/backup" class="btn-secondary">
-						Download Backup
-					</a>
+				<div class="card-body">
+					<div class="flex flex-wrap gap-4">
+						<button on:click={rebootSystem} class="btn-danger">
+							Reboot System
+						</button>
+						<button on:click={shutdownSystem} class="btn-danger">
+							Shutdown System
+						</button>
+						<a href="/api/system/backup" class="btn-secondary">
+							Download Backup
+						</a>
 				</div>
 				<div class="mt-4 rounded-lg border border-gray-200 dark:border-dark-border p-4">
 					<p class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Restore Backup</p>
@@ -631,11 +688,27 @@
 						<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Selected: {restoreFile.name}</p>
 					{/if}
 				</div>
-				<p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
-					Warning: These actions may interrupt bird detection temporarily.
-				</p>
+					<p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
+						Warning: These actions may interrupt bird detection temporarily.
+					</p>
+					<div class="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-950/30">
+						<p class="text-sm font-semibold text-red-800 dark:text-red-200">Danger Zone</p>
+						<p class="text-sm text-red-700 dark:text-red-300 mt-1">
+							Clearing all data removes detections, recordings, and generated media.
+						</p>
+						<button
+							on:click={clearAllData}
+							class="btn-danger mt-4"
+							disabled={actionLoading['clear-data']}
+						>
+							{#if actionLoading['clear-data']}
+								<span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+							{/if}
+							Clear All Data
+						</button>
+					</div>
+				</div>
 			</div>
-		</div>
 	{/if}
 </div>
 

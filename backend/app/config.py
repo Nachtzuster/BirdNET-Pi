@@ -60,6 +60,9 @@ class Settings:
             'APPRISE_NOTIFICATION_TITLE': 'New BirdNET Detection',
             'APPRISE_NOTIFICATION_BODY': '$comname was detected with confidence $confidencepct',
             'INFO_SITE': 'ALLABOUTBIRDS',
+            'IMAGE_PROVIDER': 'wikipedia',
+            'FLICKR_API_KEY': '',
+            'FLICKR_FILTER_EMAIL': '',
             'BIRDNETPI_URL': '',
             'RTSP_STREAM': '',
             'RTSP_STREAM_TO_LIVESTREAM': '0',
@@ -201,6 +204,10 @@ class Settings:
     @property
     def image_provider(self) -> str:
         return self.config.get('IMAGE_PROVIDER', 'wikipedia')
+
+    @property
+    def flickr_filter_email(self) -> str:
+        return self.config.get('FLICKR_FILTER_EMAIL', '')
 
     @property
     def birdnetpi_url(self) -> str:

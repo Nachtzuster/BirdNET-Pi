@@ -1,6 +1,6 @@
 """Detection API endpoints."""
 import sqlite3
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -10,6 +10,23 @@ from ..dependencies import get_db, verify_credentials, extract_species_from_file
 from ..models.schemas import Detection, DetectionList, DetectionSummary
 
 router = APIRouter()
+
+
+def percentage_change(current: int, previous: int) -> float | None:
+    """Return percentage change, or None when prior baseline is zero."""
+    if previous == 0:
+        return None if current > 0 else 0.0
+    return round(((current - previous) / previous) * 100, 1)
+
+
+def completed_week_range(anchor: date | None = None) -> tuple[date, date]:
+    """Return the most recently completed Sunday-Saturday reporting window."""
+    base = anchor or datetime.now().date()
+    days_since_sunday = (base.weekday() + 1) % 7
+    last_sunday = base - timedelta(days=days_since_sunday)
+    start = last_sunday - timedelta(days=7)
+    end = last_sunday - timedelta(days=1)
+    return start, end
 
 
 @router.get("/detections", response_model=DetectionList)
@@ -240,6 +257,119 @@ async def get_new_species_today(
         latest_by_species.append(dict(row))
 
     return latest_by_species
+
+
+@router.get("/detections/weekly-report")
+async def get_weekly_report(
+    end_date: Optional[str] = None,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Get summary data for the most recently completed reporting week."""
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="end_date must be YYYY-MM-DD format")
+        start = end - timedelta(days=6)
+    else:
+        start, end = completed_week_range()
+
+    prev_start = start - timedelta(days=7)
+    prev_end = end - timedelta(days=7)
+
+    current_species_rows = db.execute(
+        """
+        SELECT Sci_Name, Com_Name, COUNT(*) as count
+        FROM detections
+        WHERE Date BETWEEN ? AND ?
+        GROUP BY Sci_Name
+        ORDER BY count DESC, Com_Name ASC
+        """,
+        (start.isoformat(), end.isoformat()),
+    ).fetchall()
+
+    prior_species_rows = db.execute(
+        """
+        SELECT Sci_Name, COUNT(*) as count
+        FROM detections
+        WHERE Date BETWEEN ? AND ?
+        GROUP BY Sci_Name
+        """,
+        (prev_start.isoformat(), prev_end.isoformat()),
+    ).fetchall()
+    prior_species_counts = {row["Sci_Name"]: row["count"] for row in prior_species_rows}
+
+    first_seen_rows = db.execute(
+        """
+        SELECT d.Sci_Name, d.Com_Name, COUNT(*) as count
+        FROM detections d
+        WHERE d.Date BETWEEN ? AND ?
+          AND NOT EXISTS (
+              SELECT 1
+              FROM detections prev
+              WHERE prev.Sci_Name = d.Sci_Name
+                AND prev.Date < ?
+          )
+        GROUP BY d.Sci_Name
+        ORDER BY count DESC, d.Com_Name ASC
+        """,
+        (start.isoformat(), end.isoformat(), start.isoformat()),
+    ).fetchall()
+
+    total_detections = db.execute(
+        "SELECT COUNT(*) FROM detections WHERE Date BETWEEN ? AND ?",
+        (start.isoformat(), end.isoformat()),
+    ).fetchone()[0]
+    previous_total_detections = db.execute(
+        "SELECT COUNT(*) FROM detections WHERE Date BETWEEN ? AND ?",
+        (prev_start.isoformat(), prev_end.isoformat()),
+    ).fetchone()[0]
+
+    total_species = db.execute(
+        "SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date BETWEEN ? AND ?",
+        (start.isoformat(), end.isoformat()),
+    ).fetchone()[0]
+    previous_total_species = db.execute(
+        "SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date BETWEEN ? AND ?",
+        (prev_start.isoformat(), prev_end.isoformat()),
+    ).fetchone()[0]
+
+    top_species = []
+    for row in current_species_rows[:10]:
+        prior_count = prior_species_counts.get(row["Sci_Name"], 0)
+        top_species.append({
+            "sci_name": row["Sci_Name"],
+            "com_name": row["Com_Name"],
+            "count": row["count"],
+            "previous_count": prior_count,
+            "change_pct": percentage_change(row["count"], prior_count),
+            "is_new_this_week": prior_count == 0,
+        })
+
+    first_seen_species = [
+        {
+            "sci_name": row["Sci_Name"],
+            "com_name": row["Com_Name"],
+            "count": row["count"],
+        }
+        for row in first_seen_rows
+    ]
+
+    return {
+        "label": f"Week {end.isocalendar().week} Report",
+        "start_date": start.isoformat(),
+        "end_date": end.isoformat(),
+        "week_number": end.isocalendar().week,
+        "year": end.isocalendar().year,
+        "total_detections": total_detections,
+        "previous_total_detections": previous_total_detections,
+        "total_detections_change_pct": percentage_change(total_detections, previous_total_detections),
+        "species_count": total_species,
+        "previous_species_count": previous_total_species,
+        "species_count_change_pct": percentage_change(total_species, previous_total_species),
+        "top_species": top_species,
+        "first_seen_species": first_seen_species,
+    }
 
 
 @router.get("/detections/dates")

@@ -348,6 +348,10 @@ async def get_bird_image(
     provider = settings.image_provider.lower()
     logger.debug("Image request for '%s' using provider '%s'", sci_name, provider)
 
+    if provider in {'', 'none'}:
+        logger.debug("Image provider disabled for '%s'", sci_name)
+        return None
+
     # Check cache first
     if not force_refresh:
         cached = get_cached_image(sci_name, provider, settings)
@@ -401,6 +405,7 @@ async def get_bird_image(
 async def fetch_flickr_image(sci_name: str, settings: Settings) -> Optional[BirdImage]:
     """Fetch bird image from Flickr API."""
     api_key = settings.flickr_api_key
+    filter_email = settings.flickr_filter_email.strip()
 
     if not api_key:
         logger.debug("No Flickr API key configured, skipping Flickr for '%s'", sci_name)
@@ -423,6 +428,19 @@ async def fetch_flickr_image(sci_name: str, settings: Settings) -> Optional[Bird
         }
 
         try:
+            if filter_email:
+                user_lookup = await client.get(search_url, params={
+                    'method': 'flickr.people.findByEmail',
+                    'api_key': api_key,
+                    'find_email': filter_email,
+                    'format': 'json',
+                    'nojsoncallback': 1,
+                }, timeout=10)
+                user_lookup_data = user_lookup.json()
+                user_id = user_lookup_data.get('user', {}).get('nsid')
+                if user_lookup_data.get('stat') == 'ok' and user_id:
+                    params['user_id'] = user_id
+
             response = await client.get(search_url, params=params, timeout=10)
             data = response.json()
 
@@ -547,6 +565,8 @@ async def blacklist_image(
     This will remove the cached image and try to fetch a different one.
     """
     provider = settings.image_provider.lower()
+    if provider in {'', 'none'}:
+        return {"message": "No image provider is configured"}
 
     # Remove from cache
     try:

@@ -44,6 +44,46 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 	return response.json();
 }
 
+async function requestBlob(
+	endpoint: string,
+	options: RequestOptions = {}
+): Promise<{ blob: Blob; filename: string | null }> {
+	const { method = 'GET', auth } = options;
+	const headers: HeadersInit = {};
+
+	if (auth) {
+		headers['Authorization'] = `Basic ${btoa(`${auth.username}:${auth.password}`)}`;
+	}
+
+	const response = await fetch(`${API_BASE}${endpoint}`, {
+		method,
+		headers,
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+		throw new ApiError(response.status, error.detail || response.statusText);
+	}
+
+	const disposition = response.headers.get('Content-Disposition');
+	let filename: string | null = null;
+
+	if (disposition) {
+		const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+		if (utf8Match) {
+			filename = decodeURIComponent(utf8Match[1]);
+		} else {
+			const basicMatch = disposition.match(/filename="?([^"]+)"?/i);
+			if (basicMatch) filename = basicMatch[1];
+		}
+	}
+
+	return {
+		blob: await response.blob(),
+		filename,
+	};
+}
+
 // Detection API
 export const detections = {
 	list: (params?: { limit?: number; offset?: number; date?: string; species?: string; search?: string; new_on_date?: boolean }) => {
@@ -84,6 +124,11 @@ export const detections = {
 		});
 		return request<RangeChartData>(`/detections/chart-data-range?${searchParams}`);
 	},
+
+	weeklyReport: (endDate?: string) =>
+		request<WeeklyReport>(
+			`/detections/weekly-report${endDate ? `?end_date=${encodeURIComponent(endDate)}` : ''}`
+		),
 
 	delete: (filename: string, auth: { username: string; password: string }) =>
 		request(`/detections/${encodeURIComponent(filename)}`, { method: 'DELETE', auth }),
@@ -178,7 +223,32 @@ export const media = {
 		request<{ message: string }>(
 			`/media/shift/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}`,
 			{ method: 'DELETE', auth }
-		),
+	),
+};
+
+// File manager API
+export const fileManager = {
+	roots: (auth: { username: string; password: string }) =>
+		request<FileRootsResponse>('/files/roots', { auth }),
+
+	list: (root: string, path: string, auth: { username: string; password: string }) => {
+		const searchParams = new URLSearchParams({ root });
+		if (path) searchParams.set('path', path);
+		return request<FileListingResponse>(`/files/list?${searchParams.toString()}`, { auth });
+	},
+
+	delete: (root: string, path: string, auth: { username: string; password: string }) => {
+		const searchParams = new URLSearchParams({ root, path });
+		return request<{ message: string; path: string }>(`/files?${searchParams.toString()}`, {
+			method: 'DELETE',
+			auth,
+		});
+	},
+
+	download: (root: string, path: string, auth: { username: string; password: string }) => {
+		const searchParams = new URLSearchParams({ root, path });
+		return requestBlob(`/files/download?${searchParams.toString()}`, { auth });
+	},
 };
 
 // Config API
@@ -225,6 +295,9 @@ export const system = {
 
 	shutdown: (auth: { username: string; password: string }) =>
 		request('/system/shutdown', { method: 'POST', auth }),
+
+	clearData: (auth: { username: string; password: string }) =>
+		request('/system/clear-data', { method: 'POST', auth }),
 
 	logs: (service: string, lines: number, auth: { username: string; password: string }) =>
 		request<{ service: string; lines: number; logs: string }>(`/system/logs/${service}?lines=${lines}`, { auth }),
@@ -319,6 +392,31 @@ export interface DetectionStats {
 	species_tally: number;
 }
 
+export interface WeeklyReportSpecies {
+	sci_name: string;
+	com_name: string;
+	count: number;
+	previous_count?: number;
+	change_pct?: number | null;
+	is_new_this_week?: boolean;
+}
+
+export interface WeeklyReport {
+	label: string;
+	start_date: string;
+	end_date: string;
+	week_number: number;
+	year: number;
+	total_detections: number;
+	previous_total_detections: number;
+	total_detections_change_pct: number | null;
+	species_count: number;
+	previous_species_count: number;
+	species_count_change_pct: number | null;
+	top_species: WeeklyReportSpecies[];
+	first_seen_species: WeeklyReportSpecies[];
+}
+
 export interface SpeciesSummary {
 	Date: string;
 	Time: string;
@@ -382,6 +480,7 @@ export interface Config {
 	birdweather_id: string;
 	image_provider: string;
 	has_flickr_key: boolean;
+	flickr_filter_email: string;
 	password_configured: boolean;
 	birdnetpi_url: string;
 	rtsp_stream: string;
@@ -561,6 +660,33 @@ export interface BirdImage {
 	license: string | null;
 	license_url: string | null;
 	source: string;
+}
+
+export interface FileRoot {
+	id: string;
+	label: string;
+	description: string;
+	available: boolean;
+}
+
+export interface FileRootsResponse {
+	roots: FileRoot[];
+}
+
+export interface FileEntry {
+	name: string;
+	path: string;
+	entry_type: 'file' | 'directory';
+	size: number | null;
+	modified_at: string;
+}
+
+export interface FileListingResponse {
+	root: string;
+	root_label: string;
+	current_path: string;
+	parent_path: string | null;
+	entries: FileEntry[];
 }
 
 export interface SpeciesExternalLinks {

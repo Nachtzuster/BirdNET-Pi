@@ -12,6 +12,9 @@ The main Settings page covers the core application and analysis configuration:
 - Display language
 - Color scheme
 - Update channel
+- Info-site selection
+- Image provider selection
+- Flickr API key state and Flickr email filtering
 - Model and species-range preview controls
 - BirdWeather ID
 - Notifications
@@ -43,12 +46,52 @@ The Advanced Settings page groups the more operational controls:
 The System page includes:
 
 - Software update status and apply flow
-- Service status and restart controls
+- Service status plus start/stop/restart and enable/disable controls
 - Backup and restore
 - Reboot
+- Shutdown
+- Clear-all-data
 - Timezone
 - NTP enable/disable
 - Manual date and time entry when NTP is disabled
+
+### Live Logs
+
+The dedicated Live Logs page provides authenticated service log access for the supported services exposed by the backend allowlist.
+
+- Access remains admin-authenticated
+- The page is intended for quick operational inspection, not long-term log retention
+- Service choices are now aligned with the backend service names
+
+## Reports
+
+The modern UI now includes a Weekly Report at `/reports/weekly`.
+
+- It defaults to the most recently completed week
+- It shows total detections and species deltas versus the prior week
+- It highlights top species and first-seen species for the week
+- The weekly report notification setting links into this surface
+
+eBird export remains available from the Insights/history workflow.
+
+## File Manager
+
+The File Manager lives at `/files` and is linked from Library.
+
+- It is admin-authenticated
+- It is intentionally separate from the main Library browsing flow
+- It exposes only BirdNET-owned logical roots:
+  - `recordings`
+  - `shifted`
+  - `charts`
+  - `raw`
+- The first release scope is conservative:
+  - browse directories
+  - download files
+  - delete files
+  - delete empty directories
+
+This is intentionally not a general-purpose filesystem browser.
 
 ## Live Audio
 

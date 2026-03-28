@@ -599,9 +599,12 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-6">
-	<div class="mb-6">
-		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Insights</h1>
-		<p class="text-gray-600 dark:text-gray-400 mt-1">Trends and pattern analysis</p>
+	<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+		<div>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Insights</h1>
+			<p class="text-gray-600 dark:text-gray-400 mt-1">Trends and pattern analysis</p>
+		</div>
+		<a href="/reports/weekly" class="btn-secondary">Weekly Report</a>
 	</div>
 
 	<!-- Range Mode Tabs + Navigation -->

@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
-from .routers import detections, species, config, system, media, integrations
+from .routers import detections, species, config, system, media, integrations, files
 from .version_metadata import read_version_metadata, normalized_service_version, normalized_git_hash
 
 
@@ -51,6 +51,7 @@ app.include_router(config.router, prefix="/api", tags=["config"])
 app.include_router(system.router, prefix="/api", tags=["system"])
 app.include_router(media.router, prefix="/api", tags=["media"])
 app.include_router(integrations.router, prefix="/api", tags=["integrations"])
+app.include_router(files.router, prefix="/api", tags=["files"])
 
 
 @app.get("/api/health")

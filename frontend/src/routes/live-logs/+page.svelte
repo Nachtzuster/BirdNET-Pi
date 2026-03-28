@@ -6,13 +6,13 @@
 	import { Modal } from '$lib/components';
 
 	const services = [
-		'birdnet_analysis',
-		'birdnet_recording',
-		'chart_viewer',
-		'spectrogram',
-		'livestream',
-		'icecast2',
-		'extraction',
+		{ value: 'birdnet_analysis', label: 'birdnet_analysis' },
+		{ value: 'birdnet_recording', label: 'birdnet_recording' },
+		{ value: 'chart_viewer', label: 'chart_viewer' },
+		{ value: 'spectrogram_viewer', label: 'spectrogram_viewer' },
+		{ value: 'livestream', label: 'livestream' },
+		{ value: 'icecast2', label: 'icecast2' },
+		{ value: 'birdnet_log', label: 'birdnet_log' },
 	];
 
 	let selectedService = 'birdnet_analysis';
@@ -119,7 +119,7 @@
 				<label for="service" class="label">Service</label>
 				<select id="service" bind:value={selectedService} on:change={handleServiceChange} class="select">
 					{#each services as service}
-						<option value={service}>{service}</option>
+						<option value={service.value}>{service.label}</option>
 					{/each}
 				</select>
 			</div>
