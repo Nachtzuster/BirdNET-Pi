@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { system as systemApi } from '$lib/api';
+	import { verifyPasswordLogin } from '$lib/auth';
 	import { auth, toasts } from '$lib/stores';
 	import { Modal } from '$lib/components';
 
@@ -78,10 +79,16 @@
 		void loadLogs();
 	}
 
-	function handleLogin() {
-		auth.login(passwordInput);
+	async function handleLogin() {
+		const result = await verifyPasswordLogin(passwordInput);
+		if (!result.ok) {
+			toasts.show(result.message || 'Failed to authenticate', 'error');
+			return;
+		}
+
 		passwordInput = '';
 		showLoginModal = false;
+		toasts.show('Authenticated', 'success');
 		void loadLogs();
 		restartPolling();
 	}

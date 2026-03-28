@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { detections, integrations, media, type SpeciesExternalLinks } from '$lib/api';
+	import { verifyPasswordLogin } from '$lib/auth';
 	import { AudioPlayer, ExternalLinks, Modal } from '$lib/components';
 	import { auth, toasts } from '$lib/stores';
 	import { formatBirdName } from '$lib';
@@ -217,10 +218,16 @@
 		expandedSpectrogramFiles = next;
 	}
 
-	function handleLogin() {
-		auth.login(passwordInput);
+	async function handleLogin() {
+		const result = await verifyPasswordLogin(passwordInput);
+		if (!result.ok) {
+			toasts.show(result.message || 'Failed to authenticate', 'error');
+			return;
+		}
+
 		passwordInput = '';
 		showLoginModal = false;
+		toasts.show('Authenticated', 'success');
 	}
 
 	onMount(() => {

@@ -8,6 +8,7 @@
 		type Detection,
 		type SpeciesSummary,
 	} from '$lib/api';
+	import { verifyPasswordLogin } from '$lib/auth';
 	import { DetectionCard, Modal } from '$lib/components';
 	import { auth, toasts } from '$lib/stores';
 
@@ -253,10 +254,16 @@
 		}
 	}
 
-	function handleLogin() {
-		auth.login(passwordInput);
+	async function handleLogin() {
+		const result = await verifyPasswordLogin(passwordInput);
+		if (!result.ok) {
+			toasts.show(result.message || 'Failed to authenticate', 'error');
+			return;
+		}
+
 		passwordInput = '';
 		showLoginModal = false;
+		toasts.show('Authenticated', 'success');
 	}
 
 	onMount(() => {
