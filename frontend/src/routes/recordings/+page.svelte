@@ -26,6 +26,7 @@
 	let showLoginModal = false;
 	let passwordInput = '';
 	let expandedSpectrogramFiles = new Set<string>();
+	let postLoginRedirect: string | null = null;
 
 	async function loadDates() {
 		try {
@@ -105,10 +106,19 @@
 		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 	}
 
-	async function requireAuth(): Promise<boolean> {
-		if ($auth.isAuthenticated) return true;
+	async function requireAuth(redirectTo: string | null = null): Promise<boolean> {
+		if ($auth.isAuthenticated) {
+			postLoginRedirect = null;
+			return true;
+		}
+		postLoginRedirect = redirectTo;
 		showLoginModal = true;
 		return false;
+	}
+
+	async function openFileManager() {
+		if (!(await requireAuth('/files'))) return;
+		window.location.href = '/files';
 	}
 
 	async function deleteFile(fileName: string) {
@@ -228,6 +238,18 @@
 		passwordInput = '';
 		showLoginModal = false;
 		toasts.show('Authenticated', 'success');
+
+		if (postLoginRedirect) {
+			const destination = postLoginRedirect;
+			postLoginRedirect = null;
+			window.location.href = destination;
+		}
+	}
+
+	function cancelLogin() {
+		passwordInput = '';
+		postLoginRedirect = null;
+		showLoginModal = false;
 	}
 
 	onMount(() => {
@@ -251,7 +273,7 @@
 				<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Library</h1>
 				<p class="mt-1 text-gray-600 dark:text-gray-400">Historical file management</p>
 			</div>
-			<a href="/files" class="btn-secondary">Open File Manager</a>
+			<button type="button" class="btn-secondary" on:click={openFileManager}>Open File Manager</button>
 		</div>
 	</div>
 
@@ -479,7 +501,7 @@
 			<input id="recordingsPassword" type="password" bind:value={passwordInput} class="input" placeholder="Enter password" />
 		</div>
 		<div class="flex justify-end gap-2">
-			<button type="button" on:click={() => (showLoginModal = false)} class="btn-secondary">Cancel</button>
+			<button type="button" on:click={cancelLogin} class="btn-secondary">Cancel</button>
 			<button type="submit" class="btn-primary">Log in</button>
 		</div>
 	</form>

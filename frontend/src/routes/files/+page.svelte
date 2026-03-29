@@ -21,7 +21,7 @@
 	}
 
 	function formatSize(bytes: number | null): string {
-		if (bytes === null) return 'Folder';
+		if (bytes === null) return 'Unknown';
 		if (bytes < 1024) return `${bytes} B`;
 		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
 		if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -47,6 +47,20 @@
 		}
 
 		window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+	}
+
+	function formatEntryDetails(entry: FileEntry): string {
+		if (entry.entry_type === 'file') return 'File';
+		if (!entry.file_count) return 'Empty folder';
+		return `${entry.file_count} file${entry.file_count === 1 ? '' : 's'}`;
+	}
+
+	function cancelLogin() {
+		passwordInput = '';
+		showLoginModal = false;
+		if (!get(auth).isAuthenticated) {
+			window.location.href = '/recordings';
+		}
 	}
 
 	async function loadRoots() {
@@ -236,6 +250,10 @@
 					>
 						<div class="font-semibold text-gray-900 dark:text-gray-100">{root.label}</div>
 						<div class="mt-1 text-sm text-gray-600 dark:text-gray-400">{root.description}</div>
+						<div class="mt-3 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+							<span>{root.file_count ?? 0} files</span>
+							<span>{formatSize(root.total_size ?? 0)}</span>
+						</div>
 					</button>
 				{/each}
 			</div>
@@ -285,7 +303,7 @@
 					<thead>
 						<tr class="text-left text-sm text-gray-500 dark:text-gray-400">
 							<th class="py-3 pr-4 font-medium">Name</th>
-							<th class="py-3 pr-4 font-medium">Type</th>
+							<th class="py-3 pr-4 font-medium">Contents</th>
 							<th class="py-3 pr-4 font-medium">Size</th>
 							<th class="py-3 pr-4 font-medium">Modified</th>
 							<th class="py-3 font-medium text-right">Actions</th>
@@ -304,8 +322,8 @@
 										<span class="font-medium">{entry.name}</span>
 									</button>
 								</td>
-								<td class="py-3 pr-4 capitalize">{entry.entry_type}</td>
-								<td class="py-3 pr-4">{formatSize(entry.size)}</td>
+								<td class="py-3 pr-4">{formatEntryDetails(entry)}</td>
+								<td class="py-3 pr-4">{formatSize(entry.total_size ?? entry.size ?? 0)}</td>
 								<td class="py-3 pr-4">{formatTimestamp(entry.modified_at)}</td>
 								<td class="py-3 text-right">
 									<div class="flex justify-end gap-2">
@@ -340,7 +358,7 @@
 			<input id="filesPassword" type="password" bind:value={passwordInput} class="input" placeholder="Enter password" />
 		</div>
 		<div class="flex justify-end gap-2">
-			<button type="button" on:click={() => (showLoginModal = false)} class="btn-secondary">Cancel</button>
+			<button type="button" on:click={cancelLogin} class="btn-secondary">Cancel</button>
 			<button type="submit" class="btn-primary">Log in</button>
 		</div>
 	</form>

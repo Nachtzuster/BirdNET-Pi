@@ -101,6 +101,45 @@ def relative_path_within_root(root: RootDefinition, path: Path) -> str:
     return relative.as_posix() if str(relative) != "." else ""
 
 
+def summarize_tree(root: RootDefinition, directory: Path) -> tuple[int, int]:
+    """Return recursive file count and total size for a directory tree."""
+    file_count = 0
+    total_size = 0
+    root_base = root.path.resolve()
+
+    for current_dir, dirnames, filenames in os.walk(directory, followlinks=False):
+        dirnames[:] = [dirname for dirname in dirnames if not dirname.startswith(".")]
+
+        current_path = Path(current_dir)
+        try:
+            current_path.resolve().relative_to(root_base)
+        except ValueError:
+            dirnames[:] = []
+            continue
+
+        for filename in filenames:
+            if filename.startswith("."):
+                continue
+
+            file_path = current_path / filename
+            try:
+                resolved = file_path.resolve()
+                resolved.relative_to(root_base)
+            except (FileNotFoundError, ValueError):
+                continue
+
+            if not resolved.is_file():
+                continue
+
+            try:
+                total_size += resolved.stat().st_size
+                file_count += 1
+            except FileNotFoundError:
+                continue
+
+    return file_count, total_size
+
+
 def build_entry(root: RootDefinition, entry: Path) -> FileEntry | None:
     """Build a file entry if it resolves safely under the configured root."""
     try:
@@ -115,12 +154,19 @@ def build_entry(root: RootDefinition, entry: Path) -> FileEntry | None:
     stat = entry.stat()
     entry_type = "directory" if entry.is_dir() else "file"
     size = None if entry_type == "directory" else stat.st_size
+    file_count = None
+    total_size = size
+
+    if entry_type == "directory":
+        file_count, total_size = summarize_tree(root, entry)
 
     return FileEntry(
         name=entry.name,
         path=relative_path_within_root(root, entry),
         entry_type=entry_type,
         size=size,
+        file_count=file_count,
+        total_size=total_size,
         modified_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
     )
 
@@ -133,15 +179,26 @@ async def list_file_roots(
     """List the allowlisted logical roots for the file manager."""
     del user
 
-    roots = [
-        FileRoot(
-            id=root.id,
-            label=root.label,
-            description=root.description,
-            available=root.path.exists(),
+    roots: list[FileRoot] = []
+    for root in list_root_definitions(settings):
+        file_count = None
+        total_size = None
+        available = root.path.exists()
+
+        if available:
+            file_count, total_size = summarize_tree(root, root.path)
+
+        roots.append(
+            FileRoot(
+                id=root.id,
+                label=root.label,
+                description=root.description,
+                available=available,
+                file_count=file_count,
+                total_size=total_size,
+            )
         )
-        for root in list_root_definitions(settings)
-    ]
+
     return FileRootsResponse(roots=roots)
 
 

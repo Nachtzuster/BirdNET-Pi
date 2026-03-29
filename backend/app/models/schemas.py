@@ -336,6 +336,8 @@ class FileRoot(BaseModel):
     label: str
     description: str
     available: bool
+    file_count: Optional[int] = None
+    total_size: Optional[int] = None
 
 
 class FileEntry(BaseModel):
@@ -344,6 +346,8 @@ class FileEntry(BaseModel):
     path: str
     entry_type: str = Field(..., pattern="^(file|directory)$")
     size: Optional[int] = None
+    file_count: Optional[int] = None
+    total_size: Optional[int] = None
     modified_at: str
 
 

@@ -667,6 +667,8 @@ export interface FileRoot {
 	label: string;
 	description: string;
 	available: boolean;
+	file_count: number | null;
+	total_size: number | null;
 }
 
 export interface FileRootsResponse {
@@ -678,6 +680,8 @@ export interface FileEntry {
 	path: string;
 	entry_type: 'file' | 'directory';
 	size: number | null;
+	file_count: number | null;
+	total_size: number | null;
 	modified_at: string;
 }
 
