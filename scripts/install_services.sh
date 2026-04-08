@@ -291,11 +291,28 @@ EOF
   systemctl enable chart_viewer.service
 }
 
+install_bashrc() {
+  if [[ -L ${HOME}/.bashrc ]]; then
+    sudo -u ${USER} rm ${HOME}/.bashrc
+  fi
+
+  if [ ! -f ${HOME}/.bashrc ]; then
+    sudo -u ${USER} cp ${HOME}/BirdNET-Pi/templates/bashrc ${HOME}/.bashrc
+  else 
+    if ! grep -q "source ~/.birdnet_bashrc" ${HOME}/.bashrc; then
+      echo "# custom sourcing for BirdNET, please don't remove" >> ${HOME}/.bashrc
+      echo "source ~/.birdnet_bashrc" >> ${HOME}/.bashrc
+    fi
+  fi 
+
+  if [ ! -f ${HOME}/.birdnet_bashrc ]; then
+    sudo -u ${USER} ln -sf ${HOME}/BirdNET-Pi/templates/birdnet_bashrc ${HOME}/.birdnet_bashrc
+  fi
+}
+
 install_gotty_logs() {
   sudo -u ${USER} ln -sf $my_dir/templates/gotty \
     ${HOME}/.gotty
-  sudo -u ${USER} ln -sf $my_dir/templates/bashrc \
-    ${HOME}/.bashrc
   cat << EOF > $HOME/BirdNET-Pi/templates/birdnet_log.service
 [Unit]
 Description=BirdNET Analysis Log
@@ -418,6 +435,7 @@ install_services() {
   install_custom_recording_service # But does not enable
   install_spectrogram_service
   install_chart_viewer_service
+  install_bashrc
   install_gotty_logs
   install_phpsysinfo
   install_livestream_service

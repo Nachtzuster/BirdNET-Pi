@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# BirdNET-Pi custom bashrc sourcing
+# DO NOT MODIFY THIS FILE
+
+function remove() {
+  source /etc/birdnet/birdnet.conf
+  find $EXTRACTED -iname *${1}* -exec rm -drfv {} +
+}
+

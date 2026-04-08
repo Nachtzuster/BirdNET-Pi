@@ -111,10 +111,11 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
+# BirdNET default features that users can remove
 cd ~/BirdNET-Pi
-function remove() {
-  source /etc/birdnet/birdnet.conf
-  find $EXTRACTED -iname *${1}* -exec rm -drfv {} +
-}
 alias rerc="source ~/.bashrc"
 alias vimrc="vim ~/.bashrc"
+
+# custom sourcing for BirdNET, please don't remove
+source ~/.birdnet_bashrc

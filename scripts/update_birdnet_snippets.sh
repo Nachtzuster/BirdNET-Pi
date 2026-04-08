@@ -14,6 +14,7 @@ else
 fi
 my_dir=$HOME/BirdNET-Pi/scripts
 source "$my_dir/install_helpers.sh"
+source "$my_dir/install_services.sh"
 
 # Sets proper permissions and ownership
 find $HOME/Bird* -type f ! -perm -g+wr -exec chmod g+wr {} + 2>/dev/null
@@ -244,6 +245,8 @@ fi
 if [ -L /usr/local/bin/birdnet_analysis.sh ];then
   rm -f /usr/local/bin/birdnet_analysis.sh
 fi
+
+install_bashrc
 
 # Clean state and update cron if all scripts are not installed
 if [ "$(grep -o "#birdnet" /etc/crontab | wc -l)" -lt 6 ]; then
