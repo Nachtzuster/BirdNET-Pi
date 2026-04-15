@@ -121,11 +121,12 @@ function get_label($record, $sort_by, $date=null) {
 }
 
 function get_db() {
-  if (!isset($_db)) {
-    $_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-    $_db->busyTimeout(1000);
+  static $db = null;
+  if ($db === null) {
+    $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
+    $db->busyTimeout(1000);
   }
-  return $_db;
+  return $db;
 }
 
 function fetch_species_array($sort_by, $date=null) {
