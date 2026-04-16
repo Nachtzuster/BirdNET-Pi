@@ -23,7 +23,7 @@ if(isset($kiosk) && $kiosk == true) {
 }
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
+$db->busyTimeout(5000);
 
 $summary = get_summary();
 $totalcount = $summary['totalcount'];

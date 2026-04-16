@@ -124,7 +124,7 @@ function get_db() {
   static $db = null;
   if ($db === null) {
     $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-    $db->busyTimeout(1000);
+    $db->busyTimeout(5000);  // Increased from 1000ms to 5000ms
   }
   return $db;
 }
@@ -255,7 +255,7 @@ class ImageProvider {
     } catch (Exception $ex) {
       $this->create_tables();
     }
-    $this->db->busyTimeout(1000);
+    $this->db->busyTimeout(5000);
   }
 
   protected function create_tables() {

@@ -33,7 +33,7 @@ if (isset($_GET['diskcounts'])) {
 /* ---------- DB open (RO unless deleting) ---------- */
 $flags = isset($_GET['delete']) ? SQLITE3_OPEN_READWRITE : SQLITE3_OPEN_READONLY;
 $db   = new SQLite3(__DIR__ . '/birds.db', $flags);
-$db->busyTimeout(1000);
+$db->busyTimeout(5000);
 
 /* Paths / lists */
 $base_symlink   = $home . '/BirdSongs/Extracted/By_Date';
