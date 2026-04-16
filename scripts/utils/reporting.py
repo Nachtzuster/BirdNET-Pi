@@ -93,6 +93,8 @@ def write_to_db(file: ParseFileName, detection: Detection):
     for attempt_number in range(3):
         try:
             con = sqlite3.connect(DB_PATH)
+            con.execute("PRAGMA journal_mode=WAL;")
+            con.execute("PRAGMA synchronous=NORMAL;")
             cur = con.cursor()
             cur.execute("INSERT INTO detections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (detection.date, detection.time, detection.scientific_name, detection.common_name, detection.confidence,
