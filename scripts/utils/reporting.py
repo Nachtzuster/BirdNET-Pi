@@ -112,6 +112,35 @@ def write_to_db(file: ParseFileName, detection: Detection):
             sleep(2)
 
 
+def write_detections_to_db(file: ParseFileName, detections: list):
+    """Batch insert multiple detections in a single transaction to reduce locking"""
+    conf = get_settings()
+    for attempt_number in range(3):
+        try:
+            con = sqlite3.connect(DB_PATH)
+            con.execute("PRAGMA journal_mode=WAL;")
+            con.execute("PRAGMA synchronous=NORMAL;")
+            cur = con.cursor()
+
+            # Start transaction
+            cur.execute("BEGIN TRANSACTION;")
+
+            # Insert all detections
+            for detection in detections:
+                cur.execute("INSERT INTO detections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (detection.date, detection.time, detection.scientific_name, detection.common_name, detection.confidence,
+                             conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], str(detection.week), conf['SENSITIVITY'],
+                             conf['OVERLAP'], os.path.basename(detection.file_name_extr)))
+
+            # Commit all at once
+            con.commit()
+            con.close()
+            break
+        except BaseException as e:
+            log.warning("Database busy: %s", e)
+            sleep(2)
+
+
 def summary(file: ParseFileName, detection: Detection):
     # Date;Time;Sci_Name;Com_Name;Confidence;Lat;Lon;Cutoff;Week;Sens;Overlap
     # 2023-03-03;12:48:01;Phleocryptes melanops;Wren-like Rushbird;0.76950216;-1;-1;0.7;9;1.25;0.0
