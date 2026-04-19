@@ -14,7 +14,7 @@ from inotify.constants import IN_CLOSE_WRITE
 from utils.analysis import load_global_model, run_analysis
 from utils.helpers import get_settings, get_wav_files, ANALYZING_NOW
 from utils.classes import ParseFileName
-from utils.reporting import extract_detection, summary, write_to_file, write_to_db, apprise, bird_weather, heartbeat, \
+from utils.reporting import extract_detection, summary, write_to_file, write_to_db, write_detections_to_db, apprise, bird_weather, heartbeat, \
     update_json_file
 
 shutdown = False
@@ -94,6 +94,7 @@ def process_file(file_name, report_queue):
         if not report_queue.empty():
             log.warning('reporting queue not yet empty')
         report_queue.join()
+        # Use batch insert to reduce database transactions and locking
         report_queue.put((file, detections))
     except BaseException as e:
         stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""
@@ -114,7 +115,7 @@ def handle_reporting_queue(queue):
                 detection.file_name_extr = extract_detection(file, detection)
                 log.info('%s;%s', summary(file, detection), os.path.basename(detection.file_name_extr))
                 write_to_file(file, detection)
-                write_to_db(file, detection)
+            write_detections_to_db(file, detections)  # Moved outside loop to avoid duplicate writes
             apprise(file, detections)
             bird_weather(file, detections)
             heartbeat()

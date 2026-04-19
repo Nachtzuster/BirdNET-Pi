@@ -13,7 +13,7 @@ $myDate = date('Y-m-d');
 $chart = "Combo-$myDate.png";
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
+$db->busyTimeout(5000);
 
 if(isset($_GET['custom_image'])){
   if(isset($config["CUSTOM_IMAGE"])) {

@@ -19,7 +19,7 @@ $chart = "Combo-$theDate.png";
 $chart2 = "Combo2-$theDate.png";
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
+$db->busyTimeout(5000);
 
 $statement1 = $db->prepare("SELECT COUNT(*) FROM detections WHERE Date == \"$theDate\"");
 ensure_db_ok($statement1);
