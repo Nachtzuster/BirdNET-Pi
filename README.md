@@ -167,6 +167,9 @@ For more information : https://github.com/alexbelgium/hassio-addons/blob/master/
 - [RaspberryPi.com Blog Post](https://www.raspberrypi.com/news/classify-birds-acoustically-with-birdnet-pi/)
 - [MagPi Issue 119 Showcase Article](https://magpi.raspberrypi.com/issues/119/pdf)
 
+### Mobile Apps
+- [BirdEcho](https://github.com/arunrajiah/birdecho) — open-source Android/iOS companion app. Connects to your station via the BirdWeather API. Live detection feed, audio playback, species browser, 14-day chart, and local notifications for favourite species. MIT licensed.
+
 
 ### Internationalization:
 The bird names are in English by default, but other localized versions are available thanks to the wonderful efforts of [@patlevin](https://github.com/patlevin) and Wikipedia. Use the web interface's "Tools" > "Settings" and select your "Database Language" to have the detections in your language.
