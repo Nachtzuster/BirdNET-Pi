@@ -372,6 +372,134 @@ async def get_weekly_report(
     }
 
 
+@router.get("/detections/daily-report")
+async def get_daily_report(
+    date: Optional[str] = None,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Get summary data for a single reporting day."""
+    if date:
+        try:
+            report_date = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD format")
+    else:
+        latest_row = db.execute(
+            "SELECT Date FROM detections ORDER BY Date DESC LIMIT 1"
+        ).fetchone()
+        if not latest_row:
+            raise HTTPException(status_code=404, detail="No detections available")
+        report_date = datetime.strptime(latest_row[0], "%Y-%m-%d").date()
+
+    previous_date = report_date - timedelta(days=1)
+
+    current_species_rows = db.execute(
+        """
+        SELECT Sci_Name, Com_Name, COUNT(*) as count
+        FROM detections
+        WHERE Date = ?
+        GROUP BY Sci_Name
+        ORDER BY count DESC, Com_Name ASC
+        """,
+        (report_date.isoformat(),),
+    ).fetchall()
+
+    prior_species_rows = db.execute(
+        """
+        SELECT Sci_Name, COUNT(*) as count
+        FROM detections
+        WHERE Date = ?
+        GROUP BY Sci_Name
+        """,
+        (previous_date.isoformat(),),
+    ).fetchall()
+    prior_species_counts = {row["Sci_Name"]: row["count"] for row in prior_species_rows}
+
+    first_seen_rows = db.execute(
+        """
+        SELECT d.Sci_Name, d.Com_Name, COUNT(*) as count
+        FROM detections d
+        WHERE d.Date = ?
+          AND NOT EXISTS (
+              SELECT 1
+              FROM detections prev
+              WHERE prev.Sci_Name = d.Sci_Name
+                AND prev.Date < ?
+          )
+        GROUP BY d.Sci_Name
+        ORDER BY count DESC, d.Com_Name ASC
+        """,
+        (report_date.isoformat(), report_date.isoformat()),
+    ).fetchall()
+    first_seen_species_names = {row["Sci_Name"] for row in first_seen_rows}
+
+    total_detections = db.execute(
+        "SELECT COUNT(*) FROM detections WHERE Date = ?",
+        (report_date.isoformat(),),
+    ).fetchone()[0]
+    previous_total_detections = db.execute(
+        "SELECT COUNT(*) FROM detections WHERE Date = ?",
+        (previous_date.isoformat(),),
+    ).fetchone()[0]
+
+    total_species = db.execute(
+        "SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date = ?",
+        (report_date.isoformat(),),
+    ).fetchone()[0]
+    previous_total_species = db.execute(
+        "SELECT COUNT(DISTINCT Sci_Name) FROM detections WHERE Date = ?",
+        (previous_date.isoformat(),),
+    ).fetchone()[0]
+
+    peak_hour_row = db.execute(
+        """
+        SELECT CAST(SUBSTR(Time, 1, 2) AS INTEGER) as hour, COUNT(*) as count
+        FROM detections
+        WHERE Date = ?
+        GROUP BY hour
+        ORDER BY count DESC, hour ASC
+        LIMIT 1
+        """,
+        (report_date.isoformat(),),
+    ).fetchone()
+
+    top_species = []
+    for row in current_species_rows[:10]:
+        prior_count = prior_species_counts.get(row["Sci_Name"], 0)
+        top_species.append({
+            "sci_name": row["Sci_Name"],
+            "com_name": row["Com_Name"],
+            "count": row["count"],
+            "previous_count": prior_count,
+            "change_pct": percentage_change(row["count"], prior_count),
+            "is_new_this_day": row["Sci_Name"] in first_seen_species_names,
+        })
+
+    first_seen_species = [
+        {
+            "sci_name": row["Sci_Name"],
+            "com_name": row["Com_Name"],
+            "count": row["count"],
+        }
+        for row in first_seen_rows
+    ]
+
+    return {
+        "label": "Daily Report",
+        "date": report_date.isoformat(),
+        "previous_date": previous_date.isoformat(),
+        "total_detections": total_detections,
+        "previous_total_detections": previous_total_detections,
+        "total_detections_change_pct": percentage_change(total_detections, previous_total_detections),
+        "species_count": total_species,
+        "previous_species_count": previous_total_species,
+        "species_count_change_pct": percentage_change(total_species, previous_total_species),
+        "peak_hour": peak_hour_row["hour"] if peak_hour_row else None,
+        "top_species": top_species,
+        "first_seen_species": first_seen_species,
+    }
+
+
 @router.get("/detections/dates")
 async def get_detection_dates(
     db: sqlite3.Connection = Depends(get_db),

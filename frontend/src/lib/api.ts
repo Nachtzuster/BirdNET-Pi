@@ -125,6 +125,11 @@ export const detections = {
 		return request<RangeChartData>(`/detections/chart-data-range?${searchParams}`);
 	},
 
+	dailyReport: (date?: string) =>
+		request<DailyReport>(
+			`/detections/daily-report${date ? `?date=${encodeURIComponent(date)}` : ''}`
+		),
+
 	weeklyReport: (endDate?: string) =>
 		request<WeeklyReport>(
 			`/detections/weekly-report${endDate ? `?end_date=${encodeURIComponent(endDate)}` : ''}`
@@ -399,6 +404,30 @@ export interface WeeklyReportSpecies {
 	previous_count?: number;
 	change_pct?: number | null;
 	is_new_this_week?: boolean;
+}
+
+export interface DailyReportSpecies {
+	sci_name: string;
+	com_name: string;
+	count: number;
+	previous_count?: number;
+	change_pct?: number | null;
+	is_new_this_day?: boolean;
+}
+
+export interface DailyReport {
+	label: string;
+	date: string;
+	previous_date: string;
+	total_detections: number;
+	previous_total_detections: number;
+	total_detections_change_pct: number | null;
+	species_count: number;
+	previous_species_count: number;
+	species_count_change_pct: number | null;
+	peak_hour: number | null;
+	top_species: DailyReportSpecies[];
+	first_seen_species: DailyReportSpecies[];
 }
 
 export interface WeeklyReport {

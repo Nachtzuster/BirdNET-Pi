@@ -17,7 +17,6 @@
 	let chartData: RangeChartData | null = null;
 	let loading = false;
 	let exportLoading = false;
-	let showAllSpecies = false;
 
 	let mainCanvas: HTMLCanvasElement;
 	let speciesCanvas: HTMLCanvasElement;
@@ -27,13 +26,6 @@
 	let selectedSpecies: Set<string> = new Set();
 	let isDark = false;
 	let prefersReducedMotion = false;
-
-	type SpeciesListEntry = {
-		sci_name: string;
-		com_name: string;
-		count: number;
-		max_confidence: number | null;
-	};
 
 	function detectTheme() {
 		isDark = document.documentElement.classList.contains('dark');
@@ -116,6 +108,25 @@
 		}
 	}
 
+	function reportAction(anchor: string, mode: RangeMode): { href: string; label: string } | null {
+		if (!anchor) return null;
+		if (mode === 'day') {
+			return {
+				href: `/reports/daily?date=${encodeURIComponent(anchor)}`,
+				label: 'Daily Report',
+			};
+		}
+		if (mode === 'week') {
+			return {
+				href: `/reports/weekly?end=${encodeURIComponent(anchor)}`,
+				label: 'Weekly Report',
+			};
+		}
+		return null;
+	}
+
+	$: currentReportAction = reportAction(anchorDate, rangeMode);
+
 	// ── Navigation ────────────────────────────────────────────────
 
 	function navigate(direction: -1 | 1) {
@@ -165,7 +176,6 @@
 		if (!anchorDate) return;
 		loading = true;
 		selectedSpecies = new Set();
-		showAllSpecies = false;
 		try {
 			const { start, end } = getRange(anchorDate, rangeMode);
 			chartData = await detections.chartDataRange({
@@ -220,31 +230,6 @@
 	function clearSelectedSpecies() {
 		selectedSpecies = new Set();
 		renderCharts();
-	}
-
-	function totalForSpecies(counts: number[]): number {
-		return counts.reduce((sum, count) => sum + count, 0);
-	}
-
-	$: topSpeciesConfidenceMap = new Map(
-		(chartData?.top_species ?? []).map((sp) => [sp.sci_name, sp.max_confidence])
-	);
-
-	$: allSpecies = chartData
-		? [...chartData.species_buckets]
-				.map((sp) => ({
-					sci_name: sp.sci_name,
-					com_name: sp.com_name,
-					count: totalForSpecies(sp.counts),
-					max_confidence: topSpeciesConfidenceMap.get(sp.sci_name) ?? null,
-				}))
-				.sort((a, b) => b.count - a.count || a.com_name.localeCompare(b.com_name))
-		: [];
-
-	$: hasAdditionalSpecies = chartData ? allSpecies.length > chartData.top_species.length : false;
-
-	function toggleAllSpecies() {
-		showAllSpecies = !showAllSpecies;
 	}
 
 	// ── Colors ────────────────────────────────────────────────────
@@ -633,30 +618,38 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-6">
-	<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+	<div class="mb-6">
 		<div>
 			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Insights</h1>
 			<p class="text-gray-600 dark:text-gray-400 mt-1">Trends and pattern analysis</p>
 		</div>
-		<a href="/reports/weekly" class="btn-secondary">Weekly Report</a>
 	</div>
 
 	<!-- Range Mode Tabs + Navigation -->
 	<div class="card mb-6 overflow-hidden">
 			<!-- Mode tabs -->
-			<div class="overflow-x-auto border-b border-gray-200 px-3 py-3 dark:border-dark-border">
-				<div class="flex min-w-max gap-2">
-					{#each /** @type {[RangeMode, string][]} */([['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']]) as [mode, label]}
-						<button
-							on:click={() => changeMode(mode as RangeMode)}
-							class="rounded-xl px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors
-								{rangeMode === mode
-									? 'bg-primary-600 text-white shadow-sm'
-									: 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-dark-nav dark:text-gray-300 dark:hover:bg-dark-hover'}"
-						>
-							{label}
-						</button>
-					{/each}
+			<div class="border-b border-gray-200 px-3 py-3 dark:border-dark-border">
+				<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+					<div class="overflow-x-auto">
+						<div class="flex min-w-max gap-2">
+							{#each /** @type {[RangeMode, string][]} */([['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']]) as [mode, label]}
+								<button
+									on:click={() => changeMode(mode as RangeMode)}
+									class="rounded-xl px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors
+										{rangeMode === mode
+											? 'bg-primary-600 text-white shadow-sm'
+											: 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-dark-nav dark:text-gray-300 dark:hover:bg-dark-hover'}"
+								>
+									{label}
+								</button>
+							{/each}
+						</div>
+					</div>
+					{#if currentReportAction}
+						<a href={currentReportAction.href} class="btn-secondary btn-sm self-start lg:self-auto whitespace-nowrap">
+							{currentReportAction.label}
+						</a>
+					{/if}
 				</div>
 			</div>
 
@@ -800,14 +793,6 @@
 							Top Species
 						</h2>
 						<div class="flex items-center gap-2">
-							{#if hasAdditionalSpecies}
-								<button
-									on:click={toggleAllSpecies}
-									class="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-								>
-									{showAllSpecies ? `Hide full list` : `Show all ${allSpecies.length} species`}
-								</button>
-							{/if}
 							{#if selectedSpecies.size > 0 && rangeMode !== 'year'}
 								<button
 									on:click={clearSelectedSpecies}
@@ -865,53 +850,6 @@
 							</div>
 						{/each}
 					</div>
-					{#if showAllSpecies}
-						<div class="border-t border-gray-200 dark:border-dark-border">
-							<div class="flex items-center justify-between px-6 py-3">
-								<div>
-									<h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">All Species In This Period</h3>
-									<p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-										Every detected species with total detections for the selected range.
-									</p>
-								</div>
-								<span class="text-xs text-gray-400 dark:text-gray-500">{allSpecies.length} total</span>
-							</div>
-							<div class="max-h-96 overflow-y-auto divide-y divide-gray-200 dark:divide-dark-border">
-								{#each allSpecies as sp, i}
-									<div class="flex items-center gap-4 px-6 py-3">
-										<div class="min-w-0 flex-1">
-											<div class="flex items-center gap-3">
-												<span class="text-sm font-medium tabular-nums text-gray-400 dark:text-gray-500">{i + 1}</span>
-												<div class="min-w-0">
-													<p class="font-medium text-gray-900 dark:text-gray-100 truncate">{sp.com_name}</p>
-													<p class="text-sm text-gray-500 dark:text-gray-400 italic truncate">{sp.sci_name}</p>
-												</div>
-											</div>
-										</div>
-										<div class="flex items-center gap-4 flex-shrink-0">
-											{#if sp.max_confidence !== null}
-												<span class="badge-primary">{(sp.max_confidence * 100).toFixed(0)}%</span>
-											{/if}
-											<div class="text-right">
-												<p class="text-lg font-semibold text-primary-600 dark:text-primary-400">{sp.count}</p>
-												<p class="text-xs text-gray-500 dark:text-gray-400">detections</p>
-											</div>
-											<ExternalLinks sciName={sp.sci_name} comName={sp.com_name} compact={true} />
-											<a
-												href="/species/{encodeURIComponent(sp.sci_name)}"
-												class="text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 transition-colors"
-												title="View {sp.com_name} details"
-											>
-												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-												</svg>
-											</a>
-										</div>
-									</div>
-								{/each}
-							</div>
-						</div>
-					{/if}
 				</div>
 			</div>
 		{/if}
