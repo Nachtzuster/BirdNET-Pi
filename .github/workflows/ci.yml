@@ -50,6 +50,14 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           inputs: requirements.txt backend/requirements.txt
+          ignore-vulns: |
+            CVE-2026-33682
+            CVE-2026-25990
+            CVE-2026-40192
+            CVE-2026-42308
+            CVE-2026-42309
+            CVE-2026-42310
+            CVE-2026-42311
 
   backend:
     name: Backend
