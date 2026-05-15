@@ -24,7 +24,7 @@ This is intentional. The browser should not receive `upload.wikimedia.org` URLs 
 - Additional fetch metadata table: `image_fetch_meta`
 - Local duplicated image files: `scripts/image-cache/wikipedia/`
 
-The `images` table is left intact for compatibility with older PHP code that still reads or writes that schema.
+The `images` table remains part of the cache schema for compatibility with existing metadata rows and cache readers.
 
 ## Why Negative Caching Exists
 

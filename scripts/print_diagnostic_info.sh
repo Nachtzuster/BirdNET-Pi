@@ -1,13 +1,17 @@
 #!/bin/bash
 
 # 1. Service status
-services=("caddy" "birdnet_analysis" "birdnet_log" "birdnet_recording" "birdnet_stats" "chart_viewer" "extraction" "web_terminal" "spectrogram_viewer" "livestream")
+services=("caddy" "birdnet-web" "birdnet_analysis" "birdnet_recording" "chart_viewer" "spectrogram_viewer" "livestream" "icecast2")
 
 for service in "${services[@]}"; do
     echo "========== $service status =========="
     sudo service $service status | cat
     echo ""
 done
+
+echo "========= Recent birdnet-web logs =========="
+sudo journalctl -u birdnet-web -n 100 --no-pager
+echo ""
 
 echo "========= Syslog snippet =========="
 tail -n 100 /var/log/syslog

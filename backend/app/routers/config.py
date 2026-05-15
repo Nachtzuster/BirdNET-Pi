@@ -110,22 +110,6 @@ def update_caddy_config(settings: Settings) -> None:
     reverse_proxy localhost:8080
     {auth_block}
 
-    handle /stream* {{
-        reverse_proxy localhost:8000
-    }}
-
-    handle /log* {{
-        reverse_proxy localhost:8081
-    }}
-
-    handle /terminal* {{
-        reverse_proxy localhost:8888
-    }}
-
-    handle /stats* {{
-        reverse_proxy localhost:8501
-    }}
-
     encode gzip
 
     log {{

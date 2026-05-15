@@ -12,7 +12,6 @@
 		{ value: 'spectrogram_viewer', label: 'spectrogram_viewer' },
 		{ value: 'livestream', label: 'livestream' },
 		{ value: 'icecast2', label: 'icecast2' },
-		{ value: 'birdnet_log', label: 'birdnet_log' },
 	];
 
 	let selectedService = 'birdnet_analysis';

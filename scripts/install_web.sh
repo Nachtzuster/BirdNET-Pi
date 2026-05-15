@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# BirdNET-Pi Web Interface Installer
-# Handles both fresh installs and migrations from PHP
+# BirdNET-Pi Installer
 set -e
 
 # Colors for output
@@ -31,11 +30,6 @@ is_fresh_install() {
 is_base_installed() {
     # Base is installed if Python venv exists and has required packages
     [ -d "$BIRDNET_DIR/birdnet" ] && [ -f "$BIRDNET_DIR/birdnet/bin/python3" ]
-}
-
-is_php_installed() {
-    # PHP interface is installed if php-fpm is present
-    systemctl list-unit-files | grep -q php.*fpm 2>/dev/null
 }
 
 has_new_web_interface() {
@@ -137,16 +131,6 @@ update_caddy_config() {
     if [ -n "${CADDY_PWD}" ]; then
         HASHWORD=$(caddy hash-password --plaintext "${CADDY_PWD}")
         AUTH_BLOCK="
-  # Legacy parity: protect stream and shell/log access paths with HTTP basic auth
-  basicauth /stream* {
-    birdnet ${HASHWORD}
-  }
-  basicauth /log* {
-    birdnet ${HASHWORD}
-  }
-  basicauth /terminal* {
-    birdnet ${HASHWORD}
-  }
   basicauth /api/config* {
     birdnet ${HASHWORD}
   }
@@ -174,31 +158,9 @@ update_caddy_config() {
 }
 
 http:// ${BIRDNETPI_URL:-} {
-    # FastAPI backend serves API and frontend
     reverse_proxy localhost:8080
     ${AUTH_BLOCK}
-    
-    # Live audio stream (Icecast)
-    handle /stream* {
-        reverse_proxy localhost:8000
-    }
-    
-    # Log viewer (gotty)
-    handle /log* {
-        reverse_proxy localhost:8081
-    }
-    
-    # Terminal (gotty)  
-    handle /terminal* {
-        reverse_proxy localhost:8888
-    }
-    
-    # Streamlit stats (if still used)
-    handle /stats* {
-        reverse_proxy localhost:8501
-    }
-    
-    # Compression
+
     encode gzip
     
     log {
@@ -217,17 +179,14 @@ EOF
     echo_info "Caddy configuration updated"
 }
 
-disable_php_services() {
-    echo_step "Disabling PHP services (migration)..."
-    
-    # Stop and disable PHP-FPM if running
-    for service in $(systemctl list-units --type=service --state=running | grep php | awk '{print $1}'); do
-        echo_info "Stopping $service"
-        sudo systemctl stop "$service" || true
-        sudo systemctl disable "$service" || true
+disable_legacy_sidecars() {
+    echo_step "Disabling legacy sidecar services..."
+
+    for service in birdnet_log birdnet_stats web_terminal; do
+        if sudo systemctl list-unit-files | grep -q "^${service}\.service"; then
+            sudo systemctl disable --now "${service}.service" || true
+        fi
     done
-    
-    echo_info "PHP services disabled"
 }
 
 resolve_port_conflicts() {
@@ -364,9 +323,6 @@ run_base_install() {
     # Source config
     source "$CONFIG_FILE"
     
-    # Install services (but we'll modify for new web interface)
-    # We need to skip PHP-specific parts
-    export SKIP_PHP=1
     sudo -E HOME=$HOME USER=$USER ./install_services.sh
     
     # Install Python environment
@@ -390,7 +346,7 @@ run_base_install() {
 main() {
     echo ""
     echo "=============================================="
-    echo "   BirdNET-Pi Web Interface Installer"
+    echo "   BirdNET-Pi Installer"
     echo "=============================================="
     echo ""
     
@@ -403,16 +359,11 @@ main() {
         echo_warn "Re-running will rebuild the frontend and restart services"
         INSTALL_MODE="update"
     elif is_base_installed; then
-        if is_php_installed; then
-            echo_info "Detected: Migration from PHP interface"
-            INSTALL_MODE="migrate"
-        else
-            echo_info "Detected: Base installed, adding web interface"
-            INSTALL_MODE="add"
-        fi
+        echo_info "Detected: Base installation present, finishing web setup"
+        INSTALL_MODE="add"
     else
         echo_error "BirdNET-Pi base system not found"
-        echo_error "Please run the base installer first or set BIRDNET_DIR"
+        echo_error "Please verify BIRDNET_DIR or clone the repository again"
         exit 1
     fi
     
@@ -431,32 +382,26 @@ main() {
     # Run appropriate installation steps
     case "$INSTALL_MODE" in
         fresh)
-            echo_warn "Fresh install requires running the base installer first"
-            echo_info "Please run: ./scripts/install_birdnet.sh"
-            echo_info "Then run this script again"
-            exit 1
-            ;;
-        migrate)
-            # Migration from PHP
+            run_base_install
             verify_directories
             check_password_config
             install_nodejs
             install_backend_deps
             build_frontend
             install_systemd_service
-            disable_php_services
+            disable_legacy_sidecars
             resolve_port_conflicts
             update_caddy_config
             start_services
             ;;
         add|update)
-            # Add web interface or update existing
             verify_directories
             check_password_config
             install_nodejs
             install_backend_deps
             build_frontend
             install_systemd_service
+            disable_legacy_sidecars
             resolve_port_conflicts
             update_caddy_config
             start_services
@@ -475,11 +420,6 @@ main() {
     echo "  http://${IP_ADDR}"
     echo "  http://$(hostname).local"
     echo ""
-    
-    if [ "$INSTALL_MODE" == "migrate" ]; then
-        echo_warn "PHP services have been disabled."
-        echo_warn "If you need to revert, restore /etc/caddy/Caddyfile.backup.*"
-    fi
     
     # Check if password was configured
     source "$CONFIG_FILE" 2>/dev/null || true

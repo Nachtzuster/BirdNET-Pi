@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#Display network info for phpsysinfo
+# Display additional network details
 
 echo "........................................IPs....................................."
 echo "LAN IP: $(hostname -I|cut -d' ' -f1)"

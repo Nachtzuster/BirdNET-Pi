@@ -10,55 +10,28 @@ if ! [ -z ${CADDY_PWD} ];then
 HASHWORD=$(caddy hash-password --plaintext ${CADDY_PWD})
 cat << EOF > /etc/caddy/Caddyfile
 http:// ${BIRDNETPI_URL} {
-  root * ${EXTRACTED}
-  file_server browse
-  handle /By_Date/* {
-    file_server browse
-  }
-  handle /Charts/* {
-    file_server browse
-  }
-  basicauth /views.php?view=File* {
+  reverse_proxy localhost:8080
+  basicauth /api/config* {
     birdnet ${HASHWORD}
   }
-  basicauth /Processed* {
+  @protected_system {
+    path /api/system*
+    not path /api/system/public-status*
+  }
+  basicauth @protected_system {
     birdnet ${HASHWORD}
   }
-  basicauth /scripts* {
+  basicauth /settings* {
     birdnet ${HASHWORD}
   }
-  basicauth /stream {
-    birdnet ${HASHWORD}
-  }
-  basicauth /phpsysinfo* {
-    birdnet ${HASHWORD}
-  }
-  basicauth /terminal* {
-    birdnet ${HASHWORD}
-  }
-  reverse_proxy /stream localhost:8000
-  php_fastcgi unix//run/php/php-fpm.sock
-  reverse_proxy /log* localhost:8080
-  reverse_proxy /stats* localhost:8501
-  reverse_proxy /terminal* localhost:8888
+  encode gzip
 }
 EOF
 else
   cat << EOF > /etc/caddy/Caddyfile
 http:// ${BIRDNETPI_URL} {
-  root * ${EXTRACTED}
-  file_server browse
-  handle /By_Date/* {
-    file_server browse
-  }
-  handle /Charts/* {
-    file_server browse
-  }
-  reverse_proxy /stream localhost:8000
-  php_fastcgi unix//run/php/php-fpm.sock
-  reverse_proxy /log* localhost:8080
-  reverse_proxy /stats* localhost:8501
-  reverse_proxy /terminal* localhost:8888
+  reverse_proxy localhost:8080
+  encode gzip
 }
 EOF
 fi

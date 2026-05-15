@@ -12,7 +12,7 @@ _settings = None
 BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DB_PATH = os.path.join(BASE_PATH, 'scripts/birds.db')
 MODEL_PATH = os.path.join(BASE_PATH, 'model')
-FONT_DIR = os.path.join(BASE_PATH, 'homepage/static')
+FONT_DIR = os.path.join(BASE_PATH, 'frontend/static/fonts')
 ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
 
 # User-selectable classifier models. This excludes auxiliary metadata models.
@@ -43,7 +43,7 @@ def get_font():
     return ret
 
 
-class PHPConfigParser(ConfigParser):
+class BirdNETConfigParser(ConfigParser):
     def get(self, section, option, *, raw=False, vars=None, fallback=None):
         value = super().get(section, option, raw=raw, vars=vars, fallback=fallback)
         if raw:
@@ -56,7 +56,7 @@ def _load_settings(settings_path='/etc/birdnet/birdnet.conf', force_reload=False
     global _settings
     if _settings is None or force_reload:
         with open(settings_path) as f:
-            parser = PHPConfigParser(interpolation=None)
+            parser = BirdNETConfigParser(interpolation=None)
             # preserve case
             parser.optionxform = lambda option: option
             lines = chain(("[top]",), f)

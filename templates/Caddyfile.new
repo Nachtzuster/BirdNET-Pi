@@ -1,5 +1,5 @@
 # BirdNET-Pi Caddy Configuration
-# This replaces the PHP-FPM configuration with FastAPI reverse proxy
+# BirdNET-Pi FastAPI reverse proxy configuration
 
 {
 	# Global options

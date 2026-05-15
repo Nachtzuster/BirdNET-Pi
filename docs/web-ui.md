@@ -1,6 +1,6 @@
 # Web UI Guide
 
-This document summarizes the current FastAPI + Svelte web interface, with emphasis on the settings surfaces and the UI behaviors added during the PHP-to-modern-web migration.
+This document summarizes the current FastAPI + Svelte web interface, with emphasis on the settings surfaces and current UI behavior.
 
 ## Settings Surfaces
 

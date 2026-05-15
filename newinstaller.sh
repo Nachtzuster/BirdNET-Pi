@@ -205,23 +205,13 @@ if [ "${INSTALL_DIR}" != "${HOME}/BirdNET-Pi" ]; then
   ln -sfn "${INSTALL_DIR}" "${HOME}/BirdNET-Pi"
 fi
 
-# Set SKIP_PHP to use new web interface instead of PHP
-export SKIP_PHP=1
-
 # Export BIRDNET_DIR for scripts that need it
 export BIRDNET_DIR="${INSTALL_DIR}"
 
-# Run base installation
-"${INSTALL_DIR}/scripts/install_birdnet.sh"
-if [ ${PIPESTATUS[0]} -ne 0 ];then
-  echo "The base installation exited unsuccessfully."
-  exit 1
-fi
-
-# Install new web interface (FastAPI + SvelteKit)
+# Run the installer
 echo ""
 echo "=============================================="
-echo "Installing modern web interface..."
+echo "Installing BirdNET-Pi..."
 echo "=============================================="
 echo ""
 
@@ -237,7 +227,7 @@ if [ ${PIPESTATUS[0]} -eq 0 ];then
   sleep 10
   sudo reboot
 else
-  echo "The web interface installation exited unsuccessfully."
+  echo "The installation exited unsuccessfully."
   echo "You can try running it manually: ${INSTALL_DIR}/scripts/install_web.sh"
   exit 1
 fi

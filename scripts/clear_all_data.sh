@@ -21,26 +21,14 @@ echo "Re-creating necessary directories"
 [ -d ${EXTRACTED}/By_Date ] || sudo -u ${USER} mkdir -p ${EXTRACTED}/By_Date
 [ -d ${EXTRACTED}/Charts ] || sudo -u ${USER} mkdir -p ${EXTRACTED}/Charts
 [ -d ${PROCESSED} ] || sudo -u ${USER} mkdir -p ${PROCESSED}
+[ -d ${RECS_DIR}/StreamData ] || sudo -u ${USER} mkdir -p ${RECS_DIR}/StreamData
+[ -L ${EXTRACTED}/spectrogram.png ] || sudo -u ${USER} ln -sf ${RECS_DIR}/StreamData/spectrogram.png ${EXTRACTED}/spectrogram.png
 
 sudo -u ${USER} ln -fs $(dirname $my_dir)/exclude_species_list.txt $my_dir
 sudo -u ${USER} ln -fs $(dirname $my_dir)/confirmed_species_list.txt $my_dir
 sudo -u ${USER} ln -fs $(dirname $my_dir)/include_species_list.txt $my_dir
 sudo -u ${USER} ln -fs $(dirname $my_dir)/whitelist_species_list.txt $my_dir
-sudo -u ${USER} ln -fs $(dirname $my_dir)/homepage/* ${EXTRACTED}
 sudo -u ${USER} ln -fs $(dirname $my_dir)/model/labels.txt ${my_dir}
-sudo -u ${USER} ln -fs $my_dir ${EXTRACTED}
-sudo -u ${USER} ln -fs $my_dir/play.php ${EXTRACTED}
-sudo -u ${USER} ln -fs $my_dir/spectrogram.php ${EXTRACTED}
-sudo -u ${USER} ln -fs $my_dir/overview.php ${EXTRACTED}
-sudo -u ${USER} ln -fs $my_dir/stats.php ${EXTRACTED}
-sudo -u ${USER} ln -fs $my_dir/todays_detections.php ${EXTRACTED}
-sudo -u ${USER} ln -fs $my_dir/history.php ${EXTRACTED}
-sudo -u ${USER} ln -fs $my_dir/weekly_report.php ${EXTRACTED}
-sudo -u ${USER} ln -fs $my_dir/homepage/images/favicon.ico ${EXTRACTED}
-sudo -u ${USER} ln -fs ${HOME}/phpsysinfo ${EXTRACTED}
-sudo -u ${USER} ln -fs $(dirname $my_dir)/templates/phpsysinfo.ini ${HOME}/phpsysinfo/
-sudo -u ${USER} ln -fs $(dirname $my_dir)/templates/green_bootstrap.css ${HOME}/phpsysinfo/templates/
-sudo -u ${USER} ln -fs $(dirname $my_dir)/templates/index_bootstrap.html ${HOME}/phpsysinfo/templates/html
 chmod -R g+rw $my_dir
 chmod -R g+rw ${RECS_DIR}
 

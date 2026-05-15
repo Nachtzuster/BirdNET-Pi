@@ -9,14 +9,14 @@
 Real-time acoustic bird classification running on a Raspberry Pi 3B+, listening to the birds of Durham, North Carolina.
 
 <p align="center">
-  <img src="homepage/images/bird.png" alt="Pibird Logo" width="300"/>
+  <img src="frontend/static/bird.png" alt="Pibird Logo" width="300"/>
 </p>
 
 ---
 
 ## What's This?
 
-This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET-Pi), completely rebuilt with a **modern web stack** for better performance, maintainability, and user experience. The original PHP interface has been replaced with **FastAPI + SvelteKit + Tailwind CSS**.
+This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET-Pi), built around a **modern web stack** for performance, maintainability, and a much better day-to-day operating experience.
 
 **Want to see what's singing right now?** → **[durm.pibirds.org](https://durm.pibirds.org)**
 
@@ -51,7 +51,7 @@ This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET
 
 | Feature | Description |
 |---------|-------------|
-| **Modern Web Stack** | FastAPI backend + SvelteKit frontend replaces PHP |
+| **Modern Web Stack** | FastAPI backend + SvelteKit frontend |
 | **Tailwind CSS** | Single consolidated stylesheet with dark mode support |
 | **Mobile-First UI** | Responsive design that works great on phones |
 | **Type Safety** | TypeScript frontend + Pydantic backend schemas |
@@ -68,7 +68,7 @@ This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET
 <summary><b>Changes from upstream BirdNET-Pi</b></summary>
 
 **New in this fork:**
-- Complete web interface rewrite (PHP → FastAPI + SvelteKit)
+- Complete web interface rebuild around FastAPI + SvelteKit
 - Tailwind CSS with unified light/dark theme
 - RESTful API for all operations
 - Improved mobile experience with bottom navigation
@@ -87,7 +87,7 @@ This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET
 
 ## Current Web UI Coverage
 
-The modern web app now covers the main day-to-day and admin workflows without relying on the old PHP tools:
+The modern web app covers the main day-to-day and admin workflows:
 
 - Dashboard with current detections, live audio access, and public status
 - Review feed for recent detections and moderation actions
@@ -98,7 +98,7 @@ The modern web app now covers the main day-to-day and admin workflows without re
 - Live Logs for service log inspection
 - Admin-only File Manager at `/files`, linked from Library
 
-Intentional exclusions from the old PHP surface:
+Intentional exclusions from earlier admin tooling:
 
 - No Web Terminal
 - No Adminer
@@ -154,9 +154,9 @@ REPO_URL=https://github.com/yourfork/BirdNET-Pibird.git RELEASE_CHANNEL=edge BRA
 
 </details>
 
-### Migration from PHP-based BirdNET-Pi
+### Updating An Existing Install
 
-If you have an existing BirdNET-Pi installation with the PHP interface:
+If you already have BirdNET-Pibird checked out on a system and want to refresh the installed services and web app:
 
 ```bash
 cd ~/BirdNET-Pi
@@ -164,10 +164,9 @@ git pull
 ./scripts/install_web.sh
 ```
 
-The migration script will:
+The installer script will:
 - Install Node.js and build the new frontend
 - Install FastAPI backend dependencies
-- Disable PHP-FPM services
 - Reconfigure Caddy for the new architecture
 - Start the new web service
 
