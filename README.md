@@ -178,6 +178,8 @@ Your detection data, configuration, and recordings are preserved.
 - **OS:** 64-bit Raspberry Pi OS (Bookworm recommended)
 - **Microphone:** USB microphone or RTSP stream
 
+For local development on macOS, use Python `3.11` for the backend environment. TensorFlow does not currently provide a compatible install path for the newer Homebrew `python3.14` toolchain, so backend setup and tests are expected to run from a `3.11` virtual environment.
+
 ---
 
 ## Development
@@ -185,10 +187,28 @@ Your detection data, configuration, and recordings are preserved.
 ### Backend (FastAPI)
 
 ```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 cd backend
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8080
 ```
+
+### Running Tests
+
+Backend tests currently need both the BirdNET runtime dependencies from the repository root and the FastAPI backend dependencies from `backend/`:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pip install -r backend/requirements.txt
+python -m pip uninstall -y pyarrow
+pytest tests -q
+```
+
+On Apple Silicon macOS, uninstalling `pyarrow` in the local development venv avoids a TensorFlow import crash during test collection. This is only a local test-environment workaround and is not required on the target Pi install path.
 
 ### Frontend (SvelteKit)
 
