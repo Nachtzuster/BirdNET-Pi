@@ -4,13 +4,17 @@ set -x
 source /etc/birdnet/birdnet.conf
 used="$(df -h ${EXTRACTED} | tail -n1 | awk '{print $5}')"
 purge_threshold="${PURGE_THRESHOLD:-95}"
+python_bin="${HOME}/BirdNET-Pi/birdnet/bin/python3"
+[ -x "${python_bin}" ] || python_bin="$(command -v python3 || true)"
 
 if [ "${used//%}" -ge "$purge_threshold" ]; then
 
   case $FULL_DISK in
     purge) echo "Removing oldest data"
         cd ${EXTRACTED}/By_Date/
-        curl localhost/views.php?view=Species%20Stats &>/dev/null
+        if [ -n "${python_bin}" ] && [ -f /usr/local/bin/refresh_disk_check_exclude.py ]; then
+            "${python_bin}" /usr/local/bin/refresh_disk_check_exclude.py >/dev/null 2>&1 || true
+        fi
         if ! grep -qxFe \#\#start $HOME/BirdNET-Pi/scripts/disk_check_exclude.txt; then
             exit
         fi

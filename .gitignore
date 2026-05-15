@@ -1,50 +1,197 @@
-# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
-# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+# =============================================================================
+# BirdNET-Pi .gitignore
+# =============================================================================
 
-# User-specific stuff
-.idea/**/workspace.xml
-.idea/**/tasks.xml
-.idea/**/usage.statistics.xml
-.idea/**/dictionaries
-.idea/**/shelf
+# =============================================================================
+# IDE and Editor
+# =============================================================================
 
-# AWS User-specific
-.idea/**/aws.xml
+# JetBrains IDEs
+.idea/
 
-# Generated files
-.idea/**/contentModel.xml
-.idea
+# VS Code / Cursor
+.vscode/
+.cursor/
+*.code-workspace
 
-# Sensitive or high-churn files
-.idea/**/dataSources/
-.idea/**/dataSources.ids
-.idea/**/dataSources.local.xml
-.idea/**/sqlDataSources.xml
-.idea/**/dynamic.xml
-.idea/**/uiDesigner.xml
-.idea/**/dbnavigator.xml
+# NetBeans
+/nbproject/private/
 
-*.pyc
-*.flac
-.vscode
-model/labels.txt
-datasets/
-birdnet.conf
-IdentifiedSoFar.txt
-IdentifiedSoFar.txt.bak
-Birders_Guide_Installer_Configuration.txt
+# =============================================================================
+# OS Generated
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# =============================================================================
+# Python (General)
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment (main BirdNET venv)
 birdnet/
-templates/*.service
-scripts/*.txt
-scripts/*.db
-analyzing_now.txt
-apprise.txt
-body.txt
-BirdDB.txt
-exclude_species_list.txt
+.venv/
+
+# Datasets and generated model files
+datasets/
+model/labels.txt
+
+# =============================================================================
+# Frontend (SvelteKit + Tailwind + Vite)
+# =============================================================================
+
+# Dependencies
+frontend/node_modules/
+
+# Build outputs
+frontend/build/
+frontend/dist/
+frontend/.svelte-kit/
+
+# Vite cache
+frontend/.vite/
+frontend/vite.config.js.timestamp-*
+frontend/vite.config.ts.timestamp-*
+
+# Environment files (may contain secrets)
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+!frontend/.env.example
+
+# TypeScript build info
+frontend/*.tsbuildinfo
+
+# Testing
+frontend/coverage/
+frontend/.nyc_output/
+frontend/playwright-report/
+frontend/test-results/
+
+# Deployment / misc
+frontend/.turbo/
+frontend/.vercel/
+frontend/.output/
+
+# Note: package-lock.json SHOULD be committed for reproducible builds
+# Only ignore if you specifically don't want to track it:
+# frontend/package-lock.json
+
+# =============================================================================
+# Backend (FastAPI + Python)
+# =============================================================================
+
+# Byte-compiled files
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.py[cod]
+backend/**/*.py[cod]
+
+# Virtual environments (if created separately from main)
+backend/venv/
+backend/.venv/
+backend/env/
+
+# Environment files
+backend/.env
+backend/.env.local
+backend/.env.*.local
+!backend/.env.example
+
+# Testing
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.tox/
+
+# Type checking
+backend/.mypy_cache/
+backend/.dmypy.json
+
+# Linting
+backend/.ruff_cache/
+
+# Distribution / packaging
+backend/*.egg-info/
+backend/dist/
+
+# =============================================================================
+# BirdNET-Pi Runtime Files (generated during operation)
+# =============================================================================
+
+# Configuration (contains sensitive data like passwords, API keys)
+birdnet.conf
 firstrun.ini
-HUMAN.txt
+
+# Species lists (user-customized)
+exclude_species_list.txt
 include_species_list.txt
 whitelist_species_list.txt
-/nbproject/private/
-.DS_Store
+
+# Detection data
+IdentifiedSoFar.txt
+IdentifiedSoFar.txt.bak
+BirdDB.txt
+HUMAN.txt
+analyzing_now.txt
+
+# Notification config
+apprise.txt
+body.txt
+
+# Database files
+scripts/*.db
+
+# Generated text files in scripts
+scripts/*.txt
+
+# Legacy config
+Birders_Guide_Installer_Configuration.txt
+
+# Generated service files (created during install)
+templates/*.service
+
+# =============================================================================
+# Logs and Installation
+# =============================================================================
+
+# Log files
+*.log
+logs/
+installation-*.txt
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# =============================================================================
+# Media Files (large, user-generated)
+# =============================================================================
+
+# Audio recordings (too large to commit)
+*.flac
+*.wav
+*.mp3
+
+# Keep these out of version control - they belong on the device
+# BirdSongs/
+# Processed/
+# Extracted/

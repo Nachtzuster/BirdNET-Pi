@@ -106,6 +106,12 @@ if ! grep -E '^COLOR_SCHEME=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo "COLOR_SCHEME=\"light\"" >> /etc/birdnet/birdnet.conf
 fi
 
+if ! grep -E '^UPDATE_CHANNEL=' /etc/birdnet/birdnet.conf &>/dev/null;then
+  echo '## UPDATE_CHANNEL controls which release train updater tooling should prefer' >> /etc/birdnet/birdnet.conf
+  echo '## stable, prerelease, or edge' >> /etc/birdnet/birdnet.conf
+  echo 'UPDATE_CHANNEL="stable"' >> /etc/birdnet/birdnet.conf
+fi
+
 if ! grep -E '^PURGE_THRESHOLD=' /etc/birdnet/birdnet.conf &>/dev/null;then
   echo "PURGE_THRESHOLD=95" >> /etc/birdnet/birdnet.conf
 fi
@@ -196,22 +202,6 @@ if ! [ -f "$HOME/BirdNET-Pi/templates/$TMP_MOUNT" ]; then
    chown $USER:$USER "$HOME/BirdNET-Pi/templates/$TMP_MOUNT"
 fi
 
-if grep -q -e '-P log' $HOME/BirdNET-Pi/templates/birdnet_log.service ; then
-  sed -i "s/-P log/--path log/" ~/BirdNET-Pi/templates/birdnet_log.service
-  systemctl daemon-reload && restart_services.sh
-fi
-
-if grep -q -e '-P terminal' $HOME/BirdNET-Pi/templates/web_terminal.service ; then
-  sed -i "s/-P terminal/--path terminal/" ~/BirdNET-Pi/templates/web_terminal.service
-  systemctl daemon-reload && systemctl restart web_terminal.service
-fi
-
-if grep -q -e ' login' $HOME/BirdNET-Pi/templates/web_terminal.service ; then
-  sed -i "s/ login/ bash -c 'read -p \"Login: \" username \&\& [[ \"\$username\" =~ ^[-_.a-z0-9]{1,30}\$ ]] \&\& su --pty -l \$username'/" ~/BirdNET-Pi/templates/web_terminal.service
-  sed -i "/\[Service\]/a User=$BIRDNET_USER" ~/BirdNET-Pi/templates/web_terminal.service
-  systemctl daemon-reload && systemctl restart web_terminal.service
-fi
-
 if grep -q -e 'Environment=XDG_RUNTIME_DIR=/run/user/' $HOME/BirdNET-Pi/templates/birdnet_recording.service; then
   sed -i '/^Environment=XDG_RUNTIME_DIR=\/run\/user\/[0-9]\+/d' $HOME/BirdNET-Pi/templates/birdnet_recording.service
   systemctl daemon-reload && restart_services.sh
@@ -225,10 +215,6 @@ fi
 if grep -q -e 'Environment=XDG_RUNTIME_DIR=/run/user/' $HOME/BirdNET-Pi/templates/livestream.service; then
   sed -i '/^Environment=XDG_RUNTIME_DIR=\/run\/user\/[0-9]\+/d' $HOME/BirdNET-Pi/templates/livestream.service
   systemctl daemon-reload && restart_services.sh
-fi
-
-if grep -q 'php7.4-' /etc/caddy/Caddyfile &>/dev/null; then
-  sed -i 's/php7.4-/php-/' /etc/caddy/Caddyfile
 fi
 
 if ! [ -L /etc/avahi/services/http.service ];then

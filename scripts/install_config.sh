@@ -132,6 +132,13 @@ INFO_SITE="ALLABOUTBIRDS"
 
 COLOR_SCHEME="light"
 
+#-----------------------------  Software Updates  -----------------------------#
+## UPDATE_CHANNEL determines which release train future updater tooling should
+## prefer. Stable is recommended for most users. Pre-release is for release
+## candidates, and edge is for latest branch builds.
+
+UPDATE_CHANNEL="${RELEASE_CHANNEL:-stable}"
+
 #------------------------------  Disk Management  ------------------------------#
 ## FULL_DISK can be set to configure how the system reacts to a full disk
 ## purge = Remove the oldest day's worth of recordings

@@ -1,0 +1,60 @@
+# BirdNET-Pi Caddy Configuration
+# BirdNET-Pi FastAPI reverse proxy configuration
+
+{
+	# Global options
+	admin off
+}
+
+# Main site
+:80 {
+	# API and frontend served by FastAPI
+	reverse_proxy localhost:8080
+
+	# Live audio stream (Icecast)
+	handle /stream* {
+		reverse_proxy localhost:8000
+	}
+
+	# Spectrogram live feed
+	handle /spectrogram.png {
+		root * /home/pi/BirdNET-Pi/homepage
+		file_server
+	}
+
+	# Charts directory
+	handle /Charts/* {
+		root * /home/pi/BirdNET-Pi/homepage
+		file_server
+	}
+
+	# Static images
+	handle /images/* {
+		root * /home/pi/BirdNET-Pi/homepage
+		file_server
+	}
+
+	# Log viewer (gotty)
+	handle /log* {
+		reverse_proxy localhost:8081
+	}
+
+	# Terminal (gotty)
+	handle /terminal* {
+		reverse_proxy localhost:8888
+	}
+
+	# Streamlit stats
+	handle /stats* {
+		reverse_proxy localhost:8501
+	}
+
+	# Compression
+	encode gzip
+
+	# Logging
+	log {
+		output file /var/log/caddy/birdnet.log
+		format console
+	}
+}
