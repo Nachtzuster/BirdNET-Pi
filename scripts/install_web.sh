@@ -20,6 +20,20 @@ if [ -z "$HOME" ]; then
 fi
 BIRDNET_DIR="${BIRDNET_DIR:-$HOME/BirdNET-Pi}"
 CONFIG_FILE="/etc/birdnet/birdnet.conf"
+FRONTEND_BUILD_STAMP="$BIRDNET_DIR/frontend/build/.birdnet-build-hash"
+FRONTEND_SOURCE_HASH=""
+BUILD_PAUSED_SERVICES=()
+BUILD_SERVICE_CANDIDATES=(
+    birdnet-web
+    birdnet_analysis
+    birdnet_recording
+    custom_recording
+    chart_viewer
+    spectrogram_viewer
+    livestream
+    icecast2
+    caddy
+)
 
 # Detection functions
 is_fresh_install() {
@@ -64,8 +78,134 @@ install_backend_deps() {
     echo_info "Backend dependencies installed"
 }
 
+hash_stdin() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum | awk '{print $1}'
+    else
+        shasum -a 256 | awk '{print $1}'
+    fi
+}
+
+hash_file() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{print $1}'
+    else
+        shasum -a 256 "$1" | awk '{print $1}'
+    fi
+}
+
+frontend_source_hash() {
+    if command -v git >/dev/null 2>&1 && git -C "$BIRDNET_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        git -C "$BIRDNET_DIR" ls-files -z \
+            frontend/package.json \
+            frontend/package-lock.json \
+            frontend/svelte.config.js \
+            frontend/vite.config.js \
+            frontend/tsconfig.json \
+            frontend/tailwind.config.js \
+            frontend/postcss.config.js \
+            frontend/src \
+            frontend/static |
+            while IFS= read -r -d '' file; do
+                if [ -f "$BIRDNET_DIR/$file" ]; then
+                    printf '%s  %s\n' "$(hash_file "$BIRDNET_DIR/$file")" "$file"
+                fi
+            done | hash_stdin
+    else
+        find "$BIRDNET_DIR/frontend" -type f \
+            ! -path "$BIRDNET_DIR/frontend/node_modules/*" \
+            ! -path "$BIRDNET_DIR/frontend/build/*" \
+            ! -path "$BIRDNET_DIR/frontend/.svelte-kit/*" \
+            -print0 |
+            sort -z |
+            while IFS= read -r -d '' file; do
+                relative_path="${file#"$BIRDNET_DIR/"}"
+                printf '%s  %s\n' "$(hash_file "$file")" "$relative_path"
+            done | hash_stdin
+    fi
+}
+
+frontend_build_looks_current() {
+    [ -f "$BIRDNET_DIR/frontend/build/index.html" ] || return 1
+
+    newer_source="$(find "$BIRDNET_DIR/frontend" -type f \
+        ! -path "$BIRDNET_DIR/frontend/node_modules/*" \
+        ! -path "$BIRDNET_DIR/frontend/build/*" \
+        ! -path "$BIRDNET_DIR/frontend/.svelte-kit/*" \
+        -newer "$BIRDNET_DIR/frontend/build/index.html" \
+        -print \
+        -quit)"
+    [ -z "$newer_source" ]
+}
+
+frontend_build_needed() {
+    if [ "${BIRDNET_FORCE_FRONTEND_BUILD:-0}" = "1" ]; then
+        echo_info "BIRDNET_FORCE_FRONTEND_BUILD=1; frontend build will run"
+        FRONTEND_SOURCE_HASH="$(frontend_source_hash)"
+        return 0
+    fi
+
+    if [ ! -d "$BIRDNET_DIR/frontend/build" ]; then
+        FRONTEND_SOURCE_HASH="$(frontend_source_hash)"
+        return 0
+    fi
+
+    FRONTEND_SOURCE_HASH="$(frontend_source_hash)"
+    if [ ! -f "$FRONTEND_BUILD_STAMP" ]; then
+        if frontend_build_looks_current; then
+            echo_info "Existing frontend build looks current; writing build stamp"
+            printf '%s\n' "$FRONTEND_SOURCE_HASH" > "$FRONTEND_BUILD_STAMP"
+            return 1
+        fi
+        return 0
+    fi
+
+    previous_hash="$(cat "$FRONTEND_BUILD_STAMP" 2>/dev/null || true)"
+    [ "$FRONTEND_SOURCE_HASH" != "$previous_hash" ]
+}
+
+pause_services_for_build() {
+    echo_step "Pausing services for frontend build..."
+    BUILD_PAUSED_SERVICES=()
+
+    for service in "${BUILD_SERVICE_CANDIDATES[@]}"; do
+        if sudo systemctl list-unit-files "${service}.service" 2>/dev/null | grep -q "^${service}\.service" &&
+           sudo systemctl is-active --quiet "$service"; then
+            sudo systemctl stop "$service" || true
+            BUILD_PAUSED_SERVICES+=("$service")
+        fi
+    done
+
+    if [ ${#BUILD_PAUSED_SERVICES[@]} -gt 0 ]; then
+        echo_info "Paused services: ${BUILD_PAUSED_SERVICES[*]}"
+    else
+        echo_info "No active services needed pausing"
+    fi
+}
+
+resume_services_after_build() {
+    if [ ${#BUILD_PAUSED_SERVICES[@]} -eq 0 ]; then
+        return 0
+    fi
+
+    echo_step "Restoring services paused for frontend build..."
+    for service in "${BUILD_PAUSED_SERVICES[@]}"; do
+        sudo systemctl start "$service" || echo_warn "Could not restart ${service}; check with: sudo systemctl status ${service}"
+    done
+    BUILD_PAUSED_SERVICES=()
+}
+
 build_frontend() {
+    echo_step "Checking frontend build..."
+    if ! frontend_build_needed; then
+        echo_info "Frontend sources unchanged; skipping npm install and build"
+        return 0
+    fi
+
     echo_step "Building frontend..."
+    pause_services_for_build
+    trap resume_services_after_build RETURN
+
     cd "$BIRDNET_DIR/frontend"
     
     # Install npm dependencies
@@ -79,7 +219,12 @@ build_frontend() {
     
     # Build for production
     npm run build
+
+    mkdir -p "$BIRDNET_DIR/frontend/build"
+    printf '%s\n' "$FRONTEND_SOURCE_HASH" > "$FRONTEND_BUILD_STAMP"
     
+    trap - RETURN
+    resume_services_after_build
     echo_info "Frontend built successfully"
 }
 
@@ -356,7 +501,7 @@ main() {
         INSTALL_MODE="fresh"
     elif has_new_web_interface; then
         echo_info "Detected: New web interface already installed"
-        echo_warn "Re-running will rebuild the frontend and restart services"
+        echo_warn "Re-running will update web services; frontend build is skipped when sources are unchanged"
         INSTALL_MODE="update"
     elif is_base_installed; then
         echo_info "Detected: Base installation present, finishing web setup"
