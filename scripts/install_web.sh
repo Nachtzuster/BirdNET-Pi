@@ -303,6 +303,11 @@ update_caddy_config() {
 }
 
 http:// ${BIRDNETPI_URL:-} {
+    @blocked_legacy_probe_paths {
+        path_regexp legacyProbe (?i)(^|/)[^/]+\.(php[0-9]?|phtml|phar|phps|phtm?)(/|$)|^/(\.git|\.env)(/|\.|$)
+    }
+    respond @blocked_legacy_probe_paths 404
+
     reverse_proxy localhost:8080
     ${AUTH_BLOCK}
 

@@ -10,6 +10,11 @@ if ! [ -z ${CADDY_PWD} ];then
 HASHWORD=$(caddy hash-password --plaintext ${CADDY_PWD})
 cat << EOF > /etc/caddy/Caddyfile
 http:// ${BIRDNETPI_URL} {
+  @blocked_legacy_probe_paths {
+    path_regexp legacyProbe (?i)(^|/)[^/]+\.(php[0-9]?|phtml|phar|phps|phtm?)(/|$)|^/(\.git|\.env)(/|\.|$)
+  }
+  respond @blocked_legacy_probe_paths 404
+
   reverse_proxy localhost:8080
   basicauth /api/config* {
     birdnet ${HASHWORD}
@@ -30,6 +35,11 @@ EOF
 else
   cat << EOF > /etc/caddy/Caddyfile
 http:// ${BIRDNETPI_URL} {
+  @blocked_legacy_probe_paths {
+    path_regexp legacyProbe (?i)(^|/)[^/]+\.(php[0-9]?|phtml|phar|phps|phtm?)(/|$)|^/(\.git|\.env)(/|\.|$)
+  }
+  respond @blocked_legacy_probe_paths 404
+
   reverse_proxy localhost:8080
   encode gzip
 }

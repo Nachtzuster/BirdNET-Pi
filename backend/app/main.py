@@ -6,7 +6,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,6 +14,34 @@ from fastapi.staticfiles import StaticFiles
 from .config import get_settings
 from .routers import detections, species, config, system, media, integrations, files
 from .version_metadata import read_version_metadata, normalized_service_version, normalized_git_hash
+
+
+BLOCKED_FALLBACK_SUFFIXES = {
+    '.php',
+    '.php3',
+    '.php4',
+    '.php5',
+    '.php7',
+    '.php8',
+    '.phtml',
+    '.phar',
+    '.phps',
+    '.pht',
+    '.phtm',
+}
+BLOCKED_FALLBACK_NAMES = {'.git'}
+
+
+def is_blocked_fallback_path(full_path: str) -> bool:
+    """Reject legacy/probe paths before serving the SPA shell."""
+    parts = Path(full_path).parts
+    for part in parts:
+        lower_part = part.lower()
+        if lower_part in BLOCKED_FALLBACK_NAMES or lower_part == '.env' or lower_part.startswith('.env.'):
+            return True
+        if Path(lower_part).suffix in BLOCKED_FALLBACK_SUFFIXES:
+            return True
+    return False
 
 
 @asynccontextmanager
@@ -113,6 +141,9 @@ if os.path.exists(frontend_build_path):
         This handles client-side routing by serving index.html for all
         paths that don't match static files or API routes.
         """
+        if is_blocked_fallback_path(full_path):
+            raise HTTPException(status_code=404, detail="Not found")
+
         # Check if the path maps to an actual static file
         file_path = Path(frontend_build_path) / full_path
 

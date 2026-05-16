@@ -107,6 +107,11 @@ def update_caddy_config(settings: Settings) -> None:
 }}
 
 {caddy_site_addresses(settings.birdnetpi_url)} {{
+    @blocked_legacy_probe_paths {{
+        path_regexp legacyProbe (?i)(^|/)[^/]+\\.(php[0-9]?|phtml|phar|phps|phtm?)(/|$)|^/(\\.git|\\.env)(/|\\.|$)
+    }}
+    respond @blocked_legacy_probe_paths 404
+
     reverse_proxy localhost:8080
     {auth_block}
 
