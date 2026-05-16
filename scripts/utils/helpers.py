@@ -14,6 +14,13 @@ DB_PATH = os.path.join(BASE_PATH, 'scripts/birds.db')
 MODEL_PATH = os.path.join(BASE_PATH, 'model')
 FONT_DIR = os.path.join(BASE_PATH, 'frontend/static/fonts')
 ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
+FALLBACK_FONT_DIRS = (
+    FONT_DIR,
+    os.path.join(BASE_PATH, 'homepage/static'),
+    '/usr/share/fonts/truetype/dejavu',
+    '/usr/share/fonts/truetype/liberation2',
+    '/usr/share/fonts/truetype/freefont',
+)
 
 # User-selectable classifier models. This excludes auxiliary metadata models.
 USER_SELECTABLE_MODELS = (
@@ -40,6 +47,21 @@ def get_font():
         ret = {'font.family': 'Noto Sans Thai', 'path': os.path.join(FONT_DIR, 'NotoSansThai-Regular.ttf')}
     else:
         ret = {'font.family': 'Roboto Flex', 'path': os.path.join(FONT_DIR, 'RobotoFlex-Regular.ttf')}
+
+    if not os.path.isfile(ret['path']):
+        font_file = os.path.basename(ret['path'])
+        for font_dir in FALLBACK_FONT_DIRS:
+            candidate = os.path.join(font_dir, font_file)
+            if os.path.isfile(candidate):
+                ret['path'] = candidate
+                break
+        else:
+            for fallback_file in ('DejaVuSans.ttf', 'LiberationSans-Regular.ttf', 'FreeSans.ttf'):
+                for font_dir in FALLBACK_FONT_DIRS:
+                    candidate = os.path.join(font_dir, fallback_file)
+                    if os.path.isfile(candidate):
+                        ret['path'] = candidate
+                        return ret
     return ret
 
 

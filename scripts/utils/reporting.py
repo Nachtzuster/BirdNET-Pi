@@ -17,6 +17,7 @@ from .classes import Detection, ParseFileName
 from .notifications import sendAppriseNotifications
 
 log = logging.getLogger(__name__)
+_warned_font_paths = set()
 
 
 def extract(in_file, out_file, start, stop):
@@ -62,15 +63,26 @@ def spectrogram(in_file, title, comment, raw=0):
     height = img.size[1]
     width = img.size[0]
     draw = ImageDraw.Draw(img)
-    title_font = ImageFont.truetype(get_font()['path'], 13)
+    title_font = _load_spectrogram_font(13)
     _, _, w, _ = draw.textbbox((0, 0), title, font=title_font)
     draw.text(((width-w)/2, 6), title, fill="white", font=title_font)
 
-    comment_font = ImageFont.truetype(get_font()['path'], 11)
+    comment_font = _load_spectrogram_font(11)
     _, _, _, h = draw.textbbox((0, 0), comment, font=comment_font)
     draw.text((1, height - (h + 1)), comment, fill="white", font=comment_font)
     img.save(f'{in_file}.png')
     os.remove(tmp_file)
+
+
+def _load_spectrogram_font(size):
+    font_path = get_font()['path']
+    try:
+        return ImageFont.truetype(font_path, size)
+    except OSError as exc:
+        if font_path not in _warned_font_paths:
+            log.warning('Unable to load spectrogram font %s; using Pillow default font: %s', font_path, exc)
+            _warned_font_paths.add(font_path)
+        return ImageFont.load_default()
 
 
 def extract_detection(file: ParseFileName, detection: Detection):
