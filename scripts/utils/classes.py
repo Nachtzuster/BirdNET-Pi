@@ -30,8 +30,15 @@ class ParseFileName:
     def __init__(self, file_name):
         self.file_name = file_name
         name = os.path.splitext(os.path.basename(file_name))[0]
-        date_created = re.search('^[0-9]+-[0-9]+-[0-9]+', name).group()
-        time_created = re.search('[0-9]+:[0-9]+:[0-9]+$', name).group()
+        date_match = re.search('^[0-9]+-[0-9]+-[0-9]+', name)
+        time_match = re.search('[0-9]+:[0-9]+:[0-9]+$', name)
+        if date_match is None or time_match is None:
+            raise ValueError(
+                f"Filename '{file_name}' does not match expected pattern "
+                f"YYYY-MM-DD-...-HH:MM:SS"
+            )
+        date_created = date_match.group()
+        time_created = time_match.group()
         self.file_date = datetime.datetime.strptime(f'{date_created}T{time_created}', "%Y-%m-%dT%H:%M:%S")
         self.root = name
 
