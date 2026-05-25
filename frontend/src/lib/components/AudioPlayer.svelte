@@ -184,10 +184,10 @@
 		applyPlaybackSettings();
 	}
 
-	function temporalZoomButtonClass(rate: number, compactButton = false): string {
+	function temporalZoomButtonClass(selected: boolean, compactButton = false): string {
 		const size = compactButton ? 'px-1.5 py-1 text-[11px]' : 'px-2 py-1.5 text-xs';
 		const state =
-			playbackRate === rate
+			selected
 				? 'border-primary-500 bg-primary-100 text-primary-800 dark:border-primary-500 dark:bg-primary-900/40 dark:text-primary-100'
 				: 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-dark-border dark:bg-dark-card dark:text-gray-300 dark:hover:bg-dark-hover';
 		return `rounded-md border ${size} font-medium transition-colors ${state}`;
@@ -238,11 +238,12 @@
 				</div>
 				<div class="grid grid-cols-5 gap-1">
 					{#each temporalZoomOptions as option}
+						{@const selected = playbackRate === option.rate}
 						<button
 							type="button"
-							class={temporalZoomButtonClass(option.rate, true)}
+							class={temporalZoomButtonClass(selected, true)}
 							on:click={() => selectPlaybackRate(option.rate)}
-							aria-pressed={playbackRate === option.rate}
+							aria-pressed={selected}
 							title={`${option.label}: ${option.detail}`}
 						>
 							{option.detail}
@@ -263,11 +264,12 @@
 					</div>
 					<div class="grid grid-cols-5 gap-1">
 						{#each temporalZoomOptions as option}
+							{@const selected = playbackRate === option.rate}
 							<button
 								type="button"
-								class={temporalZoomButtonClass(option.rate, true)}
+								class={temporalZoomButtonClass(selected, true)}
 								on:click={() => selectPlaybackRate(option.rate)}
-								aria-pressed={playbackRate === option.rate}
+								aria-pressed={selected}
 								title={`${option.label}: ${option.detail}`}
 							>
 								{option.detail}
@@ -349,11 +351,12 @@
 				</div>
 				<div class="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
 					{#each temporalZoomOptions as option}
+						{@const selected = playbackRate === option.rate}
 						<button
 							type="button"
-							class={temporalZoomButtonClass(option.rate)}
+							class={temporalZoomButtonClass(selected)}
 							on:click={() => selectPlaybackRate(option.rate)}
-							aria-pressed={playbackRate === option.rate}
+							aria-pressed={selected}
 							title={`${option.label}: ${option.detail}`}
 						>
 							<span class="block">{option.label}</span>
@@ -388,11 +391,12 @@
 					</div>
 					<div class="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
 						{#each temporalZoomOptions as option}
+							{@const selected = playbackRate === option.rate}
 							<button
 								type="button"
-								class={temporalZoomButtonClass(option.rate)}
+								class={temporalZoomButtonClass(selected)}
 								on:click={() => selectPlaybackRate(option.rate)}
-								aria-pressed={playbackRate === option.rate}
+								aria-pressed={selected}
 								title={`${option.label}: ${option.detail}`}
 							>
 								<span class="block">{option.label}</span>
