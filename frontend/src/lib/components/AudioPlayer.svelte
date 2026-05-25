@@ -6,6 +6,20 @@
 	export let filename: string = '';
 	export let compact: boolean = false;
 
+	type PitchPreservingAudio = HTMLAudioElement & {
+		preservesPitch?: boolean;
+		mozPreservesPitch?: boolean;
+		webkitPreservesPitch?: boolean;
+	};
+
+	const temporalPerspectiveOptions = [
+		{ label: 'Human', rate: 1, detail: '1.0x' },
+		{ label: 'Field', rate: 0.85, detail: '0.85x' },
+		{ label: 'Bird detail', rate: 0.7, detail: '0.7x' },
+		{ label: 'Fast bird', rate: 0.6, detail: '0.6x' },
+		{ label: 'Fine', rate: 0.5, detail: '0.5x' },
+	];
+
 	let audio: HTMLAudioElement;
 	let isPlaying = false;
 	let currentTime = 0;
@@ -15,6 +29,7 @@
 	let gain = 1;
 	let volume = 1;
 	let showControls = false;
+	let playbackRate = 1;
 
 	let audioContext: AudioContext | null = null;
 	let sourceNode: MediaElementAudioSourceNode | null = null;
@@ -36,9 +51,13 @@
 	$: if (volumeNode) {
 		volumeNode.gain.value = volume;
 	}
+	$: if (audio) {
+		applyPlaybackSettings();
+	}
 
 	onMount(() => {
 		audio.volume = 1;
+		applyPlaybackSettings();
 	});
 
 	onDestroy(() => {
@@ -51,6 +70,16 @@
 			void audioContext.close();
 		}
 	});
+
+	function applyPlaybackSettings() {
+		if (!audio) return;
+		audio.playbackRate = playbackRate;
+
+		const pitchAudio = audio as PitchPreservingAudio;
+		if ('preservesPitch' in pitchAudio) pitchAudio.preservesPitch = true;
+		if ('mozPreservesPitch' in pitchAudio) pitchAudio.mozPreservesPitch = true;
+		if ('webkitPreservesPitch' in pitchAudio) pitchAudio.webkitPreservesPitch = true;
+	}
 
 	function setupAudioGraph() {
 		if (typeof window === 'undefined' || !audio) return;
@@ -119,6 +148,7 @@
 
 	function handleLoadedMetadata() {
 		duration = audio.duration;
+		applyPlaybackSettings();
 	}
 
 	function handleEnded() {
@@ -146,6 +176,11 @@
 		const mins = Math.floor(seconds / 60);
 		const secs = Math.floor(seconds % 60);
 		return `${mins}:${secs.toString().padStart(2, '0')}`;
+	}
+
+	function selectPlaybackRate(rate: number) {
+		playbackRate = rate;
+		applyPlaybackSettings();
 	}
 </script>
 
@@ -187,6 +222,30 @@
 		</div>
 		{#if showControls}
 			<div class="grid grid-cols-2 gap-2 text-xs">
+				<div class="col-span-2 rounded-lg border border-gray-200 bg-white/80 p-2 dark:border-dark-border dark:bg-dark-nav/60">
+					<div class="mb-2 flex items-center justify-between gap-2">
+						<p class="font-medium text-gray-700 dark:text-gray-200">Temporal Perspective</p>
+						<p class="text-gray-500 dark:text-gray-400">{playbackRate.toFixed(2)}x</p>
+					</div>
+					<div class="grid grid-cols-5 gap-1">
+						{#each temporalPerspectiveOptions as option}
+							<button
+								type="button"
+								class="rounded-md border px-1.5 py-1 text-[11px] font-medium transition-colors {playbackRate === option.rate
+									? 'border-primary-500 bg-primary-100 text-primary-800 dark:border-primary-500 dark:bg-primary-900/40 dark:text-primary-100'
+									: 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-dark-border dark:bg-dark-card dark:text-gray-300 dark:hover:bg-dark-hover'}"
+								on:click={() => selectPlaybackRate(option.rate)}
+								aria-pressed={playbackRate === option.rate}
+								title={`${option.label}: ${option.detail}`}
+							>
+								{option.detail}
+							</button>
+						{/each}
+					</div>
+					<p class="mt-2 leading-snug text-gray-500 dark:text-gray-400">
+						Slows playback with pitch preservation to reveal fast notes, gaps, and trills. Labels are inspired by visual temporal-resolution studies, not simulations of animal hearing.
+					</p>
+				</div>
 				<label class="text-gray-600 dark:text-gray-400">
 					Volume
 					<input class="w-full" type="range" min="0" max="1" step="0.01" bind:value={volume} />
@@ -257,6 +316,36 @@
 
 		{#if showControls}
 			<div class="grid sm:grid-cols-2 gap-2 text-xs">
+				<div class="sm:col-span-2 rounded-lg border border-gray-200 bg-white/80 p-3 dark:border-dark-border dark:bg-dark-nav/60">
+					<div class="mb-2 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+						<div>
+							<p class="font-medium text-gray-800 dark:text-gray-100">Temporal Perspective</p>
+							<p class="text-gray-500 dark:text-gray-400">
+								Slows playback with pitch preservation to reveal fast notes, gaps, and trills.
+							</p>
+						</div>
+						<p class="font-medium text-gray-600 dark:text-gray-300">{playbackRate.toFixed(2)}x</p>
+					</div>
+					<div class="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+						{#each temporalPerspectiveOptions as option}
+							<button
+								type="button"
+								class="rounded-md border px-2 py-1.5 text-xs font-medium transition-colors {playbackRate === option.rate
+									? 'border-primary-500 bg-primary-100 text-primary-800 dark:border-primary-500 dark:bg-primary-900/40 dark:text-primary-100'
+									: 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-dark-border dark:bg-dark-card dark:text-gray-300 dark:hover:bg-dark-hover'}"
+								on:click={() => selectPlaybackRate(option.rate)}
+								aria-pressed={playbackRate === option.rate}
+								title={`${option.label}: ${option.detail}`}
+							>
+								<span class="block">{option.label}</span>
+								<span class="block text-[11px] opacity-80">{option.detail}</span>
+							</button>
+						{/each}
+					</div>
+					<p class="mt-2 leading-snug text-gray-500 dark:text-gray-400">
+						Reference labels are inspired by visual temporal-resolution studies; they are not simulations of another animal's hearing.
+					</p>
+				</div>
 				<label class="text-gray-600 dark:text-gray-400">
 					Volume ({Math.round(volume * 100)}%)
 					<input class="w-full" type="range" min="0" max="1" step="0.01" bind:value={volume} />

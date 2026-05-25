@@ -111,6 +111,15 @@ Spectrogram cards now behave differently depending on context:
 
 Expanded spectrograms intentionally grow within the normal page flow and push surrounding content down, rather than opening a modal.
 
+## Temporal Perspective
+
+Recording players include Temporal Perspective presets in the expanded audio controls.
+
+- Presets slow playback while explicitly requesting browser pitch preservation
+- The modes are intended to help human listeners inspect fast notes, gaps, trills, and syllable transitions
+- Reference labels are inspired by visual temporal-resolution research, including critical flicker fusion studies, and are not presented as simulations of another animal's hearing
+- Natural playback remains the default
+
 ## Public URL and Tunnel Guidance
 
 The `BirdNET-Pi URL` setting is only appropriate when BirdNET-Pi is serving the public hostname directly.
