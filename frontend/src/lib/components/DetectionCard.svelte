@@ -181,6 +181,10 @@ import { goto } from '$app/navigation';
 
 	<!-- Audio Player -->
 	<div class="mt-3">
-		<AudioPlayer src={audioUrl} filename={detection.File_Name} />
+		<AudioPlayer
+			src={audioUrl}
+			filename={detection.File_Name}
+			temporalZoomProminent={spectrogramExpanded}
+		/>
 	</div>
 </div>

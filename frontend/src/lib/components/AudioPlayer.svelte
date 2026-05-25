@@ -5,6 +5,7 @@
 	export let src: string;
 	export let filename: string = '';
 	export let compact: boolean = false;
+	export let temporalZoomProminent: boolean = false;
 
 	type PitchPreservingAudio = HTMLAudioElement & {
 		preservesPitch?: boolean;
@@ -12,7 +13,7 @@
 		webkitPreservesPitch?: boolean;
 	};
 
-	const temporalPerspectiveOptions = [
+	const temporalZoomOptions = [
 		{ label: 'Human', rate: 1, detail: '1.0x' },
 		{ label: 'Field', rate: 0.85, detail: '0.85x' },
 		{ label: 'Bird detail', rate: 0.7, detail: '0.7x' },
@@ -182,6 +183,15 @@
 		playbackRate = rate;
 		applyPlaybackSettings();
 	}
+
+	function temporalZoomButtonClass(rate: number, compactButton = false): string {
+		const size = compactButton ? 'px-1.5 py-1 text-[11px]' : 'px-2 py-1.5 text-xs';
+		const state =
+			playbackRate === rate
+				? 'border-primary-500 bg-primary-100 text-primary-800 dark:border-primary-500 dark:bg-primary-900/40 dark:text-primary-100'
+				: 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-dark-border dark:bg-dark-card dark:text-gray-300 dark:hover:bg-dark-hover';
+		return `rounded-md border ${size} font-medium transition-colors ${state}`;
+	}
 </script>
 
 <audio
@@ -220,20 +230,42 @@
 				{showControls ? 'Hide audio controls' : 'Show audio controls'}
 			</button>
 		</div>
+		{#if temporalZoomProminent && !showControls}
+			<div class="rounded-lg border border-primary-100 bg-primary-50/70 p-2 text-xs dark:border-primary-900/50 dark:bg-primary-900/15">
+				<div class="mb-2 flex items-center justify-between gap-2">
+					<p class="font-medium text-primary-800 dark:text-primary-100">Temporal Zoom</p>
+					<p class="text-primary-700 dark:text-primary-200">{playbackRate.toFixed(2)}x</p>
+				</div>
+				<div class="grid grid-cols-5 gap-1">
+					{#each temporalZoomOptions as option}
+						<button
+							type="button"
+							class={temporalZoomButtonClass(option.rate, true)}
+							on:click={() => selectPlaybackRate(option.rate)}
+							aria-pressed={playbackRate === option.rate}
+							title={`${option.label}: ${option.detail}`}
+						>
+							{option.detail}
+						</button>
+					{/each}
+				</div>
+				<p class="mt-2 leading-snug text-primary-700/80 dark:text-primary-100/80">
+					Give your ears more room to catch fast notes and tiny gaps. Pitch stays put.
+				</p>
+			</div>
+		{/if}
 		{#if showControls}
 			<div class="grid grid-cols-2 gap-2 text-xs">
 				<div class="col-span-2 rounded-lg border border-gray-200 bg-white/80 p-2 dark:border-dark-border dark:bg-dark-nav/60">
 					<div class="mb-2 flex items-center justify-between gap-2">
-						<p class="font-medium text-gray-700 dark:text-gray-200">Temporal Perspective</p>
+						<p class="font-medium text-gray-700 dark:text-gray-200">Temporal Zoom</p>
 						<p class="text-gray-500 dark:text-gray-400">{playbackRate.toFixed(2)}x</p>
 					</div>
 					<div class="grid grid-cols-5 gap-1">
-						{#each temporalPerspectiveOptions as option}
+						{#each temporalZoomOptions as option}
 							<button
 								type="button"
-								class="rounded-md border px-1.5 py-1 text-[11px] font-medium transition-colors {playbackRate === option.rate
-									? 'border-primary-500 bg-primary-100 text-primary-800 dark:border-primary-500 dark:bg-primary-900/40 dark:text-primary-100'
-									: 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-dark-border dark:bg-dark-card dark:text-gray-300 dark:hover:bg-dark-hover'}"
+								class={temporalZoomButtonClass(option.rate, true)}
 								on:click={() => selectPlaybackRate(option.rate)}
 								aria-pressed={playbackRate === option.rate}
 								title={`${option.label}: ${option.detail}`}
@@ -243,7 +275,7 @@
 						{/each}
 					</div>
 					<p class="mt-2 leading-snug text-gray-500 dark:text-gray-400">
-						Slows playback with pitch preservation to reveal fast notes, gaps, and trills. Labels are inspired by visual temporal-resolution studies, not simulations of animal hearing.
+						Temporal zoom slows playback with pitch preservation so human listeners can notice fast notes, gaps, trills, and subtle differences. Labels are inspired by visual temporal-resolution studies, not simulations of animal hearing.
 					</p>
 				</div>
 				<label class="text-gray-600 dark:text-gray-400">
@@ -304,6 +336,34 @@
 			</div>
 		</div>
 
+		{#if temporalZoomProminent && !showControls}
+			<div class="rounded-lg border border-primary-100 bg-primary-50/70 p-3 text-xs dark:border-primary-900/50 dark:bg-primary-900/15">
+				<div class="mb-2 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+					<div>
+						<p class="font-medium text-primary-800 dark:text-primary-100">Temporal Zoom</p>
+						<p class="text-primary-700/80 dark:text-primary-100/80">
+							Give your ears more room to catch fast notes, tiny gaps, and quick differences. Pitch stays put.
+						</p>
+					</div>
+					<p class="font-medium text-primary-700 dark:text-primary-200">{playbackRate.toFixed(2)}x</p>
+				</div>
+				<div class="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+					{#each temporalZoomOptions as option}
+						<button
+							type="button"
+							class={temporalZoomButtonClass(option.rate)}
+							on:click={() => selectPlaybackRate(option.rate)}
+							aria-pressed={playbackRate === option.rate}
+							title={`${option.label}: ${option.detail}`}
+						>
+							<span class="block">{option.label}</span>
+							<span class="block text-[11px] opacity-80">{option.detail}</span>
+						</button>
+					{/each}
+				</div>
+			</div>
+		{/if}
+
 		<div>
 			<button
 				on:click={() => (showControls = !showControls)}
@@ -319,20 +379,18 @@
 				<div class="sm:col-span-2 rounded-lg border border-gray-200 bg-white/80 p-3 dark:border-dark-border dark:bg-dark-nav/60">
 					<div class="mb-2 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
 						<div>
-							<p class="font-medium text-gray-800 dark:text-gray-100">Temporal Perspective</p>
+							<p class="font-medium text-gray-800 dark:text-gray-100">Temporal Zoom</p>
 							<p class="text-gray-500 dark:text-gray-400">
-								Slows playback with pitch preservation to reveal fast notes, gaps, and trills.
+								Give your ears more room to catch fast notes, tiny gaps, trills, and quick differences. Pitch stays put.
 							</p>
 						</div>
 						<p class="font-medium text-gray-600 dark:text-gray-300">{playbackRate.toFixed(2)}x</p>
 					</div>
 					<div class="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
-						{#each temporalPerspectiveOptions as option}
+						{#each temporalZoomOptions as option}
 							<button
 								type="button"
-								class="rounded-md border px-2 py-1.5 text-xs font-medium transition-colors {playbackRate === option.rate
-									? 'border-primary-500 bg-primary-100 text-primary-800 dark:border-primary-500 dark:bg-primary-900/40 dark:text-primary-100'
-									: 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-dark-border dark:bg-dark-card dark:text-gray-300 dark:hover:bg-dark-hover'}"
+								class={temporalZoomButtonClass(option.rate)}
 								on:click={() => selectPlaybackRate(option.rate)}
 								aria-pressed={playbackRate === option.rate}
 								title={`${option.label}: ${option.detail}`}

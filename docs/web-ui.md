@@ -111,12 +111,13 @@ Spectrogram cards now behave differently depending on context:
 
 Expanded spectrograms intentionally grow within the normal page flow and push surrounding content down, rather than opening a modal.
 
-## Temporal Perspective
+## Temporal Zoom
 
-Recording players include Temporal Perspective presets in the expanded audio controls.
+Recording players include Temporal Zoom presets for slowing playback while preserving pitch.
 
-- Presets slow playback while explicitly requesting browser pitch preservation
-- The modes are intended to help human listeners inspect fast notes, gaps, trills, and syllable transitions
+- The modes are intended to give human listeners more room to notice fast notes, gaps, trills, syllable transitions, and subtle differences
+- Expanded spectrogram/detail views surface Temporal Zoom directly; other players include it in the expanded audio controls
+- Presets explicitly request browser pitch preservation so slowed recordings do not turn into novelty slow-motion audio
 - Reference labels are inspired by visual temporal-resolution research, including critical flicker fusion studies, and are not presented as simulations of another animal's hearing
 - Natural playback remains the default
 

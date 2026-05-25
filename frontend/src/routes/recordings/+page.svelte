@@ -454,7 +454,7 @@
 										</div>
 										<p class="text-sm text-gray-500 dark:text-gray-400">{formatSize(file.size)}</p>
 										<div class="mt-2">
-											<AudioPlayer src={audioUrl} compact />
+											<AudioPlayer src={audioUrl} compact temporalZoomProminent={spectrogramExpanded} />
 										</div>
 										{#if showShifted && shiftedAvailable[file.name]}
 											<div class="mt-2">
