@@ -24,9 +24,9 @@
 	let isPlaying = false;
 	let currentTime = 0;
 	let duration = 0;
-	let lowPassHz = 20000;
-	let highPassHz = 20;
-	let gain = 1;
+	let lowPassHz = 12000;
+	let highPassHz = 500;
+	let gain = 1.85;
 	let volume = 1;
 	let showControls = false;
 	let playbackRate = 1;
