@@ -372,7 +372,7 @@
 			<a href="/detections" class="btn-primary">Review Detections</a>
 		</div>
 		<p class="text-gray-600 dark:text-gray-400 mt-1">
-			What is happening now
+			What's happening now
 		</p>
 	</div>
 
@@ -587,20 +587,14 @@
 			{:else}
 				<div class="grid gap-4 md:grid-cols-2">
 					{#each groupedDetections as group (group.sciName)}
-						<div class="min-w-0">
-								<DetectionCard
-									detection={group.latest}
-									showDate={false}
-									href={detectionsHref(group.latest, { newOnDate: isPinnedNewSpecies(group.sciName) })}
-									allowSpectrogramExpand={false}
-									tagLabel={isPinnedNewSpecies(group.sciName) ? 'New species today' : null}
-								/>
-							{#if group.count > 1}
-								<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 break-words">
-									+{group.count - 1} more {group.comName} detections in recent activity
-								</p>
-							{/if}
-						</div>
+						<DetectionCard
+							detection={group.latest}
+							showDate={false}
+							href={detectionsHref(group.latest, { newOnDate: isPinnedNewSpecies(group.sciName) })}
+							allowSpectrogramExpand={false}
+							tagLabel={isPinnedNewSpecies(group.sciName) ? 'New species today' : null}
+							groupedCount={group.count}
+						/>
 					{/each}
 				</div>
 			{/if}

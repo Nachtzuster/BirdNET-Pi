@@ -17,7 +17,13 @@ import { goto } from '$app/navigation';
 	export let speciesLinks: SpeciesExternalLinks | null = null;
 	export let allowSpectrogramExpand: boolean = true;
 	export let spectrogramExpandedHeightClass: string = 'h-[68vh] md:h-[72vh]';
+	/** When > 1, shows how many additional detections are grouped into this card. */
+	export let groupedCount: number | null = null;
+	export let groupedCountContext = 'in recent activity';
 	let spectrogramExpanded = false;
+
+	$: additionalDetectionCount =
+		groupedCount != null && groupedCount > 1 ? groupedCount - 1 : 0;
 
 	const dispatch = createEventDispatcher<{ delete: Detection }>();
 
@@ -187,4 +193,12 @@ import { goto } from '$app/navigation';
 			temporalZoomProminent={spectrogramExpanded}
 		/>
 	</div>
+
+	{#if additionalDetectionCount > 0}
+		<p class="mt-3 border-t border-gray-200 pt-3 text-xs text-gray-600 dark:border-dark-border dark:text-gray-400">
+			+{additionalDetectionCount} more {detection.Com_Name}
+			{additionalDetectionCount === 1 ? 'detection' : 'detections'}
+			{groupedCountContext}
+		</p>
+	{/if}
 </div>
