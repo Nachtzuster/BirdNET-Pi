@@ -10,6 +10,9 @@
 	let topSpeciesToday: SpeciesSummary[] = [];
 	let topSpeciesAllTime: SpeciesSummary[] = [];
 	let topSpeciesMode: 'today' | 'all' = 'today';
+	let topSpeciesExpanded = false;
+
+	const TOP_SPECIES_PREVIEW = 6;
 	let siteName: string = 'BirdNET-Pi';
 	let loading = true;
 	let refreshInterval: ReturnType<typeof setInterval>;
@@ -102,6 +105,8 @@
 	}
 
 	function insightsHref(scope: string): string {
+		if (scope === 'species_today') return '/species?date=today';
+		if (scope === 'all_species') return '/species';
 		const params = new URLSearchParams({
 			mode: 'day',
 			date: todayStr(),
@@ -111,6 +116,16 @@
 	}
 
 	$: displayedTopSpecies = topSpeciesMode === 'today' ? topSpeciesToday : topSpeciesAllTime;
+	$: visibleTopSpecies = topSpeciesExpanded
+		? displayedTopSpecies
+		: displayedTopSpecies.slice(0, TOP_SPECIES_PREVIEW);
+	$: canExpandTopSpecies = displayedTopSpecies.length > TOP_SPECIES_PREVIEW;
+	$: speciesViewAllHref = topSpeciesMode === 'today' ? `/species?date=today` : '/species';
+
+	function setTopSpeciesMode(mode: 'today' | 'all') {
+		topSpeciesMode = mode;
+		topSpeciesExpanded = false;
+	}
 
 	async function loadData() {
 		if (typeof document !== 'undefined' && document.hidden) return;
@@ -135,8 +150,9 @@
 			newSpeciesTodaySet = pinnedSpecies;
 			groupedDetections = sortDetectionGroups(groupLatest(mergedDetections), pinnedSpecies);
 			siteName = infoData.site_name;
-			topSpeciesToday = speciesTodayData.species.slice(0, 6);
-			topSpeciesAllTime = speciesAllTimeData.species.slice(0, 6);
+			topSpeciesToday = speciesTodayData.species;
+			topSpeciesAllTime = speciesAllTimeData.species;
+			topSpeciesExpanded = false;
 			hourlyData = hourly;
 		} catch (e) {
 			console.error('Failed to load data:', e);
@@ -476,20 +492,35 @@
 						<h3 class="font-semibold text-gray-900 dark:text-gray-100">Top Species</h3>
 						<div class="inline-flex rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden text-xs">
 							<button
+								type="button"
 								class="px-3 py-1 {topSpeciesMode === 'today' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-card text-gray-700 dark:text-gray-300'}"
-								on:click={() => (topSpeciesMode = 'today')}
+								on:click={() => setTopSpeciesMode('today')}
 							>
 								Today
 							</button>
 							<button
+								type="button"
 								class="px-3 py-1 {topSpeciesMode === 'all' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-card text-gray-700 dark:text-gray-300'}"
-								on:click={() => (topSpeciesMode = 'all')}
+								on:click={() => setTopSpeciesMode('all')}
 							>
 								All time
 							</button>
 						</div>
 					</div>
-					<a href="/species" class="text-primary-600 dark:text-primary-400 hover:underline text-sm">View all →</a>
+					<div class="flex items-center gap-3">
+						{#if canExpandTopSpecies}
+							<button
+								type="button"
+								class="text-primary-600 dark:text-primary-400 hover:underline text-sm"
+								on:click={() => (topSpeciesExpanded = !topSpeciesExpanded)}
+							>
+								{topSpeciesExpanded ? 'Show less' : `Show all ${displayedTopSpecies.length}`}
+							</button>
+						{/if}
+						<a href={speciesViewAllHref} class="text-primary-600 dark:text-primary-400 hover:underline text-sm">
+							{topSpeciesMode === 'today' ? 'Species today →' : 'View all →'}
+						</a>
+					</div>
 				</div>
 				{#if displayedTopSpecies.length === 0}
 					<div class="card-body text-center py-8">
@@ -505,7 +536,7 @@
 					</div>
 				{:else}
 					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 divide-gray-200 dark:divide-dark-border">
-						{#each displayedTopSpecies as sp (sp.Sci_Name)}
+						{#each visibleTopSpecies as sp (sp.Sci_Name)}
 							<div class="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
 								<div class="flex-shrink-0 rounded-full overflow-hidden">
 									<SpeciesImage sciName={sp.Sci_Name} size="xs" />
