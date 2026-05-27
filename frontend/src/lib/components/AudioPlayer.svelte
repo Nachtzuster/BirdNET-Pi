@@ -226,12 +226,12 @@
 	function selectPlaybackRate(rate: number) {
 		playbackRate = rate;
 		if (useRenderedTemporalZoom && rate !== 1) {
-			void prewarmTemporalZoom(String(rate));
+			void prewarmTemporalZoom(String(rate), true);
 		}
 		applyPlaybackSettings();
 	}
 
-	async function prewarmTemporalZoom(preferredRateKey?: string) {
+	async function prewarmTemporalZoom(preferredRateKey?: string, retryPreferred = false) {
 		if (prewarmingTemporalZoom) return;
 		prewarmingTemporalZoom = true;
 		const rateOrder = preferredRateKey
@@ -240,7 +240,9 @@
 
 		try {
 			for (const rateKey of rateOrder) {
-				if (attemptedTemporalZoomPrewarmRates.has(rateKey)) continue;
+				if (attemptedTemporalZoomPrewarmRates.has(rateKey) && !(retryPreferred && rateKey === preferredRateKey)) {
+					continue;
+				}
 
 				const url = temporalZoomPrepareUrls[rateKey];
 				if (!url) continue;
@@ -249,7 +251,10 @@
 				try {
 					const response = await fetch(url, { credentials: 'same-origin' });
 					if (response.ok) {
-						preparedTemporalZoomRates = new Set(preparedTemporalZoomRates).add(rateKey);
+						const result = (await response.json().catch(() => null)) as { ready?: boolean } | null;
+						if (result?.ready) {
+							preparedTemporalZoomRates = new Set(preparedTemporalZoomRates).add(rateKey);
+						}
 					} else {
 						console.warn('Unable to prewarm Temporal Zoom audio:', response.status);
 					}

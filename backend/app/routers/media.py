@@ -2,10 +2,11 @@
 import os
 import re
 import sqlite3
+import threading
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import FileResponse
 
 from ..config import get_settings, Settings
@@ -19,6 +20,8 @@ TEMPORAL_ZOOM_RATES = {
     "0.6": 0.6,
     "0.5": 0.5,
 }
+TEMPORAL_ZOOM_RENDERS_IN_PROGRESS: set[str] = set()
+TEMPORAL_ZOOM_RENDER_LOCK = threading.Lock()
 
 
 def extract_species_from_filename(filename: str) -> str:
@@ -160,6 +163,23 @@ def render_temporal_zoom_audio(settings: Settings, date: str, filename: str, rat
     return output_path, output_filename, False
 
 
+def queue_temporal_zoom_render(settings: Settings, date: str, filename: str, rate: str) -> None:
+    """Render Temporal Zoom audio in the background, suppressing duplicate work."""
+    _, output_path, _ = temporal_zoom_paths(settings, date, filename, rate)
+    render_key = str(output_path)
+
+    with TEMPORAL_ZOOM_RENDER_LOCK:
+        if render_key in TEMPORAL_ZOOM_RENDERS_IN_PROGRESS:
+            return
+        TEMPORAL_ZOOM_RENDERS_IN_PROGRESS.add(render_key)
+
+    try:
+        render_temporal_zoom_audio(settings, date, filename, rate)
+    finally:
+        with TEMPORAL_ZOOM_RENDER_LOCK:
+            TEMPORAL_ZOOM_RENDERS_IN_PROGRESS.discard(render_key)
+
+
 @router.get("/media/audio/{date}/{species}/{filename}")
 async def get_audio(
     date: str,
@@ -219,15 +239,22 @@ async def prepare_temporal_zoom_audio(
     date: str,
     species: str,
     filename: str,
+    background_tasks: BackgroundTasks,
     rate: str = "0.6",
     settings: Settings = Depends(get_settings),
 ):
-    """Prepare a cached Temporal Zoom audio file without returning the audio body."""
+    """Queue a cached Temporal Zoom render without returning the audio body."""
     rate_key, _ = normalize_temporal_zoom_rate(rate)
-    output_path, _, was_cached = render_temporal_zoom_audio(settings, date, filename, rate)
+    _, output_path, _ = temporal_zoom_paths(settings, date, filename, rate_key)
+    is_cached = output_path.exists()
+
+    if not is_cached:
+        background_tasks.add_task(queue_temporal_zoom_render, settings, date, filename, rate_key)
+
     return {
-        "ready": True,
-        "cached": was_cached,
+        "ready": is_cached,
+        "cached": is_cached,
+        "queued": not is_cached,
         "rate": rate_key,
         "filename": output_path.name,
     }
