@@ -380,6 +380,12 @@
 						{@const audioUrl = media.audioUrl(selectedDate, selectedSpecies, file.name)}
 						{@const spectrogramUrl = media.spectrogramUrl(selectedDate, selectedSpecies, file.name)}
 						{@const shiftedUrl = media.shiftedAudioUrl(selectedDate, selectedSpecies, file.name)}
+						{@const temporalZoomUrls = {
+							'0.85': media.temporalZoomAudioUrl(selectedDate, selectedSpecies, file.name, 0.85),
+							'0.7': media.temporalZoomAudioUrl(selectedDate, selectedSpecies, file.name, 0.7),
+							'0.6': media.temporalZoomAudioUrl(selectedDate, selectedSpecies, file.name, 0.6),
+							'0.5': media.temporalZoomAudioUrl(selectedDate, selectedSpecies, file.name, 0.5),
+						}}
 						{@const spectrogramExpanded = expandedSpectrogramFiles.has(file.name)}
 						<div class="card p-4">
 							<div class="flex items-start gap-4">
@@ -454,7 +460,12 @@
 										</div>
 										<p class="text-sm text-gray-500 dark:text-gray-400">{formatSize(file.size)}</p>
 										<div class="mt-2">
-											<AudioPlayer src={audioUrl} compact temporalZoomProminent={spectrogramExpanded} />
+											<AudioPlayer
+												src={audioUrl}
+												compact
+												temporalZoomProminent={spectrogramExpanded}
+												{temporalZoomUrls}
+											/>
 										</div>
 										{#if showShifted && shiftedAvailable[file.name]}
 											<div class="mt-2">

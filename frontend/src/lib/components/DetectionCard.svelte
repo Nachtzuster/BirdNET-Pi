@@ -29,6 +29,12 @@ import { goto } from '$app/navigation';
 
 	$: audioUrl = media.audioUrl(detection.Date, detection.Sci_Name, detection.File_Name);
 	$: spectrogramUrl = media.spectrogramUrl(detection.Date, detection.Sci_Name, detection.File_Name);
+	$: temporalZoomUrls = {
+		'0.85': media.temporalZoomAudioUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.85),
+		'0.7': media.temporalZoomAudioUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.7),
+		'0.6': media.temporalZoomAudioUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.6),
+		'0.5': media.temporalZoomAudioUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.5),
+	};
 
 	function formatTime(time: string): string {
 		return time.slice(0, 5); // HH:MM
@@ -191,6 +197,7 @@ import { goto } from '$app/navigation';
 			src={audioUrl}
 			filename={detection.File_Name}
 			temporalZoomProminent={spectrogramExpanded}
+			{temporalZoomUrls}
 		/>
 	</div>
 

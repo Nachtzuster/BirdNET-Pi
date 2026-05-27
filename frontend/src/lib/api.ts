@@ -185,6 +185,9 @@ export const media = {
 	audioUrl: (date: string, species: string, filename: string) =>
 		`${API_BASE}/media/audio/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}`,
 
+	temporalZoomAudioUrl: (date: string, species: string, filename: string, rate: number) =>
+		`${API_BASE}/media/tempo/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}?rate=${rate}`,
+
 	spectrogramUrl: (date: string, species: string, filename: string) =>
 		`${API_BASE}/media/spectrogram/${date}/${encodeURIComponent(species)}/${encodeURIComponent(filename)}`,
 

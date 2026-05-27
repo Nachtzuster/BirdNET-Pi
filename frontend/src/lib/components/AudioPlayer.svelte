@@ -6,6 +6,7 @@
 	export let filename: string = '';
 	export let compact: boolean = false;
 	export let temporalZoomProminent: boolean = false;
+	export let temporalZoomUrls: Record<string, string> = {};
 
 	type PitchPreservingAudio = HTMLAudioElement & {
 		preservesPitch?: boolean;
@@ -31,6 +32,8 @@
 	let volume = 1;
 	let showControls = false;
 	let playbackRate = 1;
+	let useRenderedTemporalZoom = false;
+	let renderedTemporalZoomFailures = new Set<string>();
 
 	let audioContext: AudioContext | null = null;
 	let sourceNode: MediaElementAudioSourceNode | null = null;
@@ -39,7 +42,14 @@
 	let gainNode: GainNode | null = null;
 	let volumeNode: GainNode | null = null;
 
-	$: isCurrentlyPlaying = $currentlyPlaying === src;
+	$: selectedRateKey = String(playbackRate);
+	$: renderedTemporalZoomSrc =
+		useRenderedTemporalZoom && playbackRate !== 1 && !renderedTemporalZoomFailures.has(selectedRateKey)
+			? temporalZoomUrls[selectedRateKey]
+			: undefined;
+	$: effectiveSrc = renderedTemporalZoomSrc || src;
+	$: isUsingRenderedTemporalZoom = Boolean(renderedTemporalZoomSrc);
+	$: isCurrentlyPlaying = $currentlyPlaying === effectiveSrc;
 	$: if (lowPassNode) {
 		lowPassNode.frequency.value = lowPassHz;
 	}
@@ -58,6 +68,7 @@
 
 	onMount(() => {
 		audio.volume = 1;
+		useRenderedTemporalZoom = shouldUseRenderedTemporalZoom();
 		applyPlaybackSettings();
 	});
 
@@ -74,12 +85,23 @@
 
 	function applyPlaybackSettings() {
 		if (!audio) return;
-		audio.playbackRate = playbackRate;
+		audio.playbackRate = isUsingRenderedTemporalZoom ? 1 : playbackRate;
 
 		const pitchAudio = audio as PitchPreservingAudio;
 		if ('preservesPitch' in pitchAudio) pitchAudio.preservesPitch = true;
 		if ('mozPreservesPitch' in pitchAudio) pitchAudio.mozPreservesPitch = true;
 		if ('webkitPreservesPitch' in pitchAudio) pitchAudio.webkitPreservesPitch = true;
+	}
+
+	function shouldUseRenderedTemporalZoom(): boolean {
+		if (typeof window === 'undefined') return false;
+		const userAgent = window.navigator.userAgent;
+		const isIOS =
+			/iPad|iPhone|iPod/.test(userAgent) ||
+			(window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+		const isAndroid = /Android/.test(userAgent);
+		const isCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+		return isIOS || isAndroid || isCoarsePointer;
 	}
 
 	function setupAudioGraph() {
@@ -130,13 +152,13 @@
 				await ensureAudioContextRunning();
 
 				// Stop any other playing audio
-				if ($currentlyPlaying && $currentlyPlaying !== src) {
+				if ($currentlyPlaying && $currentlyPlaying !== effectiveSrc) {
 					const otherAudio = document.querySelector(`audio[src="${$currentlyPlaying}"]`) as HTMLAudioElement;
 					if (otherAudio) otherAudio.pause();
 				}
 
 				await audio.play();
-				currentlyPlaying.set(src);
+				currentlyPlaying.set(effectiveSrc);
 			} catch (error) {
 				console.error('Unable to play audio:', error);
 			}
@@ -184,6 +206,12 @@
 		applyPlaybackSettings();
 	}
 
+	function handleAudioError() {
+		if (!isUsingRenderedTemporalZoom) return;
+		renderedTemporalZoomFailures = new Set(renderedTemporalZoomFailures).add(selectedRateKey);
+		applyPlaybackSettings();
+	}
+
 	function temporalZoomButtonClass(selected: boolean, compactButton = false): string {
 		const size = compactButton ? 'px-1.5 py-1 text-[11px]' : 'px-2 py-1.5 text-xs';
 		const state =
@@ -196,12 +224,13 @@
 
 <audio
 	bind:this={audio}
-	{src}
+	src={effectiveSrc}
 	on:timeupdate={handleTimeUpdate}
 	on:loadedmetadata={handleLoadedMetadata}
 	on:ended={handleEnded}
 	on:play={handlePlay}
 	on:pause={handlePause}
+	on:error={handleAudioError}
 	preload="metadata"></audio>
 
 {#if compact}
