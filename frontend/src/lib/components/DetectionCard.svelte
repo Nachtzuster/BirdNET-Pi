@@ -35,6 +35,12 @@ import { goto } from '$app/navigation';
 		'0.6': media.temporalZoomAudioUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.6),
 		'0.5': media.temporalZoomAudioUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.5),
 	};
+	$: temporalZoomPrepareUrls = {
+		'0.85': media.temporalZoomPrepareUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.85),
+		'0.7': media.temporalZoomPrepareUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.7),
+		'0.6': media.temporalZoomPrepareUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.6),
+		'0.5': media.temporalZoomPrepareUrl(detection.Date, detection.Sci_Name, detection.File_Name, 0.5),
+	};
 
 	function formatTime(time: string): string {
 		return time.slice(0, 5); // HH:MM
@@ -198,6 +204,7 @@ import { goto } from '$app/navigation';
 			filename={detection.File_Name}
 			temporalZoomProminent={spectrogramExpanded}
 			{temporalZoomUrls}
+			{temporalZoomPrepareUrls}
 		/>
 	</div>
 

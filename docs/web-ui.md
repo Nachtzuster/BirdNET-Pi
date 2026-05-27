@@ -118,7 +118,8 @@ Recording players include Temporal Zoom presets for slowing playback while prese
 - The modes are intended to give human listeners more room to notice fast notes, gaps, trills, syllable transitions, and subtle differences
 - Expanded spectrogram/detail views surface Temporal Zoom directly; other players include it in the expanded audio controls
 - Presets explicitly request browser pitch preservation so slowed recordings do not turn into novelty slow-motion audio
-- Mobile browsers use cached, server-rendered Temporal Zoom audio for slower presets when available, avoiding real-time mobile playback-rate stutter
+- Mobile browsers use a lighter native playback path and avoid WebAudio filters during Temporal Zoom
+- Mobile views can prepare cached Temporal Zoom audio in the background when controls are opened, avoiding render-on-tap delays over remote access or tunnels
 - Reference labels are inspired by visual temporal-resolution research, including critical flicker fusion studies, and are not presented as simulations of another animal's hearing
 - Natural playback remains the default
 

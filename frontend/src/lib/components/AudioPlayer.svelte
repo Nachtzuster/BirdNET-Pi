@@ -7,6 +7,7 @@
 	export let compact: boolean = false;
 	export let temporalZoomProminent: boolean = false;
 	export let temporalZoomUrls: Record<string, string> = {};
+	export let temporalZoomPrepareUrls: Record<string, string> = {};
 
 	type PitchPreservingAudio = HTMLAudioElement & {
 		preservesPitch?: boolean;
@@ -21,6 +22,7 @@
 		{ label: 'Fast bird', rate: 0.6, detail: '0.6x' },
 		{ label: 'Fine', rate: 0.5, detail: '0.5x' },
 	];
+	const temporalZoomPrewarmOrder = ['0.7', '0.6', '0.85', '0.5'];
 
 	let audio: HTMLAudioElement;
 	let isPlaying = false;
@@ -34,6 +36,9 @@
 	let playbackRate = 1;
 	let useRenderedTemporalZoom = false;
 	let renderedTemporalZoomFailures = new Set<string>();
+	let attemptedTemporalZoomPrewarmRates = new Set<string>();
+	let preparedTemporalZoomRates = new Set<string>();
+	let prewarmingTemporalZoom = false;
 
 	let audioContext: AudioContext | null = null;
 	let sourceNode: MediaElementAudioSourceNode | null = null;
@@ -43,13 +48,27 @@
 	let volumeNode: GainNode | null = null;
 
 	$: selectedRateKey = String(playbackRate);
+	$: selectedRenderedTemporalZoomUrl = temporalZoomUrls[selectedRateKey];
+	$: canUsePreparedTemporalZoom = !isPlaying || $currentlyPlaying === selectedRenderedTemporalZoomUrl;
 	$: renderedTemporalZoomSrc =
-		useRenderedTemporalZoom && playbackRate !== 1 && !renderedTemporalZoomFailures.has(selectedRateKey)
-			? temporalZoomUrls[selectedRateKey]
+		useRenderedTemporalZoom &&
+		playbackRate !== 1 &&
+		canUsePreparedTemporalZoom &&
+		preparedTemporalZoomRates.has(selectedRateKey) &&
+		!renderedTemporalZoomFailures.has(selectedRateKey)
+			? selectedRenderedTemporalZoomUrl
 			: undefined;
 	$: effectiveSrc = renderedTemporalZoomSrc || src;
 	$: isUsingRenderedTemporalZoom = Boolean(renderedTemporalZoomSrc);
+	$: useLitePlayback = useRenderedTemporalZoom;
 	$: isCurrentlyPlaying = $currentlyPlaying === effectiveSrc;
+	$: shouldPrewarmTemporalZoom = useRenderedTemporalZoom && (showControls || temporalZoomProminent);
+	$: hasTemporalZoomPrewarmWork = temporalZoomPrewarmOrder.some(
+		(rateKey) => Boolean(temporalZoomPrepareUrls[rateKey]) && !attemptedTemporalZoomPrewarmRates.has(rateKey)
+	);
+	$: if (shouldPrewarmTemporalZoom && hasTemporalZoomPrewarmWork) {
+		void prewarmTemporalZoom();
+	}
 	$: if (lowPassNode) {
 		lowPassNode.frequency.value = lowPassHz;
 	}
@@ -85,6 +104,7 @@
 
 	function applyPlaybackSettings() {
 		if (!audio) return;
+		audio.volume = useLitePlayback ? volume : 1;
 		audio.playbackRate = isUsingRenderedTemporalZoom ? 1 : playbackRate;
 
 		const pitchAudio = audio as PitchPreservingAudio;
@@ -108,6 +128,7 @@
 		if (typeof window === 'undefined' || !audio) return;
 		const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
 		if (!AudioCtx) return;
+		if (useLitePlayback) return;
 		if (audioContext) return;
 
 		audioContext = new AudioCtx();
@@ -135,6 +156,7 @@
 	}
 
 	async function ensureAudioContextRunning() {
+		if (useLitePlayback) return;
 		if (!audioContext) {
 			setupAudioGraph();
 		}
@@ -203,7 +225,41 @@
 
 	function selectPlaybackRate(rate: number) {
 		playbackRate = rate;
+		if (useRenderedTemporalZoom && rate !== 1) {
+			void prewarmTemporalZoom(String(rate));
+		}
 		applyPlaybackSettings();
+	}
+
+	async function prewarmTemporalZoom(preferredRateKey?: string) {
+		if (prewarmingTemporalZoom) return;
+		prewarmingTemporalZoom = true;
+		const rateOrder = preferredRateKey
+			? [preferredRateKey, ...temporalZoomPrewarmOrder.filter((rateKey) => rateKey !== preferredRateKey)]
+			: temporalZoomPrewarmOrder;
+
+		try {
+			for (const rateKey of rateOrder) {
+				if (attemptedTemporalZoomPrewarmRates.has(rateKey)) continue;
+
+				const url = temporalZoomPrepareUrls[rateKey];
+				if (!url) continue;
+
+				attemptedTemporalZoomPrewarmRates = new Set(attemptedTemporalZoomPrewarmRates).add(rateKey);
+				try {
+					const response = await fetch(url, { credentials: 'same-origin' });
+					if (response.ok) {
+						preparedTemporalZoomRates = new Set(preparedTemporalZoomRates).add(rateKey);
+					} else {
+						console.warn('Unable to prewarm Temporal Zoom audio:', response.status);
+					}
+				} catch (error) {
+					console.warn('Unable to prewarm Temporal Zoom audio:', error);
+				}
+			}
+		} finally {
+			prewarmingTemporalZoom = false;
+		}
 	}
 
 	function handleAudioError() {

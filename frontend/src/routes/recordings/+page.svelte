@@ -386,6 +386,12 @@
 							'0.6': media.temporalZoomAudioUrl(selectedDate, selectedSpecies, file.name, 0.6),
 							'0.5': media.temporalZoomAudioUrl(selectedDate, selectedSpecies, file.name, 0.5),
 						}}
+						{@const temporalZoomPrepareUrls = {
+							'0.85': media.temporalZoomPrepareUrl(selectedDate, selectedSpecies, file.name, 0.85),
+							'0.7': media.temporalZoomPrepareUrl(selectedDate, selectedSpecies, file.name, 0.7),
+							'0.6': media.temporalZoomPrepareUrl(selectedDate, selectedSpecies, file.name, 0.6),
+							'0.5': media.temporalZoomPrepareUrl(selectedDate, selectedSpecies, file.name, 0.5),
+						}}
 						{@const spectrogramExpanded = expandedSpectrogramFiles.has(file.name)}
 						<div class="card p-4">
 							<div class="flex items-start gap-4">
@@ -465,6 +471,7 @@
 												compact
 												temporalZoomProminent={spectrogramExpanded}
 												{temporalZoomUrls}
+												{temporalZoomPrepareUrls}
 											/>
 										</div>
 										{#if showShifted && shiftedAvailable[file.name]}
