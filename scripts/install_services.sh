@@ -119,6 +119,7 @@ install_recording_service() {
   cat << EOF > $HOME/BirdNET-Pi/templates/birdnet_recording.service
 [Unit]
 Description=BirdNET Recording
+After=sound.target
 [Service]
 Restart=always
 Type=simple
@@ -137,6 +138,7 @@ install_custom_recording_service() {
   cat << EOF > $HOME/BirdNET-Pi/templates/custom_recording.service
 [Unit]
 Description=BirdNET Custom Recording
+After=sound.target
 [Service]
 Restart=always
 Type=simple
