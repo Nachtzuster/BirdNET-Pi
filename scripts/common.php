@@ -130,15 +130,18 @@ function get_db() {
 
 function fetch_species_array($sort_by, $date=null) {
   $db = get_db();
-  $where = (isset($date)) ? "WHERE Date == \"$date\"" : "";
+  $where = (isset($date)) ? "WHERE Date = :date" : "";
   if ($sort_by === "occurrences") {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY COUNT(*) DESC");
+    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY Count DESC");
   } elseif ($sort_by === "confidence") {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MAX(Confidence) DESC");
+    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MaxConfidence DESC");
   } elseif ($sort_by === "date") {
     $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MIN(Date) DESC, Time DESC");
   } else {
     $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY Com_Name ASC");
+  }
+  if (isset($date)) {
+    $statement->bindValue(':date', $date, SQLITE3_TEXT);
   }
   ensure_db_ok($statement);
   $result = $statement->execute();
@@ -147,22 +150,27 @@ function fetch_species_array($sort_by, $date=null) {
 
 function fetch_best_detection($com_name) {
   $db = get_db();
-  $statement = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = \"$com_name\"");
+  $statement = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time FROM detections WHERE Com_Name = :com_name");
   ensure_db_ok($statement);
+  $statement->bindValue(':com_name', $com_name, SQLITE3_TEXT);
   $result = $statement->execute();
   return $result;
 }
 
 function fetch_all_detections($sci_name, $sort_by, $date=null) {
   $db = get_db();
-  $filter = (isset($date)) ? "AND Date == \"$date\"" : "";
+  $filter = (isset($date)) ? "AND Date = :date" : "";
   if ($sort_by === "occurrences") {
-    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY COUNT(*) DESC");
+    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name = :sci_name $filter ORDER BY Confidence DESC");
   } elseif ($sort_by === "confidence") {
-    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY Confidence DESC");
+    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name = :sci_name $filter ORDER BY Confidence DESC");
   } else {
     $order = (isset($date)) ? "Time DESC" : "Date DESC, Time DESC";
-    $statement = $db->prepare("SELECT * FROM detections where Sci_Name == \"$sci_name\" $filter ORDER BY $order");
+    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name = :sci_name $filter ORDER BY $order");
+  }
+  $statement->bindValue(':sci_name', $sci_name, SQLITE3_TEXT);
+  if (isset($date)) {
+    $statement->bindValue(':date', $date, SQLITE3_TEXT);
   }
   ensure_db_ok($statement);
   $result = $statement->execute();

@@ -138,18 +138,25 @@ if(isset($_GET["latitude"])){
     }
   }
 
+  $safe = function($val, $pattern = '/[^a-zA-Z0-9._\-]/') {
+    return '"' . preg_replace($pattern, '', $val) . '"';
+  };
+  $safe_num = function($val) {
+    return is_numeric($val) ? $val : '0';
+  };
+
   $contents = file_get_contents("/etc/birdnet/birdnet.conf");
-  $contents = preg_replace("/SITE_NAME=.*/", "SITE_NAME=\"$site_name\"", $contents);
-  $contents = preg_replace("/LATITUDE=.*/", "LATITUDE=$latitude", $contents);
-  $contents = preg_replace("/LONGITUDE=.*/", "LONGITUDE=$longitude", $contents);
-  $contents = preg_replace("/BIRDWEATHER_ID=.*/", "BIRDWEATHER_ID=$birdweather_id", $contents);
-  $contents = preg_replace("/APPRISE_NOTIFICATION_TITLE=.*/", "APPRISE_NOTIFICATION_TITLE=\"$apprise_notification_title\"", $contents);
-  $contents = preg_replace("/APPRISE_NOTIFY_EACH_DETECTION=.*/", "APPRISE_NOTIFY_EACH_DETECTION=$apprise_notify_each_detection", $contents);
-  $contents = preg_replace("/APPRISE_NOTIFY_NEW_SPECIES=.*/", "APPRISE_NOTIFY_NEW_SPECIES=$apprise_notify_new_species", $contents);
-  $contents = preg_replace("/APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY=.*/", "APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY=$apprise_notify_new_species_each_day", $contents);
-  $contents = preg_replace("/APPRISE_WEEKLY_REPORT=.*/", "APPRISE_WEEKLY_REPORT=$apprise_weekly_report", $contents);
-  $contents = preg_replace("/IMAGE_PROVIDER=.*/", "IMAGE_PROVIDER=$image_provider", $contents);
-  $contents = preg_replace("/FLICKR_API_KEY=.*/", "FLICKR_API_KEY=$flickr_api_key", $contents);
+  $contents = preg_replace("/SITE_NAME=.*/", "SITE_NAME=" . $safe($site_name, '/[^a-zA-Z0-9._\- ]/'), $contents);
+  $contents = preg_replace("/LATITUDE=.*/", "LATITUDE=" . $safe_num($latitude), $contents);
+  $contents = preg_replace("/LONGITUDE=.*/", "LONGITUDE=" . $safe_num($longitude), $contents);
+  $contents = preg_replace("/BIRDWEATHER_ID=.*/", "BIRDWEATHER_ID=" . $safe($birdweather_id), $contents);
+  $contents = preg_replace("/APPRISE_NOTIFICATION_TITLE=.*/", "APPRISE_NOTIFICATION_TITLE=" . $safe($apprise_notification_title, '/[^a-zA-Z0-9._\- ]/'), $contents);
+  $contents = preg_replace("/APPRISE_NOTIFY_EACH_DETECTION=.*/", "APPRISE_NOTIFY_EACH_DETECTION=" . $safe_num($apprise_notify_each_detection), $contents);
+  $contents = preg_replace("/APPRISE_NOTIFY_NEW_SPECIES=.*/", "APPRISE_NOTIFY_NEW_SPECIES=" . $safe_num($apprise_notify_new_species), $contents);
+  $contents = preg_replace("/APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY=.*/", "APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY=" . $safe_num($apprise_notify_new_species_each_day), $contents);
+  $contents = preg_replace("/APPRISE_WEEKLY_REPORT=.*/", "APPRISE_WEEKLY_REPORT=" . $safe_num($apprise_weekly_report), $contents);
+  $contents = preg_replace("/IMAGE_PROVIDER=.*/", "IMAGE_PROVIDER=" . $safe($image_provider), $contents);
+  $contents = preg_replace("/FLICKR_API_KEY=.*/", "FLICKR_API_KEY=" . $safe($flickr_api_key, '/[^a-zA-Z0-9]/'), $contents);
   if(strlen($language) == 2 || strlen($language) == 5){
     $contents = preg_replace("/DATABASE_LANG=.*/", "DATABASE_LANG=$language", $contents);
   }
@@ -157,9 +164,9 @@ if(isset($_GET["latitude"])){
   $contents = preg_replace("/COLOR_SCHEME=.*/", "COLOR_SCHEME=$color_scheme", $contents);  
   $contents = preg_replace("/FLICKR_FILTER_EMAIL=.*/", "FLICKR_FILTER_EMAIL=$flickr_filter_email", $contents);
   $contents = preg_replace("/APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=.*/", "APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=$minimum_time_limit", $contents);
-  $contents = preg_replace("/MODEL=.*/", "MODEL=$model", $contents);
-  $contents = preg_replace("/SF_THRESH=.*/", "SF_THRESH=$sf_thresh", $contents);
-  $contents = preg_replace("/DATA_MODEL_VERSION=.*/", "DATA_MODEL_VERSION=$data_model_version", $contents);
+  $contents = preg_replace("/MODEL=.*/", "MODEL=" . $safe($model), $contents);
+  $contents = preg_replace("/SF_THRESH=.*/", "SF_THRESH=" . $safe_num($sf_thresh), $contents);
+  $contents = preg_replace("/DATA_MODEL_VERSION=.*/", "DATA_MODEL_VERSION=" . $safe_num($data_model_version), $contents);
   $contents = preg_replace("/APPRISE_ONLY_NOTIFY_SPECIES_NAMES=.*/", "APPRISE_ONLY_NOTIFY_SPECIES_NAMES=\"$only_notify_species_names\"", $contents);
   $contents = preg_replace("/APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2=.*/", "APPRISE_ONLY_NOTIFY_SPECIES_NAMES_2=\"$only_notify_species_names_2\"", $contents);
 
