@@ -128,18 +128,18 @@ function relativeTime($ts)
 
 if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
   if(isset($_GET['searchterm'])) {
-    if(strtolower(explode(" ", $_GET['searchterm'])[0]) == "not") {
-      $not = "NOT ";
-      $operator = "AND";
-      $_GET['searchterm'] =  str_replace("not ", "", $_GET['searchterm']);
-      $_GET['searchterm'] =  str_replace("NOT ", "", $_GET['searchterm']);
-    } else {
-      $not = "";
-      $operator = "OR";
+    $raw_term = $_GET['searchterm'];
+    $negate = (strtolower(explode(" ", $raw_term)[0]) === "not");
+    if ($negate) {
+      $raw_term = preg_replace('/^not\s+/i', '', $raw_term);
     }
-    $searchquery = "AND (Com_name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Sci_name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Confidence ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." File_Name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Time ".$not."LIKE '%".$_GET['searchterm']."%')";
+    $not = $negate ? "NOT " : "";
+    $op  = $negate ? "AND"  : "OR";
+    $searchquery = "AND (Com_name {$not}LIKE :t1 {$op} Sci_name {$not}LIKE :t2 {$op} Confidence {$not}LIKE :t3 {$op} File_Name {$not}LIKE :t4 {$op} Time {$not}LIKE :t5)";
+    $search_term_bound = '%' . $raw_term . '%';
   } else {
     $searchquery = "";
+    $search_term_bound = null;
   }
   if(isset($_GET['display_limit']) && is_numeric($_GET['display_limit'])){
     $statement0 = $db->prepare('SELECT Date, Time, Com_Name, Sci_Name, Confidence, File_Name FROM detections WHERE Date == Date(\'now\', \'localtime\') '.$searchquery.' ORDER BY Time DESC LIMIT '.(intval($_GET['display_limit'])-40).',40');
@@ -151,6 +151,11 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
       $statement0 = $db->prepare('SELECT Date, Time, Com_Name, Sci_Name, Confidence, File_Name FROM detections WHERE Date == Date(\'now\', \'localtime\') '.$searchquery.' ORDER BY Time DESC');
     }
     
+  }
+  if ($search_term_bound !== null) {
+    for ($i = 1; $i <= 5; $i++) {
+      $statement0->bindValue(":t$i", $search_term_bound, SQLITE3_TEXT);
+    }
   }
   ensure_db_ok($statement0);
   $result0 = $statement0->execute();

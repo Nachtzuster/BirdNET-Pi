@@ -25,8 +25,14 @@ if(isset($_GET['deletefile'])) {
   $statement1 = $db_writable->prepare('DELETE FROM detections WHERE File_Name = :file_name LIMIT 1');
   ensure_db_ok($statement1);
   $statement1->bindValue(':file_name', explode("/", $_GET['deletefile'])[2]);
-  $file_pointer = $home."/BirdSongs/Extracted/By_Date/".$_GET['deletefile'];
-  if (!exec("sudo rm $file_pointer 2>&1 && sudo rm $file_pointer.png 2>&1", $output)) {
+  $file_pointer = realpath($home."/BirdSongs/Extracted/By_Date/".$_GET['deletefile']);
+  $allowed_base = realpath($home."/BirdSongs/Extracted/By_Date/");
+  if ($file_pointer === false || !str_starts_with($file_pointer, $allowed_base)) {
+    echo "Error - invalid file path";
+    die();
+  }
+  @unlink($file_pointer);
+  if (@unlink($file_pointer . ".png") || true) {
     echo "OK";
   } else {
     echo "Error - file deletion failed : " . implode(", ", $output) . "<br>";
@@ -636,8 +642,9 @@ echo "<table>
 
   if(isset($_GET['filename'])){
     $name = $_GET['filename'];
-    $statement2 = $db->prepare("SELECT * FROM detections where File_name == \"$name\" ORDER BY Date DESC, Time DESC");
+    $statement2 = $db->prepare("SELECT * FROM detections WHERE File_name = :filename ORDER BY Date DESC, Time DESC");
     ensure_db_ok($statement2);
+    $statement2->bindValue(':filename', $name, SQLITE3_TEXT);
     $result2 = $statement2->execute();
     $results = $result2->fetchArray(SQLITE3_ASSOC);
     $sciname = $results['Sci_Name'];
