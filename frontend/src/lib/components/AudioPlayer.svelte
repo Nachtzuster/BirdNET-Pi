@@ -22,6 +22,7 @@
 		{ label: 'Fast bird', rate: 0.6, detail: '0.6x' },
 		{ label: 'Fine', rate: 0.5, detail: '0.5x' },
 	];
+	const temporalZoomReferenceUrl = 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3791410/';
 	const temporalZoomPrewarmOrder = ['0.7', '0.6', '0.85', '0.5'];
 
 	let audio: HTMLAudioElement;
@@ -341,7 +342,7 @@
 					{/each}
 				</div>
 				<p class="mt-2 leading-snug text-primary-700/80 dark:text-primary-100/80">
-					Give your ears more room to catch fast notes and tiny gaps. Pitch stays put.
+					“Zoom in” on the fast notes and tiny gaps without changing the pitch.
 				</p>
 			</div>
 		{/if}
@@ -367,7 +368,14 @@
 						{/each}
 					</div>
 					<p class="mt-2 leading-snug text-gray-500 dark:text-gray-400">
-						Temporal zoom slows playback with pitch preservation so human listeners can notice fast notes, gaps, trills, and subtle differences. Labels are inspired by visual temporal-resolution studies, not simulations of animal hearing.
+						Temporal zoom slows playback with pitch preservation so human listeners can notice fast notes, gaps, trills, and subtle differences. Preset labels are inspired by
+						<a
+							href={temporalZoomReferenceUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-primary-600 hover:underline dark:text-primary-400"
+						>research on temporal perception across species</a>
+						, not simulations of animal hearing.
 					</p>
 				</div>
 				<label class="text-gray-600 dark:text-gray-400">
@@ -434,7 +442,8 @@
 					<div>
 						<p class="font-medium text-primary-800 dark:text-primary-100">Temporal Zoom</p>
 						<p class="text-primary-700/80 dark:text-primary-100/80">
-							Give your ears more room to catch fast notes, tiny gaps, and quick differences. Pitch stays put.
+							“Zoom in” on the fast notes and tiny gaps without changing the pitch.
+
 						</p>
 					</div>
 					<p class="font-medium text-primary-700 dark:text-primary-200">{playbackRate.toFixed(2)}x</p>
@@ -474,7 +483,7 @@
 						<div>
 							<p class="font-medium text-gray-800 dark:text-gray-100">Temporal Zoom</p>
 							<p class="text-gray-500 dark:text-gray-400">
-								Give your ears more room to catch fast notes, tiny gaps, trills, and quick differences. Pitch stays put.
+								“Zoom in” on the fast notes and tiny gaps without changing the pitch.
 							</p>
 						</div>
 						<p class="font-medium text-gray-600 dark:text-gray-300">{playbackRate.toFixed(2)}x</p>
@@ -495,7 +504,14 @@
 						{/each}
 					</div>
 					<p class="mt-2 leading-snug text-gray-500 dark:text-gray-400">
-						Reference labels are inspired by visual temporal-resolution studies; they are not simulations of another animal's hearing.
+						Reference labels are inspired by
+						<a
+							href={temporalZoomReferenceUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-primary-600 hover:underline dark:text-primary-400"
+						>research on temporal perception across species</a>
+						(Healy et al., 2013).
 					</p>
 				</div>
 				<label class="text-gray-600 dark:text-gray-400">
