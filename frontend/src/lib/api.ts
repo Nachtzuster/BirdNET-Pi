@@ -345,7 +345,7 @@ export const system = {
 
 // Integrations API
 export const integrations = {
-	image: (sciName: string) => request<BirdImage>(`/image/${encodeURIComponent(sciName)}`),
+	image: (sciName: string) => request<BirdImage | null>(`/image/${encodeURIComponent(sciName)}`),
 
 	blacklistImage: (sciName: string, auth: { username: string; password: string }) =>
 		request(`/image/${encodeURIComponent(sciName)}/blacklist`, { method: 'POST', auth }),

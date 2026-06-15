@@ -1,6 +1,44 @@
-<script lang="ts">
-	import { onMount } from 'svelte';
+<script context="module" lang="ts">
 	import { integrations, type BirdImage } from '$lib/api';
+
+	const imageCache = new Map<string, BirdImage | null>();
+	const imageRequests = new Map<string, Promise<BirdImage | null>>();
+
+	function imageCacheKey(sciName: string): string {
+		return sciName.trim();
+	}
+
+	async function loadSpeciesImage(sciName: string): Promise<BirdImage | null> {
+		const key = imageCacheKey(sciName);
+		if (!key) return null;
+
+		if (imageCache.has(key)) {
+			return imageCache.get(key) ?? null;
+		}
+
+		let request = imageRequests.get(key);
+		if (!request) {
+			request = integrations
+				.image(sciName)
+				.then((result) => {
+					const image = result ?? null;
+					imageCache.set(key, image);
+					imageRequests.delete(key);
+					return image;
+				})
+				.catch((error) => {
+					imageRequests.delete(key);
+					throw error;
+				});
+			imageRequests.set(key, request);
+		}
+
+		return request;
+	}
+</script>
+
+<script lang="ts">
+	import { onDestroy, onMount } from 'svelte';
 
 	export let sciName: string;
 	export let size: 'xs' | 'sm' | 'md' | 'lg' = 'md';
@@ -8,6 +46,9 @@
 	let imageData: BirdImage | null = null;
 	let loading = true;
 	let error = false;
+	let container: HTMLDivElement | null = null;
+	let observer: IntersectionObserver | undefined;
+	let loadStarted = false;
 
 	const sizeClasses = {
 		xs: 'w-10 h-10',
@@ -16,18 +57,56 @@
 		lg: 'w-48 h-48',
 	};
 
-	onMount(async () => {
+	async function loadImage() {
+		if (loadStarted) return;
+		loadStarted = true;
+
 		try {
-			imageData = await integrations.image(sciName);
+			imageData = await loadSpeciesImage(sciName);
 		} catch (e) {
 			error = true;
 		} finally {
 			loading = false;
 		}
+	}
+
+	onMount(() => {
+		const key = imageCacheKey(sciName);
+		if (!key) {
+			loading = false;
+			return;
+		}
+
+		if (imageCache.has(key)) {
+			imageData = imageCache.get(key) ?? null;
+			loading = false;
+			return;
+		}
+
+		if (!container || typeof IntersectionObserver === 'undefined') {
+			void loadImage();
+			return;
+		}
+
+		observer = new IntersectionObserver((entries) => {
+			for (const entry of entries) {
+				if (!entry.isIntersecting) continue;
+				void loadImage();
+				observer?.disconnect();
+				observer = undefined;
+				break;
+			}
+		}, { rootMargin: '600px' });
+
+		observer.observe(container);
+	});
+
+	onDestroy(() => {
+		observer?.disconnect();
 	});
 </script>
 
-<div class="{sizeClasses[size]} bg-gray-200 dark:bg-dark-card rounded-lg overflow-hidden">
+<div bind:this={container} class="{sizeClasses[size]} bg-gray-200 dark:bg-dark-card rounded-lg overflow-hidden">
 	{#if loading}
 		<div class="w-full h-full flex items-center justify-center">
 			<div class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>

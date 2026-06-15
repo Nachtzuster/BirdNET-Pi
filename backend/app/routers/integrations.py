@@ -24,6 +24,10 @@ NEGATIVE_CACHE_TTL_SECONDS = 12 * 60 * 60
 WIKIMEDIA_MIN_REQUEST_INTERVAL_SECONDS = 0.5
 WIKIMEDIA_DEFAULT_RETRY_AFTER_SECONDS = 60
 WIKIMEDIA_LOCAL_CACHE_MAX_WIDTH = 640
+IMAGE_ASSET_CACHE_SECONDS = {
+    'wikipedia': 7 * 24 * 60 * 60,
+    'flickr': 60 * 60,
+}
 
 _wikimedia_request_lock: Optional[asyncio.Lock] = None
 _wikimedia_lock_loop_id: Optional[int] = None
@@ -277,6 +281,14 @@ async def ensure_local_image_asset(
 def build_local_asset_url(provider: str, sci_name: str) -> str:
     """Build API URL for a cached local image asset."""
     return f"/api/image-asset/{provider}/{sci_name}"
+
+
+def get_image_asset_cache_headers(provider: str) -> dict[str, str]:
+    """Return browser cache headers for locally cached image assets."""
+    max_age = IMAGE_ASSET_CACHE_SECONDS.get(provider.lower(), 60 * 60)
+    return {
+        "Cache-Control": f"public, max-age={max_age}, stale-while-revalidate=86400",
+    }
 
 
 def parse_retry_after_seconds(retry_after_header: Optional[str]) -> int:
@@ -551,7 +563,7 @@ async def get_cached_image_asset(
         raise HTTPException(status_code=404, detail="Cached image asset not found")
 
     file_path = os.path.join(settings.base_path, local_path)
-    return FileResponse(file_path)
+    return FileResponse(file_path, headers=get_image_asset_cache_headers(provider))
 
 
 @router.post("/image/{sci_name}/blacklist")

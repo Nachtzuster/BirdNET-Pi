@@ -165,6 +165,34 @@ class TestIntegrationsCache(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(local_path, os.path.join('scripts', 'image-cache', 'wikipedia', 'Sitta_pusilla.jpg'))
             mock_fetch.assert_called_once()
 
+    async def test_cached_asset_response_sets_browser_cache_headers(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.makedirs(os.path.join(tmpdir, 'scripts'), exist_ok=True)
+            settings = DummySettings(base_path=tmpdir)
+            local_relative_path = os.path.join('scripts', 'image-cache', 'wikipedia', 'Corvus_corax.jpg')
+            local_absolute_path = os.path.join(tmpdir, local_relative_path)
+            os.makedirs(os.path.dirname(local_absolute_path), exist_ok=True)
+            with open(local_absolute_path, 'wb') as image_file:
+                image_file.write(b'test')
+            integrations.cache_fetch_meta(
+                sci_name='Corvus corax',
+                has_image=True,
+                provider='wikipedia',
+                settings=settings,
+                local_path=local_relative_path,
+            )
+
+            response = await integrations.get_cached_image_asset(
+                provider='wikipedia',
+                sci_name='Corvus corax',
+                settings=settings,
+            )
+
+            self.assertEqual(
+                response.headers.get('cache-control'),
+                'public, max-age=604800, stale-while-revalidate=86400',
+            )
+
 
 if __name__ == '__main__':
     unittest.main()
