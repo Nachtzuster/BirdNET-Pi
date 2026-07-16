@@ -18,9 +18,10 @@ if(isset($_GET['ajax_csv'])) {
 
   if (empty($config['RTSP_STREAM'])) {
     $look_in_directory = $STREAM_DATA_DIR;
-    $files = scandir($look_in_directory, SCANDIR_SORT_ASCENDING);
-    //Extract the filename, positions 0 and 1 are the folder hierarchy '.' and '..'
-    $newest_file = $files[2];
+    $files = glob($look_in_directory . "*.wav.json");
+    if (count($files) !== 0) {
+      $newest_file = $files[0];
+    }
   }
   else {
     $look_in_directory = $STREAM_DATA_DIR;

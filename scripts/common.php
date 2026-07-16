@@ -450,8 +450,8 @@ class Wikipedia extends ImageProvider {
       } else {
         $license_url = $this->get_external_link($image_url);
       }
-      if ($page["imageinfo"][0]["width"] > 1024) {
-        $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1024px-'. $image_name;
+      if ($page["imageinfo"][0]["width"] > 1280) {
+        $image_url = preg_replace('#/commons/#', '/commons/thumb/', $image_url) . '/1280px-'. $image_name;
       }
     }
 
