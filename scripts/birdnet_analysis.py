@@ -12,7 +12,7 @@ import inotify.adapters
 from inotify.constants import IN_CLOSE_WRITE
 
 from utils.analysis import load_global_model, run_analysis
-from utils.helpers import get_settings, get_wav_files, ANALYZING_NOW
+from utils.helpers import get_settings, get_wav_files, get_analyzing_now_path
 from utils.classes import ParseFileName
 from utils.reporting import extract_detection, summary, write_to_file, write_to_db, apprise, bird_weather, heartbeat, \
     update_json_file
@@ -84,12 +84,12 @@ def main():
 
 
 def process_file(file_name, report_queue):
+    enqueued = False
     try:
         if os.path.getsize(file_name) == 0:
-            os.remove(file_name)
             return
         log.info('Analyzing %s', file_name)
-        with open(ANALYZING_NOW, 'w') as analyzing:
+        with open(get_analyzing_now_path(), 'w') as analyzing:
             analyzing.write(file_name)
         file = ParseFileName(file_name)
         detections = run_analysis(file)
@@ -97,9 +97,19 @@ def process_file(file_name, report_queue):
         # full chunk behind - same guarantee the old join() gave, but the next
         # chunk's inference can overlap this chunk's reporting.
         report_queue.put((file, detections))
-    except BaseException as e:
+        enqueued = True
+    except Exception as e:
         stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""
         log.exception(f'Unexpected error: {stderr}', exc_info=e)
+    finally:
+        # On success the reporting thread owns the file and removes it there.
+        # Only clean up here when we failed before handing it off - otherwise a
+        # failed analysis strands the wav forever (nothing else reaps StreamData).
+        if not enqueued:
+            try:
+                os.remove(file_name)
+            except OSError:
+                pass
 
 
 def handle_reporting_queue(queue):
@@ -120,12 +130,18 @@ def handle_reporting_queue(queue):
             apprise(file, detections)
             bird_weather(file, detections)
             heartbeat()
-            os.remove(file.file_name)
-        except BaseException as e:
+        except Exception as e:
             stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""
             log.exception(f'Unexpected error: {stderr}', exc_info=e)
-
-        queue.task_done()
+        finally:
+            # This is the ONLY place StreamData wavs get removed (cleanup.sh only
+            # reaps PROCESSED), so it must run even when reporting above fails -
+            # otherwise any error strands the wav permanently.
+            try:
+                os.remove(file.file_name)
+            except OSError:
+                pass
+            queue.task_done()
 
     # mark the 'None' signal as processed
     queue.task_done()

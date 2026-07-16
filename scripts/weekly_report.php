@@ -1,7 +1,9 @@
-<?php 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+<?php
+/* error_reporting is process-global and this file is include()d by views.php, so
+   E_ALL + display_errors here sprayed notices (and absolute filesystem paths)
+   into the rendered page for the rest of the request. Match every other view. */
+ini_set('display_errors', 0);
+error_reporting(E_ERROR);
 require_once 'scripts/common.php';
 
 $startdate = strtotime('last sunday') - (7*86400);

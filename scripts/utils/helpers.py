@@ -13,7 +13,17 @@ BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DB_PATH = os.path.join(BASE_PATH, 'scripts/birds.db')
 MODEL_PATH = os.path.join(BASE_PATH, 'model')
 FONT_DIR = os.path.join(BASE_PATH, 'homepage/static')
-ANALYZING_NOW = os.path.expanduser('~/BirdSongs/StreamData/analyzing_now.txt')
+
+
+def get_analyzing_now_path():
+    """Path of the 'currently analyzing' marker file.
+
+    Derived from RECS_DIR rather than hardcoding ~/BirdSongs: with the old
+    constant, relocating RECS_DIR made open() raise for every file, which the
+    caller's handler swallowed - analysis stopped while the service still
+    looked healthy. scripts/spectrogram.sh derives the same path from RECS_DIR.
+    """
+    return os.path.join(get_settings()['RECS_DIR'], 'StreamData', 'analyzing_now.txt')
 
 
 def get_font():

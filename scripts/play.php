@@ -22,7 +22,10 @@ if(isset($_GET['deletefile'])) {
     die();
   }
   $db_writable = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READWRITE);
-  $db->busyTimeout(1000);
+  /* was setting the timeout on $db (the read-only handle), leaving the writable
+     one with none - so the DELETE below failed instantly with SQLITE_BUSY
+     exactly when the analysis service was mid-insert. */
+  $db_writable->busyTimeout(1000);
   $statement1 = $db_writable->prepare('DELETE FROM detections WHERE File_Name = :file_name LIMIT 1');
   ensure_db_ok($statement1);
   $statement1->bindValue(':file_name', basename($deletefile));

@@ -2,14 +2,18 @@ try:
     import apprise
 except ImportError:
     apprise = None
+import logging
 import os
 import socket
+import sqlite3
 import requests
 import html
 import time
 
 from .db import get_todays_count_for, get_this_weeks_count_for
 from .helpers import get_settings
+
+log = logging.getLogger(__name__)
 
 userDir = os.path.expanduser('~')
 APPRISE_CONFIG = userDir + '/BirdNET-Pi/apprise.txt'
@@ -93,7 +97,11 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
                 resp = requests.get(url=url, timeout=10).json()
                 images[com_name] = resp['data']['image_url']
             except Exception as e:
-                print("IMAGE API ERROR:", e)
+                # Cache the failure too. Otherwise a down image API means a fresh
+                # 10s timeout on EVERY detection of this species, in the analysis
+                # critical path.
+                images[com_name] = ""
+                log.warning("image API lookup failed for %s: %s", sci_name, e)
         image_url = images.get(com_name, "")
 
     if settings_dict.get('APPRISE_NOTIFY_EACH_DETECTION') == "1":
@@ -105,7 +113,13 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
 
     APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT = 1  # Notifies the first N per day.
     if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY') == "1":
-        numberDetections = get_todays_count_for(sci_name)
+        # A failed count must only skip this notification - never abort the
+        # caller's reporting for the detection as a whole.
+        try:
+            numberDetections = get_todays_count_for(sci_name)
+        except sqlite3.Error:
+            log.warning("could not count today's detections for %s; skipping notification", sci_name)
+            numberDetections = 0
         if 0 < numberDetections <= APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT:
             reason = "first time today"
             notify_body = render_template(body, reason)
@@ -114,7 +128,11 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
             species_last_notified[com_name] = int(time.time())
 
     if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES') == "1":
-        numberDetections = get_this_weeks_count_for(sci_name)
+        try:
+            numberDetections = get_this_weeks_count_for(sci_name)
+        except sqlite3.Error:
+            log.warning("could not count this week's detections for %s; skipping notification", sci_name)
+            numberDetections = 0
         if 0 < numberDetections <= 5:
             reason = f"only seen {numberDetections} times in last 7d"
             notify_body = render_template(body, reason)

@@ -4,7 +4,11 @@
 source /etc/birdnet/birdnet.conf &> /dev/null
 LOG_DIR="${HOME}/BirdNET-Pi/logs"
 my_dir=$HOME/BirdNET-Pi/scripts
-services=$(awk '/service/ && /systemctl/ && !/php/ {print $3}' ${my_dir}/install_services.sh | sort)
+# Must be an ARRAY: as a plain string, "${services[@]}" below expands to a single
+# element holding every service name joined by newlines, so the -L test never
+# matched and the bundle shipped with no journals at all. (uninstall.sh does this
+# correctly.)
+services=($(awk '/service/ && /systemctl/ && !/php/ {print $3}' ${my_dir}/install_services.sh | sort -u))
 
 # Create logs directory
 [ -d ${LOG_DIR} ] || mkdir ${LOG_DIR}
@@ -18,7 +22,11 @@ for i in "${services[@]}";do
 done
 
 # Create password-removed birdnet.conf
-sed -e '/PWD=/d' ${HOME}/BirdNET-Pi/birdnet.conf > ${LOG_DIR}/birdnet.conf 
+# Prefer the canonical location the rest of the tree sources; fall back to the
+# in-tree copy so this keeps working on older layouts.
+CONF=/etc/birdnet/birdnet.conf
+[ -f "${CONF}" ] || CONF="${HOME}/BirdNET-Pi/birdnet.conf"
+sed -e '/PWD=/d' "${CONF}" > ${LOG_DIR}/birdnet.conf
 
 # Create password-removed Caddyfile
 if [ -f /etc/caddy/Caddyfile ];then

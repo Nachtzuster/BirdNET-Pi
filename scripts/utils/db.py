@@ -1,8 +1,10 @@
+import logging
 import sqlite3
-import time as timeim
 from datetime import datetime
 
 from .helpers import DB_PATH
+
+log = logging.getLogger(__name__)
 
 _DB = None
 
@@ -17,15 +19,17 @@ def get_db():
 
 
 def get_records(select_sql):
+    # Previously this swallowed the error, slept 2s (in the analysis critical
+    # path, retrying nothing) and returned [] - which callers cannot tell apart
+    # from a genuine "no rows", so a DB hiccup silently dropped notifications.
+    # Log properly and let the caller's handler decide.
     con = get_db()
     try:
         cur = con.execute(select_sql)
-        records = cur.fetchall()
-    except sqlite3.Error as e:
-        print(e)
-        timeim.sleep(2)
-        records = []
-    return records
+        return cur.fetchall()
+    except sqlite3.Error:
+        log.exception('query failed: %s', select_sql)
+        raise
 
 
 def get_record(select_sql):

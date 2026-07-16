@@ -15,13 +15,18 @@ fi
 next=0
 looptime=$(( RECORDING_LENGTH * 2 / 3 ))
 
-touch "$HOME/BirdSongs/StreamData/analyzing_now.txt"
+# Derive from RECS_DIR so this stays in step with the python side
+# (utils/helpers.py:get_analyzing_now_path). Hardcoding $HOME/BirdSongs meant a
+# relocated RECS_DIR silently broke the watch.
+ANALYZING_NOW="${RECS_DIR:-$HOME/BirdSongs}/StreamData/analyzing_now.txt"
+
+touch "${ANALYZING_NOW}"
 # Continuously loop generating a spectrogram
-inotifywait -m -e close_write "$HOME/BirdSongs/StreamData/analyzing_now.txt" |
+inotifywait -m -e close_write "${ANALYZING_NOW}" |
 while read; do
   now=$(date +%s)
   if (( now > next )); then
-    analyzing_now="$(<$HOME/BirdSongs/StreamData/analyzing_now.txt)"
+    analyzing_now="$(<"${ANALYZING_NOW}")"
 
     if [ -n "${analyzing_now}" ] && [ -f "${analyzing_now}" ]; then
       spectrogram_png=${EXTRACTED}/spectrogram.png

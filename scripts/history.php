@@ -4,9 +4,11 @@
 $_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
 $_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
 
-error_reporting(E_ALL);
-ini_set('display_errors',1);
-ini_set('display_startup_errors',1);
+/* error_reporting is process-global and this file is include()d by views.php, so
+   E_ALL + display_errors here sprayed notices (and absolute filesystem paths)
+   into the rendered page for the rest of the request. Match every other view. */
+error_reporting(E_ERROR);
+ini_set('display_errors', 0);
 require_once 'scripts/common.php';
 $config = get_config();
 

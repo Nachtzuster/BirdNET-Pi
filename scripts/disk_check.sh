@@ -2,10 +2,17 @@
 set -x
 
 source /etc/birdnet/birdnet.conf
-used="$(df -h ${EXTRACTED} | tail -n1 | awk '{print $5}')"
+
+disk_used_pct() {
+  local u
+  u="$(df -h "${EXTRACTED}" | tail -n1 | awk '{print $5}')"
+  echo "${u//%}"
+}
+
+used="$(disk_used_pct)"
 purge_threshold="${PURGE_THRESHOLD:-95}"
 
-if [ "${used//%}" -ge "$purge_threshold" ]; then
+if [ "${used}" -ge "$purge_threshold" ]; then
 
   case $FULL_DISK in
     purge) echo "Removing oldest data"
@@ -14,7 +21,15 @@ if [ "${used//%}" -ge "$purge_threshold" ]; then
         if ! grep -qxFe \#\#start $HOME/BirdNET-Pi/scripts/disk_check_exclude.txt; then
             exit
         fi
-        filestodelete=$(($(find ${EXTRACTED}/By_Date/* -type f | wc -l) / $(find ${EXTRACTED}/By_Date/* -maxdepth 0 -type d | wc -l)))
+        datedirs=$(find ${EXTRACTED}/By_Date/* -maxdepth 0 -type d | wc -l)
+        # Guard the divisor: with no date dirs this was a division by zero, which
+        # left filestodelete empty and made the [ -ge ] test below error instead
+        # of ever breaking out of the loop.
+        if [ "${datedirs}" -eq 0 ]; then
+            echo "No date directories to purge"
+            exit 0
+        fi
+        filestodelete=$(( $(find ${EXTRACTED}/By_Date/* -type f | wc -l) / datedirs ))
         iter=0
         for i in */*/*; do
             if [ $iter -ge $filestodelete ]; then
@@ -25,7 +40,7 @@ if [ "${used//%}" -ge "$purge_threshold" ]; then
             fi
             ((iter++))
         done
-        find ~/BirdSongs/ -type d -empty -mtime +90 -delete
+        find "${RECS_DIR:-$HOME/BirdSongs}/" -type d -empty -mtime +90 -delete
         find ${EXTRACTED}/By_Date/ -empty -type d -delete;;
 
        #rm -drfv "$(find ${EXTRACTED}/By_Date/* -maxdepth 1 -type d -prune \
@@ -35,7 +50,11 @@ if [ "${used//%}" -ge "$purge_threshold" ]; then
   esac
 fi
 sleep 1
-if [ "${used//%}" -ge "$purge_threshold" ]; then
+# Re-measure: the purge above may already have freed enough. Re-using the stale
+# reading made this second, more destructive purge (rm -rf $PROCESSED) fire
+# unconditionally whenever the first one did.
+used="$(disk_used_pct)"
+if [ "${used}" -ge "$purge_threshold" ]; then
   case $FULL_DISK in
     purge) echo "Removing more data"
        rm -rfv ${PROCESSED}/*;;
