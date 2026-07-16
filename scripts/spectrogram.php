@@ -20,7 +20,11 @@ if(isset($_GET['ajax_csv'])) {
     $look_in_directory = $STREAM_DATA_DIR;
     $files = glob($look_in_directory . "*.wav.json");
     if (count($files) !== 0) {
-      $newest_file = $files[0];
+      /* glob() sorts ascending and the names are date-time prefixed, so $files[0]
+         was the OLDEST - despite the variable name, and despite the RTSP branch
+         below deliberately keeping the newest. Take the last entry. */
+      $newest_file = end($files);
+      reset($files);
     }
   }
   else {

@@ -1,27 +1,35 @@
 <?php
 error_reporting(E_ERROR);
-ini_set('display_errors',1);
+ini_set('display_errors', 0);
 
 session_start();
 require_once "scripts/common.php";
 $user = get_user();
 $home = get_home();
 
-$fetch = shell_exec("sudo -u".$user." git -C ".$home."/BirdNET-Pi fetch 2>&1");
-$str = trim(shell_exec("sudo -u".$user." git -C ".$home."/BirdNET-Pi status"));
-if (preg_match("/behind '.*?' by (\d+) commit(s?)\b/", $str, $matches)) {
-  $num_commits_behind = $matches[1];
+/* This used to run a *blocking, networked* `git fetch` on every single render,
+   so with a slow or absent uplink the page hung for the full DNS+TCP timeout.
+   views.php already solved this: background the fetch and cache the result in
+   the session for a day. Reuse that instead of duplicating it differently. */
+$num_commits_behind = $_SESSION['behind'] ?? '0';
+if (!isset($_SESSION['behind']) || !isset($_SESSION['behind_time'])
+    || time() > $_SESSION['behind_time'] + 86400) {
+  shell_exec("sudo -u".$user." git -C ".$home."/BirdNET-Pi fetch > /dev/null 2>/dev/null &");
+  $str = trim(shell_exec("sudo -u".$user." git -C ".$home."/BirdNET-Pi status"));
+  if (preg_match("/behind '.*?' by (\d+) commit(s?)\b/", $str, $matches)) {
+    $num_commits_behind = $matches[1];
+  }
+  if (preg_match('/\b(\d+)\b and \b(\d+)\b different commits each/', $str, $matches)) {
+      $num1 = (int) $matches[1];
+      $num2 = (int) $matches[2];
+      $num_commits_behind = $num1 + $num2;
+  }
+  if (stripos($str, "Your branch is up to date") !== false) {
+    $num_commits_behind = '0';
+  }
+  $_SESSION['behind'] = $num_commits_behind;
+  $_SESSION['behind_time'] = time();
 }
-if (preg_match('/\b(\d+)\b and \b(\d+)\b different commits each/', $str, $matches)) {
-    $num1 = (int) $matches[1];
-    $num2 = (int) $matches[2];
-    $num_commits_behind = $num1 + $num2;
-}
-if (stripos($str, "Your branch is up to date") !== false) {
-  $num_commits_behind = '0';
-}
-$_SESSION['behind'] = $num_commits_behind;
-$_SESSION['behind_time'] = time();
 
 $restore = "cat $home/BirdSongs/restore.log";
 $max_upload_size = floor(disk_free_space("$home/BirdNET-Pi/") / 1.001);

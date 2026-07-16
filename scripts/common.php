@@ -572,8 +572,22 @@ function get_info_url($sciname){
   $engname = get_com_en_name($sciname);
   $config = get_config();
   if ($config['INFO_SITE'] === 'EBIRD'){
-    require 'scripts/ebird.php';
-    $ebird = $ebirds[$sciname];
+    /* `require` (not require_once) inside the function body rebuilt this ~6,500
+       entry / 243KB array literal on EVERY call - and callers invoke this once
+       per rendered row. Load it once into a static.
+       Also __DIR__: the old relative path silently depended on the caller's CWD
+       being homepage/. */
+    static $ebirds_cache = null;
+    if ($ebirds_cache === null) {
+      /* plain require, guarded by the static: require_once would silently become
+         a no-op (leaving $ebirds undefined) if anything else ever includes this
+         file first. The static already guarantees we only pay for it once. */
+      $ebirds = null;
+      require __DIR__ . '/ebird.php';
+      $ebirds_cache = $ebirds;
+    }
+    $ebirds = $ebirds_cache;
+    $ebird = $ebirds[$sciname] ?? '';
     $language = $config['DATABASE_LANG'];
     $url = "https://ebird.org/species/$ebird?siteLanguage=$language";
     $url_title = "eBirds";

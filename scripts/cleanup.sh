@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 source /etc/birdnet/birdnet.conf
-set -x
+# set -x  # was unconditional: this runs on a timer/at every restart, and every
+# traced line is a journal write (SD-card wear). Uncomment to debug.
 
 cd "${PROCESSED}" || exit 1
 empties=($(find ${PROCESSED} -size 57c))
