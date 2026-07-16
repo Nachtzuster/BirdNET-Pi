@@ -45,10 +45,16 @@ function conf_safe_string($v) {
   return trim(preg_replace('/[\r\n]+/', ' ', $v));
 }
 
-/* A bare, unquoted numeric value. */
+/* A bare, unquoted numeric value.
+   Pass the CURRENT config value as $default: on a rejected input we must not
+   silently write a plausible-looking constant. '0' is outside the legal range
+   for SENSITIVITY (0.5-1.5) and would mean "record everything" for CONFIDENCE.
+   Keeping the existing value preserves "never write an unsafe value" without
+   destroying a working configuration.
+   Accepts a leading '.' (".5") and a trailing '.' which bash/INI tolerate. */
 function conf_safe_number($v, $default = '0') {
   $v = trim((string)$v);
-  return preg_match('/^-?\d+(\.\d+)?$/', $v) ? $v : $default;
+  return preg_match('/^-?(\d+(\.\d*)?|\.\d+)$/', $v) ? $v : $default;
 }
 
 /* A bare, unquoted identifier (model names, colour schemes, ids, ...). */
@@ -301,7 +307,14 @@ class ImageProvider {
 
   public function __construct() {
     $this->set_db();
-    $opts = ['http' => ['header' => "User-Agent: BirdNET-Pi"]];
+    /* An explicit timeout matters: these are blocking outbound fetches made from
+       inside a PHP-FPM worker. Without it they inherit default_socket_timeout
+       (60s), so a slow upstream pins a worker for a minute - and on a 1GB Pi the
+       worker pool is small enough that a handful of those stall the whole UI. */
+    $opts = ['http' => [
+      'header' => "User-Agent: BirdNET-Pi",
+      'timeout' => 5,
+    ]];
     $this->context = stream_context_create($opts);
   }
 
@@ -509,7 +522,10 @@ class Wikipedia extends ImageProvider {
   protected $db_path = __ROOT__ . '/scripts/wikipedia.db';
 
   protected function get_from_source($sci_name) {
-    $page_title = str_replace(' ', '_', $sci_name);
+    /* rawurlencode: this value becomes a path segment in the upstream request.
+       Unencoded, dot-segments and query separators in the name let a caller
+       reach arbitrary paths on the target host. */
+    $page_title = rawurlencode(str_replace(' ', '_', $sci_name));
     $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/$page_title");
     if ($data == false or !isset($data['originalimage']))
       return;

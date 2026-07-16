@@ -39,7 +39,19 @@ SOUND_CARD="$(aplay -L \
   | grep -ve 'vc4' -e 'Head' -e 'PCH' \
   | uniq)"
 echo "SOUND_CARD=${SOUND_CARD}" > ${LOG_DIR}/soundcard
-script -c "arecord -D ${SOUND_CARD} --dump-hw-params" -a ${LOG_DIR}/soundcard &> /dev/null
+# --dump-hw-params opens the capture device, which on a *running* station is
+# always held by the recorder, so arecord blocks indefinitely and dump_logs
+# never returns - i.e. you could not collect logs from a live station, which is
+# exactly when you need them. Bound it, and say so in the output rather than
+# silently omitting the section.
+if [ -n "${SOUND_CARD}" ]; then
+  if ! timeout 10 arecord -D "${SOUND_CARD}" --dump-hw-params >> ${LOG_DIR}/soundcard 2>&1; then
+    echo "(hw params unavailable: device busy or timed out - expected while the recorder is running)" \
+      >> ${LOG_DIR}/soundcard
+  fi
+else
+  echo "(no capture card detected)" >> ${LOG_DIR}/soundcard
+fi
 
 # Get system info
 CALLS=("df -h" "free -h" "ifconfig" "find ${RECS_DIR}")

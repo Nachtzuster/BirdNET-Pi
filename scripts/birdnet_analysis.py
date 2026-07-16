@@ -122,13 +122,27 @@ def handle_reporting_queue(queue):
         file, detections = msg
         try:
             update_json_file(file, detections)
+            reported = []
             for detection in detections:
-                detection.file_name_extr = extract_detection(file, detection)
-                log.info('%s;%s', summary(file, detection), os.path.basename(detection.file_name_extr))
-                write_to_file(file, detection)
-                write_to_db(file, detection)
-            apprise(file, detections)
-            bird_weather(file, detections)
+                # Contain per detection: write_to_db now raises on persistent
+                # failure, and without this one bad row would drop every later
+                # detection in the chunk AND skip apprise/bird_weather/heartbeat
+                # below - a wider desync than the silent drop it replaced, and a
+                # missed heartbeat can trip a false "station down" alert.
+                try:
+                    detection.file_name_extr = extract_detection(file, detection)
+                    log.info('%s;%s', summary(file, detection), os.path.basename(detection.file_name_extr))
+                    write_to_file(file, detection)
+                    write_to_db(file, detection)
+                    reported.append(detection)
+                except Exception as e:
+                    log.exception('dropping detection %s', detection.common_name, exc_info=e)
+            # Only pass on detections that actually made it: apprise() and
+            # bird_weather() read detection.file_name_extr, which is unset if
+            # extract_detection() was the thing that failed.
+            if reported:
+                apprise(file, reported)
+                bird_weather(file, reported)
             heartbeat()
         except Exception as e:
             stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""

@@ -22,27 +22,30 @@ if [ "${used}" -ge "$purge_threshold" ]; then
         if ! grep -qxFe \#\#start $HOME/BirdNET-Pi/scripts/disk_check_exclude.txt; then
             exit
         fi
-        datedirs=$(find ${EXTRACTED}/By_Date/* -maxdepth 0 -type d | wc -l)
+        datedirs=$(find ${EXTRACTED}/By_Date/* -maxdepth 0 -type d 2>/dev/null | wc -l)
         # Guard the divisor: with no date dirs this was a division by zero, which
         # left filestodelete empty and made the [ -ge ] test below error instead
         # of ever breaking out of the loop.
-        if [ "${datedirs}" -eq 0 ]; then
-            echo "No date directories to purge"
-            exit 0
-        fi
-        filestodelete=$(( $(find ${EXTRACTED}/By_Date/* -type f | wc -l) / datedirs ))
-        iter=0
-        for i in */*/*; do
-            if [ $iter -ge $filestodelete ]; then
-                break
-            fi
-            if ! grep -qxFe "$i" $HOME/BirdNET-Pi/scripts/disk_check_exclude.txt; then
-                rm "$i"
-            fi
-            ((iter++))
-        done
-        find "${RECS_DIR:-$HOME/BirdSongs}/" -type d -empty -mtime +90 -delete
-        find ${EXTRACTED}/By_Date/ -empty -type d -delete;;
+        # Skip only THIS loop when there is nothing to walk - never exit the
+        # script, or we skip the PROCESSED purge below, which is the fallback
+        # that actually frees space when By_Date is already empty.
+        if [ "${datedirs}" -gt 0 ]; then
+          filestodelete=$(( $(find ${EXTRACTED}/By_Date/* -type f | wc -l) / datedirs ))
+          iter=0
+          for i in */*/*; do
+              if [ $iter -ge $filestodelete ]; then
+                  break
+              fi
+              if ! grep -qxFe "$i" $HOME/BirdNET-Pi/scripts/disk_check_exclude.txt; then
+                  rm "$i"
+              fi
+              ((iter++))
+          done
+          find "${RECS_DIR:-$HOME/BirdSongs}/" -type d -empty -mtime +90 -delete
+          find ${EXTRACTED}/By_Date/ -empty -type d -delete
+        else
+          echo "No date directories to purge"
+        fi;;
 
        #rm -drfv "$(find ${EXTRACTED}/By_Date/* -maxdepth 1 -type d -prune \
         # | sort -r | tail -n1)";;

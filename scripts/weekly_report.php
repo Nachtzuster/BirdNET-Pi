@@ -27,41 +27,73 @@ function safe_percentage($count, $prior_count) {
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
 
-$statement1 = $db->prepare('SELECT Sci_Name, Com_Name, COUNT(*) FROM detections WHERE Date BETWEEN "' . date("Y-m-d", $startdate) . '" AND "' . date("Y-m-d", $enddate) . '" GROUP By Sci_Name ORDER BY COUNT(*) DESC');
+$this_start = date("Y-m-d", $startdate);
+$this_end   = date("Y-m-d", $enddate);
+$prev_start = date("Y-m-d", $startdate - (7 * 86400));
+$prev_end   = date("Y-m-d", $enddate - (7 * 86400));
+
+/* This was 1 + 2N queries: the prior-week count and the first-seen check each
+   ran once PER SPECIES inside the loop below (~100 species => ~200 extra
+   prepared statements per report). Pre-aggregate each into a lookup instead, so
+   the whole report costs 3 grouped queries regardless of species count.
+   Values are bound rather than interpolated while we're here. */
+
+# prior week counts, grouped once
+$prior = [];
+$statement2 = $db->prepare('SELECT Sci_Name, COUNT(*) AS Count FROM detections WHERE Date BETWEEN :ps AND :pe GROUP BY Sci_Name');
+ensure_db_ok($statement2);
+$statement2->bindValue(':ps', $prev_start, SQLITE3_TEXT);
+$statement2->bindValue(':pe', $prev_end, SQLITE3_TEXT);
+$result2 = $statement2->execute();
+while ($row = $result2->fetchArray(SQLITE3_ASSOC)) {
+  $prior[$row['Sci_Name']] = $row['Count'];
+}
+
+# first/last detection date per species, grouped once. A species is "first seen"
+# when it has no detection outside this week - i.e. its whole range sits inside
+# it. Equivalent to the old per-species "COUNT(*) outside the week == 0".
+$span = [];
+$statement3 = $db->prepare('SELECT Sci_Name, MIN(Date) AS mn, MAX(Date) AS mx FROM detections GROUP BY Sci_Name');
+ensure_db_ok($statement3);
+$result3 = $statement3->execute();
+while ($row = $result3->fetchArray(SQLITE3_ASSOC)) {
+  $span[$row['Sci_Name']] = $row;
+}
+
+$statement1 = $db->prepare('SELECT Sci_Name, Com_Name, COUNT(*) AS Count FROM detections WHERE Date BETWEEN :s AND :e GROUP BY Sci_Name ORDER BY COUNT(*) DESC');
 ensure_db_ok($statement1);
+$statement1->bindValue(':s', $this_start, SQLITE3_TEXT);
+$statement1->bindValue(':e', $this_end, SQLITE3_TEXT);
 $result1 = $statement1->execute();
 $detections = [];
 while ($detection = $result1->fetchArray(SQLITE3_ASSOC)) {
   $com_name = $detection["Com_Name"];
   $sci_name = $detection["Sci_Name"];
-  $scount = $detection["COUNT(*)"];
+  $scount = $detection["Count"];
 
-  # previous week
-  $statement2 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Sci_Name == "' . $detection["Sci_Name"] . '" AND Date BETWEEN "' . date("Y-m-d", $startdate - (7 * 86400)) . '" AND "' . date("Y-m-d", $enddate - (7 * 86400)) . '"');
-  ensure_db_ok($statement2);
-  $result2 = $statement2->execute();
-  $priorweekcount = $result2->fetchArray(SQLITE3_ASSOC)['COUNT(*)'];
+  $priorweekcount = $prior[$sci_name] ?? 0;
   $percentagediff = safe_percentage($scount, $priorweekcount);
 
-  # is_first_seen?
-  $statement3 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Sci_Name == "'.$sci_name.'" AND Date NOT BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'"');
-  ensure_db_ok($statement3);
-  $result3 = $statement3->execute();
-  $totalcount = $result3->fetchArray(SQLITE3_ASSOC)['COUNT(*)'];
-  $is_first_seen = $totalcount === 0;
+  $is_first_seen = isset($span[$sci_name])
+    && $span[$sci_name]['mn'] >= $this_start
+    && $span[$sci_name]['mx'] <= $this_end;
 
   $detections[$com_name] = ["count" => $scount, "percentagediff" => $percentagediff, "is_first_seen" => $is_first_seen];
 }
 
-$statement4 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'"');
+$statement4 = $db->prepare('SELECT COUNT(*) AS Count FROM detections WHERE Date BETWEEN :s AND :e');
 ensure_db_ok($statement4);
+$statement4->bindValue(':s', $this_start, SQLITE3_TEXT);
+$statement4->bindValue(':e', $this_end, SQLITE3_TEXT);
 $result4 = $statement4->execute();
-$totalcount = $result4->fetchArray(SQLITE3_ASSOC)['COUNT(*)'];
+$totalcount = $result4->fetchArray(SQLITE3_ASSOC)['Count'];
 
-$statement5 = $db->prepare('SELECT COUNT(*) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate- (7*86400)).'" AND "'.date("Y-m-d",$enddate- (7*86400)).'"');
+$statement5 = $db->prepare('SELECT COUNT(*) AS Count FROM detections WHERE Date BETWEEN :ps AND :pe');
 ensure_db_ok($statement5);
+$statement5->bindValue(':ps', $prev_start, SQLITE3_TEXT);
+$statement5->bindValue(':pe', $prev_end, SQLITE3_TEXT);
 $result5 = $statement5->execute();
-$priortotalcount = $result5->fetchArray(SQLITE3_ASSOC)['COUNT(*)'];
+$priortotalcount = $result5->fetchArray(SQLITE3_ASSOC)['Count'];
 
 $statement6 = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections WHERE Date BETWEEN "'.date("Y-m-d",$startdate).'" AND "'.date("Y-m-d",$enddate).'"');
 ensure_db_ok($statement6);

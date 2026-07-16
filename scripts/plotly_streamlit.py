@@ -440,7 +440,12 @@ if daily is False:
 
         fig = go.Figure(data=[heatmap, sunrise_sunset])
         number_of_y_ticks = 12
-        y_downscale_factor = int(len(saved_time_labels) / number_of_y_ticks)
+        # max(1, ...): saved_time_labels only covers the 15-min buckets this
+        # species actually occupies, so a species detected within a <3h window on
+        # a single day yields <12 columns -> int(n/12) == 0 -> the [::0] slices
+        # below raise "slice step cannot be zero". That is exactly the rare
+        # species someone opens this view to look at.
+        y_downscale_factor = max(1, int(len(saved_time_labels) / number_of_y_ticks))
         fig.update_layout(
             yaxis=dict(
                 tickmode='array',

@@ -58,15 +58,15 @@ if(isset($_GET["latitude"])){
   /* Everything below lands in /etc/birdnet/birdnet.conf, which bash `source`s -
      so an unsanitised value here is remote code execution (e.g. LATITUDE=$(id)).
      Sanitise by type at the point of read; see conf_safe_* in common.php. */
-  $latitude = conf_safe_number($_GET["latitude"]);
-  $longitude = conf_safe_number($_GET["longitude"]);
+  $latitude = conf_safe_number($_GET["latitude"], $config['LATITUDE'] ?? '0');
+  $longitude = conf_safe_number($_GET["longitude"], $config['LONGITUDE'] ?? '0');
   $site_name = conf_safe_string($_GET["site_name"] ?? '');
   $birdweather_id = conf_safe_token($_GET["birdweather_id"] ?? '');
   /* written to apprise.txt / body.txt, not to the sourced conf */
   $apprise_input = $_GET['apprise_input'] ?? '';
   $apprise_notification_title = conf_safe_string($_GET['apprise_notification_title'] ?? '');
   $apprise_notification_body = htmlspecialchars_decode($_GET['apprise_notification_body'] ?? '', ENT_QUOTES);
-  $minimum_time_limit = conf_safe_number($_GET['minimum_time_limit'] ?? '', '0');
+  $minimum_time_limit = conf_safe_number($_GET['minimum_time_limit'] ?? '', $config['APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES'] ?? '0');
   $image_provider = conf_safe_token($_GET["image_provider"] ?? '');
   $flickr_api_key = conf_safe_token($_GET['flickr_api_key'] ?? '');
   $flickr_filter_email = conf_safe_token($_GET["flickr_filter_email"] ?? '');
@@ -75,7 +75,7 @@ if(isset($_GET["latitude"])){
   $color_scheme = conf_safe_token($_GET["color_scheme"] ?? '');
   $timezone = $_GET["timezone"] ?? '';
   $model = conf_safe_token($_GET["model"] ?? '');
-  $sf_thresh = conf_safe_number($_GET["sf_thresh"] ?? '', '0.03');
+  $sf_thresh = conf_safe_number($_GET["sf_thresh"] ?? '', $config['SF_THRESH'] ?? '0.03');
   if(isset($_GET['data_model_version'])) {
     $data_model_version = 2;
   } else {

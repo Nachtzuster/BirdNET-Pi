@@ -267,6 +267,12 @@ fi
 
 sqlite3 $HOME/BirdNET-Pi/scripts/birds.db << EOF
 CREATE INDEX IF NOT EXISTS "detections_Sci_Name" ON "detections" ("Sci_Name");
+-- createdb.sh DROPs and recreates the table, so it only ever helps NEW installs.
+-- Existing databases must be migrated here. See createdb.sh for the rationale:
+-- overview.php's correlated subqueries filter on (Sci_Name, Date) together.
+CREATE INDEX IF NOT EXISTS "detections_Com_Name" ON "detections" ("Com_Name");
+CREATE INDEX IF NOT EXISTS "detections_Date_Time" ON "detections" ("Date" DESC, "Time" DESC);
+CREATE INDEX IF NOT EXISTS "detections_Sci_Date" ON "detections" ("Sci_Name", "Date");
 EOF
 
 # update snippets above

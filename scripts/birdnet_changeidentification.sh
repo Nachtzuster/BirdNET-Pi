@@ -48,7 +48,10 @@ elif [[ "$2" != *"_"* ]]; then
 fi
 
 # Check if $NEWNAME is found in the file $LABELS_FILE
-if ! grep -q "$NEWNAME" "$LABELS_FILE"; then
+# -F: without it the name is treated as a REGEX, so a crafted value could satisfy
+# this guard via alternation/optional groups while still smuggling a quote into
+# the SQL built below. -- stops a leading dash being read as an option.
+if ! grep -qF -- "$NEWNAME" "$LABELS_FILE"; then
     echo "Error: $NEWNAME not found in $LABELS_FILE"
     exit 1
 fi
@@ -64,11 +67,17 @@ fi
 # EXECUTE SCRIPT #
 ##################
 
+# SQL-escape a value for a single-quoted sqlite literal by doubling any quote.
+# The caller (play.php) escapeshellarg's these, which protects the SHELL layer -
+# but the values then land raw inside the SQL below, against a DB opened for
+# WRITE. Shell escaping is not SQL escaping.
+sql_lit() { printf '%s' "${1//\'/\'\'}"; }
+
 # Intro
 [[ "$OUTPUT_TYPE" == "debug" ]] && echo "Starting to modify $OLDNAME to $NEWNAME"
 
 # Get the line where the column "File_Name" matches exactly $OLDNAME
-IFS='|' read -r OLDNAME_sciname OLDNAME_comname OLDNAME_date < <(sqlite3 "$DB_FILE" "SELECT Sci_Name, Com_Name, Date FROM $DETECTIONS_TABLE WHERE File_Name = '$OLDNAME' LIMIT 1;")
+IFS='|' read -r OLDNAME_sciname OLDNAME_comname OLDNAME_date < <(sqlite3 "$DB_FILE" "SELECT Sci_Name, Com_Name, Date FROM $DETECTIONS_TABLE WHERE File_Name = '$(sql_lit "$OLDNAME")' LIMIT 1;")
 
 if [[ -z "$OLDNAME_sciname" ]]; then
     echo "Error: No line matching $OLDNAME in $DB_FILE"
@@ -113,7 +122,7 @@ fi
 ###################################
 
 # Update the database
-sqlite3 "$DB_FILE" "UPDATE $DETECTIONS_TABLE SET Sci_Name = '$NEWNAME_sciname', Com_Name = '$NEWNAME_comname', Confidence = '0', File_Name = '$NEWNAME_filename' WHERE File_Name = '$OLDNAME';"
+sqlite3 "$DB_FILE" "UPDATE $DETECTIONS_TABLE SET Sci_Name = '$(sql_lit "$NEWNAME_sciname")', Com_Name = '$(sql_lit "$NEWNAME_comname")', Confidence = '0', File_Name = '$(sql_lit "$NEWNAME_filename")' WHERE File_Name = '$(sql_lit "$OLDNAME")';"
 
 [[ "$OUTPUT_TYPE" == "debug" ]] && echo "Database entry removed"
 

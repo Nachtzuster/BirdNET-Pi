@@ -81,42 +81,42 @@ if(isset($_GET['submit'])) {
   }
   
   if(isset($_GET["overlap"])) {
-    $overlap = conf_safe_number($_GET["overlap"]);
+    $overlap = conf_safe_number($_GET["overlap"], $config['OVERLAP'] ?? '0');
     if(strcmp($overlap,$config['OVERLAP']) !== 0) {
       $contents = preg_replace("/OVERLAP=.*/", "OVERLAP=$overlap", $contents);
     }
   }
 
   if(isset($_GET["confidence"])) {
-    $confidence = conf_safe_number($_GET["confidence"]);
+    $confidence = conf_safe_number($_GET["confidence"], $config['CONFIDENCE'] ?? '0');
     if(strcmp($confidence,$config['CONFIDENCE']) !== 0) {
       $contents = preg_replace("/CONFIDENCE=.*/", "CONFIDENCE=$confidence", $contents);
     }
   }
 
   if(isset($_GET["sensitivity"])) {
-    $sensitivity = conf_safe_number($_GET["sensitivity"]);
+    $sensitivity = conf_safe_number($_GET["sensitivity"], $config['SENSITIVITY'] ?? '0');
     if(strcmp($sensitivity,$config['SENSITIVITY']) !== 0) {
       $contents = preg_replace("/SENSITIVITY=.*/", "SENSITIVITY=$sensitivity", $contents);
     }
   }
 
   if(isset($_GET["freqshift_hi"]) && is_numeric($_GET['freqshift_hi'])) {
-    $freqshift_hi = conf_safe_number($_GET["freqshift_hi"]);
+    $freqshift_hi = conf_safe_number($_GET["freqshift_hi"], $config['FREQSHIFT_HI'] ?? '0');
     if(strcmp($freqshift_hi,$config['FREQSHIFT_HI']) !== 0) {
       $contents = preg_replace("/FREQSHIFT_HI=.*/", "FREQSHIFT_HI=$freqshift_hi", $contents);
     }
   }
 
   if(isset($_GET["freqshift_lo"]) && is_numeric($_GET['freqshift_lo'])) {
-    $freqshift_lo = conf_safe_number($_GET["freqshift_lo"]);
+    $freqshift_lo = conf_safe_number($_GET["freqshift_lo"], $config['FREQSHIFT_LO'] ?? '0');
     if(strcmp($freqshift_lo,$config['FREQSHIFT_LO']) !== 0) {
       $contents = preg_replace("/FREQSHIFT_LO=.*/", "FREQSHIFT_LO=$freqshift_lo", $contents);
     }
   }
 
   if(isset($_GET["freqshift_pitch"]) && is_numeric($_GET['freqshift_pitch'])) {
-    $freqshift_pitch = conf_safe_number($_GET["freqshift_pitch"]);
+    $freqshift_pitch = conf_safe_number($_GET["freqshift_pitch"], $config['FREQSHIFT_PITCH'] ?? '0');
     if(strcmp($freqshift_pitch,$config['FREQSHIFT_PITCH']) !== 0) {
       $contents = preg_replace("/FREQSHIFT_PITCH=.*/", "FREQSHIFT_PITCH=$freqshift_pitch", $contents);
     }
@@ -130,7 +130,7 @@ if(isset($_GET['submit'])) {
   }
 
   if(isset($_GET["freqshift_reconnect_delay"]) && is_numeric($_GET['freqshift_reconnect_delay'])) {
-    $freqshift_reconnect_delay = conf_safe_number($_GET["freqshift_reconnect_delay"]);
+    $freqshift_reconnect_delay = conf_safe_number($_GET["freqshift_reconnect_delay"], $config['FREQSHIFT_RECONNECT_DELAY'] ?? '0');
     /* was comparing $freqshift_hi - the wrong (and usually undefined) variable */
     if(strcmp($freqshift_reconnect_delay,$config['FREQSHIFT_RECONNECT_DELAY']) !== 0) {
       $contents = preg_replace("/FREQSHIFT_RECONNECT_DELAY=.*/", "FREQSHIFT_RECONNECT_DELAY=$freqshift_reconnect_delay", $contents);
@@ -145,21 +145,21 @@ if(isset($_GET['submit'])) {
   }
 
   if (isset($_GET["purge_threshold"])) {
-    $purge_threshold = conf_safe_number($_GET["purge_threshold"]);
+    $purge_threshold = conf_safe_number($_GET["purge_threshold"], $config['PURGE_THRESHOLD'] ?? '0');
     if (strcmp($purge_threshold, $config['PURGE_THRESHOLD']) !== 0) {
         $contents = preg_replace("/PURGE_THRESHOLD=.*/", "PURGE_THRESHOLD=$purge_threshold", $contents);
     }
 }
 
 if (isset($_GET["max_files_species"])) {
-    $max_files_species = conf_safe_number($_GET["max_files_species"]);
+    $max_files_species = conf_safe_number($_GET["max_files_species"], $config['MAX_FILES_SPECIES'] ?? '0');
     if (strcmp($max_files_species, $config['MAX_FILES_SPECIES']) !== 0) {
         $contents = preg_replace("/MAX_FILES_SPECIES=.*/", "MAX_FILES_SPECIES=$max_files_species", $contents);
     }
 }
 	
   if(isset($_GET["privacy_threshold"])) {
-    $privacy_threshold = conf_safe_number($_GET["privacy_threshold"]);
+    $privacy_threshold = conf_safe_number($_GET["privacy_threshold"], $config['PRIVACY_THRESHOLD'] ?? '0');
     if(strcmp($privacy_threshold,$config['PRIVACY_THRESHOLD']) !== 0) {
       $contents = preg_replace("/PRIVACY_THRESHOLD=.*/", "PRIVACY_THRESHOLD=$privacy_threshold", $contents);
     }
@@ -173,21 +173,21 @@ if (isset($_GET["max_files_species"])) {
   }
 
   if(isset($_GET["channels"])) {
-    $channels = conf_safe_number($_GET["channels"]);
+    $channels = conf_safe_number($_GET["channels"], $config['CHANNELS'] ?? '0');
     if(strcmp($channels,$config['CHANNELS']) !== 0) {
       $contents = preg_replace("/CHANNELS=.*/", "CHANNELS=$channels", $contents);
     }
   }
 
   if(isset($_GET["recording_length"])) {
-    $recording_length = conf_safe_number($_GET["recording_length"]);
+    $recording_length = conf_safe_number($_GET["recording_length"], $config['RECORDING_LENGTH'] ?? '0');
     if(strcmp($recording_length,$config['RECORDING_LENGTH']) !== 0) {
       $contents = preg_replace("/RECORDING_LENGTH=.*/", "RECORDING_LENGTH=$recording_length", $contents);
     }
   }
 
   if(isset($_GET["extraction_length"])) {
-    $extraction_length = conf_safe_number($_GET["extraction_length"]);
+    $extraction_length = conf_safe_number($_GET["extraction_length"], $config['EXTRACTION_LENGTH'] ?? '0');
     if(strcmp($extraction_length,$config['EXTRACTION_LENGTH']) !== 0) {
       $contents = preg_replace("/EXTRACTION_LENGTH=.*/", "EXTRACTION_LENGTH=$extraction_length", $contents);
     }
@@ -229,7 +229,7 @@ if (isset($_GET["max_files_species"])) {
   }
 
   if(isset($_GET["rare_species_threshold"])) {
-    $rare_species_threshold = conf_safe_number($_GET["rare_species_threshold"]);
+    $rare_species_threshold = conf_safe_number($_GET["rare_species_threshold"], $config['RARE_SPECIES_THRESHOLD'] ?? '0');
     if(strcmp($rare_species_threshold, $config['RARE_SPECIES_THRESHOLD']) !== 0) {
         $contents = preg_replace("/RARE_SPECIES_THRESHOLD=.*/", "RARE_SPECIES_THRESHOLD=$rare_species_threshold", $contents);
     }
@@ -240,7 +240,11 @@ if (isset($_GET["max_files_species"])) {
   if(isset($_GET["custom_image"])) {
     $custom_image = conf_safe_string($_GET["custom_image"]);
     if(strcmp($custom_image,$config['CUSTOM_IMAGE']) !== 0) {
-      $contents = preg_replace("/CUSTOM_IMAGE=.*/", "CUSTOM_IMAGE=$custom_image", $contents);
+      /* MUST stay double-quoted: conf_safe_string only strips what bash expands
+         INSIDE quotes ($ ` " \) and deliberately permits ; | & and spaces, which
+         are live on an unquoted value (CUSTOM_IMAGE=a.png;cmd would execute cmd
+         when the conf is sourced). Quoting matches CUSTOM_IMAGE_TITLE below. */
+      $contents = preg_replace("/CUSTOM_IMAGE=.*/", "CUSTOM_IMAGE=\"$custom_image\"", $contents);
     }
   }
 
