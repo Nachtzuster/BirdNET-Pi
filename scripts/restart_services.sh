@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # Restarts ALL services and removes ALL unprocessed audio
 source /etc/birdnet/birdnet.conf
-# set -x  # was unconditional: this runs on a timer/at every restart, and every
-# traced line is a journal write (SD-card wear). Uncomment to debug.
 my_dir=$HOME/BirdNET-Pi/scripts
 
 

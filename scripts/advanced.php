@@ -23,10 +23,6 @@ if(isset($_GET['submit'])) {
   $update_caddyfile = false;
 
   if(isset($_GET["caddy_pwd"])) {
-    /* written double-quoted, so conf_safe_string (which strips only what bash
-       still expands inside quotes) preserves password punctuation that
-       conf_safe_token would silently discard. NB ICE_PWD below is written
-       *unquoted*, so it does need the stricter token rule. */
     $caddy_pwd = conf_safe_string($_GET["caddy_pwd"]);
     if(strcmp($caddy_pwd,$config['CADDY_PWD']) !== 0) {
       $contents = preg_replace("/CADDY_PWD=.*/", "CADDY_PWD=\"$caddy_pwd\"", $contents);
@@ -131,7 +127,6 @@ if(isset($_GET['submit'])) {
 
   if(isset($_GET["freqshift_reconnect_delay"]) && is_numeric($_GET['freqshift_reconnect_delay'])) {
     $freqshift_reconnect_delay = conf_safe_number($_GET["freqshift_reconnect_delay"], $config['FREQSHIFT_RECONNECT_DELAY'] ?? '0');
-    /* was comparing $freqshift_hi - the wrong (and usually undefined) variable */
     if(strcmp($freqshift_reconnect_delay,$config['FREQSHIFT_RECONNECT_DELAY']) !== 0) {
       $contents = preg_replace("/FREQSHIFT_RECONNECT_DELAY=.*/", "FREQSHIFT_RECONNECT_DELAY=$freqshift_reconnect_delay", $contents);
     }
@@ -219,8 +214,6 @@ if (isset($_GET["max_files_species"])) {
 
   if(isset($_GET["raw_spectrogram"])) {
     $raw_spectrogram = 1;
-    /* was comparing $RAW_SPECTROGRAM (undefined) instead of $raw_spectrogram;
-       strcmp(null, ...) is also deprecated on PHP 8.1+ */
     if(strcmp($raw_spectrogram,$config['RAW_SPECTROGRAM']) !== 0) {
       $contents = preg_replace("/RAW_SPECTROGRAM=.*/", "RAW_SPECTROGRAM=$raw_spectrogram", $contents);
     }
@@ -240,10 +233,6 @@ if (isset($_GET["max_files_species"])) {
   if(isset($_GET["custom_image"])) {
     $custom_image = conf_safe_string($_GET["custom_image"]);
     if(strcmp($custom_image,$config['CUSTOM_IMAGE']) !== 0) {
-      /* MUST stay double-quoted: conf_safe_string only strips what bash expands
-         INSIDE quotes ($ ` " \) and deliberately permits ; | & and spaces, which
-         are live on an unquoted value (CUSTOM_IMAGE=a.png;cmd would execute cmd
-         when the conf is sourced). Quoting matches CUSTOM_IMAGE_TITLE below. */
       $contents = preg_replace("/CUSTOM_IMAGE=.*/", "CUSTOM_IMAGE=\"$custom_image\"", $contents);
     }
   }

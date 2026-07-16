@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# set -x  # was unconditional: this runs on a timer/at every restart, and every
-# traced line is a journal write (SD-card wear). Uncomment to debug.
 
 source /etc/birdnet/birdnet.conf
 
@@ -23,12 +21,6 @@ if [ "${used}" -ge "$purge_threshold" ]; then
             exit
         fi
         datedirs=$(find ${EXTRACTED}/By_Date/* -maxdepth 0 -type d 2>/dev/null | wc -l)
-        # Guard the divisor: with no date dirs this was a division by zero, which
-        # left filestodelete empty and made the [ -ge ] test below error instead
-        # of ever breaking out of the loop.
-        # Skip only THIS loop when there is nothing to walk - never exit the
-        # script, or we skip the PROCESSED purge below, which is the fallback
-        # that actually frees space when By_Date is already empty.
         if [ "${datedirs}" -gt 0 ]; then
           filestodelete=$(( $(find ${EXTRACTED}/By_Date/* -type f | wc -l) / datedirs ))
           iter=0
@@ -54,9 +46,6 @@ if [ "${used}" -ge "$purge_threshold" ]; then
   esac
 fi
 sleep 1
-# Re-measure: the purge above may already have freed enough. Re-using the stale
-# reading made this second, more destructive purge (rm -rf $PROCESSED) fire
-# unconditionally whenever the first one did.
 used="$(disk_used_pct)"
 if [ "${used}" -ge "$purge_threshold" ]; then
   case $FULL_DISK in

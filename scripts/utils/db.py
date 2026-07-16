@@ -19,10 +19,6 @@ def get_db():
 
 
 def get_records(select_sql):
-    # Previously this swallowed the error, slept 2s (in the analysis critical
-    # path, retrying nothing) and returned [] - which callers cannot tell apart
-    # from a genuine "no rows", so a DB hiccup silently dropped notifications.
-    # Log properly and let the caller's handler decide.
     con = get_db()
     try:
         cur = con.execute(select_sql)

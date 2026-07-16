@@ -54,8 +54,6 @@ def spectrogram(in_file, title, comment, raw=0):
             '-t', '', '-c', '', '-o', tmp_file]
     args += ['-r'] if int(raw) else []
 
-    # /tmp is a tmpfs, so a leaked temp file is leaked RAM. sox failing
-    # (check=True) or the RuntimeError below must not skip the cleanup.
     try:
         result = subprocess.run(args, check=True, capture_output=True)
         ret = result.stdout.decode('utf-8')
@@ -101,19 +99,13 @@ def write_to_db(file: ParseFileName, detection: Detection):
     last_error = None
     for attempt_number in range(3):
         try:
-            # `with` closes the connection even when execute/commit raises, which
-            # is exactly the contended case this retry loop exists for.
             with closing(sqlite3.connect(DB_PATH, timeout=5)) as con:
-                # Let SQLite wait out a competing writer instead of failing instantly.
                 con.execute("PRAGMA busy_timeout=5000")
                 cur = con.cursor()
                 cur.execute("INSERT INTO detections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                             (detection.date, detection.time, detection.scientific_name, detection.common_name, detection.confidence,
                              conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], str(detection.week), conf['SENSITIVITY'],
                              conf['OVERLAP'], os.path.basename(detection.file_name_extr)))
-                # (Date, Time, Sci_Name, Com_Name, str(score),
-                # Lat, Lon, Cutoff, Week, Sens,
-                # Overlap, File_Name))
 
                 con.commit()
             return
@@ -121,9 +113,6 @@ def write_to_db(file: ParseFileName, detection: Detection):
             last_error = e
             log.warning("Database busy (attempt %d/3): %s", attempt_number + 1, e)
             sleep(2)
-    # Previously the loop just fell through here: the detection was dropped from
-    # the DB while its wav/extraction/spectrogram/BirdDB.txt line all still
-    # existed, silently desyncing the DB from the filesystem. Fail loudly instead.
     raise RuntimeError(
         f'failed to write detection {detection.common_name} '
         f'({detection.file_name_extr}) to the database after 3 attempts'

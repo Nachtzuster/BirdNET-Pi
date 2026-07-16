@@ -129,9 +129,6 @@ function relativeTime($ts)
 if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
   $searchterm = null;
   if(isset($_GET['searchterm'])) {
-    /* Decode first: the input filter turns ' into &#039;, so searching for
-       e.g. "Anna's Hummingbird" was matching the literal &#039; and always
-       returned nothing. */
     $searchterm = htmlspecialchars_decode($_GET['searchterm'], ENT_QUOTES);
     if(strtolower(explode(" ", $searchterm)[0]) == "not") {
       $not = "NOT ";
@@ -141,9 +138,6 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
       $not = "";
       $operator = "OR";
     }
-    /* Bound below - previously the raw value was concatenated into the LIKE
-       literal, which only the input filter's quote-encoding kept from being a
-       live injection. $not/$operator are internal constants, not user input. */
     $searchquery = "AND (Com_name ".$not."LIKE :term ".$operator." Sci_name ".$not."LIKE :term ".$operator." Confidence ".$not."LIKE :term ".$operator." File_Name ".$not."LIKE :term ".$operator." Time ".$not."LIKE :term)";
   } else {
     $searchquery = "";

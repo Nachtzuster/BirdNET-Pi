@@ -2,8 +2,6 @@
 
 define('__ROOT__', dirname(dirname(__FILE__)));
 
-/* PHP 8 string helpers, polyfilled for PHP 7.4 (Debian 11 ships 7.4).
-   Guarded so this stays correct if/when the host moves to PHP 8+. */
 if (!function_exists('str_contains')) {
   function str_contains($haystack, $needle) {
     return $needle === '' || strpos($haystack, $needle) !== false;
@@ -23,54 +21,28 @@ if (!function_exists('str_ends_with')) {
 if (session_status() !== PHP_SESSION_ACTIVE)
   session_start();
 
-/* ---------- birdnet.conf value sanitisers ----------
-   /etc/birdnet/birdnet.conf has three consumers with three different parsers:
-     - bash        `source /etc/birdnet/birdnet.conf`  (restart_services.sh et al)
-     - PHP         parse_ini_string()                  (get_config below)
-     - python      ConfigParser + value.strip('"')     (utils/helpers.py)
-   That forces the KEY="value" convention: single-quoting would be shell-safe but
-   python only strips double quotes, so 'x' would arrive as a literal "'x'".
-   And inside bash double quotes $(...), `...` and $VAR still expand - so the
-   file being sourced means quoting alone cannot make a value safe.
-   Therefore: sanitise values at the point they are read from $_GET.
-   This also removes the preg_replace() backreference hazard for free, since a
-   sanitised value can no longer contain '$' or '\'. */
 
-/* Free text destined for a double-quoted value. */
 function conf_safe_string($v) {
   $v = (string)$v;
-  // Everything bash would still act on inside double quotes.
   $v = str_replace(array('"', '$', '`', '\\'), '', $v);
-  // A newline would inject an entirely new assignment line.
   return trim(preg_replace('/[\r\n]+/', ' ', $v));
 }
 
-/* A bare, unquoted numeric value.
-   Pass the CURRENT config value as $default: on a rejected input we must not
-   silently write a plausible-looking constant. '0' is outside the legal range
-   for SENSITIVITY (0.5-1.5) and would mean "record everything" for CONFIDENCE.
-   Keeping the existing value preserves "never write an unsafe value" without
-   destroying a working configuration.
-   Accepts a leading '.' (".5") and a trailing '.' which bash/INI tolerate. */
 function conf_safe_number($v, $default = '0') {
   $v = trim((string)$v);
   return preg_match('/^-?(\d+(\.\d*)?|\.\d+)$/', $v) ? $v : $default;
 }
 
-/* A bare, unquoted identifier (model names, colour schemes, ids, ...). */
 function conf_safe_token($v, $default = '') {
   $v = trim((string)$v);
   return preg_match('/^[A-Za-z0-9._@+-]*$/', $v) ? $v : $default;
 }
 
-/* A bare, unquoted host / URL (BIRDNETPI_URL). */
 function conf_safe_url($v, $default = '') {
   $v = trim((string)$v);
   return preg_match('#^[A-Za-z0-9._:/\[\]-]*$#', $v) ? $v : $default;
 }
 
-/* An ALSA device id, e.g. "default" or "plughw:CARD=MeC,DEV=0". Needs : = ,
-   which conf_safe_token would reject, but must still exclude shell metachars. */
 function conf_safe_device($v, $default = 'default') {
   $v = trim((string)$v);
   return preg_match('/^[A-Za-z0-9_:=,.-]*$/', $v) ? $v : $default;
@@ -163,8 +135,6 @@ function debug_log($message) {
 }
 
 function get_com_en_name($sci_name) {
-  /* static: the label file is ~331KB. Without it the cache never survives the
-     call and we re-read + re-decode it once per detection row. */
   static $_labels_flickr = null;
   if ($_labels_flickr === null) {
     $_labels_flickr = json_decode(file_get_contents(get_home() . "/BirdNET-Pi/model/l18n/labels_en.json"), true) ?: [];
@@ -194,7 +164,6 @@ function get_label($record, $sort_by, $date=null) {
 }
 
 function get_db() {
-  /* static: otherwise every caller opens its own SQLite handle. */
   static $_db = null;
   if ($_db === null) {
     $_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
@@ -203,13 +172,6 @@ function get_db() {
   return $_db;
 }
 
-/* These three used prepare() with the value interpolated straight into the SQL,
-   which makes prepare() decorative - no placeholder, no bind. Callers reach them
-   with htmlspecialchars_decode($_GET[...]), which deliberately restores the very
-   quote characters the input filter had encoded, so the string literal could be
-   closed. Bind properly instead; species_tools.php already did it this way.
-   $sort_by/$date only ever select a fixed branch or a bound value - they never
-   reach the SQL text. */
 
 function fetch_species_array($sort_by, $date=null) {
   $db = get_db();
@@ -307,10 +269,6 @@ class ImageProvider {
 
   public function __construct() {
     $this->set_db();
-    /* An explicit timeout matters: these are blocking outbound fetches made from
-       inside a PHP-FPM worker. Without it they inherit default_socket_timeout
-       (60s), so a slow upstream pins a worker for a minute - and on a 1GB Pi the
-       worker pool is small enough that a handful of those stall the whole UI. */
     $opts = ['http' => [
       'header' => "User-Agent: BirdNET-Pi",
       'timeout' => 5,
@@ -522,9 +480,6 @@ class Wikipedia extends ImageProvider {
   protected $db_path = __ROOT__ . '/scripts/wikipedia.db';
 
   protected function get_from_source($sci_name) {
-    /* rawurlencode: this value becomes a path segment in the upstream request.
-       Unencoded, dot-segments and query separators in the name let a caller
-       reach arbitrary paths on the target host. */
     $page_title = rawurlencode(str_replace(' ', '_', $sci_name));
     $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/$page_title");
     if ($data == false or !isset($data['originalimage']))
@@ -588,16 +543,8 @@ function get_info_url($sciname){
   $engname = get_com_en_name($sciname);
   $config = get_config();
   if ($config['INFO_SITE'] === 'EBIRD'){
-    /* `require` (not require_once) inside the function body rebuilt this ~6,500
-       entry / 243KB array literal on EVERY call - and callers invoke this once
-       per rendered row. Load it once into a static.
-       Also __DIR__: the old relative path silently depended on the caller's CWD
-       being homepage/. */
     static $ebirds_cache = null;
     if ($ebirds_cache === null) {
-      /* plain require, guarded by the static: require_once would silently become
-         a no-op (leaving $ebirds undefined) if anything else ever includes this
-         file first. The static already guarantees we only pay for it once. */
       $ebirds = null;
       require __DIR__ . '/ebird.php';
       $ebirds_cache = $ebirds;

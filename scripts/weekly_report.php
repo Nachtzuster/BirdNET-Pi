@@ -1,7 +1,4 @@
 <?php
-/* error_reporting is process-global and this file is include()d by views.php, so
-   E_ALL + display_errors here sprayed notices (and absolute filesystem paths)
-   into the rendered page for the rest of the request. Match every other view. */
 ini_set('display_errors', 0);
 error_reporting(E_ERROR);
 require_once 'scripts/common.php';
@@ -32,13 +29,7 @@ $this_end   = date("Y-m-d", $enddate);
 $prev_start = date("Y-m-d", $startdate - (7 * 86400));
 $prev_end   = date("Y-m-d", $enddate - (7 * 86400));
 
-/* This was 1 + 2N queries: the prior-week count and the first-seen check each
-   ran once PER SPECIES inside the loop below (~100 species => ~200 extra
-   prepared statements per report). Pre-aggregate each into a lookup instead, so
-   the whole report costs 3 grouped queries regardless of species count.
-   Values are bound rather than interpolated while we're here. */
 
-# prior week counts, grouped once
 $prior = [];
 $statement2 = $db->prepare('SELECT Sci_Name, COUNT(*) AS Count FROM detections WHERE Date BETWEEN :ps AND :pe GROUP BY Sci_Name');
 ensure_db_ok($statement2);
@@ -49,9 +40,6 @@ while ($row = $result2->fetchArray(SQLITE3_ASSOC)) {
   $prior[$row['Sci_Name']] = $row['Count'];
 }
 
-# first/last detection date per species, grouped once. A species is "first seen"
-# when it has no detection outside this week - i.e. its whole range sits inside
-# it. Equivalent to the old per-species "COUNT(*) outside the week == 0".
 $span = [];
 $statement3 = $db->prepare('SELECT Sci_Name, MIN(Date) AS mn, MAX(Date) AS mx FROM detections GROUP BY Sci_Name');
 ensure_db_ok($statement3);

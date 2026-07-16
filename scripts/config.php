@@ -55,14 +55,10 @@ if(isset($_GET['restart_php']) && $_GET['restart_php'] == "true") {
 
 # Basic Settings
 if(isset($_GET["latitude"])){
-  /* Everything below lands in /etc/birdnet/birdnet.conf, which bash `source`s -
-     so an unsanitised value here is remote code execution (e.g. LATITUDE=$(id)).
-     Sanitise by type at the point of read; see conf_safe_* in common.php. */
   $latitude = conf_safe_number($_GET["latitude"], $config['LATITUDE'] ?? '0');
   $longitude = conf_safe_number($_GET["longitude"], $config['LONGITUDE'] ?? '0');
   $site_name = conf_safe_string($_GET["site_name"] ?? '');
   $birdweather_id = conf_safe_token($_GET["birdweather_id"] ?? '');
-  /* written to apprise.txt / body.txt, not to the sourced conf */
   $apprise_input = $_GET['apprise_input'] ?? '';
   $apprise_notification_title = conf_safe_string($_GET['apprise_notification_title'] ?? '');
   $apprise_notification_body = htmlspecialchars_decode($_GET['apprise_notification_body'] ?? '', ENT_QUOTES);
@@ -81,8 +77,6 @@ if(isset($_GET["latitude"])){
   } else {
     $data_model_version = 1;
   }
-  /* decode first so apostrophes in species names survive ("Anna's Hummingbird"),
-     then strip what bash would still expand inside the double-quoted value */
   $only_notify_species_names = conf_safe_string(htmlspecialchars_decode($_GET['only_notify_species_names'] ?? '', ENT_QUOTES));
   $only_notify_species_names_2 = conf_safe_string(htmlspecialchars_decode($_GET['only_notify_species_names_2'] ?? '', ENT_QUOTES));
 

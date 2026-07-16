@@ -97,9 +97,6 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
                 resp = requests.get(url=url, timeout=10).json()
                 images[com_name] = resp['data']['image_url']
             except Exception as e:
-                # Cache the failure too. Otherwise a down image API means a fresh
-                # 10s timeout on EVERY detection of this species, in the analysis
-                # critical path.
                 images[com_name] = ""
                 log.warning("image API lookup failed for %s: %s", sci_name, e)
         image_url = images.get(com_name, "")
@@ -113,8 +110,6 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
 
     APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT = 1  # Notifies the first N per day.
     if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY') == "1":
-        # A failed count must only skip this notification - never abort the
-        # caller's reporting for the detection as a whole.
         try:
             numberDetections = get_todays_count_for(sci_name)
         except sqlite3.Error:

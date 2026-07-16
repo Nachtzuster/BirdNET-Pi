@@ -11,12 +11,6 @@ $home = get_home();
 $config = get_config();
 $user = get_user();
 
-/* Reject a user-supplied relative path that could escape its base directory.
-   This guard was previously inline (and duplicated) on the delete and rename
-   paths, while the shift path had none at all - hence the drift. Keep one
-   copy so every caller gets the same rules.
-   NB FILTER_SANITIZE_FULL_SPECIAL_CHARS above encodes & < > " ' but NOT
-   ; | ` $ ( ) or newline, so it is not a substitute for this. */
 function reject_unsafe_relpath($p) {
   return $p === '' || $p === null
     || str_contains($p, "\0")
@@ -35,9 +29,6 @@ if(isset($_GET['deletefile'])) {
     die();
   }
   $db_writable = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READWRITE);
-  /* was setting the timeout on $db (the read-only handle), leaving the writable
-     one with none - so the DELETE below failed instantly with SQLITE_BUSY
-     exactly when the analysis service was mid-insert. */
   $db_writable->busyTimeout(1000);
   $statement1 = $db_writable->prepare('DELETE FROM detections WHERE File_Name = :file_name LIMIT 1');
   ensure_db_ok($statement1);
@@ -124,8 +115,6 @@ if(isset($_GET['shiftfile'])) {
   ensure_authenticated('You cannot shift files for this installation');
 
     $filename = urldecode($_GET['shiftfile']);
-    /* Previously unvalidated: $dir below is derived from this and was
-       concatenated raw into a shell_exec running under sudo. */
     if (reject_unsafe_relpath($filename)) {
       echo "Error";
       die();
@@ -139,8 +128,6 @@ if(isset($_GET['shiftfile'])) {
     if(isset($_GET['doshift'])) {
   $freqshift_tool = $config['FREQSHIFT_TOOL'];
 
-  /* These come from birdnet.conf, which the settings pages write - so they are
-     not inherently trustworthy either. Escape rather than interpolate raw. */
   $mkdir_cmd = "sudo mkdir -p ".escapeshellarg($shifted_path.$dir);
 
   if ($freqshift_tool == "ffmpeg") {

@@ -36,9 +36,6 @@ def main():
 
     backlog = get_wav_files()
 
-    # maxsize bounds the queue so reporting cannot fall behind: put() blocks once
-    # a chunk is already waiting. This replaces an explicit join() per file, which
-    # forced analysis and reporting to run strictly serially.
     report_queue = Queue(maxsize=1)
     thread = threading.Thread(target=handle_reporting_queue, args=(report_queue, ))
     thread.start()
@@ -93,18 +90,12 @@ def process_file(file_name, report_queue):
             analyzing.write(file_name)
         file = ParseFileName(file_name)
         detections = run_analysis(file)
-        # The queue is bounded (maxsize=1), so this blocks only if reporting is a
-        # full chunk behind - same guarantee the old join() gave, but the next
-        # chunk's inference can overlap this chunk's reporting.
         report_queue.put((file, detections))
         enqueued = True
     except Exception as e:
         stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""
         log.exception(f'Unexpected error: {stderr}', exc_info=e)
     finally:
-        # On success the reporting thread owns the file and removes it there.
-        # Only clean up here when we failed before handing it off - otherwise a
-        # failed analysis strands the wav forever (nothing else reaps StreamData).
         if not enqueued:
             try:
                 os.remove(file_name)
@@ -124,11 +115,6 @@ def handle_reporting_queue(queue):
             update_json_file(file, detections)
             reported = []
             for detection in detections:
-                # Contain per detection: write_to_db now raises on persistent
-                # failure, and without this one bad row would drop every later
-                # detection in the chunk AND skip apprise/bird_weather/heartbeat
-                # below - a wider desync than the silent drop it replaced, and a
-                # missed heartbeat can trip a false "station down" alert.
                 try:
                     detection.file_name_extr = extract_detection(file, detection)
                     log.info('%s;%s', summary(file, detection), os.path.basename(detection.file_name_extr))
@@ -137,9 +123,6 @@ def handle_reporting_queue(queue):
                     reported.append(detection)
                 except Exception as e:
                     log.exception('dropping detection %s', detection.common_name, exc_info=e)
-            # Only pass on detections that actually made it: apprise() and
-            # bird_weather() read detection.file_name_extr, which is unset if
-            # extract_detection() was the thing that failed.
             if reported:
                 apprise(file, reported)
                 bird_weather(file, reported)
@@ -148,9 +131,6 @@ def handle_reporting_queue(queue):
             stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""
             log.exception(f'Unexpected error: {stderr}', exc_info=e)
         finally:
-            # This is the ONLY place StreamData wavs get removed (cleanup.sh only
-            # reaps PROCESSED), so it must run even when reporting above fails -
-            # otherwise any error strands the wav permanently.
             try:
                 os.remove(file.file_name)
             except OSError:

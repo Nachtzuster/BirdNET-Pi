@@ -11,14 +11,6 @@ if ($requestMethod !== 'GET') {
   sendResponse405();
 }
 
-/* This file is routed from homepage/index.php BEFORE any auth or input
-   filtering, and a cache miss triggers blocking outbound HTTP plus a DB write.
-   Unauthenticated and unbounded, a loop over junk names pins every PHP-FPM
-   worker on live network fetches and takes the UI down - cheap DoS on a 1GB Pi.
-
-   We cannot simply require auth: scripts/utils/notifications.py fetches
-   http://localhost/api/v1/image/<sci_name> with no credentials. So: allow the
-   loopback caller, require authentication for anyone else. */
 function api_is_local() {
   $ip = $_SERVER['REMOTE_ADDR'] ?? '';
   return $ip === '127.0.0.1' || $ip === '::1' || $ip === '::ffff:127.0.0.1';
@@ -31,16 +23,12 @@ if (preg_match('#^/api/v1/image/(\S+)$#', $requestUri, $matches)) {
     echo json_encode(["message" => "Unauthorized"]);
     exit;
   }
-  /* Every other call site guards on this; without it the image feature's
-     off-switch simply did not reach this endpoint. */
   if (empty($config["IMAGE_PROVIDER"])) {
     http_response_code(404);
     echo "Error 404! Image provider disabled.";
     exit;
   }
   $sci_name = urldecode($matches[1]);
-  /* Bound the input: a scientific name, not an arbitrary \S+ that becomes a
-     URL path suffix in the upstream request. */
   if (!preg_match('/^[A-Za-z .\'-]{1,64}$/', $sci_name)) {
     http_response_code(400);
     echo "Error 400! Invalid species name.";

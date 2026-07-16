@@ -15,9 +15,6 @@ fi
 next=0
 looptime=$(( RECORDING_LENGTH * 2 / 3 ))
 
-# Derive from RECS_DIR so this stays in step with the python side
-# (utils/helpers.py:get_analyzing_now_path). Hardcoding $HOME/BirdSongs meant a
-# relocated RECS_DIR silently broke the watch.
 ANALYZING_NOW="${RECS_DIR:-$HOME/BirdSongs}/StreamData/analyzing_now.txt"
 
 touch "${ANALYZING_NOW}"

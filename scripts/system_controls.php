@@ -7,10 +7,6 @@ require_once "scripts/common.php";
 $user = get_user();
 $home = get_home();
 
-/* This used to run a *blocking, networked* `git fetch` on every single render,
-   so with a slow or absent uplink the page hung for the full DNS+TCP timeout.
-   views.php already solved this: background the fetch and cache the result in
-   the session for a day. Reuse that instead of duplicating it differently. */
 $num_commits_behind = $_SESSION['behind'] ?? '0';
 if (!isset($_SESSION['behind']) || !isset($_SESSION['behind_time'])
     || time() > $_SESSION['behind_time'] + 86400) {
