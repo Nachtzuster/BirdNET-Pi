@@ -2,6 +2,24 @@
 
 define('__ROOT__', dirname(dirname(__FILE__)));
 
+/* PHP 8 string helpers, polyfilled for PHP 7.4 (Debian 11 ships 7.4).
+   Guarded so this stays correct if/when the host moves to PHP 8+. */
+if (!function_exists('str_contains')) {
+  function str_contains($haystack, $needle) {
+    return $needle === '' || strpos($haystack, $needle) !== false;
+  }
+}
+if (!function_exists('str_starts_with')) {
+  function str_starts_with($haystack, $needle) {
+    return strncmp($haystack, $needle, strlen($needle)) === 0;
+  }
+}
+if (!function_exists('str_ends_with')) {
+  function str_ends_with($haystack, $needle) {
+    return $needle === '' || substr($haystack, -strlen($needle)) === $needle;
+  }
+}
+
 if (session_status() !== PHP_SESSION_ACTIVE)
   session_start();
 
@@ -92,11 +110,13 @@ function debug_log($message) {
 }
 
 function get_com_en_name($sci_name) {
-  if (!isset($_labels_flickr)) {
-    $_labels_flickr = json_decode(file_get_contents(get_home() . "/BirdNET-Pi/model/l18n/labels_en.json"), true);
+  /* static: the label file is ~331KB. Without it the cache never survives the
+     call and we re-read + re-decode it once per detection row. */
+  static $_labels_flickr = null;
+  if ($_labels_flickr === null) {
+    $_labels_flickr = json_decode(file_get_contents(get_home() . "/BirdNET-Pi/model/l18n/labels_en.json"), true) ?: [];
   }
-  $engname = $_labels_flickr[$sci_name];
-  return $engname;
+  return $_labels_flickr[$sci_name] ?? null;
 }
 
 function get_label($record, $sort_by, $date=null) {
@@ -121,7 +141,9 @@ function get_label($record, $sort_by, $date=null) {
 }
 
 function get_db() {
-  if (!isset($_db)) {
+  /* static: otherwise every caller opens its own SQLite handle. */
+  static $_db = null;
+  if ($_db === null) {
     $_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
     $_db->busyTimeout(1000);
   }

@@ -194,6 +194,9 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
     <table>
 <?php
 $excludelines = [];
+/* The cursor was already drained by the loop above; without this reset the
+   loop below never runs, leaving this table empty and wiping the exclude list. */
+$result->reset();
 while($results=$result->fetchArray(SQLITE3_ASSOC))
 {
 $comname = preg_replace('/ /', '_', $results['Com_Name']);

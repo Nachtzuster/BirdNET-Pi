@@ -36,7 +36,10 @@ def main():
 
     backlog = get_wav_files()
 
-    report_queue = Queue()
+    # maxsize bounds the queue so reporting cannot fall behind: put() blocks once
+    # a chunk is already waiting. This replaces an explicit join() per file, which
+    # forced analysis and reporting to run strictly serially.
+    report_queue = Queue(maxsize=1)
     thread = threading.Thread(target=handle_reporting_queue, args=(report_queue, ))
     thread.start()
 
@@ -90,10 +93,9 @@ def process_file(file_name, report_queue):
             analyzing.write(file_name)
         file = ParseFileName(file_name)
         detections = run_analysis(file)
-        # we join() to make sure te reporting queue does not get behind
-        if not report_queue.empty():
-            log.warning('reporting queue not yet empty')
-        report_queue.join()
+        # The queue is bounded (maxsize=1), so this blocks only if reporting is a
+        # full chunk behind - same guarantee the old join() gave, but the next
+        # chunk's inference can overlap this chunk's reporting.
         report_queue.put((file, detections))
     except BaseException as e:
         stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""
