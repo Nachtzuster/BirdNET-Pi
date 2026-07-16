@@ -23,6 +23,53 @@ if (!function_exists('str_ends_with')) {
 if (session_status() !== PHP_SESSION_ACTIVE)
   session_start();
 
+/* ---------- birdnet.conf value sanitisers ----------
+   /etc/birdnet/birdnet.conf has three consumers with three different parsers:
+     - bash        `source /etc/birdnet/birdnet.conf`  (restart_services.sh et al)
+     - PHP         parse_ini_string()                  (get_config below)
+     - python      ConfigParser + value.strip('"')     (utils/helpers.py)
+   That forces the KEY="value" convention: single-quoting would be shell-safe but
+   python only strips double quotes, so 'x' would arrive as a literal "'x'".
+   And inside bash double quotes $(...), `...` and $VAR still expand - so the
+   file being sourced means quoting alone cannot make a value safe.
+   Therefore: sanitise values at the point they are read from $_GET.
+   This also removes the preg_replace() backreference hazard for free, since a
+   sanitised value can no longer contain '$' or '\'. */
+
+/* Free text destined for a double-quoted value. */
+function conf_safe_string($v) {
+  $v = (string)$v;
+  // Everything bash would still act on inside double quotes.
+  $v = str_replace(array('"', '$', '`', '\\'), '', $v);
+  // A newline would inject an entirely new assignment line.
+  return trim(preg_replace('/[\r\n]+/', ' ', $v));
+}
+
+/* A bare, unquoted numeric value. */
+function conf_safe_number($v, $default = '0') {
+  $v = trim((string)$v);
+  return preg_match('/^-?\d+(\.\d+)?$/', $v) ? $v : $default;
+}
+
+/* A bare, unquoted identifier (model names, colour schemes, ids, ...). */
+function conf_safe_token($v, $default = '') {
+  $v = trim((string)$v);
+  return preg_match('/^[A-Za-z0-9._@+-]*$/', $v) ? $v : $default;
+}
+
+/* A bare, unquoted host / URL (BIRDNETPI_URL). */
+function conf_safe_url($v, $default = '') {
+  $v = trim((string)$v);
+  return preg_match('#^[A-Za-z0-9._:/\[\]-]*$#', $v) ? $v : $default;
+}
+
+/* An ALSA device id, e.g. "default" or "plughw:CARD=MeC,DEV=0". Needs : = ,
+   which conf_safe_token would reject, but must still exclude shell metachars. */
+function conf_safe_device($v, $default = 'default') {
+  $v = trim((string)$v);
+  return preg_match('/^[A-Za-z0-9_:=,.-]*$/', $v) ? $v : $default;
+}
+
 function ensure_db_ok($sql_stmt) {
   if ($sql_stmt == False) {
     echo "Database is busy";
@@ -150,43 +197,60 @@ function get_db() {
   return $_db;
 }
 
+/* These three used prepare() with the value interpolated straight into the SQL,
+   which makes prepare() decorative - no placeholder, no bind. Callers reach them
+   with htmlspecialchars_decode($_GET[...]), which deliberately restores the very
+   quote characters the input filter had encoded, so the string literal could be
+   closed. Bind properly instead; species_tools.php already did it this way.
+   $sort_by/$date only ever select a fixed branch or a bound value - they never
+   reach the SQL text. */
+
 function fetch_species_array($sort_by, $date=null) {
   $db = get_db();
-  $where = (isset($date)) ? "WHERE Date == \"$date\"" : "";
+  $where = isset($date) ? "WHERE Date == :date" : "";
   if ($sort_by === "occurrences") {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY COUNT(*) DESC");
+    $order = "COUNT(*) DESC";
   } elseif ($sort_by === "confidence") {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MAX(Confidence) DESC");
+    $order = "MAX(Confidence) DESC";
   } elseif ($sort_by === "date") {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MIN(Date) DESC, Time DESC");
+    $order = "MIN(Date) DESC, Time DESC";
   } else {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY Com_Name ASC");
+    $order = "Com_Name ASC";
   }
+  $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY $order");
   ensure_db_ok($statement);
+  if (isset($date)) {
+    $statement->bindValue(':date', $date, SQLITE3_TEXT);
+  }
   $result = $statement->execute();
   return $result;
 }
 
 function fetch_best_detection($com_name) {
   $db = get_db();
-  $statement = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = \"$com_name\"");
+  $statement = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = :com_name");
   ensure_db_ok($statement);
+  $statement->bindValue(':com_name', $com_name, SQLITE3_TEXT);
   $result = $statement->execute();
   return $result;
 }
 
 function fetch_all_detections($sci_name, $sort_by, $date=null) {
   $db = get_db();
-  $filter = (isset($date)) ? "AND Date == \"$date\"" : "";
+  $filter = isset($date) ? "AND Date == :date" : "";
   if ($sort_by === "occurrences") {
-    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY COUNT(*) DESC");
+    $order = "COUNT(*) DESC";
   } elseif ($sort_by === "confidence") {
-    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY Confidence DESC");
+    $order = "Confidence DESC";
   } else {
-    $order = (isset($date)) ? "Time DESC" : "Date DESC, Time DESC";
-    $statement = $db->prepare("SELECT * FROM detections where Sci_Name == \"$sci_name\" $filter ORDER BY $order");
+    $order = isset($date) ? "Time DESC" : "Date DESC, Time DESC";
   }
+  $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == :sci_name $filter ORDER BY $order");
   ensure_db_ok($statement);
+  $statement->bindValue(':sci_name', $sci_name, SQLITE3_TEXT);
+  if (isset($date)) {
+    $statement->bindValue(':date', $date, SQLITE3_TEXT);
+  }
   $result = $statement->execute();
   return $result;
 }

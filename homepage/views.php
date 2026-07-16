@@ -1,8 +1,11 @@
 <?php
 
-/* Prevent XSS input */
-$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING);
-$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+/* Prevent XSS input.
+   FILTER_SANITIZE_STRING is deprecated as of PHP 8.1 and slated for removal, at
+   which point this would silently stop filtering. The `?: []` matters too:
+   filter_input_array returns null (not []) when there is no query string. */
+$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
 
 session_start();
 

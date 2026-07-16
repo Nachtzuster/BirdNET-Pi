@@ -5,11 +5,24 @@ $_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [
 $_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
 
 error_reporting(E_ERROR);
-ini_set('display_errors',1);
+ini_set('display_errors', 0);
 require_once 'scripts/common.php';
 $home = get_home();
 $config = get_config();
 $user = get_user();
+
+/* Reject a user-supplied relative path that could escape its base directory.
+   This guard was previously inline (and duplicated) on the delete and rename
+   paths, while the shift path had none at all - hence the drift. Keep one
+   copy so every caller gets the same rules.
+   NB FILTER_SANITIZE_FULL_SPECIAL_CHARS above encodes & < > " ' but NOT
+   ; | ` $ ( ) or newline, so it is not a substitute for this. */
+function reject_unsafe_relpath($p) {
+  return $p === '' || $p === null
+    || str_contains($p, "\0")
+    || str_contains($p, '..')
+    || str_starts_with($p, '/');
+}
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
@@ -17,7 +30,7 @@ $db->busyTimeout(1000);
 if(isset($_GET['deletefile'])) {
   ensure_authenticated('You must be authenticated to delete files.');
   $deletefile = urldecode($_GET['deletefile']);
-  if ($deletefile === '' || str_contains($deletefile, "\0") || str_contains($deletefile, '..') || str_starts_with($deletefile, '/')) {
+  if (reject_unsafe_relpath($deletefile)) {
     echo "Error";
     die();
   }
@@ -85,7 +98,7 @@ if(isset($_GET['getlabels'])) {
 if(isset($_GET['changefile']) && isset($_GET['newname'])) {
   ensure_authenticated('You must be authenticated to delete files.');
   $changefile = urldecode($_GET['changefile']);
-  if ($changefile === '' || str_contains($changefile, "\0") || str_contains($changefile, '..') || str_starts_with($changefile, '/')) {
+  if (reject_unsafe_relpath($changefile)) {
     echo "Error";
     die();
   }
@@ -110,7 +123,13 @@ $shifted_path = $home."/BirdSongs/Extracted/By_Date/shifted/";
 if(isset($_GET['shiftfile'])) {
   ensure_authenticated('You cannot shift files for this installation');
 
-    $filename = $_GET['shiftfile'];
+    $filename = urldecode($_GET['shiftfile']);
+    /* Previously unvalidated: $dir below is derived from this and was
+       concatenated raw into a shell_exec running under sudo. */
+    if (reject_unsafe_relpath($filename)) {
+      echo "Error";
+      die();
+    }
     $pp = pathinfo($filename);
     $dir = $pp['dirname'];
     $fn  = $pp['filename'];
@@ -120,16 +139,21 @@ if(isset($_GET['shiftfile'])) {
     if(isset($_GET['doshift'])) {
   $freqshift_tool = $config['FREQSHIFT_TOOL'];
 
+  /* These come from birdnet.conf, which the settings pages write - so they are
+     not inherently trustworthy either. Escape rather than interpolate raw. */
+  $mkdir_cmd = "sudo mkdir -p ".escapeshellarg($shifted_path.$dir);
+
   if ($freqshift_tool == "ffmpeg") {
-    $cmd = "sudo /usr/bin/nohup /usr/bin/ffmpeg -y -i ".escapeshellarg($pi.$filename)." -af \"rubberband=pitch=".$config['FREQSHIFT_LO']."/".$config['FREQSHIFT_HI']."\" ".escapeshellarg($shifted_path.$filename)."";
-    shell_exec("sudo mkdir -p ".$shifted_path.$dir." && ".$cmd);
+    $af = "rubberband=pitch=".$config['FREQSHIFT_LO']."/".$config['FREQSHIFT_HI'];
+    $cmd = "sudo /usr/bin/nohup /usr/bin/ffmpeg -y -i ".escapeshellarg($pi.$filename)." -af ".escapeshellarg($af)." ".escapeshellarg($shifted_path.$filename);
+    shell_exec($mkdir_cmd." && ".$cmd);
 
   } else if ($freqshift_tool == "sox") {
     //linux.die.net/man/1/sox
     $soxopt = "-q";
     $soxpitch = $config['FREQSHIFT_PITCH'];
-    $cmd = "sudo /usr/bin/nohup /usr/bin/sox ".escapeshellarg($pi.$filename)." ".escapeshellarg($shifted_path.$filename)." pitch ".$soxopt." ".$soxpitch;
-   shell_exec("sudo mkdir -p ".$shifted_path.$dir." && ".$cmd);
+    $cmd = "sudo /usr/bin/nohup /usr/bin/sox ".escapeshellarg($pi.$filename)." ".escapeshellarg($shifted_path.$filename)." pitch ".escapeshellarg($soxopt)." ".escapeshellarg($soxpitch);
+   shell_exec($mkdir_cmd." && ".$cmd);
   }
     } else {
      $cmd = "sudo rm -f " . escapeshellarg($shifted_path.$filename);

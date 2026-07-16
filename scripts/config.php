@@ -55,32 +55,36 @@ if(isset($_GET['restart_php']) && $_GET['restart_php'] == "true") {
 
 # Basic Settings
 if(isset($_GET["latitude"])){
-  $latitude = $_GET["latitude"];
-  $longitude = $_GET["longitude"];
-  $site_name = $_GET["site_name"];
-  $site_name = str_replace('"', "", $site_name);
-  $site_name = str_replace('\'', "", $site_name);
-  $birdweather_id = $_GET["birdweather_id"];
-  $apprise_input = $_GET['apprise_input'];
-  $apprise_notification_title = $_GET['apprise_notification_title'];
-  $apprise_notification_body = htmlspecialchars_decode($_GET['apprise_notification_body'], ENT_QUOTES);
-  $minimum_time_limit = $_GET['minimum_time_limit'];
-  $image_provider = $_GET["image_provider"];
-  $flickr_api_key = $_GET['flickr_api_key'];
-  $flickr_filter_email = $_GET["flickr_filter_email"];
-  $language = $_GET["language"];
-  $info_site = $_GET["info_site"];
-  $color_scheme = $_GET["color_scheme"];
-  $timezone = $_GET["timezone"];
-  $model = $_GET["model"];
-  $sf_thresh = $_GET["sf_thresh"];
+  /* Everything below lands in /etc/birdnet/birdnet.conf, which bash `source`s -
+     so an unsanitised value here is remote code execution (e.g. LATITUDE=$(id)).
+     Sanitise by type at the point of read; see conf_safe_* in common.php. */
+  $latitude = conf_safe_number($_GET["latitude"]);
+  $longitude = conf_safe_number($_GET["longitude"]);
+  $site_name = conf_safe_string($_GET["site_name"] ?? '');
+  $birdweather_id = conf_safe_token($_GET["birdweather_id"] ?? '');
+  /* written to apprise.txt / body.txt, not to the sourced conf */
+  $apprise_input = $_GET['apprise_input'] ?? '';
+  $apprise_notification_title = conf_safe_string($_GET['apprise_notification_title'] ?? '');
+  $apprise_notification_body = htmlspecialchars_decode($_GET['apprise_notification_body'] ?? '', ENT_QUOTES);
+  $minimum_time_limit = conf_safe_number($_GET['minimum_time_limit'] ?? '', '0');
+  $image_provider = conf_safe_token($_GET["image_provider"] ?? '');
+  $flickr_api_key = conf_safe_token($_GET['flickr_api_key'] ?? '');
+  $flickr_filter_email = conf_safe_token($_GET["flickr_filter_email"] ?? '');
+  $language = conf_safe_token($_GET["language"] ?? '');
+  $info_site = conf_safe_token($_GET["info_site"] ?? '');
+  $color_scheme = conf_safe_token($_GET["color_scheme"] ?? '');
+  $timezone = $_GET["timezone"] ?? '';
+  $model = conf_safe_token($_GET["model"] ?? '');
+  $sf_thresh = conf_safe_number($_GET["sf_thresh"] ?? '', '0.03');
   if(isset($_GET['data_model_version'])) {
     $data_model_version = 2;
   } else {
     $data_model_version = 1;
   }
-  $only_notify_species_names = htmlspecialchars_decode($_GET['only_notify_species_names'], ENT_QUOTES);
-  $only_notify_species_names_2 = htmlspecialchars_decode($_GET['only_notify_species_names_2'], ENT_QUOTES);
+  /* decode first so apostrophes in species names survive ("Anna's Hummingbird"),
+     then strip what bash would still expand inside the double-quoted value */
+  $only_notify_species_names = conf_safe_string(htmlspecialchars_decode($_GET['only_notify_species_names'] ?? '', ENT_QUOTES));
+  $only_notify_species_names_2 = conf_safe_string(htmlspecialchars_decode($_GET['only_notify_species_names_2'] ?? '', ENT_QUOTES));
 
   if(isset($_GET['apprise_notify_each_detection'])) {
     $apprise_notify_each_detection = 1;
