@@ -4,7 +4,7 @@
 source /etc/birdnet/birdnet.conf &> /dev/null
 LOG_DIR="${HOME}/BirdNET-Pi/logs"
 my_dir=$HOME/BirdNET-Pi/scripts
-services=$(awk '/service/ && /systemctl/ && !/php/ {print $3}' ${my_dir}/install_services.sh | sort)
+services=($(awk '/service/ && /systemctl/ && !/php/ {print $3}' ${my_dir}/install_services.sh | sort -u))
 
 # Create logs directory
 [ -d ${LOG_DIR} ] || mkdir ${LOG_DIR}
@@ -18,7 +18,9 @@ for i in "${services[@]}";do
 done
 
 # Create password-removed birdnet.conf
-sed -e '/PWD=/d' ${HOME}/BirdNET-Pi/birdnet.conf > ${LOG_DIR}/birdnet.conf 
+CONF=/etc/birdnet/birdnet.conf
+[ -f "${CONF}" ] || CONF="${HOME}/BirdNET-Pi/birdnet.conf"
+sed -e '/PWD=/d' "${CONF}" > ${LOG_DIR}/birdnet.conf
 
 # Create password-removed Caddyfile
 if [ -f /etc/caddy/Caddyfile ];then
@@ -31,7 +33,14 @@ SOUND_CARD="$(aplay -L \
   | grep -ve 'vc4' -e 'Head' -e 'PCH' \
   | uniq)"
 echo "SOUND_CARD=${SOUND_CARD}" > ${LOG_DIR}/soundcard
-script -c "arecord -D ${SOUND_CARD} --dump-hw-params" -a ${LOG_DIR}/soundcard &> /dev/null
+if [ -n "${SOUND_CARD}" ]; then
+  if ! timeout 10 arecord -D "${SOUND_CARD}" --dump-hw-params >> ${LOG_DIR}/soundcard 2>&1; then
+    echo "(hw params unavailable: device busy or timed out - expected while the recorder is running)" \
+      >> ${LOG_DIR}/soundcard
+  fi
+else
+  echo "(no capture card detected)" >> ${LOG_DIR}/soundcard
+fi
 
 # Get system info
 CALLS=("df -h" "free -h" "ifconfig" "find ${RECS_DIR}")

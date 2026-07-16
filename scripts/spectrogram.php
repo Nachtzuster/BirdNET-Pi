@@ -20,7 +20,8 @@ if(isset($_GET['ajax_csv'])) {
     $look_in_directory = $STREAM_DATA_DIR;
     $files = glob($look_in_directory . "*.wav.json");
     if (count($files) !== 0) {
-      $newest_file = $files[0];
+      $newest_file = end($files);
+      reset($files);
     }
   }
   else {

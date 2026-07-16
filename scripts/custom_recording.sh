@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -x
 source /etc/birdnet/birdnet.conf
 
 STAMP="%H:%M:%S"

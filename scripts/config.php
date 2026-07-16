@@ -55,32 +55,30 @@ if(isset($_GET['restart_php']) && $_GET['restart_php'] == "true") {
 
 # Basic Settings
 if(isset($_GET["latitude"])){
-  $latitude = $_GET["latitude"];
-  $longitude = $_GET["longitude"];
-  $site_name = $_GET["site_name"];
-  $site_name = str_replace('"', "", $site_name);
-  $site_name = str_replace('\'', "", $site_name);
-  $birdweather_id = $_GET["birdweather_id"];
-  $apprise_input = $_GET['apprise_input'];
-  $apprise_notification_title = $_GET['apprise_notification_title'];
-  $apprise_notification_body = htmlspecialchars_decode($_GET['apprise_notification_body'], ENT_QUOTES);
-  $minimum_time_limit = $_GET['minimum_time_limit'];
-  $image_provider = $_GET["image_provider"];
-  $flickr_api_key = $_GET['flickr_api_key'];
-  $flickr_filter_email = $_GET["flickr_filter_email"];
-  $language = $_GET["language"];
-  $info_site = $_GET["info_site"];
-  $color_scheme = $_GET["color_scheme"];
-  $timezone = $_GET["timezone"];
-  $model = $_GET["model"];
-  $sf_thresh = $_GET["sf_thresh"];
+  $latitude = conf_safe_number($_GET["latitude"], $config['LATITUDE'] ?? '0');
+  $longitude = conf_safe_number($_GET["longitude"], $config['LONGITUDE'] ?? '0');
+  $site_name = conf_safe_string($_GET["site_name"] ?? '');
+  $birdweather_id = conf_safe_token($_GET["birdweather_id"] ?? '');
+  $apprise_input = $_GET['apprise_input'] ?? '';
+  $apprise_notification_title = conf_safe_string($_GET['apprise_notification_title'] ?? '');
+  $apprise_notification_body = htmlspecialchars_decode($_GET['apprise_notification_body'] ?? '', ENT_QUOTES);
+  $minimum_time_limit = conf_safe_number($_GET['minimum_time_limit'] ?? '', $config['APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES'] ?? '0');
+  $image_provider = conf_safe_token($_GET["image_provider"] ?? '');
+  $flickr_api_key = conf_safe_token($_GET['flickr_api_key'] ?? '');
+  $flickr_filter_email = conf_safe_token($_GET["flickr_filter_email"] ?? '');
+  $language = conf_safe_token($_GET["language"] ?? '');
+  $info_site = conf_safe_token($_GET["info_site"] ?? '');
+  $color_scheme = conf_safe_token($_GET["color_scheme"] ?? '');
+  $timezone = $_GET["timezone"] ?? '';
+  $model = conf_safe_token($_GET["model"] ?? '');
+  $sf_thresh = conf_safe_number($_GET["sf_thresh"] ?? '', $config['SF_THRESH'] ?? '0.03');
   if(isset($_GET['data_model_version'])) {
     $data_model_version = 2;
   } else {
     $data_model_version = 1;
   }
-  $only_notify_species_names = htmlspecialchars_decode($_GET['only_notify_species_names'], ENT_QUOTES);
-  $only_notify_species_names_2 = htmlspecialchars_decode($_GET['only_notify_species_names_2'], ENT_QUOTES);
+  $only_notify_species_names = conf_safe_string(htmlspecialchars_decode($_GET['only_notify_species_names'] ?? '', ENT_QUOTES));
+  $only_notify_species_names_2 = conf_safe_string(htmlspecialchars_decode($_GET['only_notify_species_names_2'] ?? '', ENT_QUOTES));
 
   if(isset($_GET['apprise_notify_each_detection'])) {
     $apprise_notify_each_detection = 1;
@@ -106,9 +104,9 @@ if(isset($_GET["latitude"])){
   if(isset($timezone) && in_array($timezone, DateTimeZone::listIdentifiers())) {
     # dpkg-reconfigure tzdata is a pain to run non-interactively, so we do it in two steps instead
     # tzlocal.get_localzone() will fail if the Debian specific /etc/timezone is not in sync
-    shell_exec("sudo timedatectl set-timezone ".$timezone);
+    shell_exec("sudo timedatectl set-timezone " . escapeshellarg($timezone));
     if (file_exists('/etc/timezone')) {
-        shell_exec("echo ".$timezone." | sudo tee /etc/timezone > /dev/null");
+      shell_exec("echo " . escapeshellarg($timezone) . " | sudo tee /etc/timezone > /dev/null");
     }
     $_SESSION['my_timezone'] = $timezone;
     date_default_timezone_set($timezone);
@@ -128,7 +126,8 @@ if(isset($_GET["latitude"])){
     // check if valid date and time
     $datetime = DateTime::createFromFormat('Y-m-d H:i', $_GET['date'] . ' ' . $_GET['time']);
     if ($datetime && $datetime->format('Y-m-d H:i') === $_GET['date'] . ' ' . $_GET['time']) {
-      exec("sudo date -s '".$_GET['date']." ".$_GET['time']."'");
+      $safe_datetime = escapeshellarg($_GET['date'] . ' ' . $_GET['time']);
+      exec("sudo date -s " . $safe_datetime);
     }
   } else {
     // user checked 'use time from internet if available,' so make sure that's on
@@ -211,7 +210,11 @@ if(isset($_GET['sendtest']) && $_GET['sendtest'] == "true") {
   chmod($t_body_path, 0644);
   fwrite($temp_body, $body);
 
-  $cmd = "sudo -u $user $home/BirdNET-Pi/birdnet/bin/python3 $home/BirdNET-Pi/scripts/send_test_notification.py --body $t_body_path --config $t_conf_path --title '" . escapeshellcmd($title) . "' 2>&1";
+  $cmd = "sudo -u " . escapeshellarg($user) . " " .
+    escapeshellarg($home . "/BirdNET-Pi/birdnet/bin/python3") . " " .
+    escapeshellarg($home . "/BirdNET-Pi/scripts/send_test_notification.py") . " --body " .
+    escapeshellarg($t_body_path) . " --config " . escapeshellarg($t_conf_path) . " --title " .
+    escapeshellarg($title) . " 2>&1";
   $ret = shell_exec($cmd);
   echo "<pre class=\"bash\">".$ret."</pre>";
   fclose($temp_conf);

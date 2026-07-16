@@ -1,8 +1,8 @@
 <?php
 
 /* Prevent XSS input */
-$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING);
-$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
 
 ini_set('session.gc_maxlifetime', 7200);
 session_set_cookie_params(7200);
@@ -127,17 +127,18 @@ function relativeTime($ts)
 
 
 if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
+  $searchterm = null;
   if(isset($_GET['searchterm'])) {
-    if(strtolower(explode(" ", $_GET['searchterm'])[0]) == "not") {
+    $searchterm = htmlspecialchars_decode($_GET['searchterm'], ENT_QUOTES);
+    if(strtolower(explode(" ", $searchterm)[0]) == "not") {
       $not = "NOT ";
       $operator = "AND";
-      $_GET['searchterm'] =  str_replace("not ", "", $_GET['searchterm']);
-      $_GET['searchterm'] =  str_replace("NOT ", "", $_GET['searchterm']);
+      $searchterm = str_replace(array("not ", "NOT "), "", $searchterm);
     } else {
       $not = "";
       $operator = "OR";
     }
-    $searchquery = "AND (Com_name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Sci_name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Confidence ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." File_Name ".$not."LIKE '%".$_GET['searchterm']."%' ".$operator." Time ".$not."LIKE '%".$_GET['searchterm']."%')";
+    $searchquery = "AND (Com_name ".$not."LIKE :term ".$operator." Sci_name ".$not."LIKE :term ".$operator." Confidence ".$not."LIKE :term ".$operator." File_Name ".$not."LIKE :term ".$operator." Time ".$not."LIKE :term)";
   } else {
     $searchquery = "";
   }
@@ -153,6 +154,9 @@ if(isset($_GET['ajax_detections']) && $_GET['ajax_detections'] == "true"  ) {
     
   }
   ensure_db_ok($statement0);
+  if ($searchterm !== null) {
+    $statement0->bindValue(':term', '%'.$searchterm.'%', SQLITE3_TEXT);
+  }
   $result0 = $statement0->execute();
 
   ?> <table>

@@ -12,7 +12,7 @@ import inotify.adapters
 from inotify.constants import IN_CLOSE_WRITE
 
 from utils.analysis import load_global_model, run_analysis
-from utils.helpers import get_settings, get_wav_files, ANALYZING_NOW
+from utils.helpers import get_settings, get_wav_files, get_analyzing_now_path
 from utils.classes import ParseFileName
 from utils.reporting import extract_detection, summary, write_to_file, write_to_db, apprise, bird_weather, heartbeat, \
     update_json_file
@@ -36,7 +36,7 @@ def main():
 
     backlog = get_wav_files()
 
-    report_queue = Queue()
+    report_queue = Queue(maxsize=1)
     thread = threading.Thread(target=handle_reporting_queue, args=(report_queue, ))
     thread.start()
 
@@ -81,23 +81,26 @@ def main():
 
 
 def process_file(file_name, report_queue):
+    enqueued = False
     try:
         if os.path.getsize(file_name) == 0:
-            os.remove(file_name)
             return
         log.info('Analyzing %s', file_name)
-        with open(ANALYZING_NOW, 'w') as analyzing:
+        with open(get_analyzing_now_path(), 'w') as analyzing:
             analyzing.write(file_name)
         file = ParseFileName(file_name)
         detections = run_analysis(file)
-        # we join() to make sure te reporting queue does not get behind
-        if not report_queue.empty():
-            log.warning('reporting queue not yet empty')
-        report_queue.join()
         report_queue.put((file, detections))
-    except BaseException as e:
+        enqueued = True
+    except Exception as e:
         stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""
         log.exception(f'Unexpected error: {stderr}', exc_info=e)
+    finally:
+        if not enqueued:
+            try:
+                os.remove(file_name)
+            except OSError:
+                pass
 
 
 def handle_reporting_queue(queue):
@@ -110,20 +113,29 @@ def handle_reporting_queue(queue):
         file, detections = msg
         try:
             update_json_file(file, detections)
+            reported = []
             for detection in detections:
-                detection.file_name_extr = extract_detection(file, detection)
-                log.info('%s;%s', summary(file, detection), os.path.basename(detection.file_name_extr))
-                write_to_file(file, detection)
-                write_to_db(file, detection)
-            apprise(file, detections)
-            bird_weather(file, detections)
+                try:
+                    detection.file_name_extr = extract_detection(file, detection)
+                    log.info('%s;%s', summary(file, detection), os.path.basename(detection.file_name_extr))
+                    write_to_file(file, detection)
+                    write_to_db(file, detection)
+                    reported.append(detection)
+                except Exception as e:
+                    log.exception('dropping detection %s', detection.common_name, exc_info=e)
+            if reported:
+                apprise(file, reported)
+                bird_weather(file, reported)
             heartbeat()
-            os.remove(file.file_name)
-        except BaseException as e:
+        except Exception as e:
             stderr = e.stderr.decode('utf-8') if isinstance(e, CalledProcessError) else ""
             log.exception(f'Unexpected error: {stderr}', exc_info=e)
-
-        queue.task_done()
+        finally:
+            try:
+                os.remove(file.file_name)
+            except OSError:
+                pass
+            queue.task_done()
 
     # mark the 'None' signal as processed
     queue.task_done()

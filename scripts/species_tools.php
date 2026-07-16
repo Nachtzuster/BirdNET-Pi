@@ -57,6 +57,14 @@ $sf_thresh = isset($config['SF_THRESH']) ? (float)$config['SF_THRESH'] : 0.0;
 /* ---------- helpers ---------- */
 function join_path(...$parts): string { return preg_replace('#/+#', '/', implode('/', $parts)); }
 function can_unlink(string $p): bool { return is_link($p) || is_file($p); }
+function is_within_path(string $path, string $base): bool {
+  $real = realpath($path);
+  if ($real === false) {
+    return false;
+  }
+  return str_starts_with($real . DIRECTORY_SEPARATOR, rtrim($base, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)
+    || $real === rtrim($base, DIRECTORY_SEPARATOR);
+}
 
 /* Collect files/dirs for a species */
 function collect_species_targets(SQLite3 $db, string $species, string $home, $base): array {
@@ -121,10 +129,22 @@ if (isset($_GET['delete'])) {
   $species = htmlspecialchars_decode($_GET['delete'], ENT_QUOTES);
   $info = collect_species_targets($db, $species, $home, $base);
   $deleted = count($info['files']);
+  $allowed_base = realpath($home . '/BirdSongs/Extracted/By_Date');
+  if ($allowed_base === false) {
+    http_response_code(500);
+    exit(json_encode(['error' => 'Delete base directory not found']));
+  }
   foreach ($info['dirs'] as $dir) {
-    if (exec("sudo rm -r $dir 2>&1", $output)) {
-      echo "Error - files deletion failed : " . implode(", ", $output) . "<br>";
-	  exit;
+    if (!is_within_path($dir, $allowed_base)) {
+      http_response_code(400);
+      exit(json_encode(['error' => 'Invalid delete target']));
+    }
+    $output = [];
+    $return_code = 0;
+    exec("sudo rm -r " . escapeshellarg($dir) . " 2>&1", $output, $return_code);
+    if ($return_code !== 0) {
+      http_response_code(500);
+      exit(json_encode(['error' => 'files deletion failed', 'details' => implode(", ", $output)]));
     }
   }
   $del = $db->prepare('DELETE FROM detections WHERE Sci_Name = :name');

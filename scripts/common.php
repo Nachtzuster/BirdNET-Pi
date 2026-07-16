@@ -2,8 +2,51 @@
 
 define('__ROOT__', dirname(dirname(__FILE__)));
 
+if (!function_exists('str_contains')) {
+  function str_contains($haystack, $needle) {
+    return $needle === '' || strpos($haystack, $needle) !== false;
+  }
+}
+if (!function_exists('str_starts_with')) {
+  function str_starts_with($haystack, $needle) {
+    return strncmp($haystack, $needle, strlen($needle)) === 0;
+  }
+}
+if (!function_exists('str_ends_with')) {
+  function str_ends_with($haystack, $needle) {
+    return $needle === '' || substr($haystack, -strlen($needle)) === $needle;
+  }
+}
+
 if (session_status() !== PHP_SESSION_ACTIVE)
   session_start();
+
+
+function conf_safe_string($v) {
+  $v = (string)$v;
+  $v = str_replace(array('"', '$', '`', '\\'), '', $v);
+  return trim(preg_replace('/[\r\n]+/', ' ', $v));
+}
+
+function conf_safe_number($v, $default = '0') {
+  $v = trim((string)$v);
+  return preg_match('/^-?(\d+(\.\d*)?|\.\d+)$/', $v) ? $v : $default;
+}
+
+function conf_safe_token($v, $default = '') {
+  $v = trim((string)$v);
+  return preg_match('/^[A-Za-z0-9._@+-]*$/', $v) ? $v : $default;
+}
+
+function conf_safe_url($v, $default = '') {
+  $v = trim((string)$v);
+  return preg_match('#^[A-Za-z0-9._:/\[\]-]*$#', $v) ? $v : $default;
+}
+
+function conf_safe_device($v, $default = 'default') {
+  $v = trim((string)$v);
+  return preg_match('/^[A-Za-z0-9_:=,.-]*$/', $v) ? $v : $default;
+}
 
 function ensure_db_ok($sql_stmt) {
   if ($sql_stmt == False) {
@@ -92,11 +135,11 @@ function debug_log($message) {
 }
 
 function get_com_en_name($sci_name) {
-  if (!isset($_labels_flickr)) {
-    $_labels_flickr = json_decode(file_get_contents(get_home() . "/BirdNET-Pi/model/l18n/labels_en.json"), true);
+  static $_labels_flickr = null;
+  if ($_labels_flickr === null) {
+    $_labels_flickr = json_decode(file_get_contents(get_home() . "/BirdNET-Pi/model/l18n/labels_en.json"), true) ?: [];
   }
-  $engname = $_labels_flickr[$sci_name];
-  return $engname;
+  return $_labels_flickr[$sci_name] ?? null;
 }
 
 function get_label($record, $sort_by, $date=null) {
@@ -121,50 +164,61 @@ function get_label($record, $sort_by, $date=null) {
 }
 
 function get_db() {
-  if (!isset($_db)) {
+  static $_db = null;
+  if ($_db === null) {
     $_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
     $_db->busyTimeout(1000);
   }
   return $_db;
 }
 
+
 function fetch_species_array($sort_by, $date=null) {
   $db = get_db();
-  $where = (isset($date)) ? "WHERE Date == \"$date\"" : "";
+  $where = isset($date) ? "WHERE Date == :date" : "";
   if ($sort_by === "occurrences") {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY COUNT(*) DESC");
+    $order = "COUNT(*) DESC";
   } elseif ($sort_by === "confidence") {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MAX(Confidence) DESC");
+    $order = "MAX(Confidence) DESC";
   } elseif ($sort_by === "date") {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY MIN(Date) DESC, Time DESC");
+    $order = "MIN(Date) DESC, Time DESC";
   } else {
-    $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY Com_Name ASC");
+    $order = "Com_Name ASC";
   }
+  $statement = $db->prepare("SELECT Date, Time, File_Name, Com_Name, Sci_Name, COUNT(*) as Count, MAX(Confidence) as MaxConfidence FROM detections $where GROUP BY Sci_Name ORDER BY $order");
   ensure_db_ok($statement);
+  if (isset($date)) {
+    $statement->bindValue(':date', $date, SQLITE3_TEXT);
+  }
   $result = $statement->execute();
   return $result;
 }
 
 function fetch_best_detection($com_name) {
   $db = get_db();
-  $statement = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = \"$com_name\"");
+  $statement = $db->prepare("SELECT Com_Name, Sci_Name, COUNT(*), MAX(Confidence), File_Name, Date, Time from detections WHERE Com_Name = :com_name");
   ensure_db_ok($statement);
+  $statement->bindValue(':com_name', $com_name, SQLITE3_TEXT);
   $result = $statement->execute();
   return $result;
 }
 
 function fetch_all_detections($sci_name, $sort_by, $date=null) {
   $db = get_db();
-  $filter = (isset($date)) ? "AND Date == \"$date\"" : "";
+  $filter = isset($date) ? "AND Date == :date" : "";
   if ($sort_by === "occurrences") {
-    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY COUNT(*) DESC");
+    $order = "COUNT(*) DESC";
   } elseif ($sort_by === "confidence") {
-    $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == \"$sci_name\" $filter ORDER BY Confidence DESC");
+    $order = "Confidence DESC";
   } else {
-    $order = (isset($date)) ? "Time DESC" : "Date DESC, Time DESC";
-    $statement = $db->prepare("SELECT * FROM detections where Sci_Name == \"$sci_name\" $filter ORDER BY $order");
+    $order = isset($date) ? "Time DESC" : "Date DESC, Time DESC";
   }
+  $statement = $db->prepare("SELECT * FROM detections WHERE Sci_Name == :sci_name $filter ORDER BY $order");
   ensure_db_ok($statement);
+  $statement->bindValue(':sci_name', $sci_name, SQLITE3_TEXT);
+  if (isset($date)) {
+    $statement->bindValue(':date', $date, SQLITE3_TEXT);
+  }
   $result = $statement->execute();
   return $result;
 }
@@ -215,7 +269,10 @@ class ImageProvider {
 
   public function __construct() {
     $this->set_db();
-    $opts = ['http' => ['header' => "User-Agent: BirdNET-Pi"]];
+    $opts = ['http' => [
+      'header' => "User-Agent: BirdNET-Pi",
+      'timeout' => 5,
+    ]];
     $this->context = stream_context_create($opts);
   }
 
@@ -423,7 +480,7 @@ class Wikipedia extends ImageProvider {
   protected $db_path = __ROOT__ . '/scripts/wikipedia.db';
 
   protected function get_from_source($sci_name) {
-    $page_title = str_replace(' ', '_', $sci_name);
+    $page_title = rawurlencode(str_replace(' ', '_', $sci_name));
     $data = $this->get_json("https://en.wikipedia.org/api/rest_v1/page/summary/$page_title");
     if ($data == false or !isset($data['originalimage']))
       return;
@@ -486,8 +543,14 @@ function get_info_url($sciname){
   $engname = get_com_en_name($sciname);
   $config = get_config();
   if ($config['INFO_SITE'] === 'EBIRD'){
-    require 'scripts/ebird.php';
-    $ebird = $ebirds[$sciname];
+    static $ebirds_cache = null;
+    if ($ebirds_cache === null) {
+      $ebirds = null;
+      require __DIR__ . '/ebird.php';
+      $ebirds_cache = $ebirds;
+    }
+    $ebirds = $ebirds_cache;
+    $ebird = $ebirds[$sciname] ?? '';
     $language = $config['DATABASE_LANG'];
     $url = "https://ebird.org/species/$ebird?siteLanguage=$language";
     $url_title = "eBirds";

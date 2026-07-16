@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import io
 import soundfile
+from contextlib import closing
 from time import sleep
 
 import requests
@@ -53,24 +54,29 @@ def spectrogram(in_file, title, comment, raw=0):
             '-t', '', '-c', '', '-o', tmp_file]
     args += ['-r'] if int(raw) else []
 
-    result = subprocess.run(args, check=True, capture_output=True)
-    ret = result.stdout.decode('utf-8')
-    err = result.stderr.decode('utf-8')
-    if err:
-        raise RuntimeError(f'{ret}:\n {err}')
-    img = Image.open(tmp_file)
-    height = img.size[1]
-    width = img.size[0]
-    draw = ImageDraw.Draw(img)
-    title_font = ImageFont.truetype(get_font()['path'], 13)
-    _, _, w, _ = draw.textbbox((0, 0), title, font=title_font)
-    draw.text(((width-w)/2, 6), title, fill="white", font=title_font)
+    try:
+        result = subprocess.run(args, check=True, capture_output=True)
+        ret = result.stdout.decode('utf-8')
+        err = result.stderr.decode('utf-8')
+        if err:
+            raise RuntimeError(f'{ret}:\n {err}')
+        with Image.open(tmp_file) as img:
+            height = img.size[1]
+            width = img.size[0]
+            draw = ImageDraw.Draw(img)
+            title_font = ImageFont.truetype(get_font()['path'], 13)
+            _, _, w, _ = draw.textbbox((0, 0), title, font=title_font)
+            draw.text(((width-w)/2, 6), title, fill="white", font=title_font)
 
-    comment_font = ImageFont.truetype(get_font()['path'], 11)
-    _, _, _, h = draw.textbbox((0, 0), comment, font=comment_font)
-    draw.text((1, height - (h + 1)), comment, fill="white", font=comment_font)
-    img.save(f'{in_file}.png')
-    os.remove(tmp_file)
+            comment_font = ImageFont.truetype(get_font()['path'], 11)
+            _, _, _, h = draw.textbbox((0, 0), comment, font=comment_font)
+            draw.text((1, height - (h + 1)), comment, fill="white", font=comment_font)
+            img.save(f'{in_file}.png')
+    finally:
+        try:
+            os.remove(tmp_file)
+        except OSError:
+            pass
 
 
 def extract_detection(file: ParseFileName, detection: Detection):
@@ -90,24 +96,27 @@ def extract_detection(file: ParseFileName, detection: Detection):
 def write_to_db(file: ParseFileName, detection: Detection):
     conf = get_settings()
     # Connect to SQLite Database
+    last_error = None
     for attempt_number in range(3):
         try:
-            con = sqlite3.connect(DB_PATH)
-            cur = con.cursor()
-            cur.execute("INSERT INTO detections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        (detection.date, detection.time, detection.scientific_name, detection.common_name, detection.confidence,
-                         conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], str(detection.week), conf['SENSITIVITY'],
-                         conf['OVERLAP'], os.path.basename(detection.file_name_extr)))
-            # (Date, Time, Sci_Name, Com_Name, str(score),
-            # Lat, Lon, Cutoff, Week, Sens,
-            # Overlap, File_Name))
+            with closing(sqlite3.connect(DB_PATH, timeout=5)) as con:
+                con.execute("PRAGMA busy_timeout=5000")
+                cur = con.cursor()
+                cur.execute("INSERT INTO detections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (detection.date, detection.time, detection.scientific_name, detection.common_name, detection.confidence,
+                             conf['LATITUDE'], conf['LONGITUDE'], conf['CONFIDENCE'], str(detection.week), conf['SENSITIVITY'],
+                             conf['OVERLAP'], os.path.basename(detection.file_name_extr)))
 
-            con.commit()
-            con.close()
-            break
-        except BaseException as e:
-            log.warning("Database busy: %s", e)
+                con.commit()
+            return
+        except sqlite3.Error as e:
+            last_error = e
+            log.warning("Database busy (attempt %d/3): %s", attempt_number + 1, e)
             sleep(2)
+    raise RuntimeError(
+        f'failed to write detection {detection.common_name} '
+        f'({detection.file_name_extr}) to the database after 3 attempts'
+    ) from last_error
 
 
 def summary(file: ParseFileName, detection: Detection):

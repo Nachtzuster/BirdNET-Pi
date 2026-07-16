@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 source /etc/birdnet/birdnet.conf
-set -x
 
 cd "${PROCESSED}" || exit 1
 empties=($(find ${PROCESSED} -size 57c))

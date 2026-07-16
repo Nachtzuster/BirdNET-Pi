@@ -1,8 +1,8 @@
 <?php
 
 /* Prevent XSS input */
-$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING);
-$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
 
 ini_set('user_agent', 'PHP_Flickr/1.0');
 error_reporting(E_ERROR);
@@ -194,6 +194,7 @@ while($results=$result3->fetchArray(SQLITE3_ASSOC)){
     <table>
 <?php
 $excludelines = [];
+$result->reset();
 while($results=$result->fetchArray(SQLITE3_ASSOC))
 {
 $comname = preg_replace('/ /', '_', $results['Com_Name']);

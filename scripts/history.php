@@ -1,12 +1,11 @@
 <?php
 
 /* Prevent XSS input */
-$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING);
-$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+$_GET   = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
+$_POST  = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: [];
 
-error_reporting(E_ALL);
-ini_set('display_errors',1);
-ini_set('display_startup_errors',1);
+error_reporting(E_ERROR);
+ini_set('display_errors', 0);
 require_once 'scripts/common.php';
 $config = get_config();
 

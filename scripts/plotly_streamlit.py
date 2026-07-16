@@ -440,7 +440,7 @@ if daily is False:
 
         fig = go.Figure(data=[heatmap, sunrise_sunset])
         number_of_y_ticks = 12
-        y_downscale_factor = int(len(saved_time_labels) / number_of_y_ticks)
+        y_downscale_factor = max(1, int(len(saved_time_labels) / number_of_y_ticks))
         fig.update_layout(
             yaxis=dict(
                 tickmode='array',
