@@ -17,6 +17,8 @@ Current Wikimedia flow:
 
 This is intentional. The browser should not receive `upload.wikimedia.org` URLs directly for Wikipedia images.
 
+The frontend `SpeciesImage` component also keeps an in-memory request cache and uses `IntersectionObserver` with a generous root margin. This prevents repeated cards for the same species from triggering duplicate API calls and avoids loading images far below the visible page.
+
 ## Cache Layout
 
 - Metadata cache DB: `scripts/wikipedia.db`
@@ -25,6 +27,11 @@ This is intentional. The browser should not receive `upload.wikimedia.org` URLs 
 - Local duplicated image files: `scripts/image-cache/wikipedia/`
 
 The `images` table remains part of the cache schema for compatibility with existing metadata rows and cache readers.
+
+Cached image asset responses set browser cache headers:
+
+- Wikipedia assets: `public, max-age=604800, stale-while-revalidate=86400`
+- Flickr assets: shorter-lived cache headers suitable for a provider-backed image
 
 ## Why Negative Caching Exists
 
@@ -50,6 +57,7 @@ Current safeguards:
 - `429 Retry-After` is honored.
 - Thumbnail URLs are rewritten down to a smaller width before local caching.
 - The code prefers `thumbnail.source` over `originalimage.source`.
+- Local asset filenames are sanitized from the scientific name and keep a conservative image extension from the remote URL.
 
 ## Lessons Learned
 

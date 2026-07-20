@@ -2,6 +2,16 @@
 
 This document summarizes the current FastAPI + Svelte web interface, with emphasis on the settings surfaces and current UI behavior.
 
+## Dashboard
+
+The dashboard is optimized for quick scanning rather than exhaustive review.
+
+- Top species can toggle between today's counts and all-time counts
+- A compact hourly activity chart shows today's detection rhythm with species breakdowns in tooltips
+- New species for the day are pinned into the latest-detections grouping so they remain visible even if they are not the newest raw detection
+- Latest detections are grouped by species to reduce duplicate-card clutter; each group links into the filtered Review flow for the species/date context
+- Live audio remains available from the `Explore more` area with authenticated short-lived stream URLs
+
 ## Settings Surfaces
 
 ### Main Settings
@@ -116,12 +126,27 @@ Expanded spectrograms intentionally grow within the normal page flow and push su
 Recording players include Temporal Zoom presets for slowing playback while preserving pitch.
 
 - The modes are intended to give human listeners more room to notice fast notes, gaps, trills, syllable transitions, and subtle differences
+- Presets are `Human` (`1.0x`), `Field` (`0.85x`), `Bird detail` (`0.7x`), `Fast bird` (`0.6x`), and `Fine` (`0.5x`)
 - Expanded spectrogram/detail views surface Temporal Zoom directly; other players include it in the expanded audio controls
 - Presets explicitly request browser pitch preservation so slowed recordings do not turn into novelty slow-motion audio
 - Mobile browsers use a lighter native playback path and avoid WebAudio filters during Temporal Zoom
-- Mobile views can prepare cached Temporal Zoom audio in the background when controls are opened, avoiding render-on-tap delays over remote access or tunnels
+- Mobile views can prepare cached Temporal Zoom audio in the background when controls are opened; the prepare endpoint queues work and returns quickly so remote access paths such as Cloudflare Tunnel are not blocked on audio rendering
+- Cached Temporal Zoom clips live under the recordings `By_Date/tempo/{rate}x/...` cache tree and are rendered with `sox tempo` when available, falling back to `ffmpeg atempo`
 - Reference labels are inspired by visual temporal-resolution research, including critical flicker fusion studies, and are not presented as simulations of another animal's hearing
+- The in-player reference link points to Healy et al. 2013, `Metabolic rate and body size are linked with perception of temporal information`
 - Natural playback remains the default
+
+## Species Views
+
+The Species page supports broad and date-scoped browsing.
+
+- `All time` remains the default complete species list
+- `Today` shows species detected on the current local date
+- `Pick date` uses the available detection dates and updates the URL as `/species?date=YYYY-MM-DD`
+- Search and sort controls apply within the active time range
+- Dashboard links can deep-link directly to `/species?date=today`
+
+Species cards use the shared image component, which lazy-loads bird images near the viewport and reuses in-memory requests across repeated species cards.
 
 ## Public URL and Tunnel Guidance
 

@@ -62,6 +62,8 @@ This is a modernized fork of [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET
 | **Reports & Exports** | Weekly Report plus eBird export from the modern UI |
 | **Scoped File Manager** | Admin-only file management for BirdNET-owned media roots |
 | **Live Audio + Spectrogram UX** | Dashboard live audio plus compact/expandable spectrogram views where they are most useful |
+| **Temporal Zoom** | Pitch-preserved playback presets help reveal fast notes, trills, gaps, and subtle differences in recordings |
+| **Local Bird Image Cache** | Wikipedia bird images are cached locally so browsers are not sent directly to Wikimedia asset URLs |
 | **Modern Debian** | Bookworm + Trixie support |
 
 <details>
@@ -91,8 +93,8 @@ The modern web app covers the main day-to-day and admin workflows:
 
 - Dashboard with current detections, live audio access, and public status
 - Review feed for recent detections and moderation actions
-- Library for historical recordings and spectrogram inspection
-- Species and Insights views for trends, charts, and exports
+- Library for historical recordings, spectrogram inspection, frequency-shifted clips, and Temporal Zoom playback
+- Species and Insights views for trends, charts, date-filtered species lists, and exports
 - Weekly Report at `/reports/weekly`
 - Settings, Advanced Settings, and System administration
 - Live Logs for service log inspection
@@ -104,6 +106,8 @@ Intentional exclusions from earlier admin tooling:
 - No Adminer
 
 The File Manager is intentionally scoped to BirdNET-owned directories rather than acting as a general server browser.
+
+Recording players include Temporal Zoom presets (`1.0x`, `0.85x`, `0.7x`, `0.6x`, `0.5x`) that slow playback while preserving pitch. The feature is framed as a listening aid for humans, not as a simulation of another animal's hearing. On mobile browsers, Pibird uses a lighter native playback path and can prepare cached tempo-rendered clips in the background to avoid render-on-tap delays over Cloudflare Tunnel or other remote access paths.
 
 ---
 
@@ -291,6 +295,7 @@ This project builds upon the incredible work of:
 
 - [Wiki](https://github.com/cpieper/BirdNET-Pibird/wiki) — Full documentation & troubleshooting
 - [Web UI Guide](docs/web-ui.md) — Settings surfaces, reports, file management, live audio, and tunnel guidance
+- [External Integrations Notes](docs/integrations.md) — Bird image provider behavior, local asset caching, and Wikimedia safeguards
 - [Discussions](https://github.com/cpieper/BirdNET-Pibird/discussions) — Community Q&A
 - [BirdWeather](https://app.birdweather.com) — Share your birds with the world
 
