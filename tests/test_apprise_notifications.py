@@ -134,6 +134,35 @@ class TestAppriseNotifications(unittest.TestCase):
 
     @patch('scripts.utils.helpers._load_settings')
     @patch('scripts.utils.notifications.notify')
+    def test_json_body_preserves_quotes(self, mock_notify, mock_load_settings):
+        self.create_test_db()
+        # HTML entities can end up in body.txt via the settings UI; they must be
+        # unescaped, and JSON bodies must not get a title (MQTT prepends it).
+        with open(self.apprise_body_file, 'w') as f:
+            f.write('{&#34;Common_Name&#34;: &#34;$comname&#34;, &#34;Scientific_Name&#34;: &#34;$sciname&#34;, '
+                    '&#34;Confidence_Score&#34;: &#34;$confidence&#34;}')
+        with open(self.apprise_config_file, 'w') as f:
+            f.write('a dummy config')
+        notifications.APPRISE_BODY = self.apprise_body_file
+        notifications.APPRISE_CONFIG = self.apprise_config_file
+        notifications.DB_PATH = self.db_file
+        settings_dict = Settings.with_defaults()
+        settings_dict["APPRISE_NOTIFY_EACH_DETECTION"] = "1"
+        mock_load_settings.return_value = settings_dict
+
+        sendAppriseNotifications(**self.get_default_params())
+
+        self.assertEqual(mock_notify.call_count, 1)
+        body, title = mock_notify.call_args_list[0][0][0], mock_notify.call_args_list[0][0][1]
+        self.assertEqual(
+            body,
+            '{"Common_Name": "Great Crested Flycatcher", "Scientific_Name": "Myiarchus crinitus", '
+            '"Confidence_Score": "0.91"}'
+        )
+        self.assertEqual(title, "")
+
+    @patch('scripts.utils.helpers._load_settings')
+    @patch('scripts.utils.notifications.notify')
     def test_notifications_excluded(self, mock_notify, mock_load_settings):
         self.create_test_db()
         self.create_apprise_config()

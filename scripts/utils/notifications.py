@@ -59,8 +59,8 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
             .replace("$longitude", str(longitude)) \
             .replace("$cutoff", str(cutoff)) \
             .replace("$sens", str(sens)) \
-            .replace("$flickrimage", image_url if "{" in body else "") \
-            .replace("$image", image_url if "{" in body else "") \
+            .replace("$flickrimage", image_url if json_body else "") \
+            .replace("$image", image_url if json_body else "") \
             .replace("$overlap", str(overlap)) \
             .replace("$reason", reason)
         return ret
@@ -70,8 +70,12 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
 
     settings_dict = get_settings()
     title = html.unescape(settings_dict.get('APPRISE_NOTIFICATION_TITLE'))
-    f = open(APPRISE_BODY, 'r')
-    body = f.read()
+    with open(APPRISE_BODY, 'r') as f:
+        # Settings UI may persist HTML entities (e.g. &#34; for quotes)
+        body = html.unescape(f.read())
+
+    # Title-less services (MQTT) prepend title to body; omit it for JSON payloads
+    json_body = body.lstrip().startswith("{")
 
     websiteurl = settings_dict.get('BIRDNETPI_URL')
     if websiteurl is None or len(websiteurl) == 0:
@@ -94,7 +98,7 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
     if settings_dict.get('APPRISE_NOTIFY_EACH_DETECTION') == "1":
         reason = "detection"
         notify_body = render_template(body, reason)
-        notify_title = render_template(title, reason)
+        notify_title = "" if json_body else render_template(title, reason)
         notify(notify_body, notify_title, image_url)
         species_last_notified[com_name] = int(time.time())
 
@@ -104,7 +108,7 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
         if 0 < numberDetections <= APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT:
             reason = "first time today"
             notify_body = render_template(body, reason)
-            notify_title = render_template(title, reason)
+            notify_title = "" if json_body else render_template(title, reason)
             notify(notify_body, notify_title, image_url)
             species_last_notified[com_name] = int(time.time())
 
@@ -113,7 +117,7 @@ def sendAppriseNotifications(sci_name, com_name, confidence, confidencepct, path
         if 0 < numberDetections <= 5:
             reason = f"only seen {numberDetections} times in last 7d"
             notify_body = render_template(body, reason)
-            notify_title = render_template(title, reason)
+            notify_title = "" if json_body else render_template(title, reason)
             notify(notify_body, notify_title, image_url)
             species_last_notified[com_name] = int(time.time())
 
