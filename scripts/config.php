@@ -63,7 +63,7 @@ if(isset($_GET["latitude"])){
   $birdweather_id = $_GET["birdweather_id"];
   $apprise_input = $_GET['apprise_input'];
   $apprise_notification_title = $_GET['apprise_notification_title'];
-  $apprise_notification_body = htmlspecialchars_decode($_GET['apprise_notification_body'], ENT_QUOTES);
+  $apprise_notification_body = html_entity_decode($_GET['apprise_notification_body'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
   $minimum_time_limit = $_GET['minimum_time_limit'];
   $image_provider = $_GET["image_provider"];
   $flickr_api_key = $_GET['flickr_api_key'];
@@ -199,7 +199,7 @@ if(isset($_GET["latitude"])){
 if(isset($_GET['sendtest']) && $_GET['sendtest'] == "true") {
   $conf = $_GET['apprise_config'];
   $title = $_GET['apprise_notification_title'];
-  $body = $_GET['apprise_notification_body'];
+  $body = html_entity_decode($_GET['apprise_notification_body'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
   $temp_conf = tmpfile();
   $t_conf_path = stream_get_meta_data($temp_conf)['uri'];
@@ -476,7 +476,7 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <label for="apprise_notification_title">Notification Title: </label>
       <input name="apprise_notification_title" style="width: 100%" type="text" value="<?php print($config['APPRISE_NOTIFICATION_TITLE']);?>" /><br>
       <label for="apprise_notification_body">Notification Body: </label>
-      <textarea class="testbtn" name="apprise_notification_body" rows="5" type="text" ><?php print($apprise_notification_body);?></textarea>
+      <textarea class="testbtn" name="apprise_notification_body" rows="5" type="text" ><?php print(htmlspecialchars($apprise_notification_body, ENT_QUOTES, 'UTF-8'));?></textarea>
       <input type="checkbox" name="apprise_notify_new_species" <?php if($config['APPRISE_NOTIFY_NEW_SPECIES'] == 1 && filesize($home."/BirdNET-Pi/apprise.txt") != 0) { echo "checked"; };?> >
       <label for="apprise_notify_new_species">Notify each new infrequent species detection (<5 visits per week)</label><br>
       <input type="checkbox" name="apprise_notify_new_species_each_day" <?php if($config['APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY'] == 1 && filesize($home."/BirdNET-Pi/apprise.txt") != 0) { echo "checked"; };?> >
