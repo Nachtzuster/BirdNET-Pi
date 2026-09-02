@@ -20,7 +20,11 @@ if(isset($_GET['ajax_csv'])) {
     $look_in_directory = $STREAM_DATA_DIR;
     $files = glob($look_in_directory . "*.wav.json");
     if (count($files) !== 0) {
-      $newest_file = $files[0];
+      // glob() returns full paths (unlike the scandir branch below) and sorts
+      // alphabetically, i.e. chronologically for these date-prefixed names:
+      // take the newest and reduce it to a basename like the RTSP branch does,
+      // since $look_in_directory is prepended again when the file is read.
+      $newest_file = basename(end($files));
     }
   }
   else {
