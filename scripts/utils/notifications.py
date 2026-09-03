@@ -18,18 +18,18 @@ species_last_notified = {}
 
 
 def notify(body, title, attached=""):
-    global apobj
-    if apobj is None:
-        asset = apprise.AppriseAsset(
-            plugin_paths=[
-                userDir + "/.apprise/plugins",
-                userDir + "/.config/apprise/plugins",
-            ]
-        )
-        apobj = apprise.Apprise(asset=asset)
-        config = apprise.AppriseConfig()
-        config.add(APPRISE_CONFIG)
-        apobj.add(config)
+    asset = apprise.AppriseAsset(
+        plugin_paths=[
+            userDir + "/.apprise/plugins",
+            userDir + "/.config/apprise/plugins",
+        ]
+    )
+
+    apobj = apprise.Apprise(asset=asset)
+
+    config = apprise.AppriseConfig()
+    config.add(APPRISE_CONFIG)
+    apobj.add(config)
 
     if attached != "":
         apobj.notify(
