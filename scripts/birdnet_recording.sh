@@ -46,7 +46,15 @@ if [ -n "${RTSP_STREAM}" ];then
   done
   wait
 else
-  if ! pulseaudio --check;then pulseaudio --start;fi
+  # Only start PulseAudio when the capture device actually goes through it.
+  # With a direct ALSA device (plughw:/hw:/dsnoop:) PulseAudio grabs the card
+  # first and the arecord below then records digital silence: the WAVs are
+  # written at exactly 0.000000 amplitude, BirdNET reports no detections, and
+  # nothing logs an error. Headless installs make it worse - without a session
+  # bus PulseAudio cannot hand the stream on at all.
+  case "${REC_CARD}" in
+    ''|default|pulse|pulse:*) if ! pulseaudio --check;then pulseaudio --start;fi ;;
+  esac
   if pgrep arecord &> /dev/null ;then
     echo "Recording"
   else
